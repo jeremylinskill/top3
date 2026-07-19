@@ -3,7 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
 export default function MoviesScreen() {
-    const { selectedMovie, rank } = useLocalSearchParams();
+    const { movie1, movie2, movie3 } = useLocalSearchParams();
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Choose your Top 3 Movies</Text>
@@ -13,33 +13,44 @@ export default function MoviesScreen() {
       </Text>
       <MovieSlot
   rank={1}
-  title={
-  rank === '1' && selectedMovie
-    ? selectedMovie.toString()
-    : 'Choose your #1 movie'
-}
+  title={movie1?.toString() || 'Choose your #1 movie'}
   onPress={() =>
   router.push({
     pathname: '/movie-search',
-    params: { rank: '1' },
+    params: {
+  rank: '1',
+  movie1: movie1?.toString() || '',
+  movie2: movie2?.toString() || '',
+  movie3: movie3?.toString() || '',
+},
   })}
 />
 <MovieSlot
   rank={2}
-  title="Choose your #2 movie"
+ title={movie2?.toString() || 'Choose your #2 movie'}
   onPress={() =>
   router.push({
     pathname: '/movie-search',
-    params: { rank: '2' },
+    params: {
+  rank: '2',
+  movie1: movie1?.toString() || '',
+  movie2: movie2?.toString() || '',
+  movie3: movie3?.toString() || '',
+},
   })}
 />
 <MovieSlot
   rank={3}
-  title="Choose your #3 movie"
+  title={movie3?.toString() || 'Choose your #3 movie'}
   onPress={() =>
   router.push({
     pathname: '/movie-search',
-    params: { rank: '3' },
+    params: {
+  rank: '3',
+  movie1: movie1?.toString() || '',
+  movie2: movie2?.toString() || '',
+  movie3: movie3?.toString() || '',
+},
   })}
 />
     </View>
