@@ -1,7 +1,8 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function MovieSearchScreen() {
+  const { rank } = useLocalSearchParams();
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Search Movies</Text>
@@ -18,8 +19,9 @@ export default function MovieSearchScreen() {
     router.replace({
       pathname: '/movies',
       params: {
-        selectedMovie: 'The Dark Knight',
-      },
+  selectedMovie: 'The Dark Knight',
+  rank,
+},
     })
   }>
   <Text style={styles.movie}>The Dark Knight</Text>

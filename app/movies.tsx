@@ -1,8 +1,9 @@
+import MovieSlot from '@/components/movie-slot';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 export default function MoviesScreen() {
-    const { selectedMovie } = useLocalSearchParams();
+    const { selectedMovie, rank } = useLocalSearchParams();
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Choose your Top 3 Movies</Text>
@@ -10,22 +11,37 @@ export default function MoviesScreen() {
       <Text style={styles.subtitle}>
         Pick the three movies that say the most about your taste.
       </Text>
-      <Pressable
-  style={styles.movieSlot}
-  onPress={() => router.push('/movie-search')}>
-  <Text style={styles.rank}>1</Text>
-  <Text style={styles.placeholder}>
-  {selectedMovie || 'Choose your #1 movie'}
-</Text>
-</Pressable>
-<View style={styles.movieSlot}>
-  <Text style={styles.rank}>2</Text>
-  <Text style={styles.placeholder}>Choose your #2 movie</Text>
-</View>
-<View style={styles.movieSlot}>
-  <Text style={styles.rank}>3</Text>
-  <Text style={styles.placeholder}>Choose your #3 movie</Text>
-</View>
+      <MovieSlot
+  rank={1}
+  title={
+  rank === '1' && selectedMovie
+    ? selectedMovie.toString()
+    : 'Choose your #1 movie'
+}
+  onPress={() =>
+  router.push({
+    pathname: '/movie-search',
+    params: { rank: '1' },
+  })}
+/>
+<MovieSlot
+  rank={2}
+  title="Choose your #2 movie"
+  onPress={() =>
+  router.push({
+    pathname: '/movie-search',
+    params: { rank: '2' },
+  })}
+/>
+<MovieSlot
+  rank={3}
+  title="Choose your #3 movie"
+  onPress={() =>
+  router.push({
+    pathname: '/movie-search',
+    params: { rank: '3' },
+  })}
+/>
     </View>
   );
 }
@@ -47,21 +63,4 @@ const styles = StyleSheet.create({
     fontSize: 20,
     textAlign: 'center',
   },
-  movieSlot: {
-  width: '100%',
-  borderWidth: 1,
-  borderColor: '#CCCCCC',
-  borderRadius: 12,
-  padding: 20,
-  marginTop: 32,
-},
-rank: {
-  fontSize: 16,
-  fontWeight: 'bold',
-  marginBottom: 8,
-},
-placeholder: {
-  fontSize: 18,
-  color: '#777777',
-},
 });
