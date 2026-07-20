@@ -1,6 +1,13 @@
 import { Top3Item } from '@/types/top3-item';
 import { Top3List } from '@/types/top3-list';
-import { createContext, ReactNode, useContext, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+    createContext,
+    ReactNode,
+    useContext,
+    useEffect,
+    useState,
+} from 'react';
 
 type Top3ContextValue = {
   currentList: Top3List;
@@ -13,6 +20,8 @@ type Top3ProviderProps = {
   children: ReactNode;
 };
 
+const STORAGE_KEY = 'top3-current-list';
+
 const initialList: Top3List = {
   id: 'movies-general',
   category: 'movies',
@@ -22,6 +31,44 @@ const initialList: Top3List = {
 
 export function Top3Provider({ children }: Top3ProviderProps) {
   const [currentList, setCurrentList] = useState<Top3List>(initialList);
+  const [hasLoadedStorage, setHasLoadedStorage] = useState(false);
+
+  useEffect(() => {
+    async function loadSavedList() {
+      try {
+        const savedList = await AsyncStorage.getItem(STORAGE_KEY);
+
+        if (savedList) {
+          setCurrentList(JSON.parse(savedList));
+        }
+      } catch (error) {
+        console.error('Failed to load saved Top 3 list:', error);
+      } finally {
+        setHasLoadedStorage(true);
+      }
+    }
+
+    loadSavedList();
+  }, []);
+
+  useEffect(() => {
+    if (!hasLoadedStorage) {
+      return;
+    }
+
+    async function saveCurrentList() {
+      try {
+        await AsyncStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify(currentList)
+        );
+      } catch (error) {
+        console.error('Failed to save Top 3 list:', error);
+      }
+    }
+
+    saveCurrentList();
+  }, [currentList, hasLoadedStorage]);
 
   function setItemAtRank(rank: number, item: Top3Item) {
     if (rank < 1 || rank > 3) {
