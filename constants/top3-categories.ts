@@ -2,6 +2,7 @@ export type Top3Topic = {
   id: string;
   name: string;
   icon: string;
+  tmdbGenreId?: number;
 };
 
 export type Top3Category = {
@@ -17,10 +18,29 @@ export const TOP3_CATEGORIES: Top3Category[] = [
     name: 'Movies',
     icon: '🎬',
     topics: [
-      { id: 'general', name: 'General', icon: '🎬' },
-      { id: 'horror', name: 'Horror', icon: '👻' },
-      { id: 'comedy', name: 'Comedy', icon: '😂' },
-      { id: 'sci-fi', name: 'Sci-Fi', icon: '🚀' },
+      {
+        id: 'general',
+        name: 'General',
+        icon: '🎬',
+      },
+      {
+        id: 'horror',
+        name: 'Horror',
+        icon: '👻',
+        tmdbGenreId: 27,
+      },
+      {
+        id: 'comedy',
+        name: 'Comedy',
+        icon: '😂',
+        tmdbGenreId: 35,
+      },
+      {
+        id: 'sci-fi',
+        name: 'Sci-Fi',
+        icon: '🚀',
+        tmdbGenreId: 878,
+      },
     ],
   },
 ];

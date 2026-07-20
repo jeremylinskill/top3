@@ -1,3 +1,4 @@
+import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { Top3Item } from '@/types/top3-item';
 
 type TMDBMovie = {
@@ -7,12 +8,6 @@ type TMDBMovie = {
   poster_path?: string | null;
   vote_average?: number;
   genre_ids?: number[];
-};
-
-const MOVIE_GENRE_IDS: Record<string, number> = {
-  horror: 27,
-  comedy: 35,
-  'sci-fi': 878,
 };
 
 export async function searchMovies(
@@ -39,16 +34,19 @@ export async function searchMovies(
 
   let movies: TMDBMovie[] = data.results ?? [];
 
-  const normalizedTopic = topic?.toLowerCase();
-  const genreId = normalizedTopic
-    ? MOVIE_GENRE_IDS[normalizedTopic]
-    : undefined;
+const movieCategory = TOP3_CATEGORIES.find(
+  (category) => category.id === 'movies'
+);
 
-  if (genreId) {
-    movies = movies.filter((movie) =>
-      movie.genre_ids?.includes(genreId)
-    );
-  }
+const selectedTopic = movieCategory?.topics.find(
+  (item) => item.name.toLowerCase() === topic?.toLowerCase()
+);
+
+if (selectedTopic?.tmdbGenreId) {
+  movies = movies.filter((movie) =>
+    movie.genre_ids?.includes(selectedTopic.tmdbGenreId!)
+  );
+}
 
   return movies.slice(0, 10).map((movie) => ({
     id: movie.id.toString(),
