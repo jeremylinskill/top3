@@ -1,8 +1,51 @@
 import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+
+type Movie = {
+  id: number;
+  title: string;
+  release_date?: string;
+};
 
 export default function MovieSearchScreen() {
   const { rank, movie1, movie2, movie3 } = useLocalSearchParams();
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Movie[]>([]);
+
+  useEffect(() => {
+    async function searchMovies() {
+      if (!searchQuery.trim()) {
+        setSearchResults([]);
+        return;
+      }
+
+      try {
+        const apiKey = process.env.EXPO_PUBLIC_TMDB_API_KEY;
+
+        const response = await fetch(
+          `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${encodeURIComponent(
+            searchQuery
+          )}`
+        );
+
+        if (!response.ok) {
+          throw new Error(`TMDB request failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        setSearchResults(data.results?.slice(0, 10) || []);
+      } catch (error) {
+        console.error('Movie search failed:', error);
+        setSearchResults([]);
+      }
+    }
+
+    searchMovies();
+  }, [searchQuery]);
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Search Movies</Text>
@@ -10,26 +53,39 @@ export default function MovieSearchScreen() {
       <TextInput
         style={styles.searchInput}
         placeholder="Search for a movie..."
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        autoCorrect={false}
       />
 
-      <Text style={styles.sectionTitle}>Popular Movies</Text>
+      <Text style={styles.sectionTitle}>Search Results</Text>
 
-      <Pressable
-  onPress={() =>
-   router.replace({
-  pathname: '/movies',
-  params: {
-  movie1: rank === '1' ? 'The Dark Knight' : movie1?.toString() || '',
-  movie2: rank === '2' ? 'The Dark Knight' : movie2?.toString() || '',
-  movie3: rank === '3' ? 'The Dark Knight' : movie3?.toString() || '',
-},
-})
-  }>
-  <Text style={styles.movie}>The Dark Knight</Text>
-</Pressable>
-      <Text style={styles.movie}>Interstellar</Text>
-      <Text style={styles.movie}>Pulp Fiction</Text>
-      <Text style={styles.movie}>The Shawshank Redemption</Text>
+      {searchResults.map((movie) => {
+        const releaseYear = movie.release_date?.slice(0, 4);
+
+        return (
+          <Pressable
+            key={movie.id}
+            onPress={() =>
+              router.replace({
+                pathname: '/movies',
+                params: {
+                  movie1:
+                    rank === '1' ? movie.title : movie1?.toString() || '',
+                  movie2:
+                    rank === '2' ? movie.title : movie2?.toString() || '',
+                  movie3:
+                    rank === '3' ? movie.title : movie3?.toString() || '',
+                },
+              })
+            }>
+            <Text style={styles.movie}>
+              {movie.title}
+              {releaseYear ? ` (${releaseYear})` : ''}
+            </Text>
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
