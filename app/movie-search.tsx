@@ -1,9 +1,13 @@
+import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { useTop3 } from '@/context/top3-context';
 import { Top3Item } from '@/types/top3-item';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Image,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -20,27 +24,57 @@ export default function MovieSearchScreen() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Top3Item[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
 
-  const isHorrorCollection =
-    currentList?.category === 'movies' &&
-    currentList.topic?.toLowerCase() === 'horror';
+  const movieCategory = TOP3_CATEGORIES.find(
+    (category) => category.id === 'movies'
+  );
+
+  const selectedTopic =
+    movieCategory?.topics.find(
+      (topic) =>
+        topic.name.toLowerCase() === currentList?.topic?.toLowerCase()
+    ) ??
+    movieCategory?.topics.find((topic) => topic.id === 'general');
+
+  const topicName = selectedTopic?.name;
+  const searchItemName = selectedTopic?.searchItemName ?? 'movie';
+  const searchIcon = selectedTopic?.icon ?? '🎬';
 
   useEffect(() => {
     async function loadResults() {
+      const trimmedQuery = searchQuery.trim();
+
+      if (!trimmedQuery) {
+        setSearchResults([]);
+        setHasSearched(false);
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+
       try {
         const results = await searchMovies(
-          searchQuery,
+          trimmedQuery,
           currentList?.topic
         );
 
         setSearchResults(results);
+        setHasSearched(true);
       } catch (error) {
         console.error('Movie search failed:', error);
         setSearchResults([]);
+        setHasSearched(true);
+      } finally {
+        setIsLoading(false);
       }
     }
 
-    loadResults();
+    const timeoutId = setTimeout(loadResults, 300);
+
+    return () => clearTimeout(timeoutId);
   }, [searchQuery, currentList?.topic]);
 
   function selectMovie(item: Top3Item) {
@@ -54,73 +88,111 @@ export default function MovieSearchScreen() {
     router.back();
   }
 
+  const searchTitle =
+    selectedTopic?.id === 'general'
+      ? 'Search Movies'
+      : `Search ${topicName} Movies`;
+
+  const searchPlaceholder = `Search for a ${searchItemName}...`;
+
+  const resultsTitle =
+    selectedTopic?.id === 'general'
+      ? 'Search Results'
+      : `${topicName} Results`;
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>
-  {currentList?.topic
-    ? `Search ${currentList.topic} Movies`
-    : 'Search Movies'}
-</Text>
+    <KeyboardAvoidingView
+      style={styles.keyboardContainer}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={90}>
+      <View style={styles.container}>
+        <Text style={styles.title}>{searchTitle}</Text>
 
-      <TextInput
-        style={styles.searchInput}
-        placeholder={
-  currentList?.topic
-    ? `Search for a ${currentList.topic.toLowerCase()} movie...`
-    : 'Search for a movie...'
-}
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-        autoCorrect={false}
-        autoCapitalize="words"
-      />
+        <TextInput
+          style={styles.searchInput}
+          placeholder={searchPlaceholder}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          autoCorrect={false}
+          autoCapitalize="words"
+        />
 
-      <Text style={styles.sectionTitle}>
-  {currentList?.topic
-    ? `${currentList.topic} Results`
-    : 'Search Results'}
-</Text>
+        {isLoading ? (
+          <View style={styles.messageContainer}>
+            <ActivityIndicator size="large" />
+            <Text style={styles.messageText}>Searching...</Text>
+          </View>
+        ) : !hasSearched ? (
+          <View style={styles.messageContainer}>
+            <Text style={styles.messageIcon}>{searchIcon}</Text>
+            <Text style={styles.messageTitle}>
+              Search for a {searchItemName}
+            </Text>
+            <Text style={styles.messageText}>
+              Start typing a title to see matching results.
+            </Text>
+          </View>
+        ) : searchResults.length === 0 ? (
+          <View style={styles.messageContainer}>
+            <Text style={styles.messageIcon}>{searchIcon}</Text>
+            <Text style={styles.messageTitle}>
+              No {searchItemName}s found
+            </Text>
+            <Text style={styles.messageText}>
+              Try another {searchItemName} title or a broader search.
+            </Text>
+          </View>
+        ) : (
+          <>
+            <Text style={styles.sectionTitle}>{resultsTitle}</Text>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled">
-        {searchResults.map((item) => (
-          <Pressable
-            key={item.id}
-            style={styles.movieRow}
-            onPress={() => selectMovie(item)}>
-            {item.imageUrl ? (
-              <Image
-                source={{ uri: item.imageUrl }}
-                style={styles.poster}
-                resizeMode="cover"
-              />
-            ) : (
-              <View style={styles.posterPlaceholder}>
-                <Text style={styles.posterPlaceholderText}>
-                  No poster
-                </Text>
-              </View>
-            )}
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.resultsContent}>
+              {searchResults.map((item) => (
+                <Pressable
+                  key={item.id}
+                  style={styles.movieRow}
+                  onPress={() => selectMovie(item)}>
+                  {item.imageUrl ? (
+                    <Image
+                      source={{ uri: item.imageUrl }}
+                      style={styles.poster}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={styles.posterPlaceholder}>
+                      <Text style={styles.posterPlaceholderText}>
+                        No poster
+                      </Text>
+                    </View>
+                  )}
 
-            <View style={styles.movieDetails}>
-              <Text style={styles.movieTitle}>{item.title}</Text>
+                  <View style={styles.movieDetails}>
+                    <Text style={styles.movieTitle}>{item.title}</Text>
 
-              <Text style={styles.metadata}>
-                {item.subtitle || 'Year unknown'}
-                {typeof item.rating === 'number'
-                  ? ` · ★ ${item.rating.toFixed(1)}`
-                  : ''}
-              </Text>
-            </View>
-          </Pressable>
-        ))}
-      </ScrollView>
-    </View>
+                    <Text style={styles.metadata}>
+                      {item.subtitle || 'Year unknown'}
+                      {typeof item.rating === 'number'
+                        ? ` · ★ ${item.rating.toFixed(1)}`
+                        : ''}
+                    </Text>
+                  </View>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </>
+        )}
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  keyboardContainer: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     padding: 24,
@@ -137,12 +209,39 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     fontSize: 18,
-    marginBottom: 32,
+    marginBottom: 24,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600',
     marginBottom: 16,
+  },
+  messageContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: 48,
+    paddingHorizontal: 24,
+  },
+  messageIcon: {
+    fontSize: 42,
+    marginBottom: 12,
+  },
+  messageTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  messageText: {
+    fontSize: 16,
+    color: '#777777',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginTop: 10,
+  },
+  resultsContent: {
+    paddingBottom: 24,
   },
   movieRow: {
     flexDirection: 'row',

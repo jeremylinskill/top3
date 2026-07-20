@@ -22,6 +22,7 @@ type Top3ContextValue = {
   createList: (input: CreateListInput) => string | null;
   selectList: (listId: string) => void;
   setItemAtRank: (rank: number, item: Top3Item) => void;
+  setItems: (items: Top3List['items']) => void;
 };
 
 const Top3Context = createContext<Top3ContextValue | undefined>(undefined);
@@ -156,6 +157,23 @@ export function Top3Provider({ children }: Top3ProviderProps) {
     );
   }
 
+  function setItems(items: Top3List['items']) {
+    if (!currentList) {
+      return;
+    }
+
+    setLists((currentLists) =>
+      currentLists.map((list) =>
+        list.id === currentList.id
+          ? {
+              ...list,
+              items,
+            }
+          : list
+      )
+    );
+  }
+
   return (
     <Top3Context.Provider
       value={{
@@ -164,6 +182,7 @@ export function Top3Provider({ children }: Top3ProviderProps) {
         createList,
         selectList,
         setItemAtRank,
+        setItems,
       }}>
       {children}
     </Top3Context.Provider>

@@ -1,11 +1,20 @@
 import RankedItemCard from '@/components/ranked-item-card';
 import { useTop3 } from '@/context/top3-context';
+import { Top3Item } from '@/types/top3-item';
 import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
+import DraggableFlatList, {
+    RenderItemParams,
+} from 'react-native-draggable-flatlist';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+type DraggableRow = {
+  key: string;
+  item: Top3Item | null;
+};
+
 export default function CollectionScreen() {
-  const { currentList } = useTop3();
+  const { currentList, setItems } = useTop3();
 
   if (!currentList) {
     return (
@@ -15,30 +24,71 @@ export default function CollectionScreen() {
     );
   }
 
+  const rows: DraggableRow[] = currentList.items.map((item, index) => ({
+    key: item?.id ?? `empty-${index}`,
+    item,
+  }));
+
+  function renderItem({
+    item: row,
+    drag,
+    isActive,
+    getIndex,
+  }: RenderItemParams<DraggableRow>) {
+    const index = getIndex() ?? 0;
+    const rank = index + 1;
+
+    return (
+      <View style={[styles.row, isActive && styles.activeRow]}>
+        <RankedItemCard
+          rank={rank}
+          item={row.item}
+          placeholder={`Choose item #${rank}`}
+          onPress={() =>
+            router.push({
+              pathname: '/movie-search',
+              params: { rank: String(rank) },
+            })
+          }
+        />
+
+        {row.item ? (
+          <Text
+            style={styles.dragHandle}
+            onLongPress={drag}
+            suppressHighlighting>
+            ☰
+          </Text>
+        ) : null}
+      </View>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>{currentList.title}</Text>
 
       <Text style={styles.subtitle}>
-        Choose the three items that best represent your taste.
+        Tap a card to replace it. Press and hold the handle to reorder.
       </Text>
 
-      <View style={styles.list}>
-        {currentList.items.map((item, index) => (
-          <RankedItemCard
-            key={index}
-            rank={index + 1}
-            item={item}
-            placeholder={`Choose item #${index + 1}`}
-            onPress={() =>
-              router.push({
-                pathname: '/movie-search',
-                params: { rank: String(index + 1) },
-              })
-            }
-          />
-        ))}
-      </View>
+      <DraggableFlatList
+        data={rows}
+        keyExtractor={(row) => row.key}
+        renderItem={renderItem}
+        onDragEnd={({ data }) => {
+          const reorderedItems = data.map((row) => row.item) as [
+            Top3Item | null,
+            Top3Item | null,
+            Top3Item | null,
+          ];
+
+          setItems(reorderedItems);
+        }}
+        activationDistance={12}
+        containerStyle={styles.list}
+        extraData={currentList.items}
+      />
     </SafeAreaView>
   );
 }
@@ -62,6 +112,20 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   list: {
-    gap: 12,
+    flex: 1,
+  },
+  row: {
+    position: 'relative',
+  },
+  activeRow: {
+    opacity: 0.9,
+  },
+  dragHandle: {
+    position: 'absolute',
+    right: 18,
+    top: 38,
+    fontSize: 24,
+    color: '#777777',
+    padding: 12,
   },
 });
