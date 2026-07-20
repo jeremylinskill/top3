@@ -1,3 +1,5 @@
+import { useTop3 } from '@/context/top3-context';
+import { Top3Item } from '@/types/top3-item';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
@@ -19,10 +21,11 @@ type Movie = {
 };
 
 export default function MovieSearchScreen() {
-  const { rank, movie1, movie2, movie3 } = useLocalSearchParams();
+  const { rank } = useLocalSearchParams();
+  const { setItemAtRank } = useTop3();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<Movie[]>([]);
+  const [searchResults, setSearchResults] = useState<Top3Item[]>([]);
 
   useEffect(() => {
     async function searchMovies() {
@@ -46,7 +49,18 @@ export default function MovieSearchScreen() {
 
         const data = await response.json();
 
-        setSearchResults(data.results?.slice(0, 10) || []);
+        const items: Top3Item[] =
+          data.results?.slice(0, 10).map((movie: Movie) => ({
+            id: movie.id.toString(),
+            title: movie.title,
+            subtitle: movie.release_date?.slice(0, 4),
+            imageUrl: movie.poster_path
+              ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+              : undefined,
+            rating: movie.vote_average,
+          })) || [];
+
+        setSearchResults(items);
       } catch (error) {
         console.error('Movie search failed:', error);
         setSearchResults([]);
@@ -56,15 +70,15 @@ export default function MovieSearchScreen() {
     searchMovies();
   }, [searchQuery]);
 
-  function selectMovie(movieLabel: string) {
-    router.replace({
-      pathname: '/movies',
-      params: {
-        movie1: rank === '1' ? movieLabel : movie1?.toString() || '',
-        movie2: rank === '2' ? movieLabel : movie2?.toString() || '',
-        movie3: rank === '3' ? movieLabel : movie3?.toString() || '',
-      },
-    });
+  function selectMovie(item: Top3Item) {
+    const selectedRank = Number(rank);
+
+    if (selectedRank < 1 || selectedRank > 3) {
+      return;
+    }
+
+    setItemAtRank(selectedRank, item);
+    router.back();
   }
 
   return (
@@ -85,50 +99,35 @@ export default function MovieSearchScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled">
-        {searchResults.map((movie) => {
-          const releaseYear = movie.release_date?.slice(0, 4);
-
-          const posterUrl = movie.poster_path
-            ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-            : null;
-
-          const rating =
-            typeof movie.vote_average === 'number'
-              ? movie.vote_average.toFixed(1)
-              : null;
-
-          const movieLabel = releaseYear
-            ? `${movie.title} (${releaseYear})`
-            : movie.title;
-
-          return (
-            <Pressable
-              key={movie.id}
-              style={styles.movieRow}
-              onPress={() => selectMovie(movieLabel)}>
-              {posterUrl ? (
-                <Image
-                  source={{ uri: posterUrl }}
-                  style={styles.poster}
-                  resizeMode="cover"
-                />
-              ) : (
-                <View style={styles.posterPlaceholder}>
-                  <Text style={styles.posterPlaceholderText}>No poster</Text>
-                </View>
-              )}
-
-              <View style={styles.movieDetails}>
-                <Text style={styles.movieTitle}>{movie.title}</Text>
-
-                <Text style={styles.metadata}>
-                  {releaseYear || 'Year unknown'}
-                  {rating ? ` · ★ ${rating}` : ''}
-                </Text>
+        {searchResults.map((item) => (
+          <Pressable
+            key={item.id}
+            style={styles.movieRow}
+            onPress={() => selectMovie(item)}>
+            {item.imageUrl ? (
+              <Image
+                source={{ uri: item.imageUrl }}
+                style={styles.poster}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={styles.posterPlaceholder}>
+                <Text style={styles.posterPlaceholderText}>No poster</Text>
               </View>
-            </Pressable>
-          );
-        })}
+            )}
+
+            <View style={styles.movieDetails}>
+              <Text style={styles.movieTitle}>{item.title}</Text>
+
+              <Text style={styles.metadata}>
+                {item.subtitle || 'Year unknown'}
+                {typeof item.rating === 'number'
+                  ? ` · ★ ${item.rating.toFixed(1)}`
+                  : ''}
+              </Text>
+            </View>
+          </Pressable>
+        ))}
       </ScrollView>
     </View>
   );
