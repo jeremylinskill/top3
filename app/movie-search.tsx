@@ -15,6 +15,7 @@ type Movie = {
   title: string;
   release_date?: string;
   poster_path?: string | null;
+  vote_average?: number;
 };
 
 export default function MovieSearchScreen() {
@@ -91,6 +92,11 @@ export default function MovieSearchScreen() {
             ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
             : null;
 
+          const rating =
+            typeof movie.vote_average === 'number'
+              ? movie.vote_average.toFixed(1)
+              : null;
+
           const movieLabel = releaseYear
             ? `${movie.title} (${releaseYear})`
             : movie.title;
@@ -115,9 +121,10 @@ export default function MovieSearchScreen() {
               <View style={styles.movieDetails}>
                 <Text style={styles.movieTitle}>{movie.title}</Text>
 
-                {releaseYear ? (
-                  <Text style={styles.releaseYear}>{releaseYear}</Text>
-                ) : null}
+                <Text style={styles.metadata}>
+                  {releaseYear || 'Year unknown'}
+                  {rating ? ` · ★ ${rating}` : ''}
+                </Text>
               </View>
             </Pressable>
           );
@@ -186,7 +193,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
-  releaseYear: {
+  metadata: {
     fontSize: 16,
     color: '#777777',
     marginTop: 6,
