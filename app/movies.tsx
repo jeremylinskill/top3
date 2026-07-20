@@ -9,7 +9,9 @@ export default function MoviesScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Top 3 Movies</Text>
+      <Text style={styles.title}>
+  {currentList?.title ?? 'Top 3'}
+</Text>
 
       <Text style={styles.subtitle}>
         Choose the three movies that best represent your taste.

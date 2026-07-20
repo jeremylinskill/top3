@@ -6,11 +6,21 @@ import {
     ReactNode,
     useContext,
     useEffect,
+    useMemo,
     useState,
 } from 'react';
 
+type CreateListInput = {
+  category: string;
+  topic?: string;
+  title: string;
+};
+
 type Top3ContextValue = {
-  currentList: Top3List;
+  lists: Top3List[];
+  currentList: Top3List | null;
+  createList: (input: CreateListInput) => string;
+  selectList: (listId: string) => void;
   setItemAtRank: (rank: number, item: Top3Item) => void;
 };
 
@@ -20,9 +30,9 @@ type Top3ProviderProps = {
   children: ReactNode;
 };
 
-const STORAGE_KEY = 'top3-current-list';
+const STORAGE_KEY = 'top3-lists';
 
-const initialList: Top3List = {
+const initialMovieList: Top3List = {
   id: 'movies-general',
   category: 'movies',
   title: 'Top 3 Movies',
@@ -30,25 +40,39 @@ const initialList: Top3List = {
 };
 
 export function Top3Provider({ children }: Top3ProviderProps) {
-  const [currentList, setCurrentList] = useState<Top3List>(initialList);
+  const [lists, setLists] = useState<Top3List[]>([initialMovieList]);
+  const [currentListId, setCurrentListId] = useState(initialMovieList.id);
   const [hasLoadedStorage, setHasLoadedStorage] = useState(false);
 
-  useEffect(() => {
-    async function loadSavedList() {
-      try {
-        const savedList = await AsyncStorage.getItem(STORAGE_KEY);
+  const currentList = useMemo(
+    () => lists.find((list) => list.id === currentListId) ?? null,
+    [lists, currentListId]
+  );
 
-        if (savedList) {
-          setCurrentList(JSON.parse(savedList));
+  useEffect(() => {
+    async function loadSavedLists() {
+      try {
+        const savedData = await AsyncStorage.getItem(STORAGE_KEY);
+
+        if (savedData) {
+          const parsedData = JSON.parse(savedData) as {
+            lists: Top3List[];
+            currentListId: string;
+          };
+
+          if (parsedData.lists.length > 0) {
+            setLists(parsedData.lists);
+            setCurrentListId(parsedData.currentListId);
+          }
         }
       } catch (error) {
-        console.error('Failed to load saved Top 3 list:', error);
+        console.error('Failed to load saved collections:', error);
       } finally {
         setHasLoadedStorage(true);
       }
     }
 
-    loadSavedList();
+    loadSavedLists();
   }, []);
 
   useEffect(() => {
@@ -56,38 +80,75 @@ export function Top3Provider({ children }: Top3ProviderProps) {
       return;
     }
 
-    async function saveCurrentList() {
+    async function saveLists() {
       try {
         await AsyncStorage.setItem(
           STORAGE_KEY,
-          JSON.stringify(currentList)
+          JSON.stringify({
+            lists,
+            currentListId,
+          })
         );
       } catch (error) {
-        console.error('Failed to save Top 3 list:', error);
+        console.error('Failed to save collections:', error);
       }
     }
 
-    saveCurrentList();
-  }, [currentList, hasLoadedStorage]);
+    saveLists();
+  }, [lists, currentListId, hasLoadedStorage]);
+
+  function createList(input: CreateListInput) {
+    const id = `${input.category}-${input.topic ?? 'general'}-${Date.now()}`;
+
+    const newList: Top3List = {
+      id,
+      category: input.category,
+      topic: input.topic,
+      title: input.title,
+      items: [null, null, null],
+    };
+
+    setLists((currentLists) => [...currentLists, newList]);
+    setCurrentListId(id);
+
+    return id;
+  }
+
+  function selectList(listId: string) {
+    setCurrentListId(listId);
+  }
 
   function setItemAtRank(rank: number, item: Top3Item) {
-    if (rank < 1 || rank > 3) {
-      throw new Error('Rank must be 1, 2, or 3');
+    if (!currentList || rank < 1 || rank > 3) {
+      return;
     }
 
-    setCurrentList((list) => {
-      const nextItems = [...list.items] as Top3List['items'];
-      nextItems[rank - 1] = item;
+    setLists((currentLists) =>
+      currentLists.map((list) => {
+        if (list.id !== currentList.id) {
+          return list;
+        }
 
-      return {
-        ...list,
-        items: nextItems,
-      };
-    });
+        const nextItems = [...list.items] as Top3List['items'];
+        nextItems[rank - 1] = item;
+
+        return {
+          ...list,
+          items: nextItems,
+        };
+      })
+    );
   }
 
   return (
-    <Top3Context.Provider value={{ currentList, setItemAtRank }}>
+    <Top3Context.Provider
+      value={{
+        lists,
+        currentList,
+        createList,
+        selectList,
+        setItemAtRank,
+      }}>
       {children}
     </Top3Context.Provider>
   );

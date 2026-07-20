@@ -12,63 +12,36 @@ import {
   View,
 } from 'react-native';
 
-type Movie = {
-  id: number;
-  title: string;
-  release_date?: string;
-  poster_path?: string | null;
-  vote_average?: number;
-};
+import { searchMovies } from '../providers/tmdb';
 
 export default function MovieSearchScreen() {
   const { rank } = useLocalSearchParams();
-  const { setItemAtRank } = useTop3();
+  const { currentList, setItemAtRank } = useTop3();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Top3Item[]>([]);
 
+  const isHorrorCollection =
+    currentList?.category === 'movies' &&
+    currentList.topic?.toLowerCase() === 'horror';
+
   useEffect(() => {
-    async function searchMovies() {
-      if (!searchQuery.trim()) {
-        setSearchResults([]);
-        return;
-      }
-
+    async function loadResults() {
       try {
-        const apiKey = process.env.EXPO_PUBLIC_TMDB_API_KEY;
-
-        const response = await fetch(
-          `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${encodeURIComponent(
-            searchQuery
-          )}`
+        const results = await searchMovies(
+          searchQuery,
+          currentList?.topic
         );
 
-        if (!response.ok) {
-          throw new Error(`TMDB request failed: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        const items: Top3Item[] =
-          data.results?.slice(0, 10).map((movie: Movie) => ({
-            id: movie.id.toString(),
-            title: movie.title,
-            subtitle: movie.release_date?.slice(0, 4),
-            imageUrl: movie.poster_path
-              ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-              : undefined,
-            rating: movie.vote_average,
-          })) || [];
-
-        setSearchResults(items);
+        setSearchResults(results);
       } catch (error) {
         console.error('Movie search failed:', error);
         setSearchResults([]);
       }
     }
 
-    searchMovies();
-  }, [searchQuery]);
+    loadResults();
+  }, [searchQuery, currentList?.topic]);
 
   function selectMovie(item: Top3Item) {
     const selectedRank = Number(rank);
@@ -83,18 +56,26 @@ export default function MovieSearchScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Search Movies</Text>
+      <Text style={styles.title}>
+        {isHorrorCollection ? 'Search Horror Movies' : 'Search Movies'}
+      </Text>
 
       <TextInput
         style={styles.searchInput}
-        placeholder="Search for a movie..."
+        placeholder={
+          isHorrorCollection
+            ? 'Search for a horror movie...'
+            : 'Search for a movie...'
+        }
         value={searchQuery}
         onChangeText={setSearchQuery}
         autoCorrect={false}
         autoCapitalize="words"
       />
 
-      <Text style={styles.sectionTitle}>Search Results</Text>
+      <Text style={styles.sectionTitle}>
+        {isHorrorCollection ? 'Horror Results' : 'Search Results'}
+      </Text>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -112,7 +93,9 @@ export default function MovieSearchScreen() {
               />
             ) : (
               <View style={styles.posterPlaceholder}>
-                <Text style={styles.posterPlaceholderText}>No poster</Text>
+                <Text style={styles.posterPlaceholderText}>
+                  No poster
+                </Text>
               </View>
             )}
 

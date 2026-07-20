@@ -17,7 +17,7 @@ export default function HomeScreen() {
 
       <Pressable
   style={styles.button}
-  onPress={() => router.push('/onboarding')}>
+  onPress={() => router.push('/collections')}>
         <Text style={styles.buttonText}>Get Started</Text>
       </Pressable>
 
