@@ -57,16 +57,18 @@ export default function MovieSearchScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>
-        {isHorrorCollection ? 'Search Horror Movies' : 'Search Movies'}
-      </Text>
+  {currentList?.topic
+    ? `Search ${currentList.topic} Movies`
+    : 'Search Movies'}
+</Text>
 
       <TextInput
         style={styles.searchInput}
         placeholder={
-          isHorrorCollection
-            ? 'Search for a horror movie...'
-            : 'Search for a movie...'
-        }
+  currentList?.topic
+    ? `Search for a ${currentList.topic.toLowerCase()} movie...`
+    : 'Search for a movie...'
+}
         value={searchQuery}
         onChangeText={setSearchQuery}
         autoCorrect={false}
@@ -74,8 +76,10 @@ export default function MovieSearchScreen() {
       />
 
       <Text style={styles.sectionTitle}>
-        {isHorrorCollection ? 'Horror Results' : 'Search Results'}
-      </Text>
+  {currentList?.topic
+    ? `${currentList.topic} Results`
+    : 'Search Results'}
+</Text>
 
       <ScrollView
         showsVerticalScrollIndicator={false}

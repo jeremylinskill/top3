@@ -9,7 +9,11 @@ type TMDBMovie = {
   genre_ids?: number[];
 };
 
-const HORROR_GENRE_ID = 27;
+const MOVIE_GENRE_IDS: Record<string, number> = {
+  horror: 27,
+  comedy: 35,
+  'sci-fi': 878,
+};
 
 export async function searchMovies(
   query: string,
@@ -35,15 +39,15 @@ export async function searchMovies(
 
   let movies: TMDBMovie[] = data.results ?? [];
 
-  switch (topic?.toLowerCase()) {
-    case 'horror':
-      movies = movies.filter((movie) =>
-        movie.genre_ids?.includes(HORROR_GENRE_ID)
-      );
-      break;
+  const normalizedTopic = topic?.toLowerCase();
+  const genreId = normalizedTopic
+    ? MOVIE_GENRE_IDS[normalizedTopic]
+    : undefined;
 
-    default:
-      break;
+  if (genreId) {
+    movies = movies.filter((movie) =>
+      movie.genre_ids?.includes(genreId)
+    );
   }
 
   return movies.slice(0, 10).map((movie) => ({

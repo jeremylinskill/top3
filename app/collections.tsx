@@ -1,3 +1,4 @@
+import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { useTop3 } from '@/context/top3-context';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -6,6 +7,26 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function CollectionsScreen() {
   const { lists, selectList } = useTop3();
 
+  function getCollectionIcon(categoryId: string, topic?: string) {
+    const category = TOP3_CATEGORIES.find(
+      (item) => item.id === categoryId
+    );
+
+    if (!category) {
+      return '⭐';
+    }
+
+    if (!topic) {
+      return category.icon;
+    }
+
+    const topicConfig = category.topics.find(
+      (item) => item.name.toLowerCase() === topic.toLowerCase()
+    );
+
+    return topicConfig?.icon ?? category.icon;
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>My Collections</Text>
@@ -13,26 +34,39 @@ export default function CollectionsScreen() {
       <ScrollView
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}>
-        {lists.map((list) => (
-          <Pressable
-            key={list.id}
-            style={styles.collectionCard}
-            onPress={() => {
-              selectList(list.id);
-              router.push('/movies');
-            }}>
-            <View style={styles.collectionDetails}>
-              <Text style={styles.collectionTitle}>{list.title}</Text>
+        {lists.map((list) => {
+          const selectedCount = list.items.filter(Boolean).length;
+          const isComplete = selectedCount === 3;
+          const icon = getCollectionIcon(list.category, list.topic);
 
-              <Text style={styles.collectionSubtitle}>
-                {list.topic ? `${list.topic} · ` : ''}
-                Tap to edit
-              </Text>
-            </View>
+          return (
+            <Pressable
+              key={list.id}
+              style={styles.collectionCard}
+              onPress={() => {
+                selectList(list.id);
+                router.push('/collection');
+              }}>
+              <Text style={styles.icon}>{icon}</Text>
 
-            <Text style={styles.arrow}>›</Text>
-          </Pressable>
-        ))}
+              <View style={styles.collectionDetails}>
+                <View style={styles.titleRow}>
+                  <Text style={styles.collectionTitle}>{list.title}</Text>
+
+                  {isComplete ? (
+                    <Text style={styles.completeIndicator}>✓</Text>
+                  ) : null}
+                </View>
+
+                <Text style={styles.collectionSubtitle}>
+                  {selectedCount}/3 selected
+                </Text>
+              </View>
+
+              <Text style={styles.arrow}>›</Text>
+            </Pressable>
+          );
+        })}
 
         <Pressable
           style={styles.createButton}
@@ -62,7 +96,6 @@ const styles = StyleSheet.create({
   },
   collectionCard: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
@@ -70,13 +103,27 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#EEEEEE',
   },
+  icon: {
+    fontSize: 28,
+    marginRight: 14,
+  },
   collectionDetails: {
     flex: 1,
     paddingRight: 12,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   collectionTitle: {
+    flexShrink: 1,
     fontSize: 20,
     fontWeight: '600',
+  },
+  completeIndicator: {
+    fontSize: 18,
+    fontWeight: '700',
   },
   collectionSubtitle: {
     fontSize: 15,

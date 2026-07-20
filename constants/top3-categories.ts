@@ -1,6 +1,7 @@
 export type Top3Topic = {
   id: string;
   name: string;
+  icon: string;
 };
 
 export type Top3Category = {
@@ -16,10 +17,10 @@ export const TOP3_CATEGORIES: Top3Category[] = [
     name: 'Movies',
     icon: '🎬',
     topics: [
-      { id: 'general', name: 'General' },
-      { id: 'horror', name: 'Horror' },
-      { id: 'comedy', name: 'Comedy' },
-      { id: 'sci-fi', name: 'Sci-Fi' },
+      { id: 'general', name: 'General', icon: '🎬' },
+      { id: 'horror', name: 'Horror', icon: '👻' },
+      { id: 'comedy', name: 'Comedy', icon: '😂' },
+      { id: 'sci-fi', name: 'Sci-Fi', icon: '🚀' },
     ],
   },
 ];

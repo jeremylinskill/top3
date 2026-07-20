@@ -19,7 +19,7 @@ type CreateListInput = {
 type Top3ContextValue = {
   lists: Top3List[];
   currentList: Top3List | null;
-  createList: (input: CreateListInput) => string;
+  createList: (input: CreateListInput) => string | null;
   selectList: (listId: string) => void;
   setItemAtRank: (rank: number, item: Top3Item) => void;
 };
@@ -98,7 +98,23 @@ export function Top3Provider({ children }: Top3ProviderProps) {
   }, [lists, currentListId, hasLoadedStorage]);
 
   function createList(input: CreateListInput) {
-    const id = `${input.category}-${input.topic ?? 'general'}-${Date.now()}`;
+    const normalizedTopic = input.topic?.trim().toLowerCase() ?? '';
+
+    const existingList = lists.find((list) => {
+      const existingTopic = list.topic?.trim().toLowerCase() ?? '';
+
+      return (
+        list.category.toLowerCase() === input.category.toLowerCase() &&
+        existingTopic === normalizedTopic
+      );
+    });
+
+    if (existingList) {
+      setCurrentListId(existingList.id);
+      return null;
+    }
+
+    const id = `${input.category}-${normalizedTopic || 'general'}-${Date.now()}`;
 
     const newList: Top3List = {
       id,
