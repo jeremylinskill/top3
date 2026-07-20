@@ -1,11 +1,20 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 type Movie = {
   id: number;
   title: string;
   release_date?: string;
+  poster_path?: string | null;
 };
 
 export default function MovieSearchScreen() {
@@ -46,6 +55,17 @@ export default function MovieSearchScreen() {
     searchMovies();
   }, [searchQuery]);
 
+  function selectMovie(movieLabel: string) {
+    router.replace({
+      pathname: '/movies',
+      params: {
+        movie1: rank === '1' ? movieLabel : movie1?.toString() || '',
+        movie2: rank === '2' ? movieLabel : movie2?.toString() || '',
+        movie3: rank === '3' ? movieLabel : movie3?.toString() || '',
+      },
+    });
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Search Movies</Text>
@@ -56,36 +76,53 @@ export default function MovieSearchScreen() {
         value={searchQuery}
         onChangeText={setSearchQuery}
         autoCorrect={false}
+        autoCapitalize="words"
       />
 
       <Text style={styles.sectionTitle}>Search Results</Text>
 
-      {searchResults.map((movie) => {
-        const releaseYear = movie.release_date?.slice(0, 4);
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled">
+        {searchResults.map((movie) => {
+          const releaseYear = movie.release_date?.slice(0, 4);
 
-        return (
-          <Pressable
-            key={movie.id}
-            onPress={() =>
-              router.replace({
-                pathname: '/movies',
-                params: {
-                  movie1:
-                    rank === '1' ? movie.title : movie1?.toString() || '',
-                  movie2:
-                    rank === '2' ? movie.title : movie2?.toString() || '',
-                  movie3:
-                    rank === '3' ? movie.title : movie3?.toString() || '',
-                },
-              })
-            }>
-            <Text style={styles.movie}>
-              {movie.title}
-              {releaseYear ? ` (${releaseYear})` : ''}
-            </Text>
-          </Pressable>
-        );
-      })}
+          const posterUrl = movie.poster_path
+            ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+            : null;
+
+          const movieLabel = releaseYear
+            ? `${movie.title} (${releaseYear})`
+            : movie.title;
+
+          return (
+            <Pressable
+              key={movie.id}
+              style={styles.movieRow}
+              onPress={() => selectMovie(movieLabel)}>
+              {posterUrl ? (
+                <Image
+                  source={{ uri: posterUrl }}
+                  style={styles.poster}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={styles.posterPlaceholder}>
+                  <Text style={styles.posterPlaceholderText}>No poster</Text>
+                </View>
+              )}
+
+              <View style={styles.movieDetails}>
+                <Text style={styles.movieTitle}>{movie.title}</Text>
+
+                {releaseYear ? (
+                  <Text style={styles.releaseYear}>{releaseYear}</Text>
+                ) : null}
+              </View>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
     </View>
   );
 }
@@ -114,10 +151,44 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 16,
   },
-  movie: {
-    fontSize: 18,
-    paddingVertical: 16,
+  movieRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#EEEEEE',
+  },
+  poster: {
+    width: 64,
+    height: 96,
+    borderRadius: 8,
+    backgroundColor: '#EEEEEE',
+  },
+  posterPlaceholder: {
+    width: 64,
+    height: 96,
+    borderRadius: 8,
+    backgroundColor: '#EEEEEE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 6,
+  },
+  posterPlaceholderText: {
+    fontSize: 12,
+    color: '#777777',
+    textAlign: 'center',
+  },
+  movieDetails: {
+    flex: 1,
+    marginLeft: 16,
+  },
+  movieTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  releaseYear: {
+    fontSize: 16,
+    color: '#777777',
+    marginTop: 6,
   },
 });
