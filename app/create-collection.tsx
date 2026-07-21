@@ -13,10 +13,11 @@ export default function CreateCollectionScreen() {
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>Create Collection</Text>
+        <Text style={styles.title}>Create Topic Collection</Text>
 
         <Text style={styles.subtitle}>
-          Choose a category and topic for your new Top 3.
+          Choose a category and topic to create a specialized Top 3
+          collection.
         </Text>
 
         <CollectionForm
@@ -33,7 +34,9 @@ export default function CreateCollectionScreen() {
             const topic =
               topicId === 'general'
                 ? undefined
-                : category.topics.find((item) => item.id === topicId)?.name;
+                : category.topics.find(
+                    (item) => item.id === topicId
+                  )?.name;
 
             const newListId = createList({
               category: categoryId,

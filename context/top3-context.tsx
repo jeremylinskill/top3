@@ -1,3 +1,4 @@
+import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { Top3Item } from '@/types/top3-item';
 import { Top3List } from '@/types/top3-list';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -25,24 +26,53 @@ type Top3ContextValue = {
   setItems: (items: Top3List['items']) => void;
 };
 
-const Top3Context = createContext<Top3ContextValue | undefined>(undefined);
-
 type Top3ProviderProps = {
   children: ReactNode;
 };
 
-const STORAGE_KEY = 'top3-lists';
-
-const initialMovieList: Top3List = {
-  id: 'movies-general',
-  category: 'movies',
-  title: 'Top 3 Movies',
-  items: [null, null, null],
+type StoredTop3Data = {
+  lists: Top3List[];
+  currentListId: string;
 };
 
+const Top3Context = createContext<Top3ContextValue | undefined>(undefined);
+
+const STORAGE_KEY = 'top3-lists';
+
+function createDefaultLists(): Top3List[] {
+  return TOP3_CATEGORIES.map((category) => ({
+    id: `${category.id}-general`,
+    category: category.id,
+    title: `Top 3 ${category.name}`,
+    items: [null, null, null],
+  }));
+}
+
+function getListIdentity(list: Pick<Top3List, 'category' | 'topic'>) {
+  const category = list.category.trim().toLowerCase();
+  const topic = list.topic?.trim().toLowerCase() ?? 'general';
+
+  return `${category}:${topic}`;
+}
+
+function mergeDefaultLists(savedLists: Top3List[]) {
+  const defaultLists = createDefaultLists();
+  const existingIdentities = new Set(savedLists.map(getListIdentity));
+
+  const missingDefaults = defaultLists.filter(
+    (defaultList) => !existingIdentities.has(getListIdentity(defaultList))
+  );
+
+  return [...savedLists, ...missingDefaults];
+}
+
+const defaultLists = createDefaultLists();
+const firstDefaultListId = defaultLists[0]?.id ?? '';
+
 export function Top3Provider({ children }: Top3ProviderProps) {
-  const [lists, setLists] = useState<Top3List[]>([initialMovieList]);
-  const [currentListId, setCurrentListId] = useState(initialMovieList.id);
+  const [lists, setLists] = useState<Top3List[]>(defaultLists);
+  const [currentListId, setCurrentListId] =
+    useState<string>(firstDefaultListId);
   const [hasLoadedStorage, setHasLoadedStorage] = useState(false);
 
   const currentList = useMemo(
@@ -55,17 +85,29 @@ export function Top3Provider({ children }: Top3ProviderProps) {
       try {
         const savedData = await AsyncStorage.getItem(STORAGE_KEY);
 
-        if (savedData) {
-          const parsedData = JSON.parse(savedData) as {
-            lists: Top3List[];
-            currentListId: string;
-          };
-
-          if (parsedData.lists.length > 0) {
-            setLists(parsedData.lists);
-            setCurrentListId(parsedData.currentListId);
-          }
+        if (!savedData) {
+          return;
         }
+
+        const parsedData = JSON.parse(savedData) as StoredTop3Data;
+
+        const savedLists = Array.isArray(parsedData.lists)
+          ? parsedData.lists
+          : [];
+
+        const nextLists = mergeDefaultLists(savedLists);
+
+        setLists(nextLists);
+
+        const savedCurrentListStillExists = nextLists.some(
+          (list) => list.id === parsedData.currentListId
+        );
+
+        setCurrentListId(
+          savedCurrentListStillExists
+            ? parsedData.currentListId
+            : nextLists[0]?.id ?? firstDefaultListId
+        );
       } catch (error) {
         console.error('Failed to load saved collections:', error);
       } finally {
@@ -83,13 +125,12 @@ export function Top3Provider({ children }: Top3ProviderProps) {
 
     async function saveLists() {
       try {
-        await AsyncStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify({
-            lists,
-            currentListId,
-          })
-        );
+        const data: StoredTop3Data = {
+          lists,
+          currentListId,
+        };
+
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       } catch (error) {
         console.error('Failed to save collections:', error);
       }
@@ -99,13 +140,16 @@ export function Top3Provider({ children }: Top3ProviderProps) {
   }, [lists, currentListId, hasLoadedStorage]);
 
   function createList(input: CreateListInput) {
-    const normalizedTopic = input.topic?.trim().toLowerCase() ?? '';
+    const normalizedCategory = input.category.trim().toLowerCase();
+    const normalizedTopic = input.topic?.trim().toLowerCase() ?? 'general';
 
     const existingList = lists.find((list) => {
-      const existingTopic = list.topic?.trim().toLowerCase() ?? '';
+      const existingCategory = list.category.trim().toLowerCase();
+      const existingTopic =
+        list.topic?.trim().toLowerCase() ?? 'general';
 
       return (
-        list.category.toLowerCase() === input.category.toLowerCase() &&
+        existingCategory === normalizedCategory &&
         existingTopic === normalizedTopic
       );
     });
@@ -115,7 +159,7 @@ export function Top3Provider({ children }: Top3ProviderProps) {
       return null;
     }
 
-    const id = `${input.category}-${normalizedTopic || 'general'}-${Date.now()}`;
+    const id = `${normalizedCategory}-${normalizedTopic}-${Date.now()}`;
 
     const newList: Top3List = {
       id,
@@ -132,7 +176,11 @@ export function Top3Provider({ children }: Top3ProviderProps) {
   }
 
   function selectList(listId: string) {
-    setCurrentListId(listId);
+    const listExists = lists.some((list) => list.id === listId);
+
+    if (listExists) {
+      setCurrentListId(listId);
+    }
   }
 
   function setItemAtRank(rank: number, item: Top3Item) {

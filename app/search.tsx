@@ -1,5 +1,7 @@
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { useTop3 } from '@/context/top3-context';
+import { searchBooks } from '@/providers/google-books';
+import { searchMovies } from '@/providers/tmdb';
 import { Top3Item } from '@/types/top3-item';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -16,9 +18,17 @@ import {
   View,
 } from 'react-native';
 
-import { searchMovies } from '../providers/tmdb';
+type SearchProvider = (
+  query: string,
+  topic?: string
+) => Promise<Top3Item[]>;
 
-export default function MovieSearchScreen() {
+const SEARCH_PROVIDERS: Record<string, SearchProvider> = {
+  movies: searchMovies,
+  books: searchBooks,
+};
+
+export default function SearchScreen() {
   const { rank } = useLocalSearchParams();
   const { currentList, setItemAtRank } = useTop3();
 
@@ -27,20 +37,22 @@ export default function MovieSearchScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
-  const movieCategory = TOP3_CATEGORIES.find(
-    (category) => category.id === 'movies'
+  const selectedCategory = TOP3_CATEGORIES.find(
+    (category) => category.id === currentList?.category
   );
 
   const selectedTopic =
-    movieCategory?.topics.find(
+    selectedCategory?.topics.find(
       (topic) =>
         topic.name.toLowerCase() === currentList?.topic?.toLowerCase()
     ) ??
-    movieCategory?.topics.find((topic) => topic.id === 'general');
+    selectedCategory?.topics.find((topic) => topic.id === 'general');
 
+  const categoryName = selectedCategory?.name ?? 'Items';
   const topicName = selectedTopic?.name;
-  const searchItemName = selectedTopic?.searchItemName ?? 'movie';
-  const searchIcon = selectedTopic?.icon ?? '🎬';
+  const searchItemName = selectedTopic?.searchItemName ?? 'item';
+  const searchIcon = selectedTopic?.icon ?? selectedCategory?.icon ?? '⭐';
+  const isGeneralTopic = selectedTopic?.id === 'general';
 
   useEffect(() => {
     async function loadResults() {
@@ -53,10 +65,27 @@ export default function MovieSearchScreen() {
         return;
       }
 
+      const categoryId = currentList?.category;
+
+      if (!categoryId) {
+        setSearchResults([]);
+        setHasSearched(true);
+        return;
+      }
+
+      const searchProvider = SEARCH_PROVIDERS[categoryId];
+
+      if (!searchProvider) {
+        console.error(`No search provider exists for: ${categoryId}`);
+        setSearchResults([]);
+        setHasSearched(true);
+        return;
+      }
+
       setIsLoading(true);
 
       try {
-        const results = await searchMovies(
+        const results = await searchProvider(
           trimmedQuery,
           currentList?.topic
         );
@@ -64,7 +93,7 @@ export default function MovieSearchScreen() {
         setSearchResults(results);
         setHasSearched(true);
       } catch (error) {
-        console.error('Movie search failed:', error);
+        console.error(`${categoryName} search failed:`, error);
         setSearchResults([]);
         setHasSearched(true);
       } finally {
@@ -75,9 +104,14 @@ export default function MovieSearchScreen() {
     const timeoutId = setTimeout(loadResults, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchQuery, currentList?.topic]);
+  }, [
+    searchQuery,
+    currentList?.category,
+    currentList?.topic,
+    categoryName,
+  ]);
 
-  function selectMovie(item: Top3Item) {
+  function selectItem(item: Top3Item) {
     const selectedRank = Number(rank);
 
     if (selectedRank < 1 || selectedRank > 3) {
@@ -88,17 +122,18 @@ export default function MovieSearchScreen() {
     router.back();
   }
 
-  const searchTitle =
-    selectedTopic?.id === 'general'
-      ? 'Search Movies'
-      : `Search ${topicName} Movies`;
+  const searchTitle = isGeneralTopic
+    ? `Search ${categoryName}`
+    : `Search ${topicName} ${categoryName}`;
 
   const searchPlaceholder = `Search for a ${searchItemName}...`;
 
-  const resultsTitle =
-    selectedTopic?.id === 'general'
-      ? 'Search Results'
-      : `${topicName} Results`;
+  const resultsTitle = isGeneralTopic
+    ? 'Search Results'
+    : `${topicName} Results`;
+
+  const imagePlaceholder =
+    currentList?.category === 'books' ? 'No cover' : 'No poster';
 
   return (
     <KeyboardAvoidingView
@@ -125,9 +160,11 @@ export default function MovieSearchScreen() {
         ) : !hasSearched ? (
           <View style={styles.messageContainer}>
             <Text style={styles.messageIcon}>{searchIcon}</Text>
+
             <Text style={styles.messageTitle}>
               Search for a {searchItemName}
             </Text>
+
             <Text style={styles.messageText}>
               Start typing a title to see matching results.
             </Text>
@@ -135,11 +172,13 @@ export default function MovieSearchScreen() {
         ) : searchResults.length === 0 ? (
           <View style={styles.messageContainer}>
             <Text style={styles.messageIcon}>{searchIcon}</Text>
+
             <Text style={styles.messageTitle}>
-              No {searchItemName}s found
+              No {searchItemName} results found
             </Text>
+
             <Text style={styles.messageText}>
-              Try another {searchItemName} title or a broader search.
+              Try another title or a broader search.
             </Text>
           </View>
         ) : (
@@ -153,27 +192,28 @@ export default function MovieSearchScreen() {
               {searchResults.map((item) => (
                 <Pressable
                   key={item.id}
-                  style={styles.movieRow}
-                  onPress={() => selectMovie(item)}>
+                  style={styles.resultRow}
+                  onPress={() => selectItem(item)}>
                   {item.imageUrl ? (
                     <Image
                       source={{ uri: item.imageUrl }}
-                      style={styles.poster}
+                      style={styles.image}
                       resizeMode="cover"
                     />
                   ) : (
-                    <View style={styles.posterPlaceholder}>
-                      <Text style={styles.posterPlaceholderText}>
-                        No poster
+                    <View style={styles.imagePlaceholder}>
+                      <Text style={styles.imagePlaceholderText}>
+                        {imagePlaceholder}
                       </Text>
                     </View>
                   )}
 
-                  <View style={styles.movieDetails}>
-                    <Text style={styles.movieTitle}>{item.title}</Text>
+                  <View style={styles.resultDetails}>
+                    <Text style={styles.resultTitle}>{item.title}</Text>
 
                     <Text style={styles.metadata}>
-                      {item.subtitle || 'Year unknown'}
+                      {item.subtitle || 'Details unavailable'}
+
                       {typeof item.rating === 'number'
                         ? ` · ★ ${item.rating.toFixed(1)}`
                         : ''}
@@ -243,20 +283,20 @@ const styles = StyleSheet.create({
   resultsContent: {
     paddingBottom: 24,
   },
-  movieRow: {
+  resultRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#EEEEEE',
   },
-  poster: {
+  image: {
     width: 64,
     height: 96,
     borderRadius: 8,
     backgroundColor: '#EEEEEE',
   },
-  posterPlaceholder: {
+  imagePlaceholder: {
     width: 64,
     height: 96,
     borderRadius: 8,
@@ -265,16 +305,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 6,
   },
-  posterPlaceholderText: {
+  imagePlaceholderText: {
     fontSize: 12,
     color: '#777777',
     textAlign: 'center',
   },
-  movieDetails: {
+  resultDetails: {
     flex: 1,
     marginLeft: 16,
   },
-  movieTitle: {
+  resultTitle: {
     fontSize: 18,
     fontWeight: '600',
   },
@@ -282,5 +322,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#777777',
     marginTop: 6,
+    lineHeight: 22,
   },
 });

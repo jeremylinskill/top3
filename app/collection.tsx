@@ -108,7 +108,7 @@ export default function CollectionScreen() {
 
   function openSearch(rank: number) {
     router.push({
-      pathname: '/movie-search',
+      pathname: '/search',
       params: { rank: String(rank) },
     });
   }

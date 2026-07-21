@@ -2,8 +2,8 @@ export type Top3Topic = {
   id: string;
   name: string;
   icon: string;
-  tmdbGenreId?: number;
   searchItemName: string;
+  tmdbGenreId?: number;
 };
 
 export type Top3Category = {
@@ -29,22 +29,59 @@ export const TOP3_CATEGORIES: Top3Category[] = [
         id: 'horror',
         name: 'Horror',
         icon: '👻',
-        tmdbGenreId: 27,
         searchItemName: 'horror movie',
+        tmdbGenreId: 27,
       },
       {
         id: 'comedy',
         name: 'Comedy',
         icon: '😂',
-        tmdbGenreId: 35,
         searchItemName: 'comedy movie',
+        tmdbGenreId: 35,
       },
       {
         id: 'sci-fi',
         name: 'Sci-Fi',
         icon: '🚀',
-        tmdbGenreId: 878,
         searchItemName: 'science fiction movie',
+        tmdbGenreId: 878,
+      },
+    ],
+  },
+  {
+    id: 'books',
+    name: 'Books',
+    icon: '📚',
+    topics: [
+      {
+        id: 'general',
+        name: 'General',
+        icon: '📚',
+        searchItemName: 'book',
+      },
+      {
+        id: 'fantasy',
+        name: 'Fantasy',
+        icon: '🐉',
+        searchItemName: 'fantasy book',
+      },
+      {
+        id: 'mystery',
+        name: 'Mystery',
+        icon: '🔎',
+        searchItemName: 'mystery book',
+      },
+      {
+        id: 'sci-fi',
+        name: 'Sci-Fi',
+        icon: '🛸',
+        searchItemName: 'science fiction book',
+      },
+      {
+        id: 'biography',
+        name: 'Biography',
+        icon: '👤',
+        searchItemName: 'biography',
       },
     ],
   },
