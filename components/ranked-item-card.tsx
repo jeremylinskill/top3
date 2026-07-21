@@ -1,3 +1,7 @@
+import {
+    CategoryId,
+    TOP3_CATEGORIES,
+} from '@/constants/top3-categories';
 import { Top3Item } from '@/types/top3-item';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -7,8 +11,6 @@ import {
     Text,
     View,
 } from 'react-native';
-
-type CategoryId = 'movies' | 'books';
 
 type RankedItemCardProps = {
   rank: number;
@@ -20,14 +22,6 @@ type RankedItemCardProps = {
 
 const DRAG_HANDLE_WIDTH = 64;
 
-const PLACEHOLDER_ICONS: Record<
-  CategoryId,
-  keyof typeof Ionicons.glyphMap
-> = {
-  movies: 'film-outline',
-  books: 'book-outline',
-};
-
 export default function RankedItemCard({
   rank,
   item,
@@ -35,7 +29,9 @@ export default function RankedItemCard({
   category,
   onPress,
 }: RankedItemCardProps) {
-  const placeholderIcon = PLACEHOLDER_ICONS[category];
+  const placeholderIcon =
+  TOP3_CATEGORIES.find((categoryItem) => categoryItem.id === category)
+    ?.placeholderIcon ?? 'image-outline';
 
   return (
     <Pressable style={styles.card} onPress={onPress}>

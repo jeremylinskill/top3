@@ -10,51 +10,136 @@ type TMDBMovie = {
   genre_ids?: number[];
 };
 
+type TMDBTvShow = {
+  id: number;
+  name: string;
+  first_air_date?: string;
+  poster_path?: string | null;
+  vote_average?: number;
+  genre_ids?: number[];
+};
+
+type TMDBSearchResponse<T> = {
+  results?: T[];
+};
+
+const API_BASE_URL = 'https://api.themoviedb.org/3';
+const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
+
+function getApiKey() {
+  const apiKey = process.env.EXPO_PUBLIC_TMDB_API_KEY;
+
+  if (!apiKey) {
+    throw new Error('Missing EXPO_PUBLIC_TMDB_API_KEY in .env');
+  }
+
+  return apiKey;
+}
+
+function getTopicGenreId(categoryId: 'movies' | 'tv', topic?: string) {
+  if (!topic) {
+    return undefined;
+  }
+
+  const category = TOP3_CATEGORIES.find(
+    (item) => item.id === categoryId
+  );
+
+  const selectedTopic = category?.topics.find(
+    (item) => item.name.toLowerCase() === topic.toLowerCase()
+  );
+
+  return selectedTopic?.tmdbGenreId;
+}
+
 export async function searchMovies(
   query: string,
   topic?: string
 ): Promise<Top3Item[]> {
-  if (!query.trim()) {
+  const trimmedQuery = query.trim();
+
+  if (!trimmedQuery) {
     return [];
   }
 
-  const apiKey = process.env.EXPO_PUBLIC_TMDB_API_KEY;
+  const apiKey = getApiKey();
 
   const response = await fetch(
-    `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${encodeURIComponent(
-      query
-    )}&include_adult=false`
+    `${API_BASE_URL}/search/movie` +
+      `?api_key=${apiKey}` +
+      `&query=${encodeURIComponent(trimmedQuery)}` +
+      `&include_adult=false`
   );
 
   if (!response.ok) {
-    throw new Error(`TMDB request failed: ${response.status}`);
+    throw new Error(`TMDB movie request failed: ${response.status}`);
   }
 
-  const data = await response.json();
+  const data =
+    (await response.json()) as TMDBSearchResponse<TMDBMovie>;
 
-  let movies: TMDBMovie[] = data.results ?? [];
+  let movies = data.results ?? [];
+  const genreId = getTopicGenreId('movies', topic);
 
-const movieCategory = TOP3_CATEGORIES.find(
-  (category) => category.id === 'movies'
-);
-
-const selectedTopic = movieCategory?.topics.find(
-  (item) => item.name.toLowerCase() === topic?.toLowerCase()
-);
-
-if (selectedTopic?.tmdbGenreId) {
-  movies = movies.filter((movie) =>
-    movie.genre_ids?.includes(selectedTopic.tmdbGenreId!)
-  );
-}
+  if (genreId) {
+    movies = movies.filter((movie) =>
+      movie.genre_ids?.includes(genreId)
+    );
+  }
 
   return movies.slice(0, 10).map((movie) => ({
-    id: movie.id.toString(),
+    id: `movie-${movie.id}`,
     title: movie.title,
     subtitle: movie.release_date?.slice(0, 4),
     imageUrl: movie.poster_path
-      ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+      ? `${IMAGE_BASE_URL}${movie.poster_path}`
       : undefined,
     rating: movie.vote_average,
+  }));
+}
+
+export async function searchTvShows(
+  query: string,
+  topic?: string
+): Promise<Top3Item[]> {
+  const trimmedQuery = query.trim();
+
+  if (!trimmedQuery) {
+    return [];
+  }
+
+  const apiKey = getApiKey();
+
+  const response = await fetch(
+    `${API_BASE_URL}/search/tv` +
+      `?api_key=${apiKey}` +
+      `&query=${encodeURIComponent(trimmedQuery)}` +
+      `&include_adult=false`
+  );
+
+  if (!response.ok) {
+    throw new Error(`TMDB TV request failed: ${response.status}`);
+  }
+
+  const data =
+    (await response.json()) as TMDBSearchResponse<TMDBTvShow>;
+
+  let tvShows = data.results ?? [];
+  const genreId = getTopicGenreId('tv', topic);
+
+  if (genreId) {
+    tvShows = tvShows.filter((show) =>
+      show.genre_ids?.includes(genreId)
+    );
+  }
+
+  return tvShows.slice(0, 10).map((show) => ({
+    id: `tv-${show.id}`,
+    title: show.name,
+    subtitle: show.first_air_date?.slice(0, 4),
+    imageUrl: show.poster_path
+      ? `${IMAGE_BASE_URL}${show.poster_path}`
+      : undefined,
+    rating: show.vote_average,
   }));
 }

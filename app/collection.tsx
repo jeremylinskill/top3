@@ -1,4 +1,5 @@
 import RankedItemCard from '@/components/ranked-item-card';
+import { CategoryId } from '@/constants/top3-categories';
 import { useTop3 } from '@/context/top3-context';
 import { Top3Item } from '@/types/top3-item';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,8 +23,6 @@ type DraggableRow = {
   key: string;
   item: Top3Item;
 };
-
-type SupportedCategory = 'movies' | 'books';
 
 const DRAG_INSTRUCTION_KEY = 'top3-drag-instruction-seen';
 
@@ -95,7 +94,7 @@ export default function CollectionScreen() {
     );
   }
 
-  const category = currentList.category as SupportedCategory;
+  const category = currentList.category as CategoryId;
 
   const draggableRows: DraggableRow[] = selectedItems.map((item) => ({
     key: item.id,

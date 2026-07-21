@@ -2,7 +2,10 @@ import SearchResultSkeleton from '@/components/search-result-skeleton';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { useTop3 } from '@/context/top3-context';
 import { searchBooks } from '@/providers/google-books';
-import { searchMovies } from '@/providers/tmdb';
+import {
+  searchMovies,
+  searchTvShows,
+} from '@/providers/tmdb';
 import { Top3Item } from '@/types/top3-item';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -25,16 +28,10 @@ type SearchProvider = (
   topic?: string
 ) => Promise<Top3Item[]>;
 
-type PlaceholderIconName = keyof typeof Ionicons.glyphMap;
-
 const SEARCH_PROVIDERS: Record<string, SearchProvider> = {
   movies: searchMovies,
   books: searchBooks,
-};
-
-const PLACEHOLDER_ICONS: Record<string, PlaceholderIconName> = {
-  movies: 'film-outline',
-  books: 'book-outline',
+  tv: searchTvShows,
 };
 
 const MINIMUM_SEARCH_LENGTH = 3;
@@ -74,7 +71,7 @@ export default function SearchScreen() {
   const canSearch = trimmedQuery.length >= MINIMUM_SEARCH_LENGTH;
 
   const placeholderIcon =
-    PLACEHOLDER_ICONS[currentList?.category ?? ''] ?? 'image-outline';
+  selectedCategory?.placeholderIcon ?? 'image-outline';
 
   useEffect(() => {
     async function loadResults() {
