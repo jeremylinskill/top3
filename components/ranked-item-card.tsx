@@ -1,19 +1,42 @@
 import { Top3Item } from '@/types/top3-item';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import {
+    Image,
+    Pressable,
+    StyleSheet,
+    Text,
+    View,
+} from 'react-native';
+
+type CategoryId = 'movies' | 'books';
 
 type RankedItemCardProps = {
   rank: number;
   item: Top3Item | null;
   placeholder: string;
+  category: CategoryId;
   onPress: () => void;
+};
+
+const DRAG_HANDLE_WIDTH = 64;
+
+const PLACEHOLDER_ICONS: Record<
+  CategoryId,
+  keyof typeof Ionicons.glyphMap
+> = {
+  movies: 'film-outline',
+  books: 'book-outline',
 };
 
 export default function RankedItemCard({
   rank,
   item,
   placeholder,
+  category,
   onPress,
 }: RankedItemCardProps) {
+  const placeholderIcon = PLACEHOLDER_ICONS[category];
+
   return (
     <Pressable style={styles.card} onPress={onPress}>
       <View style={styles.rankContainer}>
@@ -28,17 +51,29 @@ export default function RankedItemCard({
         />
       ) : (
         <View style={styles.posterPlaceholder}>
-          <Text style={styles.plus}>+</Text>
+          {item ? (
+            <Ionicons
+              name={placeholderIcon}
+              size={28}
+              color="#999999"
+            />
+          ) : (
+            <Text style={styles.plus}>+</Text>
+          )}
         </View>
       )}
 
-      <View style={styles.details}>
-        <Text style={styles.title}>
+      <View
+        style={[
+          styles.details,
+          item && styles.detailsWithDragHandle,
+        ]}>
+        <Text style={styles.title} numberOfLines={2}>
           {item?.title ?? placeholder}
         </Text>
 
         {item ? (
-          <Text style={styles.metadata}>
+          <Text style={styles.metadata} numberOfLines={2}>
             {item.subtitle ?? ''}
             {typeof item.rating === 'number'
               ? ` · ★ ${item.rating.toFixed(1)}`
@@ -101,6 +136,10 @@ const styles = StyleSheet.create({
   details: {
     flex: 1,
     marginLeft: 16,
+  },
+
+  detailsWithDragHandle: {
+    paddingRight: DRAG_HANDLE_WIDTH + 8,
   },
 
   title: {

@@ -1,12 +1,14 @@
+import SearchResultSkeleton from '@/components/search-result-skeleton';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { useTop3 } from '@/context/top3-context';
 import { searchBooks } from '@/providers/google-books';
 import { searchMovies } from '@/providers/tmdb';
 import { Top3Item } from '@/types/top3-item';
+import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
+  Animated,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -23,10 +25,21 @@ type SearchProvider = (
   topic?: string
 ) => Promise<Top3Item[]>;
 
+type PlaceholderIconName = keyof typeof Ionicons.glyphMap;
+
 const SEARCH_PROVIDERS: Record<string, SearchProvider> = {
   movies: searchMovies,
   books: searchBooks,
 };
+
+const PLACEHOLDER_ICONS: Record<string, PlaceholderIconName> = {
+  movies: 'film-outline',
+  books: 'book-outline',
+};
+
+const MINIMUM_SEARCH_LENGTH = 3;
+
+const SEARCH_CACHE = new Map<string, Top3Item[]>();
 
 export default function SearchScreen() {
   const { rank } = useLocalSearchParams();
@@ -36,6 +49,8 @@ export default function SearchScreen() {
   const [searchResults, setSearchResults] = useState<Top3Item[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const selectedCategory = TOP3_CATEGORIES.find(
     (category) => category.id === currentList?.category
@@ -51,14 +66,19 @@ export default function SearchScreen() {
   const categoryName = selectedCategory?.name ?? 'Items';
   const topicName = selectedTopic?.name;
   const searchItemName = selectedTopic?.searchItemName ?? 'item';
-  const searchIcon = selectedTopic?.icon ?? selectedCategory?.icon ?? '⭐';
+  const searchIcon =
+    selectedTopic?.icon ?? selectedCategory?.icon ?? '⭐';
   const isGeneralTopic = selectedTopic?.id === 'general';
+
+  const trimmedQuery = searchQuery.trim();
+  const canSearch = trimmedQuery.length >= MINIMUM_SEARCH_LENGTH;
+
+  const placeholderIcon =
+    PLACEHOLDER_ICONS[currentList?.category ?? ''] ?? 'image-outline';
 
   useEffect(() => {
     async function loadResults() {
-      const trimmedQuery = searchQuery.trim();
-
-      if (!trimmedQuery) {
+      if (!canSearch) {
         setSearchResults([]);
         setHasSearched(false);
         setIsLoading(false);
@@ -70,8 +90,24 @@ export default function SearchScreen() {
       if (!categoryId) {
         setSearchResults([]);
         setHasSearched(true);
+        setIsLoading(false);
         return;
       }
+
+      const cacheKey = [
+  categoryId,
+  currentList?.topic?.trim().toLowerCase() ?? 'general',
+  trimmedQuery.toLowerCase(),
+].join('|');
+
+const cachedResults = SEARCH_CACHE.get(cacheKey);
+
+if (cachedResults) {
+  setSearchResults(cachedResults);
+  setHasSearched(true);
+  setIsLoading(false);
+  return;
+}
 
       const searchProvider = SEARCH_PROVIDERS[categoryId];
 
@@ -79,6 +115,7 @@ export default function SearchScreen() {
         console.error(`No search provider exists for: ${categoryId}`);
         setSearchResults([]);
         setHasSearched(true);
+        setIsLoading(false);
         return;
       }
 
@@ -90,7 +127,8 @@ export default function SearchScreen() {
           currentList?.topic
         );
 
-        setSearchResults(results);
+        SEARCH_CACHE.set(cacheKey, results);
+setSearchResults(results);
         setHasSearched(true);
       } catch (error) {
         console.error(`${categoryName} search failed:`, error);
@@ -101,15 +139,29 @@ export default function SearchScreen() {
       }
     }
 
-    const timeoutId = setTimeout(loadResults, 300);
+    const timeoutId = setTimeout(loadResults, 200);
 
     return () => clearTimeout(timeoutId);
   }, [
-    searchQuery,
+    canSearch,
+    categoryName,
     currentList?.category,
     currentList?.topic,
-    categoryName,
+    trimmedQuery,
   ]);
+
+  useEffect(() => {
+    if (isLoading || searchResults.length === 0) {
+      fadeAnim.setValue(0);
+      return;
+    }
+
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  }, [fadeAnim, isLoading, searchResults]);
 
   function selectItem(item: Top3Item) {
     const selectedRank = Number(rank);
@@ -132,9 +184,6 @@ export default function SearchScreen() {
     ? 'Search Results'
     : `${topicName} Results`;
 
-  const imagePlaceholder =
-    currentList?.category === 'books' ? 'No cover' : 'No poster';
-
   return (
     <KeyboardAvoidingView
       style={styles.keyboardContainer}
@@ -152,23 +201,27 @@ export default function SearchScreen() {
           autoCapitalize="words"
         />
 
+        {!canSearch ? (
+          <Text style={styles.searchHelper}>
+            Type at least {MINIMUM_SEARCH_LENGTH} characters to search.
+          </Text>
+        ) : null}
+
         {isLoading ? (
-          <View style={styles.messageContainer}>
-            <ActivityIndicator size="large" />
-            <Text style={styles.messageText}>Searching...</Text>
-          </View>
+          <>
+            <Text style={styles.sectionTitle}>{resultsTitle}</Text>
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.resultsContent}>
+              {Array.from({ length: 5 }, (_, index) => (
+                <SearchResultSkeleton key={index} />
+              ))}
+            </ScrollView>
+          </>
         ) : !hasSearched ? (
-          <View style={styles.messageContainer}>
-            <Text style={styles.messageIcon}>{searchIcon}</Text>
-
-            <Text style={styles.messageTitle}>
-              Search for a {searchItemName}
-            </Text>
-
-            <Text style={styles.messageText}>
-              Start typing a title to see matching results.
-            </Text>
-          </View>
+          <View style={styles.emptySpace} />
         ) : searchResults.length === 0 ? (
           <View style={styles.messageContainer}>
             <Text style={styles.messageIcon}>{searchIcon}</Text>
@@ -185,43 +238,62 @@ export default function SearchScreen() {
           <>
             <Text style={styles.sectionTitle}>{resultsTitle}</Text>
 
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={styles.resultsContent}>
-              {searchResults.map((item) => (
-                <Pressable
-                  key={item.id}
-                  style={styles.resultRow}
-                  onPress={() => selectItem(item)}>
-                  {item.imageUrl ? (
-                    <Image
-                      source={{ uri: item.imageUrl }}
-                      style={styles.image}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View style={styles.imagePlaceholder}>
-                      <Text style={styles.imagePlaceholderText}>
-                        {imagePlaceholder}
+            <Animated.View
+              style={[
+                styles.resultsContainer,
+                {
+                  opacity: fadeAnim,
+                  transform: [
+                    {
+                      translateY: fadeAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [6, 0],
+                      }),
+                    },
+                  ],
+                },
+              ]}>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                contentContainerStyle={styles.resultsContent}>
+                {searchResults.map((item) => (
+                  <Pressable
+                    key={item.id}
+                    style={styles.resultRow}
+                    onPress={() => selectItem(item)}>
+                    {item.imageUrl ? (
+                      <Image
+                        source={{ uri: item.imageUrl }}
+                        style={styles.image}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View style={styles.imagePlaceholder}>
+                        <Ionicons
+                          name={placeholderIcon}
+                          size={28}
+                          color="#999999"
+                        />
+                      </View>
+                    )}
+
+                    <View style={styles.resultDetails}>
+                      <Text style={styles.resultTitle}>
+                        {item.title}
+                      </Text>
+
+                      <Text style={styles.metadata}>
+                        {item.subtitle || 'Details unavailable'}
+                        {typeof item.rating === 'number'
+                          ? ` · ★ ${item.rating.toFixed(1)}`
+                          : ''}
                       </Text>
                     </View>
-                  )}
-
-                  <View style={styles.resultDetails}>
-                    <Text style={styles.resultTitle}>{item.title}</Text>
-
-                    <Text style={styles.metadata}>
-                      {item.subtitle || 'Details unavailable'}
-
-                      {typeof item.rating === 'number'
-                        ? ` · ★ ${item.rating.toFixed(1)}`
-                        : ''}
-                    </Text>
-                  </View>
-                </Pressable>
-              ))}
-            </ScrollView>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </Animated.View>
           </>
         )}
       </View>
@@ -233,16 +305,19 @@ const styles = StyleSheet.create({
   keyboardContainer: {
     flex: 1,
   },
+
   container: {
     flex: 1,
     padding: 24,
     backgroundColor: '#FFFFFF',
   },
+
   title: {
     fontSize: 32,
     fontWeight: 'bold',
     marginBottom: 24,
   },
+
   searchInput: {
     borderWidth: 1,
     borderColor: '#CCCCCC',
@@ -251,11 +326,28 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginBottom: 24,
   },
+
+  searchHelper: {
+    fontSize: 14,
+    color: '#777777',
+    marginTop: -14,
+    marginBottom: 20,
+  },
+
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600',
     marginBottom: 16,
   },
+
+  resultsContainer: {
+    flex: 1,
+  },
+
+  emptySpace: {
+    flex: 1,
+  },
+
   messageContainer: {
     flex: 1,
     alignItems: 'center',
@@ -263,16 +355,19 @@ const styles = StyleSheet.create({
     paddingTop: 48,
     paddingHorizontal: 24,
   },
+
   messageIcon: {
     fontSize: 42,
     marginBottom: 12,
   },
+
   messageTitle: {
     fontSize: 20,
     fontWeight: '600',
     marginBottom: 6,
     textAlign: 'center',
   },
+
   messageText: {
     fontSize: 16,
     color: '#777777',
@@ -280,9 +375,11 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginTop: 10,
   },
+
   resultsContent: {
     paddingBottom: 24,
   },
+
   resultRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -290,12 +387,14 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#EEEEEE',
   },
+
   image: {
     width: 64,
     height: 96,
     borderRadius: 8,
     backgroundColor: '#EEEEEE',
   },
+
   imagePlaceholder: {
     width: 64,
     height: 96,
@@ -303,21 +402,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#EEEEEE',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 6,
   },
-  imagePlaceholderText: {
-    fontSize: 12,
-    color: '#777777',
-    textAlign: 'center',
-  },
+
   resultDetails: {
     flex: 1,
     marginLeft: 16,
   },
+
   resultTitle: {
     fontSize: 18,
     fontWeight: '600',
   },
+
   metadata: {
     fontSize: 16,
     color: '#777777',

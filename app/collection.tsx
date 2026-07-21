@@ -23,6 +23,8 @@ type DraggableRow = {
   item: Top3Item;
 };
 
+type SupportedCategory = 'movies' | 'books';
+
 const DRAG_INSTRUCTION_KEY = 'top3-drag-instruction-seen';
 
 export default function CollectionScreen() {
@@ -54,7 +56,7 @@ export default function CollectionScreen() {
 
         Alert.alert(
           'Reorder your Top 3',
-          'Press and hold the ⋮⋮ grip, then drag a selection into its new position.',
+          'Press and hold the grip, then drag a selection into its new position.',
           [
             {
               text: 'Got it',
@@ -75,7 +77,10 @@ export default function CollectionScreen() {
           ]
         );
       } catch (error) {
-        console.error('Failed to load drag instruction status:', error);
+        console.error(
+          'Failed to load drag instruction status:',
+          error
+        );
       }
     }
 
@@ -90,6 +95,8 @@ export default function CollectionScreen() {
     );
   }
 
+  const category = currentList.category as SupportedCategory;
+
   const draggableRows: DraggableRow[] = selectedItems.map((item) => ({
     key: item.id,
     item,
@@ -97,9 +104,14 @@ export default function CollectionScreen() {
 
   async function beginDrag(index: number, drag: () => void) {
     try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      await Haptics.impactAsync(
+        Haptics.ImpactFeedbackStyle.Light
+      );
     } catch (error) {
-      console.error('Failed to trigger haptic feedback:', error);
+      console.error(
+        'Failed to trigger haptic feedback:',
+        error
+      );
     }
 
     setActiveIndex(index);
@@ -109,7 +121,9 @@ export default function CollectionScreen() {
   function openSearch(rank: number) {
     router.push({
       pathname: '/search',
-      params: { rank: String(rank) },
+      params: {
+        rank: String(rank),
+      },
     });
   }
 
@@ -121,22 +135,33 @@ export default function CollectionScreen() {
   }: RenderItemParams<DraggableRow>) {
     const index = getIndex() ?? 0;
     const rank = index + 1;
-    const shouldFade = activeIndex !== null && activeIndex !== index;
+    const shouldFade =
+      activeIndex !== null && activeIndex !== index;
 
     return (
-      <View style={[styles.row, shouldFade && styles.fadedRow]}>
-        <View style={[styles.cardWrapper, isActive && styles.activeCard]}>
+      <View
+        style={[
+          styles.row,
+          shouldFade && styles.fadedRow,
+        ]}>
+        <View
+          style={[
+            styles.cardWrapper,
+            isActive && styles.activeCard,
+          ]}>
           <RankedItemCard
             rank={rank}
             item={row.item}
             placeholder={`Choose item #${rank}`}
+            category={category}
             onPress={() => openSearch(rank)}
           />
 
           <Pressable
             style={[
               styles.dragHandleContainer,
-              isActive && styles.dragHandleContainerActive,
+              isActive &&
+                styles.dragHandleContainerActive,
             ]}
             onLongPress={() => beginDrag(index, drag)}
             delayLongPress={150}
@@ -144,10 +169,10 @@ export default function CollectionScreen() {
             <View style={styles.dragDivider} />
 
             <Ionicons
-  name="reorder-three-outline"
-  size={24}
-  color={isActive ? '#333333' : '#777777'}
-/>
+              name="reorder-three-outline"
+              size={24}
+              color={isActive ? '#333333' : '#777777'}
+            />
           </Pressable>
         </View>
       </View>
@@ -157,20 +182,26 @@ export default function CollectionScreen() {
   function renderEmptySlots() {
     return (
       <View>
-        {Array.from({ length: emptySlotCount }, (_, index) => {
-          const rank = selectedItemCount + index + 1;
+        {Array.from(
+          { length: emptySlotCount },
+          (_, index) => {
+            const rank = selectedItemCount + index + 1;
 
-          return (
-            <View key={`empty-${rank}`} style={styles.row}>
-              <RankedItemCard
-                rank={rank}
-                item={null}
-                placeholder={`Choose item #${rank}`}
-                onPress={() => openSearch(rank)}
-              />
-            </View>
-          );
-        })}
+            return (
+              <View
+                key={`empty-${rank}`}
+                style={styles.row}>
+                <RankedItemCard
+                  rank={rank}
+                  item={null}
+                  placeholder={`Choose item #${rank}`}
+                  category={category}
+                  onPress={() => openSearch(rank)}
+                />
+              </View>
+            );
+          }
+        )}
       </View>
     );
   }
@@ -193,10 +224,8 @@ export default function CollectionScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>{currentList.title}</Text>
-
-      <Text style={styles.subtitle}>
-        Tap a card to replace it. Press and hold the grip to reorder.
+      <Text style={styles.title}>
+        {currentList.title}
       </Text>
 
       {selectedItemCount > 0 ? (
@@ -208,7 +237,9 @@ export default function CollectionScreen() {
           scrollEnabled={false}
           onDragBegin={setActiveIndex}
           onRelease={() => setActiveIndex(null)}
-          onDragEnd={({ data }) => saveReorderedItems(data)}
+          onDragEnd={({ data }) =>
+            saveReorderedItems(data)
+          }
           activationDistance={12}
           dragItemOverflow
           removeClippedSubviews={false}
@@ -216,7 +247,9 @@ export default function CollectionScreen() {
           extraData={activeIndex}
         />
       ) : (
-        <View style={styles.listContent}>{renderEmptySlots()}</View>
+        <View style={styles.listContent}>
+          {renderEmptySlots()}
+        </View>
       )}
     </SafeAreaView>
   );
@@ -229,36 +262,35 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingTop: 24,
   },
+
   title: {
-    fontSize: 34,
-    fontWeight: '700',
-    paddingHorizontal: 8,
-  },
-  subtitle: {
-    fontSize: 17,
-    color: '#666666',
-    marginTop: 8,
-    marginBottom: 24,
-    lineHeight: 24,
-    paddingHorizontal: 8,
-  },
+  fontSize: 34,
+  fontWeight: '700',
+  paddingHorizontal: 8,
+  marginBottom: 16,
+},
+
   listContent: {
     paddingHorizontal: 8,
     paddingBottom: 24,
   },
+
   row: {
     position: 'relative',
     paddingHorizontal: 6,
     opacity: 1,
     overflow: 'visible',
   },
+
   fadedRow: {
     opacity: 0.72,
   },
+
   cardWrapper: {
     position: 'relative',
     overflow: 'visible',
   },
+
   activeCard: {
     zIndex: 20,
     elevation: 20,
@@ -271,6 +303,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 10,
   },
+
   dragHandleContainer: {
     position: 'absolute',
     right: 0,
@@ -283,9 +316,11 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 16,
     borderBottomRightRadius: 16,
   },
+
   dragHandleContainerActive: {
     backgroundColor: '#F2F2F2',
   },
+
   dragDivider: {
     position: 'absolute',
     left: 0,
@@ -294,5 +329,4 @@ const styles = StyleSheet.create({
     width: StyleSheet.hairlineWidth,
     backgroundColor: '#E5E5E5',
   },
-  
 });

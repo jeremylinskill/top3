@@ -1,4 +1,5 @@
 import { Top3Item } from '@/types/top3-item';
+import { searchOpenLibrary } from './open-library';
 
 type GoogleBooksVolume = {
   id: string;
@@ -22,6 +23,7 @@ const API_KEY = process.env.EXPO_PUBLIC_GOOGLE_BOOKS_API_KEY;
 
 const RETRYABLE_STATUS_CODES = new Set([429, 500, 502, 503, 504]);
 const MAX_ATTEMPTS = 3;
+const MIN_TITLE_RESULTS = 5;
 
 function wait(milliseconds: number) {
   return new Promise<void>((resolve) => {
@@ -57,30 +59,127 @@ async function fetchWithRetry(
   return fetchWithRetry(url, attempt + 1);
 }
 
-export async function searchBooks(
-  query: string,
-  topic?: string
+function mapGoogleBook(book: GoogleBooksVolume): Top3Item {
+  const info = book.volumeInfo ?? {};
+
+  const authors =
+    info.authors?.join(', ') ?? 'Author unknown';
+
+  const publishedYear = info.publishedDate
+    ? info.publishedDate.slice(0, 4)
+    : '';
+
+  const rawImageUrl =
+    info.imageLinks?.thumbnail ??
+    info.imageLinks?.smallThumbnail;
+
+  const imageUrl = rawImageUrl
+    ? rawImageUrl.replace('http://', 'https://')
+    : undefined;
+
+  return {
+    id: book.id,
+    title: info.title ?? 'Untitled',
+    subtitle: publishedYear
+      ? `${authors} · ${publishedYear}`
+      : authors,
+    imageUrl,
+  };
+}
+
+function normalizeText(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function getTitleScore(title: string, query: string) {
+  const normalizedTitle = normalizeText(title);
+  const normalizedQuery = normalizeText(query);
+
+  if (normalizedTitle === normalizedQuery) {
+    return 1000;
+  }
+
+  if (normalizedTitle.startsWith(normalizedQuery)) {
+    return 900;
+  }
+
+  if (normalizedTitle.includes(normalizedQuery)) {
+    return 700;
+  }
+
+  const queryWords = normalizedQuery.split(' ');
+  const titleWords = normalizedTitle.split(' ');
+
+  const matchingWords = queryWords.filter((queryWord) =>
+    titleWords.some((titleWord) => titleWord.startsWith(queryWord))
+  ).length;
+
+  return matchingWords * 100;
+}
+
+function rankByTitle(
+  results: Top3Item[],
+  query: string
+): Top3Item[] {
+  return results
+    .map((item, originalIndex) => ({
+      item,
+      originalIndex,
+      score: getTitleScore(item.title, query),
+    }))
+    .sort((a, b) => {
+      if (b.score !== a.score) {
+        return b.score - a.score;
+      }
+
+      return a.originalIndex - b.originalIndex;
+    })
+    .map(({ item }) => item);
+}
+
+function mergeUniqueResults(
+  primaryResults: Top3Item[],
+  secondaryResults: Top3Item[]
+) {
+  const seenIds = new Set<string>();
+  const mergedResults: Top3Item[] = [];
+
+  for (const item of [...primaryResults, ...secondaryResults]) {
+    if (seenIds.has(item.id)) {
+      continue;
+    }
+
+    seenIds.add(item.id);
+    mergedResults.push(item);
+  }
+
+  return mergedResults;
+}
+
+function buildRequestUrl(query: string) {
+  const fields =
+    'items(id,volumeInfo(title,authors,publishedDate,imageLinks/thumbnail,imageLinks/smallThumbnail))';
+
+  return (
+    `${API_BASE_URL}?q=${encodeURIComponent(query)}` +
+    `&maxResults=10` +
+    `&printType=books` +
+    `&projection=lite` +
+    `&fields=${encodeURIComponent(fields)}` +
+    `&key=${API_KEY}`
+  );
+}
+
+async function requestGoogleBooks(
+  query: string
 ): Promise<Top3Item[]> {
-  const trimmedQuery = query.trim();
-
-  if (!trimmedQuery) {
-    return [];
-  }
-
-  if (!API_KEY) {
-    throw new Error(
-      'Missing EXPO_PUBLIC_GOOGLE_BOOKS_API_KEY in .env'
-    );
-  }
-
-  const topicQuery = topic ? ` subject:${topic}` : '';
-  const fullQuery = `${trimmedQuery}${topicQuery}`;
-
-  const requestUrl =
-    `${API_BASE_URL}?q=${encodeURIComponent(fullQuery)}` +
-    `&maxResults=20&printType=books&key=${API_KEY}`;
-
-  const response = await fetchWithRetry(requestUrl);
+  const response = await fetchWithRetry(buildRequestUrl(query));
 
   if (!response.ok) {
     const errorBody = await response.text();
@@ -92,31 +191,83 @@ export async function searchBooks(
 
   const data = (await response.json()) as GoogleBooksResponse;
 
-  return (data.items ?? []).slice(0, 10).map((book) => {
-    const info = book.volumeInfo ?? {};
+  return (data.items ?? []).map(mapGoogleBook);
+}
 
-    const authors =
-      info.authors?.join(', ') ?? 'Author unknown';
+async function searchFallback(
+  query: string,
+  topic?: string
+) {
+  const results = await searchOpenLibrary(query, topic);
 
-    const publishedYear = info.publishedDate
-      ? info.publishedDate.slice(0, 4)
-      : '';
+  return rankByTitle(results, query).slice(0, 10);
+}
 
-    const rawImageUrl =
-      info.imageLinks?.thumbnail ??
-      info.imageLinks?.smallThumbnail;
+export async function searchBooks(
+  query: string,
+  topic?: string
+): Promise<Top3Item[]> {
+  const trimmedQuery = query.trim();
 
-    const imageUrl = rawImageUrl
-      ? rawImageUrl.replace('http://', 'https://')
-      : undefined;
+  if (!trimmedQuery) {
+    return [];
+  }
 
-    return {
-      id: book.id,
-      title: info.title ?? 'Untitled',
-      subtitle: publishedYear
-        ? `${authors} · ${publishedYear}`
-        : authors,
-      imageUrl,
-    };
-  });
+  if (!API_KEY) {
+    return searchFallback(trimmedQuery, topic);
+  }
+
+  const topicFilter = topic ? ` subject:${topic}` : '';
+
+  try {
+    // 1. Search titles first.
+    const titleQuery =
+      `intitle:${trimmedQuery}${topicFilter}`;
+
+    const titleResults = rankByTitle(
+      await requestGoogleBooks(titleQuery),
+      trimmedQuery
+    );
+
+    if (titleResults.length >= MIN_TITLE_RESULTS) {
+      return titleResults.slice(0, 10);
+    }
+
+    // 2. Broaden the search while keeping title matches first.
+    const broadQuery = `${trimmedQuery}${topicFilter}`;
+
+    const broadResults = rankByTitle(
+      await requestGoogleBooks(broadQuery),
+      trimmedQuery
+    );
+
+    const combinedResults = mergeUniqueResults(
+      titleResults,
+      broadResults
+    );
+
+    if (combinedResults.length > 0) {
+      return combinedResults.slice(0, 10);
+    }
+
+    // 3. Only search authors when no title/general results exist.
+    const authorQuery =
+      `inauthor:${trimmedQuery}${topicFilter}`;
+
+    const authorResults = await requestGoogleBooks(authorQuery);
+
+    if (authorResults.length > 0) {
+      return authorResults.slice(0, 10);
+    }
+
+    // 4. Final fallback.
+    return searchFallback(trimmedQuery, topic);
+  } catch (error) {
+    console.warn(
+      'Google Books search failed. Using Open Library.',
+      error
+    );
+
+    return searchFallback(trimmedQuery, topic);
+  }
 }
