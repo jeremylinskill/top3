@@ -1,7 +1,9 @@
 import RankedItemCard from '@/components/ranked-item-card';
+import ScreenHeader from '@/components/screen-header';
 import { CategoryId } from '@/constants/top3-categories';
 import { useTop3 } from '@/context/top3-context';
 import { Top3Item } from '@/types/top3-item';
+import { formatRelativeTime } from '@/utils/format-relative-time';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
@@ -11,8 +13,7 @@ import {
     Alert,
     Pressable,
     StyleSheet,
-    Text,
-    View,
+    View
 } from 'react-native';
 import DraggableFlatList, {
     RenderItemParams,
@@ -27,8 +28,14 @@ type DraggableRow = {
 const DRAG_INSTRUCTION_KEY = 'top3-drag-instruction-seen';
 
 export default function CollectionScreen() {
-  const { currentList, setItems } = useTop3();
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const {
+    currentList,
+    setItems,
+    removeItemAtRank,
+  } = useTop3();
+
+  const [activeIndex, setActiveIndex] =
+    useState<number | null>(null);
 
   const selectedItems =
     currentList?.items.filter(
@@ -45,9 +52,10 @@ export default function CollectionScreen() {
       }
 
       try {
-        const hasSeenInstruction = await AsyncStorage.getItem(
-          DRAG_INSTRUCTION_KEY
-        );
+        const hasSeenInstruction =
+          await AsyncStorage.getItem(
+            DRAG_INSTRUCTION_KEY
+          );
 
         if (hasSeenInstruction) {
           return;
@@ -89,19 +97,27 @@ export default function CollectionScreen() {
   if (!currentList) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text style={styles.title}>No Collection Selected</Text>
+        <ScreenHeader title="No Collection Selected" />
       </SafeAreaView>
     );
   }
 
   const category = currentList.category as CategoryId;
 
-  const draggableRows: DraggableRow[] = selectedItems.map((item) => ({
-    key: item.id,
-    item,
-  }));
+  const draggableRows: DraggableRow[] =
+    selectedItems.map((item) => ({
+      key: item.id,
+      item,
+    }));
 
-  async function beginDrag(index: number, drag: () => void) {
+  const lastChangedText = formatRelativeTime(
+    currentList.updatedAt
+  );
+
+  async function beginDrag(
+    index: number,
+    drag: () => void
+  ) {
     try {
       await Haptics.impactAsync(
         Haptics.ImpactFeedbackStyle.Light
@@ -126,6 +142,31 @@ export default function CollectionScreen() {
     });
   }
 
+  function openItemActions(
+    rank: number,
+    itemTitle: string
+  ) {
+    Alert.alert(
+      itemTitle,
+      'What would you like to do?',
+      [
+        {
+          text: 'Replace',
+          onPress: () => openSearch(rank),
+        },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => removeItemAtRank(rank),
+        },
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+      ]
+    );
+  }
+
   function renderItem({
     item: row,
     drag,
@@ -134,8 +175,10 @@ export default function CollectionScreen() {
   }: RenderItemParams<DraggableRow>) {
     const index = getIndex() ?? 0;
     const rank = index + 1;
+
     const shouldFade =
-      activeIndex !== null && activeIndex !== index;
+      activeIndex !== null &&
+      activeIndex !== index;
 
     return (
       <View
@@ -153,7 +196,9 @@ export default function CollectionScreen() {
             item={row.item}
             placeholder={`Choose item #${rank}`}
             category={category}
-            onPress={() => openSearch(rank)}
+            onPress={() =>
+              openItemActions(rank, row.item.title)
+            }
           />
 
           <Pressable
@@ -162,7 +207,9 @@ export default function CollectionScreen() {
               isActive &&
                 styles.dragHandleContainerActive,
             ]}
-            onLongPress={() => beginDrag(index, drag)}
+            onLongPress={() =>
+              beginDrag(index, drag)
+            }
             delayLongPress={150}
             hitSlop={8}>
             <View style={styles.dragDivider} />
@@ -170,7 +217,11 @@ export default function CollectionScreen() {
             <Ionicons
               name="reorder-three-outline"
               size={24}
-              color={isActive ? '#333333' : '#777777'}
+              color={
+                isActive
+                  ? '#333333'
+                  : '#777777'
+              }
             />
           </Pressable>
         </View>
@@ -184,7 +235,8 @@ export default function CollectionScreen() {
         {Array.from(
           { length: emptySlotCount },
           (_, index) => {
-            const rank = selectedItemCount + index + 1;
+            const rank =
+              selectedItemCount + index + 1;
 
             return (
               <View
@@ -205,8 +257,12 @@ export default function CollectionScreen() {
     );
   }
 
-  function saveReorderedItems(data: DraggableRow[]) {
-    const reorderedItems = data.map((row) => row.item);
+  function saveReorderedItems(
+    data: DraggableRow[]
+  ) {
+    const reorderedItems = data.map(
+      (row) => row.item
+    );
 
     const nextItems = [
       ...reorderedItems,
@@ -223,33 +279,40 @@ export default function CollectionScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>
-        {currentList.title}
-      </Text>
+      <ScreenHeader
+  title={currentList.title}
+  subtitle={lastChangedText}
+/>
 
-      {selectedItemCount > 0 ? (
-        <DraggableFlatList
-          data={draggableRows}
-          keyExtractor={(row) => row.key}
-          renderItem={renderItem}
-          ListFooterComponent={renderEmptySlots}
-          scrollEnabled={false}
-          onDragBegin={setActiveIndex}
-          onRelease={() => setActiveIndex(null)}
-          onDragEnd={({ data }) =>
-            saveReorderedItems(data)
-          }
-          activationDistance={12}
-          dragItemOverflow
-          removeClippedSubviews={false}
-          contentContainerStyle={styles.listContent}
-          extraData={activeIndex}
-        />
-      ) : (
-        <View style={styles.listContent}>
-          {renderEmptySlots()}
-        </View>
-      )}
+      <View style={styles.listArea}>
+        {selectedItemCount > 0 ? (
+          <DraggableFlatList
+            data={draggableRows}
+            keyExtractor={(row) => row.key}
+            renderItem={renderItem}
+            ListFooterComponent={renderEmptySlots}
+            scrollEnabled={false}
+            onDragBegin={setActiveIndex}
+            onRelease={() =>
+              setActiveIndex(null)
+            }
+            onDragEnd={({ data }) =>
+              saveReorderedItems(data)
+            }
+            activationDistance={12}
+            dragItemOverflow
+            removeClippedSubviews={false}
+            contentContainerStyle={
+              styles.listContent
+            }
+            extraData={activeIndex}
+          />
+        ) : (
+          <View style={styles.listContent}>
+            {renderEmptySlots()}
+          </View>
+        )}
+      </View>
     </SafeAreaView>
   );
 }
@@ -258,19 +321,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F8F8',
-    paddingHorizontal: 12,
-    paddingTop: 24,
   },
 
-  title: {
-  fontSize: 34,
-  fontWeight: '700',
-  paddingHorizontal: 8,
-  marginBottom: 16,
-},
+  listArea: {
+    flex: 1,
+    paddingHorizontal: 12,
+  },
 
   listContent: {
     paddingHorizontal: 8,
+    paddingTop: 8,
     paddingBottom: 24,
   },
 

@@ -23,6 +23,7 @@ type Top3ContextValue = {
   createList: (input: CreateListInput) => string | null;
   selectList: (listId: string) => void;
   setItemAtRank: (rank: number, item: Top3Item) => void;
+  removeItemAtRank: (rank: number) => void;
   setItems: (items: Top3List['items']) => void;
 };
 
@@ -35,32 +36,46 @@ type StoredTop3Data = {
   currentListId: string;
 };
 
-const Top3Context = createContext<Top3ContextValue | undefined>(undefined);
+const Top3Context =
+  createContext<Top3ContextValue | undefined>(undefined);
 
 const STORAGE_KEY = 'top3-lists';
 
 function createDefaultLists(): Top3List[] {
+  const now = new Date().toISOString();
+
   return TOP3_CATEGORIES.map((category) => ({
     id: `${category.id}-general`,
     category: category.id,
     title: `Top 3 ${category.name}`,
     items: [null, null, null],
+    createdAt: now,
+    updatedAt: now,
   }));
 }
 
-function getListIdentity(list: Pick<Top3List, 'category' | 'topic'>) {
+function getListIdentity(
+  list: Pick<Top3List, 'category' | 'topic'>
+) {
   const category = list.category.trim().toLowerCase();
-  const topic = list.topic?.trim().toLowerCase() ?? 'general';
+  const topic =
+    list.topic?.trim().toLowerCase() ?? 'general';
 
   return `${category}:${topic}`;
 }
 
 function mergeDefaultLists(savedLists: Top3List[]) {
   const defaultLists = createDefaultLists();
-  const existingIdentities = new Set(savedLists.map(getListIdentity));
+
+  const existingIdentities = new Set(
+    savedLists.map(getListIdentity)
+  );
 
   const missingDefaults = defaultLists.filter(
-    (defaultList) => !existingIdentities.has(getListIdentity(defaultList))
+    (defaultList) =>
+      !existingIdentities.has(
+        getListIdentity(defaultList)
+      )
   );
 
   return [...savedLists, ...missingDefaults];
@@ -69,47 +84,67 @@ function mergeDefaultLists(savedLists: Top3List[]) {
 const defaultLists = createDefaultLists();
 const firstDefaultListId = defaultLists[0]?.id ?? '';
 
-export function Top3Provider({ children }: Top3ProviderProps) {
-  const [lists, setLists] = useState<Top3List[]>(defaultLists);
+export function Top3Provider({
+  children,
+}: Top3ProviderProps) {
+  const [lists, setLists] =
+    useState<Top3List[]>(defaultLists);
+
   const [currentListId, setCurrentListId] =
     useState<string>(firstDefaultListId);
-  const [hasLoadedStorage, setHasLoadedStorage] = useState(false);
+
+  const [hasLoadedStorage, setHasLoadedStorage] =
+    useState(false);
 
   const currentList = useMemo(
-    () => lists.find((list) => list.id === currentListId) ?? null,
+    () =>
+      lists.find(
+        (list) => list.id === currentListId
+      ) ?? null,
     [lists, currentListId]
   );
 
   useEffect(() => {
     async function loadSavedLists() {
       try {
-        const savedData = await AsyncStorage.getItem(STORAGE_KEY);
+        const savedData =
+          await AsyncStorage.getItem(STORAGE_KEY);
 
         if (!savedData) {
           return;
         }
 
-        const parsedData = JSON.parse(savedData) as StoredTop3Data;
+        const parsedData =
+          JSON.parse(savedData) as StoredTop3Data;
 
-        const savedLists = Array.isArray(parsedData.lists)
+        const savedLists = Array.isArray(
+          parsedData.lists
+        )
           ? parsedData.lists
           : [];
 
-        const nextLists = mergeDefaultLists(savedLists);
+        const nextLists =
+          mergeDefaultLists(savedLists);
 
         setLists(nextLists);
 
-        const savedCurrentListStillExists = nextLists.some(
-          (list) => list.id === parsedData.currentListId
-        );
+        const savedCurrentListStillExists =
+          nextLists.some(
+            (list) =>
+              list.id === parsedData.currentListId
+          );
 
         setCurrentListId(
           savedCurrentListStillExists
             ? parsedData.currentListId
-            : nextLists[0]?.id ?? firstDefaultListId
+            : nextLists[0]?.id ??
+                firstDefaultListId
         );
       } catch (error) {
-        console.error('Failed to load saved collections:', error);
+        console.error(
+          'Failed to load saved collections:',
+          error
+        );
       } finally {
         setHasLoadedStorage(true);
       }
@@ -130,23 +165,40 @@ export function Top3Provider({ children }: Top3ProviderProps) {
           currentListId,
         };
 
-        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        await AsyncStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify(data)
+        );
       } catch (error) {
-        console.error('Failed to save collections:', error);
+        console.error(
+          'Failed to save collections:',
+          error
+        );
       }
     }
 
     saveLists();
-  }, [lists, currentListId, hasLoadedStorage]);
+  }, [
+    lists,
+    currentListId,
+    hasLoadedStorage,
+  ]);
 
   function createList(input: CreateListInput) {
-    const normalizedCategory = input.category.trim().toLowerCase();
-    const normalizedTopic = input.topic?.trim().toLowerCase() ?? 'general';
+    const normalizedCategory =
+      input.category.trim().toLowerCase();
+
+    const normalizedTopic =
+      input.topic?.trim().toLowerCase() ??
+      'general';
 
     const existingList = lists.find((list) => {
-      const existingCategory = list.category.trim().toLowerCase();
+      const existingCategory =
+        list.category.trim().toLowerCase();
+
       const existingTopic =
-        list.topic?.trim().toLowerCase() ?? 'general';
+        list.topic?.trim().toLowerCase() ??
+        'general';
 
       return (
         existingCategory === normalizedCategory &&
@@ -159,7 +211,12 @@ export function Top3Provider({ children }: Top3ProviderProps) {
       return null;
     }
 
-    const id = `${normalizedCategory}-${normalizedTopic}-${Date.now()}`;
+    const now = new Date().toISOString();
+
+    const id =
+      `${normalizedCategory}-` +
+      `${normalizedTopic}-` +
+      `${Date.now()}`;
 
     const newList: Top3List = {
       id,
@@ -167,26 +224,43 @@ export function Top3Provider({ children }: Top3ProviderProps) {
       topic: input.topic,
       title: input.title,
       items: [null, null, null],
+      createdAt: now,
+      updatedAt: now,
     };
 
-    setLists((currentLists) => [...currentLists, newList]);
+    setLists((currentLists) => [
+      ...currentLists,
+      newList,
+    ]);
+
     setCurrentListId(id);
 
     return id;
   }
 
   function selectList(listId: string) {
-    const listExists = lists.some((list) => list.id === listId);
+    const listExists = lists.some(
+      (list) => list.id === listId
+    );
 
     if (listExists) {
       setCurrentListId(listId);
     }
   }
 
-  function setItemAtRank(rank: number, item: Top3Item) {
-    if (!currentList || rank < 1 || rank > 3) {
+  function setItemAtRank(
+    rank: number,
+    item: Top3Item
+  ) {
+    if (
+      !currentList ||
+      rank < 1 ||
+      rank > 3
+    ) {
       return;
     }
+
+    const now = new Date().toISOString();
 
     setLists((currentLists) =>
       currentLists.map((list) => {
@@ -194,21 +268,67 @@ export function Top3Provider({ children }: Top3ProviderProps) {
           return list;
         }
 
-        const nextItems = [...list.items] as Top3List['items'];
+        const nextItems = [
+          ...list.items,
+        ] as Top3List['items'];
+
         nextItems[rank - 1] = item;
 
         return {
           ...list,
           items: nextItems,
+          updatedAt: now,
         };
       })
     );
   }
 
-  function setItems(items: Top3List['items']) {
+  function removeItemAtRank(rank: number) {
+    if (
+      !currentList ||
+      rank < 1 ||
+      rank > 3
+    ) {
+      return;
+    }
+
+    const now = new Date().toISOString();
+
+    setLists((currentLists) =>
+      currentLists.map((list) => {
+        if (list.id !== currentList.id) {
+          return list;
+        }
+
+        const remainingItems = list.items.filter(
+          (item, index): item is Top3Item =>
+            item !== null && index !== rank - 1
+        );
+
+        const nextItems = [
+          ...remainingItems,
+          ...Array(
+            3 - remainingItems.length
+          ).fill(null),
+        ] as Top3List['items'];
+
+        return {
+          ...list,
+          items: nextItems,
+          updatedAt: now,
+        };
+      })
+    );
+  }
+
+  function setItems(
+    items: Top3List['items']
+  ) {
     if (!currentList) {
       return;
     }
+
+    const now = new Date().toISOString();
 
     setLists((currentLists) =>
       currentLists.map((list) =>
@@ -216,6 +336,7 @@ export function Top3Provider({ children }: Top3ProviderProps) {
           ? {
               ...list,
               items,
+              updatedAt: now,
             }
           : list
       )
@@ -230,6 +351,7 @@ export function Top3Provider({ children }: Top3ProviderProps) {
         createList,
         selectList,
         setItemAtRank,
+        removeItemAtRank,
         setItems,
       }}>
       {children}
@@ -241,7 +363,9 @@ export function useTop3() {
   const context = useContext(Top3Context);
 
   if (!context) {
-    throw new Error('useTop3 must be used inside a Top3Provider');
+    throw new Error(
+      'useTop3 must be used inside a Top3Provider'
+    );
   }
 
   return context;

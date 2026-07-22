@@ -14,4 +14,8 @@ export type Top3List = {
     Top3Item | null,
     Top3Item | null,
   ];
+
+  createdAt?: string;
+
+  updatedAt?: string;
 };

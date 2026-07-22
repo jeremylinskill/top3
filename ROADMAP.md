@@ -2,6 +2,12 @@
 
 Top3 is a mobile app that allows users to create and share Top 3 lists across different categories of media and interests.
 
+# Product Vision
+
+Top3 helps people express their taste and discover others who share it.
+
+Create Top 3 lists of your favorite things—from movies and books to TV shows and games—and connect through what you love.
+
 ---
 
 # Current Status

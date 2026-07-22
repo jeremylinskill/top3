@@ -4,15 +4,14 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 export default function HomeScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.logo}>Top3</Text>
+      <Text style={styles.logo}>Top 3</Text>
 
       <Text style={styles.heading}>
-        Find your people through what you love.
+        Discover people who share your taste.
       </Text>
 
       <Text style={styles.description}>
-        Share your favourite movies, music, books and more. Discover people who
-        love the same things you do.
+        Create and share Top 3 lists for movies, books, TV shows, games, and more.
       </Text>
 
       <Pressable

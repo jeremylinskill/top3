@@ -1,9 +1,14 @@
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { Top3List } from '@/types/top3-list';
-import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useMemo } from 'react';
+import {
+    Pressable,
+    StyleSheet,
+    Text,
+    View,
+} from 'react-native';
 
-type CollectionFormValues = {
+export type CollectionFormValues = {
   categoryId: string;
   topicId: string;
   title: string;
@@ -11,70 +16,146 @@ type CollectionFormValues = {
 
 type CollectionFormProps = {
   existingLists: Top3List[];
-  onSubmit: (values: CollectionFormValues) => void;
+  values: CollectionFormValues;
+  onChange: (values: CollectionFormValues) => void;
 };
+
+const SORTED_CATEGORIES = [...TOP3_CATEGORIES].sort(
+  (first, second) =>
+    first.name.localeCompare(second.name)
+);
+
+function getAvailableTopics(
+  categoryId: string,
+  existingLists: Top3List[]
+) {
+  const category = SORTED_CATEGORIES.find(
+    (item) => item.id === categoryId
+  );
+
+  if (!category) {
+    return [];
+  }
+
+  return category.topics
+    .filter((topic) => {
+      const normalizedTopic =
+        topic.id === 'general'
+          ? ''
+          : topic.name.trim().toLowerCase();
+
+      return !existingLists.some((list) => {
+        const existingTopic =
+          list.topic?.trim().toLowerCase() ?? '';
+
+        return (
+          list.category.toLowerCase() ===
+            category.id.toLowerCase() &&
+          existingTopic === normalizedTopic
+        );
+      });
+    })
+    .sort((first, second) => {
+      if (first.id === 'general') {
+        return -1;
+      }
+
+      if (second.id === 'general') {
+        return 1;
+      }
+
+      return first.name.localeCompare(second.name);
+    });
+}
+
+function buildTitle(
+  categoryId: string,
+  topicId: string
+) {
+  const category = SORTED_CATEGORIES.find(
+    (item) => item.id === categoryId
+  );
+
+  const topic = category?.topics.find(
+    (item) => item.id === topicId
+  );
+
+  if (!category || !topic) {
+    return '';
+  }
+
+  return topic.id === 'general'
+    ? `Top 3 ${category.name}`
+    : `Top 3 ${topic.name} ${category.name}`;
+}
+
+export function getInitialCollectionFormValues(
+  existingLists: Top3List[]
+): CollectionFormValues {
+  const firstCategory = SORTED_CATEGORIES[0];
+
+  if (!firstCategory) {
+    return {
+      categoryId: '',
+      topicId: '',
+      title: '',
+    };
+  }
+
+  const firstTopic = getAvailableTopics(
+    firstCategory.id,
+    existingLists
+  )[0];
+
+  return {
+    categoryId: firstCategory.id,
+    topicId: firstTopic?.id ?? '',
+    title: firstTopic
+      ? buildTitle(firstCategory.id, firstTopic.id)
+      : '',
+  };
+}
 
 export default function CollectionForm({
   existingLists,
-  onSubmit,
+  values,
+  onChange,
 }: CollectionFormProps) {
-  const firstCategory = TOP3_CATEGORIES[0];
-  const [categoryId, setCategoryId] = useState(firstCategory.id);
-
-  const selectedCategory =
-    TOP3_CATEGORIES.find((category) => category.id === categoryId) ??
-    firstCategory;
-
-  const availableTopics = useMemo(() => {
-    return selectedCategory.topics.filter((topic) => {
-      const normalizedTopic =
-        topic.id === 'general' ? '' : topic.name.trim().toLowerCase();
-
-      return !existingLists.some((list) => {
-        const existingTopic = list.topic?.trim().toLowerCase() ?? '';
-
-        return (
-          list.category.toLowerCase() === selectedCategory.id.toLowerCase() &&
-          existingTopic === normalizedTopic
-        );
-      });
-    });
-  }, [existingLists, selectedCategory]);
-
-  const [topicId, setTopicId] = useState(availableTopics[0]?.id ?? '');
-
-  const selectedTopic =
-    availableTopics.find((topic) => topic.id === topicId) ??
-    availableTopics[0];
-
-  const title = selectedTopic
-    ? selectedTopic.id === 'general'
-      ? `Top 3 ${selectedCategory.name}`
-      : `Top 3 ${selectedTopic.name} ${selectedCategory.name}`
-    : '';
+  const availableTopics = useMemo(
+    () =>
+      getAvailableTopics(
+        values.categoryId,
+        existingLists
+      ),
+    [existingLists, values.categoryId]
+  );
 
   function chooseCategory(nextCategoryId: string) {
-    const nextCategory =
-      TOP3_CATEGORIES.find(
-        (category) => category.id === nextCategoryId
-      ) ?? firstCategory;
+    const nextTopic = getAvailableTopics(
+      nextCategoryId,
+      existingLists
+    )[0];
 
-    const nextAvailableTopics = nextCategory.topics.filter((topic) => {
-      const normalizedTopic =
-        topic.id === 'general' ? '' : topic.name.trim().toLowerCase();
+    const nextTopicId = nextTopic?.id ?? '';
 
-      return !existingLists.some((list) => {
-        const existingTopic = list.topic?.trim().toLowerCase() ?? '';
-
-        return (
-          list.category.toLowerCase() === nextCategory.id.toLowerCase() &&
-          existingTopic === normalizedTopic
-        );
-      });
+    onChange({
+      categoryId: nextCategoryId,
+      topicId: nextTopicId,
+      title: nextTopic
+        ? buildTitle(nextCategoryId, nextTopicId)
+        : '',
     });
+  }
 
-    setCategoryId(nextCategory.id);
-    setTopicId(nextAvailableTopics[0]?.id ?? '');
+  function chooseTopic(nextTopicId: string) {
+    onChange({
+      categoryId: values.categoryId,
+      topicId: nextTopicId,
+      title: buildTitle(
+        values.categoryId,
+        nextTopicId
+      ),
+    });
   }
 
   return (
@@ -82,21 +163,26 @@ export default function CollectionForm({
       <Text style={styles.label}>Category</Text>
 
       <View style={styles.optionGroup}>
-        {TOP3_CATEGORIES.map((category) => {
-          const isSelected = category.id === categoryId;
+        {SORTED_CATEGORIES.map((category) => {
+          const isSelected =
+            category.id === values.categoryId;
 
           return (
             <Pressable
               key={category.id}
               style={[
                 styles.optionButton,
-                isSelected && styles.optionButtonSelected,
+                isSelected &&
+                  styles.optionButtonSelected,
               ]}
-              onPress={() => chooseCategory(category.id)}>
+              onPress={() =>
+                chooseCategory(category.id)
+              }>
               <Text
                 style={[
                   styles.optionText,
-                  isSelected && styles.optionTextSelected,
+                  isSelected &&
+                    styles.optionTextSelected,
                 ]}>
                 {category.icon} {category.name}
               </Text>
@@ -108,47 +194,39 @@ export default function CollectionForm({
       <Text style={styles.label}>Available topics</Text>
 
       {availableTopics.length > 0 ? (
-        <>
-          <View style={styles.optionGroup}>
-            {availableTopics.map((topic) => {
-              const isSelected = topic.id === topicId;
+        <View style={styles.optionGroup}>
+          {availableTopics.map((topic) => {
+            const isSelected =
+              topic.id === values.topicId;
 
-              return (
-                <Pressable
-                  key={topic.id}
+            const displayName =
+              topic.id === 'general'
+                ? 'All'
+                : topic.name;
+
+            return (
+              <Pressable
+                key={topic.id}
+                style={[
+                  styles.optionButton,
+                  isSelected &&
+                    styles.optionButtonSelected,
+                ]}
+                onPress={() =>
+                  chooseTopic(topic.id)
+                }>
+                <Text
                   style={[
-                    styles.optionButton,
-                    isSelected && styles.optionButtonSelected,
-                  ]}
-                  onPress={() => setTopicId(topic.id)}>
-                  <Text
-                    style={[
-                      styles.optionText,
-                      isSelected && styles.optionTextSelected,
-                    ]}>
-                    {topic.name}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-
-          <Pressable
-            style={styles.submitButton}
-            onPress={() => {
-              if (!selectedTopic) {
-                return;
-              }
-
-              onSubmit({
-                categoryId,
-                topicId: selectedTopic.id,
-                title,
-              });
-            }}>
-            <Text style={styles.submitButtonText}>Create {title}</Text>
-          </Pressable>
-        </>
+                    styles.optionText,
+                    isSelected &&
+                      styles.optionTextSelected,
+                  ]}>
+                  {displayName}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
       ) : (
         <Text style={styles.emptyMessage}>
           You’ve created all available collections in this category.
@@ -165,11 +243,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginTop: 20,
   },
+
   optionGroup: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
   },
+
   optionButton: {
     borderWidth: 1,
     borderColor: '#CCCCCC',
@@ -178,35 +258,25 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     backgroundColor: '#FFFFFF',
   },
+
   optionButtonSelected: {
     borderColor: '#222222',
     backgroundColor: '#222222',
   },
+
   optionText: {
     fontSize: 16,
     color: '#222222',
   },
+
   optionTextSelected: {
     color: '#FFFFFF',
   },
+
   emptyMessage: {
     marginTop: 8,
     fontSize: 16,
     color: '#777777',
     lineHeight: 22,
-  },
-  submitButton: {
-    marginTop: 28,
-    borderRadius: 14,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-    backgroundColor: '#222222',
-  },
-  submitButtonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '600',
-    textAlign: 'center',
   },
 });

@@ -1,3 +1,4 @@
+import ScreenHeader from '@/components/screen-header';
 import SearchResultSkeleton from '@/components/search-result-skeleton';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { useTop3 } from '@/context/top3-context';
@@ -23,6 +24,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type SearchProvider = (
   query: string,
@@ -58,22 +60,31 @@ export default function SearchScreen() {
   const selectedTopic =
     selectedCategory?.topics.find(
       (topic) =>
-        topic.name.toLowerCase() === currentList?.topic?.toLowerCase()
+        topic.name.toLowerCase() ===
+        currentList?.topic?.toLowerCase()
     ) ??
-    selectedCategory?.topics.find((topic) => topic.id === 'general');
+    selectedCategory?.topics.find(
+      (topic) => topic.id === 'general'
+    );
 
   const categoryName = selectedCategory?.name ?? 'Items';
   const topicName = selectedTopic?.name;
-  const searchItemName = selectedTopic?.searchItemName ?? 'item';
+  const searchItemName =
+    selectedTopic?.searchItemName ?? 'item';
+
   const searchIcon =
-    selectedTopic?.icon ?? selectedCategory?.icon ?? '⭐';
+    selectedTopic?.icon ??
+    selectedCategory?.icon ??
+    '⭐';
+
+  const placeholderIcon =
+    selectedCategory?.placeholderIcon ?? 'image-outline';
+
   const isGeneralTopic = selectedTopic?.id === 'general';
 
   const trimmedQuery = searchQuery.trim();
-  const canSearch = trimmedQuery.length >= MINIMUM_SEARCH_LENGTH;
-
-  const placeholderIcon =
-  selectedCategory?.placeholderIcon ?? 'image-outline';
+  const canSearch =
+    trimmedQuery.length >= MINIMUM_SEARCH_LENGTH;
 
   useEffect(() => {
     async function loadResults() {
@@ -94,24 +105,29 @@ export default function SearchScreen() {
       }
 
       const cacheKey = [
-  categoryId,
-  currentList?.topic?.trim().toLowerCase() ?? 'general',
-  trimmedQuery.toLowerCase(),
-].join('|');
+        categoryId,
+        currentList?.topic?.trim().toLowerCase() ??
+          'general',
+        trimmedQuery.toLowerCase(),
+      ].join('|');
 
-const cachedResults = SEARCH_CACHE.get(cacheKey);
+      const cachedResults = SEARCH_CACHE.get(cacheKey);
 
-if (cachedResults) {
-  setSearchResults(cachedResults);
-  setHasSearched(true);
-  setIsLoading(false);
-  return;
-}
+      if (cachedResults) {
+        setSearchResults(cachedResults);
+        setHasSearched(true);
+        setIsLoading(false);
+        return;
+      }
 
-      const searchProvider = SEARCH_PROVIDERS[categoryId];
+      const searchProvider =
+        SEARCH_PROVIDERS[categoryId];
 
       if (!searchProvider) {
-        console.error(`No search provider exists for: ${categoryId}`);
+        console.error(
+          `No search provider exists for: ${categoryId}`
+        );
+
         setSearchResults([]);
         setHasSearched(true);
         setIsLoading(false);
@@ -127,10 +143,14 @@ if (cachedResults) {
         );
 
         SEARCH_CACHE.set(cacheKey, results);
-setSearchResults(results);
+        setSearchResults(results);
         setHasSearched(true);
       } catch (error) {
-        console.error(`${categoryName} search failed:`, error);
+        console.error(
+          `${categoryName} search failed:`,
+          error
+        );
+
         setSearchResults([]);
         setHasSearched(true);
       } finally {
@@ -177,7 +197,8 @@ setSearchResults(results);
     ? `Search ${categoryName}`
     : `Search ${topicName} ${categoryName}`;
 
-  const searchPlaceholder = `Search for a ${searchItemName}...`;
+  const searchPlaceholder =
+    `Search for a ${searchItemName}...`;
 
   const resultsTitle = isGeneralTopic
     ? 'Search Results'
@@ -188,114 +209,133 @@ setSearchResults(results);
       style={styles.keyboardContainer}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={90}>
-      <View style={styles.container}>
-        <Text style={styles.title}>{searchTitle}</Text>
+      <SafeAreaView style={styles.container}>
+        <ScreenHeader title={searchTitle} />
 
-        <TextInput
-          style={styles.searchInput}
-          placeholder={searchPlaceholder}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          autoCorrect={false}
-          autoCapitalize="words"
-        />
+        <View style={styles.content}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder={searchPlaceholder}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            autoCorrect={false}
+            autoCapitalize="words"
+          />
 
-        {!canSearch ? (
-          <Text style={styles.searchHelper}>
-            Type at least {MINIMUM_SEARCH_LENGTH} characters to search.
-          </Text>
-        ) : null}
-
-        {isLoading ? (
-          <>
-            <Text style={styles.sectionTitle}>{resultsTitle}</Text>
-
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={styles.resultsContent}>
-              {Array.from({ length: 5 }, (_, index) => (
-                <SearchResultSkeleton key={index} />
-              ))}
-            </ScrollView>
-          </>
-        ) : !hasSearched ? (
-          <View style={styles.emptySpace} />
-        ) : searchResults.length === 0 ? (
-          <View style={styles.messageContainer}>
-            <Text style={styles.messageIcon}>{searchIcon}</Text>
-
-            <Text style={styles.messageTitle}>
-              No {searchItemName} results found
+          {!canSearch ? (
+            <Text style={styles.searchHelper}>
+              Type at least {MINIMUM_SEARCH_LENGTH}{' '}
+              characters to search.
             </Text>
+          ) : null}
 
-            <Text style={styles.messageText}>
-              Try another title or a broader search.
-            </Text>
-          </View>
-        ) : (
-          <>
-            <Text style={styles.sectionTitle}>{resultsTitle}</Text>
+          {isLoading ? (
+            <>
+              <Text style={styles.sectionTitle}>
+                {resultsTitle}
+              </Text>
 
-            <Animated.View
-              style={[
-                styles.resultsContainer,
-                {
-                  opacity: fadeAnim,
-                  transform: [
-                    {
-                      translateY: fadeAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [6, 0],
-                      }),
-                    },
-                  ],
-                },
-              ]}>
               <ScrollView
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
-                contentContainerStyle={styles.resultsContent}>
-                {searchResults.map((item) => (
-                  <Pressable
-                    key={item.id}
-                    style={styles.resultRow}
-                    onPress={() => selectItem(item)}>
-                    {item.imageUrl ? (
-                      <Image
-                        source={{ uri: item.imageUrl }}
-                        style={styles.image}
-                        resizeMode="cover"
-                      />
-                    ) : (
-                      <View style={styles.imagePlaceholder}>
-                        <Ionicons
-                          name={placeholderIcon}
-                          size={28}
-                          color="#999999"
-                        />
-                      </View>
-                    )}
-
-                    <View style={styles.resultDetails}>
-                      <Text style={styles.resultTitle}>
-                        {item.title}
-                      </Text>
-
-                      <Text style={styles.metadata}>
-                        {item.subtitle || 'Details unavailable'}
-                        {typeof item.rating === 'number'
-                          ? ` · ★ ${item.rating.toFixed(1)}`
-                          : ''}
-                      </Text>
-                    </View>
-                  </Pressable>
-                ))}
+                contentContainerStyle={
+                  styles.resultsContent
+                }>
+                {Array.from(
+                  { length: 5 },
+                  (_, index) => (
+                    <SearchResultSkeleton key={index} />
+                  )
+                )}
               </ScrollView>
-            </Animated.View>
-          </>
-        )}
-      </View>
+            </>
+          ) : !hasSearched ? (
+            <View style={styles.emptySpace} />
+          ) : searchResults.length === 0 ? (
+            <View style={styles.messageContainer}>
+              <Text style={styles.messageIcon}>
+                {searchIcon}
+              </Text>
+
+              <Text style={styles.messageTitle}>
+                No {searchItemName} results found
+              </Text>
+
+              <Text style={styles.messageText}>
+                Try another title or a broader search.
+              </Text>
+            </View>
+          ) : (
+            <>
+              <Text style={styles.sectionTitle}>
+                {resultsTitle}
+              </Text>
+
+              <Animated.View
+                style={[
+                  styles.resultsContainer,
+                  {
+                    opacity: fadeAnim,
+                    transform: [
+                      {
+                        translateY:
+                          fadeAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [6, 0],
+                          }),
+                      },
+                    ],
+                  },
+                ]}>
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                  contentContainerStyle={
+                    styles.resultsContent
+                  }>
+                  {searchResults.map((item) => (
+                    <Pressable
+                      key={item.id}
+                      style={styles.resultRow}
+                      onPress={() => selectItem(item)}>
+                      {item.imageUrl ? (
+                        <Image
+                          source={{ uri: item.imageUrl }}
+                          style={styles.image}
+                          resizeMode="cover"
+                        />
+                      ) : (
+                        <View
+                          style={styles.imagePlaceholder}>
+                          <Ionicons
+                            name={placeholderIcon}
+                            size={28}
+                            color="#999999"
+                          />
+                        </View>
+                      )}
+
+                      <View style={styles.resultDetails}>
+                        <Text style={styles.resultTitle}>
+                          {item.title}
+                        </Text>
+
+                        <Text style={styles.metadata}>
+                          {item.subtitle ||
+                            'Details unavailable'}
+                          {typeof item.rating === 'number'
+                            ? ` · ★ ${item.rating.toFixed(1)}`
+                            : ''}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </Animated.View>
+            </>
+          )}
+        </View>
+      </SafeAreaView>
     </KeyboardAvoidingView>
   );
 }
@@ -307,15 +347,15 @@ const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    padding: 24,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FAFAFA',
   },
 
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 24,
-  },
+  content: {
+  flex: 1,
+  paddingHorizontal: 20,
+  paddingTop: 24,
+  backgroundColor: '#FFFFFF',
+},
 
   searchInput: {
     borderWidth: 1,
@@ -324,6 +364,7 @@ const styles = StyleSheet.create({
     padding: 16,
     fontSize: 18,
     marginBottom: 24,
+    backgroundColor: '#FFFFFF',
   },
 
   searchHelper: {
