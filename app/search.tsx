@@ -2,6 +2,7 @@ import SearchResultSkeleton from '@/components/search-result-skeleton';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { useTop3 } from '@/context/top3-context';
 import { searchBooks } from '@/providers/google-books';
+import { searchGames } from '@/providers/rawg';
 import {
   searchMovies,
   searchTvShows,
@@ -32,6 +33,7 @@ const SEARCH_PROVIDERS: Record<string, SearchProvider> = {
   movies: searchMovies,
   books: searchBooks,
   tv: searchTvShows,
+  games: searchGames,
 };
 
 const MINIMUM_SEARCH_LENGTH = 3;

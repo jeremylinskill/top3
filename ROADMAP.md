@@ -169,3 +169,14 @@ Albums:
 - UI should remain category-agnostic.
 - New categories should require minimal code changes.
 - Prefer long-term maintainability over short-term hacks.
+
+### Video Games
+
+Current provider:
+- RAWG
+
+Future provider:
+- IGDB
+
+Reason:
+IGDB provides dedicated cover artwork that better matches the portrait card layout used throughout the app.
