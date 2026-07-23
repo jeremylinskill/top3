@@ -16,6 +16,6 @@ export type Top3List = {
   ];
 
   createdAt?: string;
-
   updatedAt?: string;
+  publishedAt?: string;
 };

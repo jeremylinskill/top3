@@ -1,3 +1,4 @@
+import { ProfileProvider } from '@/context/profile-context';
 import { Top3Provider } from '@/context/top3-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import {
@@ -8,6 +9,7 @@ import {
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import 'react-native-reanimated';
 
 export const unstable_settings = {
@@ -19,26 +21,42 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <Top3Provider>
-        <ThemeProvider
-          value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack>
-            <Stack.Screen
-              name="(tabs)"
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="modal"
-              options={{
-                presentation: 'modal',
-                title: 'Modal',
-              }}
-            />
-          </Stack>
+      <KeyboardProvider>
+        <ProfileProvider>
+          <Top3Provider>
+            <ThemeProvider
+              value={
+                colorScheme === 'dark'
+                  ? DarkTheme
+                  : DefaultTheme
+              }>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                }}>
+                <Stack.Screen name="(tabs)" />
 
-          <StatusBar style="auto" />
-        </ThemeProvider>
-      </Top3Provider>
+                <Stack.Screen name="collections" />
+
+                <Stack.Screen name="collection" />
+
+                <Stack.Screen name="search" />
+
+                <Stack.Screen name="edit-profile" />
+
+                <Stack.Screen
+                  name="modal"
+                  options={{
+                    presentation: 'modal',
+                  }}
+                />
+              </Stack>
+
+              <StatusBar style="auto" />
+            </ThemeProvider>
+          </Top3Provider>
+        </ProfileProvider>
+      </KeyboardProvider>
     </GestureHandlerRootView>
   );
 }

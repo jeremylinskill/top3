@@ -1,3 +1,4 @@
+import PrimaryButton from '@/components/primary-button';
 import RankedItemCard from '@/components/ranked-item-card';
 import ScreenHeader from '@/components/screen-header';
 import { CategoryId } from '@/constants/top3-categories';
@@ -13,7 +14,7 @@ import {
     Alert,
     Pressable,
     StyleSheet,
-    View
+    View,
 } from 'react-native';
 import DraggableFlatList, {
     RenderItemParams,
@@ -32,6 +33,7 @@ export default function CollectionScreen() {
     currentList,
     setItems,
     removeItemAtRank,
+    publishCurrentList,
   } = useTop3();
 
   const [activeIndex, setActiveIndex] =
@@ -44,6 +46,7 @@ export default function CollectionScreen() {
 
   const selectedItemCount = selectedItems.length;
   const emptySlotCount = 3 - selectedItemCount;
+  const canPublish = selectedItemCount === 3;
 
   useEffect(() => {
     async function showDragInstruction() {
@@ -97,7 +100,10 @@ export default function CollectionScreen() {
   if (!currentList) {
     return (
       <SafeAreaView style={styles.container}>
-        <ScreenHeader title="No Collection Selected" />
+        <ScreenHeader
+          title="No Collection Selected"
+          showBackButton
+        />
       </SafeAreaView>
     );
   }
@@ -110,9 +116,20 @@ export default function CollectionScreen() {
       item,
     }));
 
-  const lastChangedText = formatRelativeTime(
-    currentList.updatedAt
+  const relativeTime = formatRelativeTime(
+    currentList.publishedAt ?? currentList.updatedAt
   );
+
+  const timeText = relativeTime?.replace(
+    /^Updated\s+/i,
+    ''
+  );
+
+  const subtitle = timeText
+    ? currentList.publishedAt
+      ? `Published ${timeText}`
+      : `Updated ${timeText}`
+    : null;
 
   async function beginDrag(
     index: number,
@@ -165,6 +182,15 @@ export default function CollectionScreen() {
         },
       ]
     );
+  }
+
+  function publishCollection() {
+    if (!canPublish) {
+      return;
+    }
+
+    publishCurrentList();
+    router.replace('/(tabs)');
   }
 
   function renderItem({
@@ -280,9 +306,10 @@ export default function CollectionScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScreenHeader
-  title={currentList.title}
-  subtitle={lastChangedText}
-/>
+        title={currentList.title}
+        subtitle={subtitle}
+        showBackButton
+      />
 
       <View style={styles.listArea}>
         {selectedItemCount > 0 ? (
@@ -293,9 +320,7 @@ export default function CollectionScreen() {
             ListFooterComponent={renderEmptySlots}
             scrollEnabled={false}
             onDragBegin={setActiveIndex}
-            onRelease={() =>
-              setActiveIndex(null)
-            }
+            onRelease={() => setActiveIndex(null)}
             onDragEnd={({ data }) =>
               saveReorderedItems(data)
             }
@@ -312,6 +337,14 @@ export default function CollectionScreen() {
             {renderEmptySlots()}
           </View>
         )}
+      </View>
+
+      <View style={styles.bottomBar}>
+        <PrimaryButton
+          title="Publish Top 3"
+          onPress={publishCollection}
+          disabled={!canPublish}
+        />
       </View>
     </SafeAreaView>
   );
@@ -387,5 +420,14 @@ const styles = StyleSheet.create({
     bottom: 10,
     width: StyleSheet.hairlineWidth,
     backgroundColor: '#E5E5E5',
+  },
+
+  bottomBar: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 8,
+    backgroundColor: '#FAFAFA',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#DDDDDD',
   },
 });

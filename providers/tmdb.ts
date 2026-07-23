@@ -30,13 +30,18 @@ function getApiKey() {
   const apiKey = process.env.EXPO_PUBLIC_TMDB_API_KEY;
 
   if (!apiKey) {
-    throw new Error('Missing EXPO_PUBLIC_TMDB_API_KEY in .env');
+    throw new Error(
+      'Missing EXPO_PUBLIC_TMDB_API_KEY in .env'
+    );
   }
 
   return apiKey;
 }
 
-function getTopicGenreId(categoryId: 'movies' | 'tv', topic?: string) {
+function getTopicGenreId(
+  categoryId: 'movies' | 'tv',
+  topic?: string
+) {
   if (!topic) {
     return undefined;
   }
@@ -46,10 +51,37 @@ function getTopicGenreId(categoryId: 'movies' | 'tv', topic?: string) {
   );
 
   const selectedTopic = category?.topics.find(
-    (item) => item.name.toLowerCase() === topic.toLowerCase()
+    (item) =>
+      item.name.toLowerCase() === topic.toLowerCase()
   );
 
   return selectedTopic?.tmdbGenreId;
+}
+
+function movieToTop3Item(movie: TMDBMovie): Top3Item {
+  return {
+    id: `movie-${movie.id}`,
+    title: movie.title,
+    subtitle: movie.release_date?.slice(0, 4),
+    imageUrl: movie.poster_path
+      ? `${IMAGE_BASE_URL}${movie.poster_path}`
+      : undefined,
+    rating: movie.vote_average,
+  };
+}
+
+function tvShowToTop3Item(
+  show: TMDBTvShow
+): Top3Item {
+  return {
+    id: `tv-${show.id}`,
+    title: show.name,
+    subtitle: show.first_air_date?.slice(0, 4),
+    imageUrl: show.poster_path
+      ? `${IMAGE_BASE_URL}${show.poster_path}`
+      : undefined,
+    rating: show.vote_average,
+  };
 }
 
 export async function searchMovies(
@@ -72,7 +104,9 @@ export async function searchMovies(
   );
 
   if (!response.ok) {
-    throw new Error(`TMDB movie request failed: ${response.status}`);
+    throw new Error(
+      `TMDB movie request failed: ${response.status}`
+    );
   }
 
   const data =
@@ -87,15 +121,7 @@ export async function searchMovies(
     );
   }
 
-  return movies.slice(0, 10).map((movie) => ({
-    id: `movie-${movie.id}`,
-    title: movie.title,
-    subtitle: movie.release_date?.slice(0, 4),
-    imageUrl: movie.poster_path
-      ? `${IMAGE_BASE_URL}${movie.poster_path}`
-      : undefined,
-    rating: movie.vote_average,
-  }));
+  return movies.slice(0, 10).map(movieToTop3Item);
 }
 
 export async function searchTvShows(
@@ -118,7 +144,9 @@ export async function searchTvShows(
   );
 
   if (!response.ok) {
-    throw new Error(`TMDB TV request failed: ${response.status}`);
+    throw new Error(
+      `TMDB TV request failed: ${response.status}`
+    );
   }
 
   const data =
@@ -133,13 +161,48 @@ export async function searchTvShows(
     );
   }
 
-  return tvShows.slice(0, 10).map((show) => ({
-    id: `tv-${show.id}`,
-    title: show.name,
-    subtitle: show.first_air_date?.slice(0, 4),
-    imageUrl: show.poster_path
-      ? `${IMAGE_BASE_URL}${show.poster_path}`
-      : undefined,
-    rating: show.vote_average,
-  }));
+  return tvShows.slice(0, 10).map(tvShowToTop3Item);
+}
+
+export async function getMovieById(
+  movieId: number
+): Promise<Top3Item> {
+  const apiKey = getApiKey();
+
+  const response = await fetch(
+    `${API_BASE_URL}/movie/${movieId}` +
+      `?api_key=${apiKey}`
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `TMDB movie request failed: ${response.status}`
+    );
+  }
+
+  const movie = (await response.json()) as TMDBMovie;
+
+  return movieToTop3Item(movie);
+}
+
+export async function getTvShowById(
+  showId: number
+): Promise<Top3Item> {
+  const apiKey = getApiKey();
+
+  const response = await fetch(
+    `${API_BASE_URL}/tv/${showId}` +
+      `?api_key=${apiKey}`
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `TMDB TV request failed: ${response.status}`
+    );
+  }
+
+  const show =
+    (await response.json()) as TMDBTvShow;
+
+  return tvShowToTop3Item(show);
 }

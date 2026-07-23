@@ -25,6 +25,33 @@ const SORTED_CATEGORIES = [...TOP3_CATEGORIES].sort(
     first.name.localeCompare(second.name)
 );
 
+function buildTitle(
+  categoryId: string,
+  topicId: string
+) {
+  const category = SORTED_CATEGORIES.find(
+    (item) => item.id === categoryId
+  );
+
+  if (!category) {
+    return '';
+  }
+
+  if (!topicId) {
+    return `Top 3 ${category.name}`;
+  }
+
+  const topic = category.topics.find(
+    (item) => item.id === topicId
+  );
+
+  if (!topic || topic.id === 'general') {
+    return `Top 3 ${category.name}`;
+  }
+
+  return `Top 3 ${topic.name} ${category.name}`;
+}
+
 function getAvailableTopics(
   categoryId: string,
   existingLists: Top3List[]
@@ -39,54 +66,29 @@ function getAvailableTopics(
 
   return category.topics
     .filter((topic) => {
+      // A category with no selected topic represents
+      // the general collection, so it is not shown here.
+      if (topic.id === 'general') {
+        return false;
+      }
+
       const normalizedTopic =
-        topic.id === 'general'
-          ? ''
-          : topic.name.trim().toLowerCase();
+        topic.name.trim().toLowerCase();
 
       return !existingLists.some((list) => {
         const existingTopic =
           list.topic?.trim().toLowerCase() ?? '';
 
         return (
-          list.category.toLowerCase() ===
-            category.id.toLowerCase() &&
+          list.category.trim().toLowerCase() ===
+            category.id.trim().toLowerCase() &&
           existingTopic === normalizedTopic
         );
       });
     })
-    .sort((first, second) => {
-      if (first.id === 'general') {
-        return -1;
-      }
-
-      if (second.id === 'general') {
-        return 1;
-      }
-
-      return first.name.localeCompare(second.name);
-    });
-}
-
-function buildTitle(
-  categoryId: string,
-  topicId: string
-) {
-  const category = SORTED_CATEGORIES.find(
-    (item) => item.id === categoryId
-  );
-
-  const topic = category?.topics.find(
-    (item) => item.id === topicId
-  );
-
-  if (!category || !topic) {
-    return '';
-  }
-
-  return topic.id === 'general'
-    ? `Top 3 ${category.name}`
-    : `Top 3 ${topic.name} ${category.name}`;
+    .sort((first, second) =>
+      first.name.localeCompare(second.name)
+    );
 }
 
 export function getInitialCollectionFormValues(
@@ -102,17 +104,10 @@ export function getInitialCollectionFormValues(
     };
   }
 
-  const firstTopic = getAvailableTopics(
-    firstCategory.id,
-    existingLists
-  )[0];
-
   return {
     categoryId: firstCategory.id,
-    topicId: firstTopic?.id ?? '',
-    title: firstTopic
-      ? buildTitle(firstCategory.id, firstTopic.id)
-      : '',
+    topicId: '',
+    title: buildTitle(firstCategory.id, ''),
   };
 }
 
@@ -131,29 +126,27 @@ export default function CollectionForm({
   );
 
   function chooseCategory(nextCategoryId: string) {
-    const nextTopic = getAvailableTopics(
-      nextCategoryId,
-      existingLists
-    )[0];
-
-    const nextTopicId = nextTopic?.id ?? '';
-
     onChange({
       categoryId: nextCategoryId,
-      topicId: nextTopicId,
-      title: nextTopic
-        ? buildTitle(nextCategoryId, nextTopicId)
-        : '',
+      topicId: '',
+      title: buildTitle(nextCategoryId, ''),
     });
   }
 
   function chooseTopic(nextTopicId: string) {
+    const shouldClearTopic =
+      values.topicId === nextTopicId;
+
+    const updatedTopicId = shouldClearTopic
+      ? ''
+      : nextTopicId;
+
     onChange({
       categoryId: values.categoryId,
-      topicId: nextTopicId,
+      topicId: updatedTopicId,
       title: buildTitle(
         values.categoryId,
-        nextTopicId
+        updatedTopicId
       ),
     });
   }
@@ -191,18 +184,22 @@ export default function CollectionForm({
         })}
       </View>
 
-      <Text style={styles.label}>Available topics</Text>
+      <Text style={styles.label}>
+        Topic{' '}
+        <Text style={styles.optionalLabel}>
+          (optional)
+        </Text>
+      </Text>
+
+      <Text style={styles.topicHelper}>
+        Want to get more specific? Choose a topic.
+      </Text>
 
       {availableTopics.length > 0 ? (
         <View style={styles.optionGroup}>
           {availableTopics.map((topic) => {
             const isSelected =
               topic.id === values.topicId;
-
-            const displayName =
-              topic.id === 'general'
-                ? 'All'
-                : topic.name;
 
             return (
               <Pressable
@@ -221,7 +218,7 @@ export default function CollectionForm({
                     isSelected &&
                       styles.optionTextSelected,
                   ]}>
-                  {displayName}
+                  {topic.name}
                 </Text>
               </Pressable>
             );
@@ -229,7 +226,8 @@ export default function CollectionForm({
         </View>
       ) : (
         <Text style={styles.emptyMessage}>
-          You’ve created all available collections in this category.
+          You’ve created all available topic collections
+          in this category.
         </Text>
       )}
     </View>
@@ -242,6 +240,19 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 10,
     marginTop: 20,
+  },
+
+  optionalLabel: {
+    fontWeight: '400',
+    color: '#777777',
+  },
+
+  topicHelper: {
+    marginTop: -4,
+    marginBottom: 12,
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#777777',
   },
 
   optionGroup: {
