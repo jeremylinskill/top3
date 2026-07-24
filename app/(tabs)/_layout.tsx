@@ -8,20 +8,45 @@ export default function TabLayout() {
       initialRouteName="index"
       screenOptions={{
         headerShown: false,
+
         tabBarActiveTintColor: '#222222',
         tabBarInactiveTintColor: '#999999',
+
         tabBarStyle: {
           backgroundColor: '#FAFAFA',
-          borderTopColor: '#DDDDDD',
+
+          borderTopWidth: 1,
+          borderTopColor: '#EAEAEA',
+
+          elevation: 0,
+          shadowOpacity: 0,
+          shadowRadius: 0,
+          shadowOffset: {
+            width: 0,
+            height: 0,
+          },
+
+          height: 80,
+        },
+
+        tabBarItemStyle: {
+          paddingTop: 8,
+          paddingBottom: 6,
+        },
+
+        tabBarLabelStyle: {
+          fontSize: 12,
+          marginTop: 2,
+          marginBottom: 2,
         },
       }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Feed',
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: ({ color, size, focused }) => (
             <Ionicons
-              name="home-outline"
+              name={focused ? 'home' : 'home-outline'}
               size={size}
               color={color}
             />
@@ -33,9 +58,13 @@ export default function TabLayout() {
         name="top3"
         options={{
           title: 'Create',
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: ({ color, size, focused }) => (
             <Ionicons
-              name="add-circle-outline"
+              name={
+                focused
+                  ? 'add-circle'
+                  : 'add-circle-outline'
+              }
               size={size}
               color={color}
             />
@@ -47,9 +76,13 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: ({ color, size, focused }) => (
             <Ionicons
-              name="person-outline"
+              name={
+                focused
+                  ? 'person'
+                  : 'person-outline'
+              }
               size={size}
               color={color}
             />

@@ -1,10 +1,17 @@
 import ScreenHeader from '@/components/screen-header';
+import Top3Card from '@/components/top3-card';
 import { useProfile } from '@/context/profile-context';
-import { getFeedPosts, getMockUserById } from '@/services/post-service';
-import { formatRelativeTime } from '@/utils/format-relative-time';
-import { router, useLocalSearchParams } from 'expo-router';
 import {
-    Alert,
+    getHydratedFeedPosts,
+    getMockUserById,
+} from '@/services/post-service';
+import { Post } from '@/types/post';
+import {
+    router,
+    useLocalSearchParams,
+} from 'expo-router';
+import { useEffect, useState } from 'react';
+import {
     Image,
     Pressable,
     ScrollView,
@@ -21,10 +28,70 @@ export default function PublishedTop3Screen() {
 
   const { profile } = useProfile();
 
-  const allPosts = getFeedPosts([]);
+  const [post, setPost] = useState<Post | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const post =
-    allPosts.find((item) => item.id === postId) ?? null;
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadPost() {
+      if (!postId) {
+        if (isMounted) {
+          setPost(null);
+          setIsLoading(false);
+        }
+
+        return;
+      }
+
+      setIsLoading(true);
+
+      try {
+        const posts = await getHydratedFeedPosts([]);
+
+        const matchingPost =
+          posts.find((item) => item.id === postId) ??
+          null;
+
+        if (isMounted) {
+          setPost(matchingPost);
+        }
+      } catch (error) {
+        console.error(
+          'Failed to load published Top 3:',
+          error
+        );
+
+        if (isMounted) {
+          setPost(null);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadPost();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [postId]);
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScreenHeader showBackButton />
+
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>
+            Loading Top 3…
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (!post) {
     return (
@@ -40,7 +107,8 @@ export default function PublishedTop3Screen() {
           </Text>
 
           <Text style={styles.messageText}>
-            It may have been removed or is no longer available.
+            It may have been removed or is no longer
+            available.
           </Text>
         </View>
       </SafeAreaView>
@@ -52,33 +120,23 @@ export default function PublishedTop3Screen() {
       ? profile
       : getMockUserById(post.authorId);
 
-  const publishedText = formatRelativeTime(
-    post.publishedAt
-  )?.replace(/^Updated\s+/i, '');
-
   function openAuthorProfile() {
-  if (post.authorId === profile.id) {
-    router.push('/(tabs)/profile');
-    return;
-  }
+    if (post.authorId === profile.id) {
+      router.push('/(tabs)/profile');
+      return;
+    }
 
-  Alert.alert(
-    'Public profile coming next',
-    'We’ll build the read-only profile screen for other users next.'
-  );
-}
+    router.push({
+      pathname: '/public-profile',
+      params: {
+        userId: post.authorId,
+      },
+    });
+  }
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScreenHeader
-        title={post.collection.title}
-        subtitle={
-          publishedText
-            ? `Published ${publishedText}`
-            : 'Published'
-        }
-        showBackButton
-      />
+      <ScreenHeader showBackButton />
 
       <ScrollView
         contentContainerStyle={styles.content}
@@ -119,56 +177,11 @@ export default function PublishedTop3Screen() {
           </Pressable>
         ) : null}
 
-        <View style={styles.rankingCard}>
-          {post.collection.items.map((item, index) => (
-            <View
-              key={`${post.id}-${index}`}
-              style={[
-                styles.rankRow,
-                index < 2 && styles.rankRowBorder,
-              ]}>
-              <Text style={styles.rankNumber}>
-                {index + 1}
-              </Text>
-
-              <View style={styles.itemDetails}>
-                <Text style={styles.itemTitle}>
-                  {item?.title ?? 'Not selected'}
-                </Text>
-
-                {item?.subtitle ? (
-                  <Text style={styles.itemSubtitle}>
-                    {item.subtitle}
-                  </Text>
-                ) : null}
-              </View>
-            </View>
-          ))}
-        </View>
-
-        <View style={styles.socialRow}>
-          <View style={styles.socialStat}>
-            <Text style={styles.socialValue}>
-              {post.reactions}
-            </Text>
-
-            <Text style={styles.socialLabel}>
-              Reactions
-            </Text>
-          </View>
-
-          <View style={styles.socialDivider} />
-
-          <View style={styles.socialStat}>
-            <Text style={styles.socialValue}>
-              {post.comments}
-            </Text>
-
-            <Text style={styles.socialLabel}>
-              Comments
-            </Text>
-          </View>
-        </View>
+        <Top3Card
+          post={post}
+          author={author}
+          showAuthor={false}
+        />
       </ScrollView>
     </SafeAreaView>
   );
@@ -240,82 +253,15 @@ const styles = StyleSheet.create({
     color: '#999999',
   },
 
-  rankingCard: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#EEEEEE',
-    borderRadius: 16,
-    paddingHorizontal: 18,
-  },
-
-  rankRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    paddingVertical: 20,
-  },
-
-  rankRowBorder: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#EEEEEE',
-  },
-
-  rankNumber: {
-    width: 38,
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#222222',
-  },
-
-  itemDetails: {
-    flex: 1,
-  },
-
-  itemTitle: {
-    fontSize: 20,
-    lineHeight: 27,
-    fontWeight: '600',
-    color: '#222222',
-  },
-
-  itemSubtitle: {
-    marginTop: 4,
-    fontSize: 15,
-    lineHeight: 21,
-    color: '#777777',
-  },
-
-  socialRow: {
-    marginTop: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#EEEEEE',
-    borderRadius: 16,
-    paddingVertical: 18,
-  },
-
-  socialStat: {
+  loadingContainer: {
     flex: 1,
     alignItems: 'center',
+    paddingTop: 80,
   },
 
-  socialValue: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#222222',
-  },
-
-  socialLabel: {
-    marginTop: 4,
-    fontSize: 14,
+  loadingText: {
+    fontSize: 16,
     color: '#777777',
-  },
-
-  socialDivider: {
-    width: StyleSheet.hairlineWidth,
-    height: 34,
-    backgroundColor: '#DDDDDD',
   },
 
   messageContainer: {

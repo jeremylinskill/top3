@@ -157,7 +157,9 @@ export default function CreateCollectionScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+  style={styles.container}
+  edges={['top', 'left', 'right']}>
       <ScreenHeader />
 
       <ScrollView
@@ -210,8 +212,8 @@ const styles = StyleSheet.create({
 
   bottomBar: {
     paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 8,
+    paddingTop: 20,
+    paddingBottom: 20,
     backgroundColor: '#FAFAFA',
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: '#DDDDDD',

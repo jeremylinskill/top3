@@ -1,12 +1,12 @@
 import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
-import { TOP3_CATEGORIES } from '@/constants/top3-categories';
+import Top3Card from '@/components/top3-card';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
+import { Post } from '@/types/post';
 import { router } from 'expo-router';
 import {
   Image,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,52 +16,31 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ProfileScreen() {
   const { profile } = useProfile();
-  const { lists, selectList } = useTop3();
 
-  const publishedLists = [...lists]
-    .filter((list) => Boolean(list.publishedAt))
-    .sort((first, second) => {
-      const firstTime = first.publishedAt
-        ? new Date(first.publishedAt).getTime()
-        : 0;
+  const {
+    posts,
+    selectList,
+  } = useTop3();
 
-      const secondTime = second.publishedAt
-        ? new Date(second.publishedAt).getTime()
-        : 0;
-
-      return secondTime - firstTime;
-    });
-
-  function getCategoryIcon(categoryId: string) {
-    return (
-      TOP3_CATEGORIES.find(
-        (category) => category.id === categoryId
-      )?.icon ?? '⭐'
-    );
-  }
-
-  function getDisplayTitle(
-    categoryId: string,
-    topic?: string
-  ) {
-    const category = TOP3_CATEGORIES.find(
-      (item) => item.id === categoryId
+  const publishedPosts = [...posts]
+    .filter(
+      (post) => post.authorId === profile.id
+    )
+    .sort(
+      (first, second) =>
+        new Date(second.publishedAt).getTime() -
+        new Date(first.publishedAt).getTime()
     );
 
-    const categoryName = category?.name ?? categoryId;
-
-    return topic
-      ? `${categoryName} · ${topic}`
-      : categoryName;
-  }
-
-  function openCollection(listId: string) {
-    selectList(listId);
+  function openCollection(post: Post) {
+    selectList(post.collection.id);
     router.push('/collection');
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+  style={styles.container}
+  edges={['top', 'left', 'right']}>
       <ScreenHeader />
 
       <ScrollView
@@ -112,7 +91,7 @@ export default function ProfileScreen() {
         <View style={styles.statsRow}>
           <View style={styles.stat}>
             <Text style={styles.statValue}>
-              {publishedLists.length}
+              {publishedPosts.length}
             </Text>
 
             <Text style={styles.statLabel}>
@@ -123,7 +102,9 @@ export default function ProfileScreen() {
           <View style={styles.statDivider} />
 
           <View style={styles.stat}>
-            <Text style={styles.statValue}>0</Text>
+            <Text style={styles.statValue}>
+              0
+            </Text>
 
             <Text style={styles.statLabel}>
               Followers
@@ -133,7 +114,9 @@ export default function ProfileScreen() {
           <View style={styles.statDivider} />
 
           <View style={styles.stat}>
-            <Text style={styles.statValue}>0</Text>
+            <Text style={styles.statValue}>
+              0
+            </Text>
 
             <Text style={styles.statLabel}>
               Following
@@ -151,11 +134,9 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            Published Top 3s
-          </Text>
+        
 
-          {publishedLists.length === 0 ? (
+          {publishedPosts.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyStateTitle}>
                 Nothing published yet
@@ -167,38 +148,17 @@ export default function ProfileScreen() {
               </Text>
             </View>
           ) : (
-            <View style={styles.collectionList}>
-              {publishedLists.map((list) => (
-                <Pressable
-                  key={list.id}
-                  style={styles.collectionCard}
+            <View style={styles.postList}>
+              {publishedPosts.map((post) => (
+                <Top3Card
+                  key={post.id}
+                  post={post}
+                  author={profile}
+                  showAuthor={false}
                   onPress={() =>
-                    openCollection(list.id)
-                  }>
-                  <Text style={styles.collectionIcon}>
-                    {getCategoryIcon(list.category)}
-                  </Text>
-
-                  <View style={styles.collectionDetails}>
-                    <Text style={styles.collectionTitle}>
-                      {getDisplayTitle(
-                        list.category,
-                        list.topic
-                      )}
-                    </Text>
-
-                    <Text
-                      style={styles.collectionPreview}
-                      numberOfLines={1}>
-                      {list.items
-                        .filter(Boolean)
-                        .map((item) => item?.title)
-                        .join(' · ')}
-                    </Text>
-                  </View>
-
-                  <Text style={styles.arrow}>›</Text>
-                </Pressable>
+                    openCollection(post)
+                  }
+                />
               ))}
             </View>
           )}
@@ -316,55 +276,18 @@ const styles = StyleSheet.create({
   },
 
   section: {
-    marginTop: 26,
+    marginTop: 20,
   },
 
   sectionTitle: {
+    marginBottom: 14,
     fontSize: 22,
     fontWeight: '700',
     color: '#222222',
-    marginBottom: 14,
   },
 
-  collectionList: {
-    gap: 12,
-  },
-
-  collectionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#EEEEEE',
-    padding: 18,
-  },
-
-  collectionIcon: {
-    fontSize: 28,
-    marginRight: 14,
-  },
-
-  collectionDetails: {
-    flex: 1,
-    paddingRight: 12,
-  },
-
-  collectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#222222',
-  },
-
-  collectionPreview: {
-    marginTop: 5,
-    fontSize: 14,
-    color: '#777777',
-  },
-
-  arrow: {
-    fontSize: 30,
-    color: '#999999',
+  postList: {
+    gap: 16,
   },
 
   emptyState: {
