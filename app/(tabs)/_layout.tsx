@@ -14,10 +14,8 @@ export default function TabLayout() {
 
         tabBarStyle: {
           backgroundColor: '#FAFAFA',
-
           borderTopWidth: 1,
           borderTopColor: '#EAEAEA',
-
           elevation: 0,
           shadowOpacity: 0,
           shadowRadius: 0,
@@ -25,7 +23,6 @@ export default function TabLayout() {
             width: 0,
             height: 0,
           },
-
           height: 80,
         },
 
@@ -44,9 +41,39 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Feed',
-          tabBarIcon: ({ color, size, focused }) => (
+          tabBarIcon: ({
+            color,
+            size,
+            focused,
+          }) => (
             <Ionicons
-              name={focused ? 'home' : 'home-outline'}
+              name={
+                focused
+                  ? 'home'
+                  : 'home-outline'
+              }
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="discover"
+        options={{
+          title: 'Discover',
+          tabBarIcon: ({
+            color,
+            size,
+            focused,
+          }) => (
+            <Ionicons
+              name={
+                focused
+                  ? 'compass'
+                  : 'compass-outline'
+              }
               size={size}
               color={color}
             />
@@ -58,7 +85,11 @@ export default function TabLayout() {
         name="top3"
         options={{
           title: 'Create',
-          tabBarIcon: ({ color, size, focused }) => (
+          tabBarIcon: ({
+            color,
+            size,
+            focused,
+          }) => (
             <Ionicons
               name={
                 focused
@@ -76,7 +107,11 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color, size, focused }) => (
+          tabBarIcon: ({
+            color,
+            size,
+            focused,
+          }) => (
             <Ionicons
               name={
                 focused

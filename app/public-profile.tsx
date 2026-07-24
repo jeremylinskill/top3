@@ -1,5 +1,7 @@
+import CommentsSheet from '@/components/comments-sheet';
 import ScreenHeader from '@/components/screen-header';
 import Top3Card from '@/components/top3-card';
+import { useFollow } from '@/context/follow-context';
 import {
     getHydratedFeedPosts,
     getMockUserById,
@@ -11,6 +13,7 @@ import {
 } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
+    ActivityIndicator,
     Image,
     Pressable,
     ScrollView,
@@ -21,13 +24,23 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function PublicProfileScreen() {
-  const { userId } = useLocalSearchParams<{
-    userId?: string;
+  const params = useLocalSearchParams<{
+    userId?: string | string[];
   }>();
+
+  const userId = Array.isArray(params.userId)
+    ? params.userId[0]
+    : params.userId;
 
   const user = userId
     ? getMockUserById(userId)
     : null;
+
+  const {
+    isFollowing,
+    toggleFollow,
+    isLoading: isLoadingFollowState,
+  } = useFollow();
 
   const [publishedPosts, setPublishedPosts] =
     useState<Post[]>([]);
@@ -35,8 +48,14 @@ export default function PublicProfileScreen() {
   const [isLoadingPosts, setIsLoadingPosts] =
     useState(true);
 
-  const [isFollowing, setIsFollowing] =
-    useState(false);
+  const [
+    selectedCommentsPost,
+    setSelectedCommentsPost,
+  ] = useState<Post | null>(null);
+
+  const userIsFollowed = userId
+    ? isFollowing(userId)
+    : false;
 
   useEffect(() => {
     let isMounted = true;
@@ -97,6 +116,14 @@ export default function PublicProfileScreen() {
     };
   }, [userId]);
 
+  function handleToggleFollowing() {
+    if (!userId || isLoadingFollowState) {
+      return;
+    }
+
+    toggleFollow(userId);
+  }
+
   function openPost(postId: string) {
     router.push({
       pathname: '/published-top3',
@@ -106,10 +133,12 @@ export default function PublicProfileScreen() {
     });
   }
 
-  function toggleFollowing() {
-    setIsFollowing(
-      (currentValue) => !currentValue
-    );
+  function openComments(post: Post) {
+    setSelectedCommentsPost(post);
+  }
+
+  function closeComments() {
+    setSelectedCommentsPost(null);
   }
 
   if (!user) {
@@ -135,7 +164,9 @@ export default function PublicProfileScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={styles.container}
+      edges={['top', 'left', 'right']}>
       <ScreenHeader showBackButton />
 
       <ScrollView
@@ -192,7 +223,7 @@ export default function PublicProfileScreen() {
 
           <View style={styles.stat}>
             <Text style={styles.statValue}>
-              {isFollowing ? 1 : 0}
+              {userIsFollowed ? 1 : 0}
             </Text>
 
             <Text style={styles.statLabel}>
@@ -214,32 +245,44 @@ export default function PublicProfileScreen() {
         </View>
 
         <Pressable
-          style={[
+          style={({ pressed }) => [
             styles.followButton,
-            isFollowing &&
+            userIsFollowed &&
               styles.followingButton,
+            pressed && styles.buttonPressed,
+            isLoadingFollowState &&
+              styles.buttonDisabled,
           ]}
-          onPress={toggleFollowing}
+          onPress={handleToggleFollowing}
+          disabled={isLoadingFollowState}
           accessibilityRole="button"
+          accessibilityState={{
+            disabled: isLoadingFollowState,
+            selected: userIsFollowed,
+          }}
           accessibilityLabel={
-            isFollowing
+            userIsFollowed
               ? `Unfollow ${user.displayName}`
               : `Follow ${user.displayName}`
           }>
-          <Text
-            style={[
-              styles.followButtonText,
-              isFollowing &&
-                styles.followingButtonText,
-            ]}>
-            {isFollowing
-              ? 'Following'
-              : 'Follow'}
-          </Text>
+          {isLoadingFollowState ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text
+              style={[
+                styles.followButtonText,
+                userIsFollowed &&
+                  styles.followingButtonText,
+              ]}>
+              {userIsFollowed
+                ? 'Following'
+                : 'Follow'}
+            </Text>
+          )}
         </Pressable>
 
         <View style={styles.section}>
-            {isLoadingPosts ? (
+          {isLoadingPosts ? (
             <View style={styles.loadingState}>
               <Text style={styles.loadingText}>
                 Loading Top 3s…
@@ -260,16 +303,30 @@ export default function PublicProfileScreen() {
             <View style={styles.postList}>
               {publishedPosts.map((post) => (
                 <Top3Card
-  key={post.id}
-  post={post}
-  author={user}
-  showAuthor={false}
-/>
+                  key={post.id}
+                  post={post}
+                  author={user}
+                  showAuthor={false}
+                  onPress={() =>
+                    openPost(post.id)
+                  }
+                  onCommentsPress={() =>
+                    openComments(post)
+                  }
+                />
               ))}
             </View>
           )}
         </View>
       </ScrollView>
+
+      <CommentsSheet
+        visible={
+          selectedCommentsPost !== null
+        }
+        post={selectedCommentsPost}
+        onClose={closeComments}
+      />
     </SafeAreaView>
   );
 }
@@ -385,6 +442,14 @@ const styles = StyleSheet.create({
     borderColor: '#CCCCCC',
   },
 
+  buttonPressed: {
+    opacity: 0.75,
+  },
+
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+
   followButtonText: {
     color: '#FFFFFF',
     fontSize: 17,
@@ -397,13 +462,6 @@ const styles = StyleSheet.create({
 
   section: {
     marginTop: 20,
-  },
-
-  sectionTitle: {
-    marginBottom: 14,
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#222222',
   },
 
   postList: {

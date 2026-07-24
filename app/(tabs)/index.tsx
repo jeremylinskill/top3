@@ -1,3 +1,4 @@
+import CommentsSheet from '@/components/comments-sheet';
 import ScreenHeader from '@/components/screen-header';
 import Top3Card from '@/components/top3-card';
 import { useProfile } from '@/context/profile-context';
@@ -18,13 +19,25 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+function normalizeTopic(topic?: string) {
+  return topic?.trim().toLowerCase() || 'general';
+}
+
 export default function FeedScreen() {
   const { profile } = useProfile();
   const { posts, selectList } = useTop3();
 
-  const [feedPosts, setFeedPosts] = useState<Post[]>([]);
+  const [feedPosts, setFeedPosts] = useState<
+    Post[]
+  >([]);
+
   const [isLoadingFeed, setIsLoadingFeed] =
     useState(true);
+
+  const [
+    selectedCommentsPost,
+    setSelectedCommentsPost,
+  ] = useState<Post | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -72,7 +85,9 @@ export default function FeedScreen() {
     return getMockUserById(authorId);
   }
 
-  function openAuthorProfile(authorId: string) {
+  function openAuthorProfile(
+    authorId: string
+  ) {
     if (authorId === profile.id) {
       router.push('/(tabs)/profile');
       return;
@@ -87,15 +102,6 @@ export default function FeedScreen() {
   }
 
   function openPost(post: Post) {
-    const isCurrentUserPost =
-      post.authorId === profile.id;
-
-    if (isCurrentUserPost) {
-      selectList(post.collection.id);
-      router.push('/collection');
-      return;
-    }
-
     router.push({
       pathname: '/published-top3',
       params: {
@@ -104,10 +110,35 @@ export default function FeedScreen() {
     });
   }
 
+  function openCollectionFeed(post: Post) {
+    router.push({
+      pathname: '/category-feed',
+      params: {
+        category: post.collection.category,
+        topic: normalizeTopic(
+          post.collection.topic
+        ),
+      },
+    });
+  }
+
+  function editCollection(post: Post) {
+    selectList(post.collection.id);
+    router.push('/collection');
+  }
+
+  function openComments(post: Post) {
+    setSelectedCommentsPost(post);
+  }
+
+  function closeComments() {
+    setSelectedCommentsPost(null);
+  }
+
   return (
     <SafeAreaView
-  style={styles.container}
-  edges={['top', 'left', 'right']}>
+      style={styles.container}
+      edges={['top', 'left', 'right']}>
       <ScreenHeader />
 
       <ScrollView
@@ -126,7 +157,8 @@ export default function FeedScreen() {
             </Text>
 
             <Text style={styles.emptyText}>
-              Publish a completed Top 3 to see it here.
+              Publish a completed Top 3 to see it
+              here.
             </Text>
           </View>
         ) : (
@@ -139,6 +171,9 @@ export default function FeedScreen() {
               return null;
             }
 
+            const isCurrentUserPost =
+              post.authorId === profile.id;
+
             return (
               <Top3Card
                 key={post.id}
@@ -146,14 +181,38 @@ export default function FeedScreen() {
                 author={author}
                 showAuthor
                 onAuthorPress={() =>
-                  openAuthorProfile(post.authorId)
+                  openAuthorProfile(
+                    post.authorId
+                  )
                 }
-                onPress={() => openPost(post)}
+                onTitlePress={() =>
+                  openCollectionFeed(post)
+                }
+                onPress={() =>
+                  openPost(post)
+                }
+                onEditPress={
+                  isCurrentUserPost
+                    ? () =>
+                        editCollection(post)
+                    : undefined
+                }
+                onCommentsPress={() =>
+                  openComments(post)
+                }
               />
             );
           })
         )}
       </ScrollView>
+
+      <CommentsSheet
+        visible={
+          selectedCommentsPost !== null
+        }
+        post={selectedCommentsPost}
+        onClose={closeComments}
+      />
     </SafeAreaView>
   );
 }
@@ -188,16 +247,16 @@ const styles = StyleSheet.create({
   },
 
   emptyTitle: {
+    marginBottom: 8,
     fontSize: 22,
     fontWeight: '700',
-    marginBottom: 8,
     color: '#222222',
   },
 
   emptyText: {
     fontSize: 16,
+    lineHeight: 22,
     color: '#777777',
     textAlign: 'center',
-    lineHeight: 22,
   },
 });

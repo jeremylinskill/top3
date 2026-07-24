@@ -1,3 +1,4 @@
+import CommentsSheet from '@/components/comments-sheet';
 import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
 import Top3Card from '@/components/top3-card';
@@ -5,6 +6,7 @@ import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
 import { Post } from '@/types/post';
 import { router } from 'expo-router';
+import { useState } from 'react';
 import {
   Image,
   ScrollView,
@@ -22,14 +24,23 @@ export default function ProfileScreen() {
     selectList,
   } = useTop3();
 
+  const [
+    selectedCommentsPost,
+    setSelectedCommentsPost,
+  ] = useState<Post | null>(null);
+
   const publishedPosts = [...posts]
     .filter(
       (post) => post.authorId === profile.id
     )
     .sort(
       (first, second) =>
-        new Date(second.publishedAt).getTime() -
-        new Date(first.publishedAt).getTime()
+        new Date(
+          second.publishedAt
+        ).getTime() -
+        new Date(
+          first.publishedAt
+        ).getTime()
     );
 
   function openCollection(post: Post) {
@@ -37,10 +48,18 @@ export default function ProfileScreen() {
     router.push('/collection');
   }
 
+  function openComments(post: Post) {
+    setSelectedCommentsPost(post);
+  }
+
+  function closeComments() {
+    setSelectedCommentsPost(null);
+  }
+
   return (
     <SafeAreaView
-  style={styles.container}
-  edges={['top', 'left', 'right']}>
+      style={styles.container}
+      edges={['top', 'left', 'right']}>
       <ScreenHeader />
 
       <ScrollView
@@ -50,7 +69,9 @@ export default function ProfileScreen() {
           <View style={styles.avatar}>
             {profile.avatarUrl ? (
               <Image
-                source={{ uri: profile.avatarUrl }}
+                source={{
+                  uri: profile.avatarUrl,
+                }}
                 style={styles.avatarImage}
                 resizeMode="cover"
               />
@@ -82,7 +103,8 @@ export default function ProfileScreen() {
               <Text
                 style={styles.emptyBio}
                 numberOfLines={2}>
-                Add a bio to tell people about your taste.
+                Add a bio to tell people about
+                your taste.
               </Text>
             )}
           </View>
@@ -134,8 +156,6 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.section}>
-        
-
           {publishedPosts.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyStateTitle}>
@@ -143,8 +163,8 @@ export default function ProfileScreen() {
               </Text>
 
               <Text style={styles.emptyStateText}>
-                Complete and publish a Top 3 to show it on
-                your profile.
+                Complete and publish a Top 3 to
+                show it on your profile.
               </Text>
             </View>
           ) : (
@@ -158,12 +178,23 @@ export default function ProfileScreen() {
                   onPress={() =>
                     openCollection(post)
                   }
+                  onCommentsPress={() =>
+                    openComments(post)
+                  }
                 />
               ))}
             </View>
           )}
         </View>
       </ScrollView>
+
+      <CommentsSheet
+        visible={
+          selectedCommentsPost !== null
+        }
+        post={selectedCommentsPost}
+        onClose={closeComments}
+      />
     </SafeAreaView>
   );
 }
@@ -277,13 +308,6 @@ const styles = StyleSheet.create({
 
   section: {
     marginTop: 20,
-  },
-
-  sectionTitle: {
-    marginBottom: 14,
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#222222',
   },
 
   postList: {

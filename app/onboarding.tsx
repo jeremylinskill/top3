@@ -1,5 +1,10 @@
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 export default function OnboardingScreen() {
   return (
@@ -11,10 +16,12 @@ export default function OnboardingScreen() {
       </Text>
 
       <Pressable
-  style={styles.button}
-  onPress={() => router.push('/category')}>
-  <Text style={styles.buttonText}>Continue</Text>
-</Pressable>
+        style={styles.button}
+        onPress={() => router.push('/top3')}>
+        <Text style={styles.buttonText}>
+          Continue
+        </Text>
+      </Pressable>
     </View>
   );
 }
@@ -26,25 +33,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 24,
   },
+
   title: {
     fontSize: 34,
     fontWeight: 'bold',
     marginBottom: 16,
   },
+
   subtitle: {
     fontSize: 20,
     textAlign: 'center',
   },
+
   button: {
-  backgroundColor: '#000000',
-  paddingVertical: 16,
-  paddingHorizontal: 32,
-  borderRadius: 12,
-  marginTop: 32,
-},
-buttonText: {
-  color: '#FFFFFF',
-  fontSize: 18,
-  fontWeight: '600',
-},
+    backgroundColor: '#000000',
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    marginTop: 32,
+  },
+
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '600',
+  },
 });

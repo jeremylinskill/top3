@@ -26,15 +26,20 @@ function getInitialValuesForCategory(
   requestedCategoryId?: string
 ): CollectionFormValues {
   if (!requestedCategoryId) {
-    return getInitialCollectionFormValues(existingLists);
+    return getInitialCollectionFormValues(
+      existingLists
+    );
   }
 
   const category = TOP3_CATEGORIES.find(
-    (item) => item.id === requestedCategoryId
+    (item) =>
+      item.id === requestedCategoryId
   );
 
   if (!category) {
-    return getInitialCollectionFormValues(existingLists);
+    return getInitialCollectionFormValues(
+      existingLists
+    );
   }
 
   const availableTopics = category.topics
@@ -42,15 +47,23 @@ function getInitialValuesForCategory(
       const normalizedTopic =
         topic.id === 'general'
           ? ''
-          : topic.name.trim().toLowerCase();
+          : topic.name
+              .trim()
+              .toLowerCase();
 
       return !existingLists.some((list) => {
         const existingTopic =
-          list.topic?.trim().toLowerCase() ?? '';
+          list.topic
+            ?.trim()
+            .toLowerCase() ?? '';
 
         return (
-          list.category.trim().toLowerCase() ===
-            category.id.trim().toLowerCase() &&
+          list.category
+            .trim()
+            .toLowerCase() ===
+            category.id
+              .trim()
+              .toLowerCase() &&
           existingTopic === normalizedTopic
         );
       });
@@ -64,7 +77,9 @@ function getInitialValuesForCategory(
         return 1;
       }
 
-      return first.name.localeCompare(second.name);
+      return first.name.localeCompare(
+        second.name
+      );
     });
 
   const firstTopic = availableTopics[0];
@@ -90,9 +105,10 @@ function getInitialValuesForCategory(
 }
 
 export default function CreateCollectionScreen() {
-  const { categoryId } = useLocalSearchParams<{
-    categoryId?: string;
-  }>();
+  const { categoryId } =
+    useLocalSearchParams<{
+      categoryId?: string;
+    }>();
 
   const { createList, lists } = useTop3();
 
@@ -105,8 +121,8 @@ export default function CreateCollectionScreen() {
     );
 
   const canCreate =
-  Boolean(formValues.categoryId) &&
-  Boolean(formValues.title);
+    Boolean(formValues.categoryId) &&
+    Boolean(formValues.title);
 
   function createCollection() {
     if (!canCreate) {
@@ -114,7 +130,8 @@ export default function CreateCollectionScreen() {
     }
 
     const category = TOP3_CATEGORIES.find(
-      (item) => item.id === formValues.categoryId
+      (item) =>
+        item.id === formValues.categoryId
     );
 
     if (!category) {
@@ -122,10 +139,11 @@ export default function CreateCollectionScreen() {
     }
 
     const topic = formValues.topicId
-  ? category.topics.find(
-      (item) => item.id === formValues.topicId
-    )?.name
-  : undefined;
+      ? category.topics.find(
+          (item) =>
+            item.id === formValues.topicId
+        )?.name
+      : undefined;
 
     const newListId = createList({
       category: formValues.categoryId,
@@ -158,23 +176,25 @@ export default function CreateCollectionScreen() {
 
   return (
     <SafeAreaView
-  style={styles.container}
-  edges={['top', 'left', 'right']}>
+      style={styles.container}
+      edges={['top', 'left', 'right']}>
       <ScreenHeader />
 
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}>
-            <View style={styles.introduction}>
-  <Text style={styles.heading}>
-    Share your taste
-  </Text>
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled">
+        <View style={styles.headingSection}>
+          <Text style={styles.title}>
+            Share your taste
+          </Text>
 
-  <Text style={styles.description}>
-    What would you like to rank today?
-  </Text>
-</View>
+          <Text style={styles.subtitle}>
+            What would you like to rank today?
+          </Text>
+        </View>
+
         <CollectionForm
           existingLists={lists}
           values={formValues}
@@ -201,37 +221,40 @@ const styles = StyleSheet.create({
 
   scrollView: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FAFAFA',
   },
 
   content: {
     paddingHorizontal: 20,
-    paddingTop: 40,
-    paddingBottom: 24,
+    paddingTop: 24,
+    paddingBottom: 40,
+  },
+
+  headingSection: {
+    marginBottom: 24,
+  },
+
+  title: {
+    fontSize: 30,
+    lineHeight: 36,
+    fontWeight: '700',
+    color: '#222222',
+  },
+
+  subtitle: {
+    marginTop: 8,
+    fontSize: 16,
+    lineHeight: 22,
+    color: '#777777',
   },
 
   bottomBar: {
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 20,
+    paddingTop: 12,
+    paddingBottom: 8,
     backgroundColor: '#FAFAFA',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#DDDDDD',
+    borderTopWidth:
+      StyleSheet.hairlineWidth,
+    borderTopColor: '#EAEAEA',
   },
-  introduction: {
-  marginBottom: 24,
-},
-
-heading: {
-  fontSize: 30,
-  fontWeight: '700',
-  color: '#222222',
-},
-
-description: {
-  marginTop: 8,
-  fontSize: 17,
-  lineHeight: 24,
-  color: '#666666',
-},
 });
