@@ -1,0 +1,1 @@
+export const MINIMUM_TASTE_MATCH = 20;

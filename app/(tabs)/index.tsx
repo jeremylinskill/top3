@@ -1,16 +1,24 @@
 import CommentsSheet from '@/components/comments-sheet';
 import ScreenHeader from '@/components/screen-header';
 import Top3Card from '@/components/top3-card';
+import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
 import {
   getHydratedFeedPosts,
   getMockUserById,
 } from '@/services/post-service';
+import { getTasteRecommendationForUser } from '@/services/taste-recommendation-service';
 import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
+import { buildPersonalizedFeed } from '@/utils/build-personalized-feed';
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -25,7 +33,18 @@ function normalizeTopic(topic?: string) {
 
 export default function FeedScreen() {
   const { profile } = useProfile();
-  const { posts, selectList } = useTop3();
+
+  const {
+    followedUserIds,
+    isFollowing,
+    toggleFollow,
+    isLoading: isLoadingFollowState,
+  } = useFollow();
+
+  const {
+    posts,
+    selectList,
+  } = useTop3();
 
   const [feedPosts, setFeedPosts] = useState<
     Post[]
@@ -75,6 +94,55 @@ export default function FeedScreen() {
     };
   }, [posts]);
 
+  const personalizedFeed = useMemo(
+    () =>
+      buildPersonalizedFeed({
+        posts: feedPosts,
+        currentUserId: profile.id,
+        followedUserIds,
+      }),
+    [
+      feedPosts,
+      followedUserIds,
+      profile.id,
+    ]
+  );
+
+  const tasteMatchByUserId = useMemo(() => {
+    const matches = new Map<
+      string,
+      ReturnType<
+        typeof getTasteRecommendationForUser
+      >
+    >();
+
+    const feedAuthorIds = new Set(
+      personalizedFeed
+        .filter(
+          ({ post }) =>
+            post.authorId !== profile.id
+        )
+        .map(({ post }) => post.authorId)
+    );
+
+    feedAuthorIds.forEach((authorId) => {
+      matches.set(
+        authorId,
+        getTasteRecommendationForUser({
+          posts: feedPosts,
+          currentUserId: profile.id,
+          otherUserId: authorId,
+        })
+      );
+    });
+
+    return matches;
+  }, [
+    feedPosts,
+    personalizedFeed,
+    profile.id,
+  ]);
+
   function getPostAuthor(
     authorId: string
   ): UserProfile | null {
@@ -101,6 +169,21 @@ export default function FeedScreen() {
     });
   }
 
+  function openTasteMatch(
+    authorId: string
+  ) {
+    if (authorId === profile.id) {
+      return;
+    }
+
+    router.push({
+      pathname: '/taste-match',
+      params: {
+        userId: authorId,
+      },
+    });
+  }
+
   function openPost(post: Post) {
     router.push({
       pathname: '/published-top3',
@@ -114,7 +197,8 @@ export default function FeedScreen() {
     router.push({
       pathname: '/category-feed',
       params: {
-        category: post.collection.category,
+        category:
+          post.collection.category,
         topic: normalizeTopic(
           post.collection.topic
         ),
@@ -135,6 +219,19 @@ export default function FeedScreen() {
     setSelectedCommentsPost(null);
   }
 
+  function toggleAuthorFollow(
+    authorId: string
+  ) {
+    if (
+      authorId === profile.id ||
+      isLoadingFollowState
+    ) {
+      return;
+    }
+
+    toggleFollow(authorId);
+  }
+
   return (
     <SafeAreaView
       style={styles.container}
@@ -150,7 +247,7 @@ export default function FeedScreen() {
               Loading feed…
             </Text>
           </View>
-        ) : feedPosts.length === 0 ? (
+        ) : personalizedFeed.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyTitle}>
               Nothing published yet
@@ -162,47 +259,119 @@ export default function FeedScreen() {
             </Text>
           </View>
         ) : (
-          feedPosts.map((post) => {
-            const author = getPostAuthor(
-              post.authorId
-            );
+          personalizedFeed.map(
+            ({
+              post,
+              isSuggested,
+            }) => {
+              const author = getPostAuthor(
+                post.authorId
+              );
 
-            if (!author) {
-              return null;
+              if (!author) {
+                return null;
+              }
+
+              const isCurrentUserPost =
+                post.authorId === profile.id;
+
+              const authorIsFollowed =
+                isFollowing(post.authorId);
+
+              const tasteMatch =
+                !isCurrentUserPost
+                  ? tasteMatchByUserId.get(
+                      post.authorId
+                    )
+                  : null;
+
+              return (
+                <View
+                  key={post.id}
+                  style={styles.feedItem}>
+                  {isSuggested ? (
+                    <View
+                      style={
+                        styles.recommendationHeader
+                      }>
+                      <Ionicons
+                        name="sparkles-outline"
+                        size={16}
+                        color="#555555"
+                      />
+
+                      <Text
+                        style={
+                          styles.recommendationTitle
+                        }>
+                        Recommended for you
+                      </Text>
+                    </View>
+                  ) : null}
+
+                  <Top3Card
+                    post={post}
+                    author={author}
+                    showAuthor
+                    tasteMatchScore={
+                      tasteMatch?.score
+                    }
+                    tasteMatchSharedPickCount={
+                      tasteMatch?.sharedItems
+                        .length ?? 0
+                    }
+                    onTasteMatchPress={
+                      tasteMatch
+                        ? () =>
+                            openTasteMatch(
+                              post.authorId
+                            )
+                        : undefined
+                    }
+                    showFollowButton={
+                      isSuggested &&
+                      !isCurrentUserPost
+                    }
+                    isFollowingAuthor={
+                      authorIsFollowed
+                    }
+                    isFollowLoading={
+                      isLoadingFollowState
+                    }
+                    onFollowPress={
+                      isSuggested &&
+                      !isCurrentUserPost
+                        ? () =>
+                            toggleAuthorFollow(
+                              post.authorId
+                            )
+                        : undefined
+                    }
+                    onAuthorPress={() =>
+                      openAuthorProfile(
+                        post.authorId
+                      )
+                    }
+                    onTitlePress={() =>
+                      openCollectionFeed(post)
+                    }
+                    onPress={() =>
+                      openPost(post)
+                    }
+                    onEditPress={
+                      isCurrentUserPost
+                        ? () =>
+                            editCollection(post)
+                        : undefined
+                    }
+                    onCommentsPress={() =>
+                      openComments(post)
+                    }
+                  />
+                </View>
+              );
             }
-
-            const isCurrentUserPost =
-              post.authorId === profile.id;
-
-            return (
-              <Top3Card
-                key={post.id}
-                post={post}
-                author={author}
-                showAuthor
-                onAuthorPress={() =>
-                  openAuthorProfile(
-                    post.authorId
-                  )
-                }
-                onTitlePress={() =>
-                  openCollectionFeed(post)
-                }
-                onPress={() =>
-                  openPost(post)
-                }
-                onEditPress={
-                  isCurrentUserPost
-                    ? () =>
-                        editCollection(post)
-                    : undefined
-                }
-                onCommentsPress={() =>
-                  openComments(post)
-                }
-              />
-            );
-          })
+          )
         )}
       </ScrollView>
 
@@ -227,7 +396,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 32,
-    gap: 16,
+  },
+
+  feedItem: {
+    marginBottom: 16,
+  },
+
+  recommendationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 9,
+    paddingHorizontal: 4,
+  },
+
+  recommendationTitle: {
+    marginLeft: 6,
+    fontSize: 14,
+    lineHeight: 19,
+    fontWeight: '700',
+    color: '#555555',
   },
 
   loadingState: {

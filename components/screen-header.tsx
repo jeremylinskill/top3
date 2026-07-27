@@ -1,10 +1,12 @@
+import { COLORS } from '@/constants/colors';
+import { SPACING } from '@/constants/spacing';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import {
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 
 type ScreenHeaderProps = {
@@ -31,7 +33,7 @@ export default function ScreenHeader({
             <Ionicons
               name="chevron-back"
               size={28}
-              color="#222222"
+              color={COLORS.text}
             />
           </Pressable>
         ) : (
@@ -60,16 +62,16 @@ export default function ScreenHeader({
 
 const styles = StyleSheet.create({
   header: {
-    backgroundColor: '#FAFAFA',
+    backgroundColor: COLORS.background,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#DDDDDD',
+    borderBottomColor: COLORS.border,
   },
 
   topBar: {
     height: 44,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
+    paddingHorizontal: SPACING.sm,
   },
 
   sideSlot: {
@@ -84,12 +86,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 20,
     fontWeight: '700',
-    color: '#222222',
+    color: COLORS.text,
     letterSpacing: 0.2,
   },
 
   titleArea: {
-    paddingHorizontal: 20,
+    paddingHorizontal: SPACING.xl,
     paddingBottom: 10,
   },
 
@@ -97,13 +99,13 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontWeight: '700',
     lineHeight: 42,
-    color: '#222222',
+    color: COLORS.text,
   },
 
   subtitle: {
-    marginTop: 4,
+    marginTop: SPACING.xs,
     fontSize: 14,
-    color: '#777777',
+    color: COLORS.tertiaryText,
     lineHeight: 18,
   },
 });

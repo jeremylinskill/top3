@@ -1,8 +1,27 @@
+import DiscoverListCard from '@/components/discover-list-card';
 import ScreenHeader from '@/components/screen-header';
+import SegmentedControl from '@/components/segmented-control';
+import TasteMatchBadge from '@/components/taste-match-badge';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
+import { useFollow } from '@/context/follow-context';
+import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
-import { getHydratedFeedPosts } from '@/services/post-service';
+import {
+  getHydratedFeedPosts,
+  getMockUserById,
+} from '@/services/post-service';
+import {
+  clearRecentSearches,
+  getRecentSearches,
+  saveRecentSearch,
+} from '@/services/recent-search-service';
+import { getTasteRecommendations } from '@/services/taste-recommendation-service';
 import { Post } from '@/types/post';
+import { UserProfile } from '@/types/user-profile';
+import {
+  Ionicons,
+  MaterialIcons,
+} from '@expo/vector-icons';
 import { router } from 'expo-router';
 import {
   useEffect,
@@ -11,10 +30,14 @@ import {
 } from 'react';
 import {
   ActivityIndicator,
+  Image,
+  Keyboard,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -25,7 +48,7 @@ type DiscoverCategory = {
   icon: string;
 };
 
-type PopularTopic = {
+type DiscoverTopic = {
   id: string;
   categoryId: string;
   categoryName: string;
@@ -33,6 +56,22 @@ type PopularTopic = {
   topic: string;
   listCount: number;
 };
+
+type MatchingCollection = {
+  id: string;
+  categoryId: string;
+  categoryName: string;
+  categoryIcon: string;
+  topic: string;
+  title: string;
+  matchingListCount: number;
+};
+
+type DiscoverBrowseMode = 'people' | 'trending';
+
+const TRENDING_WINDOW_DAYS = 30;
+const MAX_TRENDING_CATEGORIES = 3;
+const MAX_TRENDING_TOPICS = 3;
 
 const DISCOVER_CATEGORIES: DiscoverCategory[] =
   [...TOP3_CATEGORIES]
@@ -61,8 +100,39 @@ function formatTopicLabel(value: string) {
     .join(' ');
 }
 
+function formatResultCaption(
+  categoryCount: number,
+  topicCount: number,
+  collectionCount: number,
+  peopleCount: number
+) {
+  const total =
+    categoryCount +
+    topicCount +
+    collectionCount +
+    peopleCount;
+
+  if (total === 0) {
+    return 'No matches';
+  }
+
+  if (total === 1) {
+    return '1 match';
+  }
+
+  return `${total} matches`;
+}
+
 export default function DiscoverScreen() {
+  const { profile } = useProfile();
   const { posts } = useTop3();
+
+  const {
+    followedUserIds,
+    isFollowing,
+    toggleFollow,
+    isLoading: isLoadingFollowState,
+  } = useFollow();
 
   const [allPosts, setAllPosts] = useState<
     Post[]
@@ -70,6 +140,37 @@ export default function DiscoverScreen() {
 
   const [isLoading, setIsLoading] =
     useState(true);
+
+  const [searchQuery, setSearchQuery] =
+    useState('');
+
+  const [recentSearches, setRecentSearches] =
+    useState<string[]>([]);
+
+  const [isSearchFocused, setIsSearchFocused] =
+    useState(false);
+
+  const [browseMode, setBrowseMode] =
+    useState<DiscoverBrowseMode>('people');
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadRecentSearches() {
+      const storedSearches =
+        await getRecentSearches();
+
+      if (isMounted) {
+        setRecentSearches(storedSearches);
+      }
+    }
+
+    loadRecentSearches();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -131,12 +232,12 @@ export default function DiscoverScreen() {
     [allPosts]
   );
 
-  const popularTopics = useMemo<
-    PopularTopic[]
+  const allTopics = useMemo<
+    DiscoverTopic[]
   >(() => {
     const topicMap = new Map<
       string,
-      PopularTopic
+      DiscoverTopic
     >();
 
     allPosts.forEach((post) => {
@@ -173,11 +274,155 @@ export default function DiscoverScreen() {
       }
 
       const topicId =
-        `${categoryId}:` +
-        normalizedTopic;
+        `${categoryId}:${normalizedTopic}`;
 
       const existingTopic =
         topicMap.get(topicId);
+
+      if (existingTopic) {
+        existingTopic.listCount += 1;
+        return;
+      }
+
+      topicMap.set(topicId, {
+        id: topicId,
+        categoryId: category.id,
+        categoryName: category.name,
+        categoryIcon: category.icon,
+        topic: formatTopicLabel(rawTopic),
+        listCount: 1,
+      });
+    });
+
+    return Array.from(topicMap.values()).sort(
+      (first, second) => {
+        if (
+          second.listCount !== first.listCount
+        ) {
+          return (
+            second.listCount -
+            first.listCount
+          );
+        }
+
+        const topicComparison =
+          first.topic.localeCompare(
+            second.topic
+          );
+
+        if (topicComparison !== 0) {
+          return topicComparison;
+        }
+
+        return first.categoryName.localeCompare(
+          second.categoryName
+        );
+      }
+    );
+  }, [allPosts]);
+
+  const trendingPosts = useMemo(() => {
+    const cutoffTime =
+      Date.now() -
+      TRENDING_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+
+    const recentPosts = allPosts.filter((post) => {
+      const publishedTime = new Date(
+        post.publishedAt
+      ).getTime();
+
+      return (
+        Number.isFinite(publishedTime) &&
+        publishedTime >= cutoffTime
+      );
+    });
+
+    return recentPosts.length > 0
+      ? recentPosts
+      : allPosts;
+  }, [allPosts]);
+
+  const trendingCategories = useMemo(() => {
+    const counts = new Map<string, number>();
+
+    trendingPosts.forEach((post) => {
+      const categoryId = normalizeValue(
+        post.collection.category
+      );
+
+      if (!categoryId) {
+        return;
+      }
+
+      counts.set(
+        categoryId,
+        (counts.get(categoryId) ?? 0) + 1
+      );
+    });
+
+    return DISCOVER_CATEGORIES
+      .map((category) => ({
+        ...category,
+        trendingCount:
+          counts.get(normalizeValue(category.id)) ?? 0,
+      }))
+      .filter((category) => category.trendingCount > 0)
+      .sort((first, second) => {
+        if (
+          second.trendingCount !== first.trendingCount
+        ) {
+          return (
+            second.trendingCount -
+            first.trendingCount
+          );
+        }
+
+        return first.name.localeCompare(second.name);
+      })
+      .slice(0, MAX_TRENDING_CATEGORIES);
+  }, [trendingPosts]);
+
+  const trendingTopics = useMemo<
+    DiscoverTopic[]
+  >(() => {
+    const topicMap = new Map<
+      string,
+      DiscoverTopic
+    >();
+
+    trendingPosts.forEach((post) => {
+      const categoryId = normalizeValue(
+        post.collection.category
+      );
+      const rawTopic =
+        post.collection.topic?.trim();
+
+      if (!categoryId || !rawTopic) {
+        return;
+      }
+
+      const normalizedTopic =
+        normalizeValue(rawTopic);
+
+      if (
+        !normalizedTopic ||
+        normalizedTopic === 'general'
+      ) {
+        return;
+      }
+
+      const category = TOP3_CATEGORIES.find(
+        (item) =>
+          normalizeValue(item.id) === categoryId
+      );
+
+      if (!category) {
+        return;
+      }
+
+      const topicId =
+        `${categoryId}:${normalizedTopic}`;
+      const existingTopic = topicMap.get(topicId);
 
       if (existingTopic) {
         existingTopic.listCount += 1;
@@ -200,15 +445,12 @@ export default function DiscoverScreen() {
           second.listCount !== first.listCount
         ) {
           return (
-            second.listCount -
-            first.listCount
+            second.listCount - first.listCount
           );
         }
 
         const topicComparison =
-          first.topic.localeCompare(
-            second.topic
-          );
+          first.topic.localeCompare(second.topic);
 
         if (topicComparison !== 0) {
           return topicComparison;
@@ -218,8 +460,299 @@ export default function DiscoverScreen() {
           second.categoryName
         );
       })
-      .slice(0, 10);
-  }, [allPosts]);
+      .slice(0, MAX_TRENDING_TOPICS);
+  }, [trendingPosts]);
+
+  const searchablePeople = useMemo<
+    UserProfile[]
+  >(() => {
+    const peopleById = new Map<
+      string,
+      UserProfile
+    >();
+
+    peopleById.set(profile.id, profile);
+
+    allPosts.forEach((post) => {
+      if (peopleById.has(post.authorId)) {
+        return;
+      }
+
+      const author =
+        post.authorId === profile.id
+          ? profile
+          : getMockUserById(post.authorId);
+
+      if (author) {
+        peopleById.set(author.id, author);
+      }
+    });
+
+    return Array.from(
+      peopleById.values()
+    )
+      .filter(
+        (person) => person.id !== profile.id
+      )
+      .sort((first, second) =>
+        first.displayName.localeCompare(
+          second.displayName
+        )
+      );
+  }, [allPosts, profile]);
+
+  const tasteRecommendations = useMemo(() => {
+    const publishedPostCountByUserId =
+      new Map<string, number>();
+
+    allPosts.forEach((post) => {
+      publishedPostCountByUserId.set(
+        post.authorId,
+        (publishedPostCountByUserId.get(
+          post.authorId
+        ) ?? 0) + 1
+      );
+    });
+
+    const recommendationCandidates =
+      getTasteRecommendations({
+        posts: allPosts,
+        currentUserId: profile.id,
+        limit: Math.max(
+          allPosts.length,
+          20
+        ),
+      });
+
+    return recommendationCandidates
+      .filter(
+        ({ user }) =>
+          user.id !== profile.id &&
+          !followedUserIds.includes(user.id)
+      )
+      .sort((first, second) => {
+        if (second.score !== first.score) {
+          return second.score - first.score;
+        }
+
+        if (
+          second.sharedItems.length !==
+          first.sharedItems.length
+        ) {
+          return (
+            second.sharedItems.length -
+            first.sharedItems.length
+          );
+        }
+
+        const secondPublishedCount =
+          publishedPostCountByUserId.get(
+            second.user.id
+          ) ?? 0;
+
+        const firstPublishedCount =
+          publishedPostCountByUserId.get(
+            first.user.id
+          ) ?? 0;
+
+        if (
+          secondPublishedCount !==
+          firstPublishedCount
+        ) {
+          return (
+            secondPublishedCount -
+            firstPublishedCount
+          );
+        }
+
+        return first.user.displayName.localeCompare(
+          second.user.displayName
+        );
+      })
+      .slice(0, 3);
+  }, [
+    allPosts,
+    followedUserIds,
+    profile.id,
+  ]);
+
+  const normalizedSearchQuery =
+    normalizeValue(searchQuery);
+
+  const isSearching =
+    normalizedSearchQuery.length > 0;
+
+  const showRecentSearches =
+    isSearchFocused &&
+    !isSearching &&
+    recentSearches.length > 0;
+
+  const filteredCategories = useMemo(() => {
+    if (!normalizedSearchQuery) {
+      return [];
+    }
+
+    return DISCOVER_CATEGORIES.filter(
+      (category) =>
+        normalizeValue(category.name).includes(
+          normalizedSearchQuery
+        )
+    );
+  }, [normalizedSearchQuery]);
+
+  const filteredTopics = useMemo(() => {
+    if (!normalizedSearchQuery) {
+      return [];
+    }
+
+    return allTopics.filter((topic) => {
+      const searchableText = normalizeValue(
+        `${topic.topic} ${topic.categoryName}`
+      );
+
+      return searchableText.includes(
+        normalizedSearchQuery
+      );
+    });
+  }, [
+    allTopics,
+    normalizedSearchQuery,
+  ]);
+
+  const matchingCollections = useMemo<
+    MatchingCollection[]
+  >(() => {
+    if (!normalizedSearchQuery) {
+      return [];
+    }
+
+    const collectionMap = new Map<
+      string,
+      MatchingCollection
+    >();
+
+    allPosts.forEach((post) => {
+      const itemMatches =
+        post.collection.items.some((item) => {
+          if (!item) {
+            return false;
+          }
+
+          const searchableItem =
+            normalizeValue(
+              `${item.title} ${
+                item.subtitle ?? ''
+              }`
+            );
+
+          return searchableItem.includes(
+            normalizedSearchQuery
+          );
+        });
+
+      if (!itemMatches) {
+        return;
+      }
+
+      const categoryId = normalizeValue(
+        post.collection.category
+      );
+
+      if (!categoryId) {
+        return;
+      }
+
+      const category =
+        TOP3_CATEGORIES.find(
+          (item) =>
+            normalizeValue(item.id) ===
+            categoryId
+        );
+
+      if (!category) {
+        return;
+      }
+
+      const normalizedTopic =
+        normalizeValue(
+          post.collection.topic
+        ) || 'general';
+
+      const collectionId =
+        `${categoryId}:${normalizedTopic}`;
+
+      const existingCollection =
+        collectionMap.get(collectionId);
+
+      if (existingCollection) {
+        existingCollection.matchingListCount += 1;
+        return;
+      }
+
+      collectionMap.set(collectionId, {
+        id: collectionId,
+        categoryId: category.id,
+        categoryName: category.name,
+        categoryIcon: category.icon,
+        topic: normalizedTopic,
+        title: post.collection.title,
+        matchingListCount: 1,
+      });
+    });
+
+    return Array.from(
+      collectionMap.values()
+    ).sort((first, second) => {
+      if (
+        second.matchingListCount !==
+        first.matchingListCount
+      ) {
+        return (
+          second.matchingListCount -
+          first.matchingListCount
+        );
+      }
+
+      return first.title.localeCompare(
+        second.title
+      );
+    });
+  }, [
+    allPosts,
+    normalizedSearchQuery,
+  ]);
+
+  const filteredPeople = useMemo(() => {
+    if (!normalizedSearchQuery) {
+      return [];
+    }
+
+    return searchablePeople.filter((person) => {
+      const searchableText = normalizeValue(
+        `${person.displayName} ${person.username}`
+      );
+
+      return searchableText.includes(
+        normalizedSearchQuery
+      );
+    });
+  }, [
+    searchablePeople,
+    normalizedSearchQuery,
+  ]);
+
+  const resultCount =
+    filteredCategories.length +
+    filteredTopics.length +
+    matchingCollections.length +
+    filteredPeople.length;
+
+  const resultCaption = formatResultCaption(
+    filteredCategories.length,
+    filteredTopics.length,
+    matchingCollections.length,
+    filteredPeople.length
+  );
 
   function getPublishedCount(
     categoryId: string
@@ -263,9 +796,99 @@ export default function DiscoverScreen() {
     return `${count} published Top 3s`;
   }
 
+  function getMatchingListCountLabel(
+    count: number
+  ) {
+    if (count === 1) {
+      return '1 matching list';
+    }
+
+    return `${count} matching lists`;
+  }
+
+  async function rememberSearch(
+    value: string
+  ) {
+    const normalizedSearch = value.trim();
+
+    if (!normalizedSearch) {
+      return;
+    }
+
+    const nextSearches =
+      await saveRecentSearch(
+        normalizedSearch
+      );
+
+    setRecentSearches(nextSearches);
+  }
+
+  function submitSearch() {
+    if (!searchQuery.trim()) {
+      return;
+    }
+
+    setIsSearchFocused(false);
+    Keyboard.dismiss();
+    void rememberSearch(searchQuery);
+  }
+
+  function chooseRecentSearch(
+    recentSearch: string
+  ) {
+    setSearchQuery(recentSearch);
+    setIsSearchFocused(false);
+    Keyboard.dismiss();
+    void rememberSearch(recentSearch);
+  }
+
+  async function removeRecentSearch(
+    recentSearchToRemove: string
+  ) {
+    const nextSearches = recentSearches.filter(
+      (recentSearch) =>
+        normalizeValue(recentSearch) !==
+        normalizeValue(recentSearchToRemove)
+    );
+
+    await clearRecentSearches();
+
+    for (const recentSearch of [
+      ...nextSearches,
+    ].reverse()) {
+      await saveRecentSearch(recentSearch);
+    }
+
+    setRecentSearches(nextSearches);
+  }
+
+  function dismissSearchKeyboard() {
+    setIsSearchFocused(false);
+    Keyboard.dismiss();
+  }
+
+  async function clearAllRecentSearches() {
+    await clearRecentSearches();
+    setRecentSearches([]);
+  }
+
+  function clearSearch() {
+    setSearchQuery('');
+    Keyboard.dismiss();
+  }
+
+  function saveActiveSearch() {
+    if (isSearching) {
+      void rememberSearch(searchQuery);
+    }
+  }
+
   function openCategoryFeed(
     categoryId: string
   ) {
+    Keyboard.dismiss();
+    saveActiveSearch();
+
     router.push({
       pathname: '/category-feed',
       params: {
@@ -276,8 +899,11 @@ export default function DiscoverScreen() {
   }
 
   function openTopicFeed(
-    topic: PopularTopic
+    topic: DiscoverTopic
   ) {
+    Keyboard.dismiss();
+    saveActiveSearch();
+
     router.push({
       pathname: '/category-feed',
       params: {
@@ -285,6 +911,58 @@ export default function DiscoverScreen() {
         topic: normalizeValue(topic.topic),
       },
     });
+  }
+
+  function openMatchingCollection(
+    collection: MatchingCollection
+  ) {
+    Keyboard.dismiss();
+    saveActiveSearch();
+
+    router.push({
+      pathname: '/category-feed',
+      params: {
+        category: collection.categoryId,
+        topic: collection.topic,
+        itemQuery: searchQuery.trim(),
+      },
+    });
+  }
+
+  function openPersonProfile(
+    person: UserProfile
+  ) {
+    Keyboard.dismiss();
+    saveActiveSearch();
+
+    router.push({
+      pathname: '/public-profile',
+      params: {
+        userId: person.id,
+      },
+    });
+  }
+
+  function openTasteMatch(userId: string) {
+    Keyboard.dismiss();
+    saveActiveSearch();
+
+    router.push({
+      pathname: '/taste-match',
+      params: {
+        userId,
+      },
+    });
+  }
+
+  function toggleRecommendedPersonFollow(
+    userId: string
+  ) {
+    if (isLoadingFollowState) {
+      return;
+    }
+
+    toggleFollow(userId);
   }
 
   return (
@@ -295,160 +973,824 @@ export default function DiscoverScreen() {
 
       <ScrollView
         contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode={
+          Platform.OS === 'ios'
+            ? 'interactive'
+            : 'on-drag'
+        }
+        onScrollBeginDrag={dismissSearchKeyboard}>
         <View style={styles.headingSection}>
-          <Text style={styles.title}>
-            Discover Top 3s
-          </Text>
+          <View style={styles.searchContainer}>
+            <Ionicons
+              name="search-outline"
+              size={19}
+              color="#777777"
+            />
 
-          <Text style={styles.subtitle}>
-            Browse published lists by category
-            and see what the community ranks
-            highest overall.
-          </Text>
-        </View>
+            <TextInput
+              style={styles.searchInput}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Search Top 3s and People"
+              placeholderTextColor="#999999"
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="search"
+              clearButtonMode="never"
+              onFocus={() =>
+                setIsSearchFocused(true)
+              }
+              onBlur={() =>
+                setIsSearchFocused(false)
+              }
+              onSubmitEditing={submitSearch}
+              accessibilityLabel="Search Top 3s and People"
+            />
 
-        <Text style={styles.sectionTitle}>
-          Categories
-        </Text>
-
-        <View style={styles.categoryList}>
-          {DISCOVER_CATEGORIES.map(
-            (category) => (
+            {searchQuery.length > 0 ? (
               <Pressable
-                key={category.id}
                 style={({ pressed }) => [
-                  styles.categoryCard,
+                  styles.clearButton,
                   pressed && styles.pressed,
                 ]}
-                onPress={() =>
-                  openCategoryFeed(category.id)
-                }
+                onPress={clearSearch}
+                hitSlop={10}
                 accessibilityRole="button"
-                accessibilityLabel={`Browse ${category.name} Top 3 lists`}>
-                <View
-                  style={styles.iconContainer}>
-                  <Text style={styles.icon}>
-                    {category.icon}
-                  </Text>
-                </View>
+                accessibilityLabel="Clear search">
+                <Ionicons
+                  name="close-circle"
+                  size={20}
+                  color="#999999"
+                />
+              </Pressable>
+            ) : null}
+          </View>
 
-                <View
-                  style={styles.categoryDetails}>
-                  <Text
-                    style={styles.categoryName}>
-                    {category.name}
-                  </Text>
+          {!showRecentSearches && !isSearching ? (
+            <View style={styles.segmentedSection}>
+              <SegmentedControl<DiscoverBrowseMode>
+                value={browseMode}
+                options={[
+                  {
+                    value: 'people',
+                    label: 'People',
+                    accessibilityLabel:
+                      'Show people recommendations',
+                  },
+                  {
+                    value: 'trending',
+                    label: 'Trending',
+                    accessibilityLabel:
+                      'Show trending categories and topics',
+                  },
+                ]}
+                onChange={setBrowseMode}
+              />
+            </View>
+          ) : null}
+        </View>
 
-                  <View
-                    style={
-                      styles.categoryMetaRow
-                    }>
-                    {isLoading ? (
-                      <ActivityIndicator
-                        size="small"
-                        color="#999999"
-                      />
-                    ) : null}
+        <Pressable
+          style={styles.contentDismissArea}
+          onPress={dismissSearchKeyboard}
+          accessible={false}>
+          {showRecentSearches ? (
+          <View style={styles.recentSection}>
+            <View style={styles.recentHeader}>
+              <Text style={styles.sectionTitle}>
+                Recent Searches
+              </Text>
 
-                    <Text
-                      style={[
-                        styles.categoryMeta,
-                        isLoading &&
-                          styles
-                            .categoryMetaLoading,
-                      ]}>
-                      {getPublishedCountLabel(
-                        category.id
-                      )}
-                    </Text>
-                  </View>
-                </View>
-
-                <Text style={styles.arrow}>
-                  ›
+              <Pressable
+                style={({ pressed }) => [
+                  styles.clearRecentButton,
+                  pressed && styles.pressed,
+                ]}
+                onPress={clearAllRecentSearches}
+                accessibilityRole="button"
+                accessibilityLabel="Clear recent searches">
+                <Text
+                  style={styles.clearRecentText}>
+                  Clear all
                 </Text>
               </Pressable>
-            )
-          )}
-        </View>
-
-        <View style={styles.topicsSection}>
-          <Text style={styles.sectionTitle}>
-            Popular Topics
-          </Text>
-
-          {isLoading ? (
-            <View style={styles.topicsLoading}>
-              <ActivityIndicator
-                size="small"
-                color="#777777"
-              />
-
-              <Text
-                style={styles.topicsLoadingText}>
-                Loading popular topics…
-              </Text>
             </View>
-          ) : popularTopics.length === 0 ? (
+
+            <View style={styles.recentList}>
+              {recentSearches.map(
+                (recentSearch) => (
+                  <View
+                    key={recentSearch.toLowerCase()}
+                    style={styles.recentSearchCard}>
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.recentSearchAction,
+                        pressed && styles.pressed,
+                      ]}
+                      onPress={() =>
+                        chooseRecentSearch(
+                          recentSearch
+                        )
+                      }
+                      accessibilityRole="button"
+                      accessibilityLabel={`Search for ${recentSearch}`}>
+                      <MaterialIcons
+                        name="history"
+                        size={23}
+                        color="#777777"
+                      />
+
+                      <Text
+                        style={
+                          styles.recentSearchText
+                        }
+                        numberOfLines={1}>
+                        {recentSearch}
+                      </Text>
+                    </Pressable>
+
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.removeRecentButton,
+                        pressed && styles.pressed,
+                      ]}
+                      onPress={() =>
+                        void removeRecentSearch(
+                          recentSearch
+                        )
+                      }
+                      hitSlop={8}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Remove ${recentSearch} from recent searches`}>
+                      <Ionicons
+                        name="close"
+                        size={21}
+                        color="#777777"
+                      />
+                    </Pressable>
+                  </View>
+                )
+              )}
+            </View>
+          </View>
+        ) : isSearching ? (
+          <View style={styles.searchResults}>
+            <Text style={styles.resultsCaption}>
+              {resultCaption} for “
+              {searchQuery.trim()}”
+            </Text>
+
+            {filteredCategories.length > 0 ? (
+              <View style={styles.resultSection}>
+                <Text style={styles.sectionTitle}>
+                  Categories
+                </Text>
+
+                <View style={styles.categoryList}>
+                  {filteredCategories.map(
+                    (category) => (
+                      <Pressable
+                        key={category.id}
+                        style={({ pressed }) => [
+                          styles.categoryCard,
+                          pressed &&
+                            styles.pressed,
+                        ]}
+                        onPress={() =>
+                          openCategoryFeed(
+                            category.id
+                          )
+                        }
+                        accessibilityRole="button"
+                        accessibilityLabel={`Browse ${category.name} Top 3 lists`}>
+                        <View
+                          style={
+                            styles.iconContainer
+                          }>
+                          <Text
+                            style={styles.icon}>
+                            {category.icon}
+                          </Text>
+                        </View>
+
+                        <View
+                          style={
+                            styles.categoryDetails
+                          }>
+                          <Text
+                            style={
+                              styles.categoryName
+                            }>
+                            {category.name}
+                          </Text>
+
+                          <View
+                            style={
+                              styles.categoryMetaRow
+                            }>
+                            {isLoading ? (
+                              <ActivityIndicator
+                                size="small"
+                                color="#999999"
+                              />
+                            ) : null}
+
+                            <Text
+                              style={[
+                                styles.categoryMeta,
+                                isLoading &&
+                                  styles
+                                    .categoryMetaLoading,
+                              ]}>
+                              {getPublishedCountLabel(
+                                category.id
+                              )}
+                            </Text>
+                          </View>
+                        </View>
+
+                        <Text
+                          style={styles.arrow}>
+                          ›
+                        </Text>
+                      </Pressable>
+                    )
+                  )}
+                </View>
+              </View>
+            ) : null}
+
+            {filteredTopics.length > 0 ? (
+              <View style={styles.resultSection}>
+                <Text style={styles.sectionTitle}>
+                  Topics
+                </Text>
+
+                <View style={styles.topicList}>
+                  {filteredTopics.map(
+                    (topic) => (
+                      <Pressable
+                        key={topic.id}
+                        style={({ pressed }) => [
+                          styles.topicCard,
+                          pressed &&
+                            styles.pressed,
+                        ]}
+                        onPress={() =>
+                          openTopicFeed(topic)
+                        }
+                        accessibilityRole="button"
+                        accessibilityLabel={`Browse ${topic.categoryName} ${topic.topic} Top 3 lists`}>
+                        <View
+                          style={styles.topicIcon}>
+                          <Text
+                            style={
+                              styles.topicEmoji
+                            }>
+                            {topic.categoryIcon}
+                          </Text>
+                        </View>
+
+                        <View
+                          style={
+                            styles.topicDetails
+                          }>
+                          <Text
+                            style={
+                              styles.topicTitle
+                            }>
+                            {topic.categoryName} • {topic.topic}
+                          </Text>
+
+                          <Text
+                            style={
+                              styles.topicMeta
+                            }>
+                            {getTopicCountLabel(
+                              topic.listCount
+                            )}
+                          </Text>
+                        </View>
+
+                        <Text
+                          style={styles.arrow}>
+                          ›
+                        </Text>
+                      </Pressable>
+                    )
+                  )}
+                </View>
+              </View>
+            ) : null}
+
+            {matchingCollections.length > 0 ? (
+              <View style={styles.resultSection}>
+                <Text style={styles.sectionTitle}>
+                  Collections containing “
+                  {searchQuery.trim()}”
+                </Text>
+
+                <View
+                  style={styles.collectionList}>
+                  {matchingCollections.map(
+                    (collection) => (
+                      <Pressable
+                        key={collection.id}
+                        style={({ pressed }) => [
+                          styles.collectionCard,
+                          pressed &&
+                            styles.pressed,
+                        ]}
+                        onPress={() =>
+                          openMatchingCollection(
+                            collection
+                          )
+                        }
+                        accessibilityRole="button"
+                        accessibilityLabel={`Open ${
+                          collection.topic === 'general'
+                            ? collection.categoryName
+                            : `${collection.categoryName} ${formatTopicLabel(
+                                collection.topic
+                              )}`
+                        }`}>
+                        <View
+                          style={
+                            styles.collectionIcon
+                          }>
+                          <Text
+                            style={
+                              styles.collectionEmoji
+                            }>
+                            {
+                              collection.categoryIcon
+                            }
+                          </Text>
+                        </View>
+
+                        <View
+                          style={
+                            styles.collectionDetails
+                          }>
+                          <Text
+                            style={
+                              styles.collectionTitle
+                            }
+                            numberOfLines={2}>
+                            {collection.topic ===
+                            'general'
+                              ? collection.categoryName
+                              : `${collection.categoryName} • ${formatTopicLabel(
+                                  collection.topic
+                                )}`}
+                          </Text>
+
+                          <Text
+                            style={
+                              styles.collectionMeta
+                            }>
+                            {getMatchingListCountLabel(
+                              collection.matchingListCount
+                            )}
+                          </Text>
+                        </View>
+
+                        <Text
+                          style={styles.arrow}>
+                          ›
+                        </Text>
+                      </Pressable>
+                    )
+                  )}
+                </View>
+              </View>
+            ) : null}
+
+            {filteredPeople.length > 0 ? (
+              <View style={styles.resultSection}>
+                <Text style={styles.sectionTitle}>
+                  People
+                </Text>
+
+                <View style={styles.peopleList}>
+                  {filteredPeople.map(
+                    (person) => (
+                      <Pressable
+                        key={person.id}
+                        style={({ pressed }) => [
+                          styles.personCard,
+                          pressed &&
+                            styles.pressed,
+                        ]}
+                        onPress={() =>
+                          openPersonProfile(person)
+                        }
+                        accessibilityRole="button"
+                        accessibilityLabel={`Open ${person.displayName}'s profile`}>
+                        <View
+                          style={styles.personAvatar}>
+                          {person.avatarUrl ? (
+                            <Image
+                              source={{
+                                uri: person.avatarUrl,
+                              }}
+                              style={
+                                styles
+                                  .personAvatarImage
+                              }
+                              resizeMode="cover"
+                            />
+                          ) : (
+                            <Text
+                              style={
+                                styles
+                                  .personAvatarText
+                              }>
+                              {person.displayName
+                                .charAt(0)
+                                .toUpperCase()}
+                            </Text>
+                          )}
+                        </View>
+
+                        <View
+                          style={
+                            styles.personDetails
+                          }>
+                          <Text
+                            style={
+                              styles.personName
+                            }>
+                            {person.displayName}
+                          </Text>
+
+                          <Text
+                            style={
+                              styles.personUsername
+                            }>
+                            @{person.username}
+                          </Text>
+                        </View>
+
+                        <Text
+                          style={styles.arrow}>
+                          ›
+                        </Text>
+                      </Pressable>
+                    )
+                  )}
+                </View>
+              </View>
+            ) : null}
+
+            {resultCount === 0 ? (
+              <View
+                style={styles.searchPlaceholder}>
+                <Text
+                  style={
+                    styles.searchPlaceholderTitle
+                  }>
+                  No results found
+                </Text>
+
+                <Text
+                  style={
+                    styles.searchPlaceholderText
+                  }>
+                  Try searching for another
+                  category, topic, ranked item, or
+                  person.
+                </Text>
+              </View>
+            ) : null}
+          </View>
+        ) : (
+          browseMode === 'people' ? (
+            <>
+            {tasteRecommendations.length > 0 ? (
+              <View style={styles.tasteSection}>
+                <Text style={styles.sectionTitle}>
+                  People with Similar Taste
+                </Text>
+
+                <View style={styles.tasteList}>
+                  {tasteRecommendations.map(
+                    ({ user, score, sharedItems }) => {
+                      const userIsFollowed =
+                        isFollowing(user.id);
+
+                      return (
+                        <View
+                          key={user.id}
+                          style={styles.tasteCard}>
+                          <View style={styles.tasteMainContent}>
+                            <Pressable
+                              style={({ pressed }) => [
+                                styles.tasteProfileAction,
+                                pressed && styles.pressed,
+                              ]}
+                              onPress={() =>
+                                openPersonProfile(user)
+                              }
+                              accessibilityRole="button"
+                              accessibilityLabel={`Open ${user.displayName}'s profile`}>
+                              <View
+                                style={styles.personAvatar}>
+                                {user.avatarUrl ? (
+                                  <Image
+                                    source={{
+                                      uri: user.avatarUrl,
+                                    }}
+                                    style={
+                                      styles.personAvatarImage
+                                    }
+                                    resizeMode="cover"
+                                  />
+                                ) : (
+                                  <Text
+                                    style={
+                                      styles.personAvatarText
+                                    }>
+                                    {user.displayName
+                                      .charAt(0)
+                                      .toUpperCase()}
+                                  </Text>
+                                )}
+                              </View>
+
+                              <View
+                                style={styles.tasteDetails}>
+                                <Text
+                                  style={styles.personName}
+                                  numberOfLines={1}>
+                                  {user.displayName}
+                                </Text>
+
+                                <Text
+                                  style={
+                                    styles.personUsername
+                                  }
+                                  numberOfLines={1}>
+                                  @{user.username}
+                                </Text>
+                              </View>
+                            </Pressable>
+
+                            <View style={styles.tasteBadgeRow}>
+                              <TasteMatchBadge
+                                score={score}
+                                sharedPickCount={
+                                  sharedItems.length
+                                }
+                                onPress={() =>
+                                  openTasteMatch(user.id)
+                                }
+                              />
+                            </View>
+                          </View>
+
+                          <Pressable
+                            style={({ pressed }) => [
+                              styles.tasteFollowButton,
+                              userIsFollowed &&
+                                styles
+                                  .tasteFollowingButton,
+                              pressed && styles.pressed,
+                              isLoadingFollowState &&
+                                styles.disabled,
+                            ]}
+                            onPress={() =>
+                              toggleRecommendedPersonFollow(
+                                user.id
+                              )
+                            }
+                            disabled={isLoadingFollowState}
+                            accessibilityRole="button"
+                            accessibilityState={{
+                              selected: userIsFollowed,
+                              disabled:
+                                isLoadingFollowState,
+                            }}
+                            accessibilityLabel={
+                              userIsFollowed
+                                ? `Unfollow ${user.displayName}`
+                                : `Follow ${user.displayName}`
+                            }>
+                            <Text
+                              style={[
+                                styles.tasteFollowText,
+                                userIsFollowed &&
+                                  styles
+                                    .tasteFollowingText,
+                              ]}>
+                              {userIsFollowed
+                                ? 'Following'
+                                : 'Follow'}
+                            </Text>
+                          </Pressable>
+                        </View>
+                      );
+                    }
+                  )}
+                </View>
+              </View>
+            ) : null}
+
+              {tasteRecommendations.length === 0
+                ? (
             <View style={styles.emptyTopics}>
-              <Text
-                style={styles.emptyTopicsTitle}>
-                No popular topics yet
+              <Text style={styles.emptyTopicsTitle}>
+                No new taste matches
               </Text>
 
-              <Text
-                style={styles.emptyTopicsText}>
-                Topic-specific Top 3s will appear
-                here as people publish them.
+              <Text style={styles.emptyTopicsText}>
+                You may already follow everyone we
+                currently recommend. Publish more Top
+                3s or check back as more people join.
               </Text>
             </View>
+                  )
+                : null}
+            </>
           ) : (
-            <View style={styles.topicList}>
-              {popularTopics.map((topic) => (
-                <Pressable
-                  key={topic.id}
-                  style={({ pressed }) => [
-                    styles.topicCard,
-                    pressed && styles.pressed,
-                  ]}
-                  onPress={() =>
-                    openTopicFeed(topic)
-                  }
-                  accessibilityRole="button"
-                  accessibilityLabel={`Browse ${topic.topic} ${topic.categoryName} Top 3 lists`}>
-                  <View
-                    style={styles.topicIcon}>
-                    <Text
-                      style={styles.topicEmoji}>
-                      {topic.categoryIcon}
-                    </Text>
-                  </View>
+            <>
+            <View>
+              <Text style={styles.sectionTitle}>
+                Trending Topics
+              </Text>
 
-                  <View
-                    style={styles.topicDetails}>
-                    <Text
-                      style={styles.topicTitle}>
-                      {topic.topic}
-                    </Text>
+              {isLoading ? (
+                <View
+                  style={styles.topicsLoading}>
+                  <ActivityIndicator
+                    size="small"
+                    color="#777777"
+                  />
 
-                    <Text
-                      style={styles.topicMeta}>
-                      {topic.categoryName} ·{' '}
-                      {getTopicCountLabel(
-                        topic.listCount
-                      )}
-                    </Text>
-                  </View>
-
-                  <Text style={styles.arrow}>
-                    ›
+                  <Text
+                    style={
+                      styles.topicsLoadingText
+                    }>
+                    Loading trending topics…
                   </Text>
-                </Pressable>
-              ))}
+                </View>
+              ) : trendingTopics.length === 0 ? (
+                <View
+                  style={styles.emptyTopics}>
+                  <Text
+                    style={
+                      styles.emptyTopicsTitle
+                    }>
+                    No trending topics yet
+                  </Text>
+
+                  <Text
+                    style={
+                      styles.emptyTopicsText
+                    }>
+                    Topic-specific Top 3s will
+                    appear here as people publish
+                    them.
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.topicList}>
+                  {trendingTopics.map(
+                    (topic) => (
+                      <DiscoverListCard
+                        key={topic.id}
+                        icon={topic.categoryIcon}
+                        title={`${topic.categoryName} • ${topic.topic}`}
+                        metadata={
+                          topic.listCount === 1
+                            ? '1 recently published Top 3'
+                            : `${topic.listCount} recently published Top 3s`
+                        }
+                        onPress={() => openTopicFeed(topic)}
+                        accessibilityLabel={`Browse trending ${topic.categoryName} ${topic.topic} Top 3 lists`}
+                      />
+                    )
+                  )}
+                </View>
+              )}
             </View>
-          )}
-        </View>
+
+            <View style={styles.topicsSection}>
+              <Text style={styles.sectionTitle}>
+                Trending Categories
+              </Text>
+
+              {isLoading ? (
+                <View style={styles.topicsLoading}>
+                  <ActivityIndicator
+                    size="small"
+                    color="#777777"
+                  />
+
+                  <Text
+                    style={styles.topicsLoadingText}>
+                    Loading trending categories…
+                  </Text>
+                </View>
+              ) : trendingCategories.length === 0 ? (
+                <View style={styles.emptyTopics}>
+                  <Text style={styles.emptyTopicsTitle}>
+                    No trending categories yet
+                  </Text>
+
+                  <Text style={styles.emptyTopicsText}>
+                    Categories will appear here as
+                    people publish new Top 3s.
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.categoryList}>
+                  {trendingCategories.map(
+                    (category) => (
+                      <DiscoverListCard
+                        key={category.id}
+                        icon={category.icon}
+                        title={category.name}
+                        metadata={
+                          category.trendingCount === 1
+                            ? '1 recently published Top 3'
+                            : `${category.trendingCount} recently published Top 3s`
+                        }
+                        onPress={() =>
+                          openCategoryFeed(category.id)
+                        }
+                        accessibilityLabel={`Browse trending ${category.name} Top 3 lists`}
+                      />
+                    )
+                  )}
+                </View>
+              )}
+            </View>
+
+            {trendingCategories.length === 0 &&
+            trendingTopics.length === 0 ? (
+              <View style={styles.allCategoriesSection}>
+                <Text style={styles.sectionTitle}>
+                  All Categories
+                </Text>
+
+                <View style={styles.categoryList}>
+                  {DISCOVER_CATEGORIES.map(
+                    (category) => (
+                      <Pressable
+                        key={category.id}
+                        style={({ pressed }) => [
+                          styles.categoryCard,
+                          pressed && styles.pressed,
+                        ]}
+                        onPress={() =>
+                          openCategoryFeed(
+                            category.id
+                          )
+                        }
+                        accessibilityRole="button"
+                        accessibilityLabel={`Browse ${category.name} Top 3 lists`}>
+                        <View
+                          style={styles.iconContainer}>
+                          <Text style={styles.icon}>
+                            {category.icon}
+                          </Text>
+                        </View>
+
+                        <View
+                          style={
+                            styles.categoryDetails
+                          }>
+                          <Text
+                            style={
+                              styles.categoryName
+                            }>
+                            {category.name}
+                          </Text>
+
+                          <Text
+                            style={styles.categoryMeta}>
+                            {getPublishedCountLabel(
+                              category.id
+                            )}
+                          </Text>
+                        </View>
+
+                        <Text style={styles.arrow}>
+                          ›
+                        </Text>
+                      </Pressable>
+                    )
+                  )}
+                </View>
+              </View>
+            ) : null}
+            </>
+          )
+        )}
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
@@ -470,18 +1812,119 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
 
-  title: {
-    fontSize: 30,
-    lineHeight: 36,
-    fontWeight: '700',
+  segmentedSection: {
+    marginTop: 16,
+  },
+
+  contentDismissArea: {
+    alignSelf: 'stretch',
+  },
+
+  searchContainer: {
+    minHeight: 50,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 0,
+    paddingLeft: 15,
+    paddingRight: 9,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#EAEAEA',
+    borderRadius: 16,
+  },
+
+  searchInput: {
+    flex: 1,
+    minHeight: 48,
+    marginLeft: 10,
+    paddingVertical: 12,
+    fontSize: 16,
     color: '#222222',
   },
 
-  subtitle: {
-    marginTop: 8,
-    fontSize: 16,
-    lineHeight: 22,
+  clearButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  recentSection: {
+    flex: 1,
+  },
+
+  recentHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+
+  clearRecentButton: {
+    minHeight: 34,
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+  },
+
+  clearRecentText: {
+    fontSize: 14,
+    fontWeight: '600',
     color: '#777777',
+  },
+
+  recentList: {
+    gap: 10,
+  },
+
+  recentSearchCard: {
+    minHeight: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#EAEAEA',
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+
+  recentSearchAction: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 54,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 16,
+  },
+
+  recentSearchText: {
+    flex: 1,
+    minWidth: 0,
+    marginLeft: 12,
+    fontSize: 16,
+    color: '#222222',
+  },
+
+  removeRecentButton: {
+    width: 52,
+    minHeight: 54,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  searchResults: {
+    flex: 1,
+  },
+
+  resultsCaption: {
+    marginBottom: 20,
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#777777',
+  },
+
+  resultSection: {
+    marginBottom: 30,
   },
 
   sectionTitle: {
@@ -536,12 +1979,16 @@ const styles = StyleSheet.create({
     minHeight: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: 6,
   },
 
   categoryMeta: {
     fontSize: 13,
     color: '#888888',
+  },
+
+  trendingCategoryMeta: {
+    marginTop: 6,
   },
 
   categoryMetaLoading: {
@@ -550,6 +1997,77 @@ const styles = StyleSheet.create({
 
   topicsSection: {
     marginTop: 30,
+  },
+
+  allCategoriesSection: {
+    marginTop: 30,
+  },
+
+  tasteSection: {
+    marginTop: 0,
+  },
+
+  tasteList: {
+    gap: 12,
+  },
+
+  tasteCard: {
+    minHeight: 112,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#EAEAEA',
+    borderRadius: 18,
+  },
+
+  tasteMainContent: {
+    flex: 1,
+    minWidth: 0,
+  },
+
+  tasteProfileAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  tasteBadgeRow: {
+    marginLeft: 64,
+  },
+
+  tasteDetails: {
+    flex: 1,
+    minWidth: 0,
+    marginLeft: 14,
+  },
+
+  tasteFollowButton: {
+    minWidth: 86,
+    minHeight: 38,
+    marginLeft: 12,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    backgroundColor: '#222222',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  tasteFollowingButton: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#CCCCCC',
+  },
+
+  tasteFollowText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+
+  tasteFollowingText: {
+    color: '#222222',
   },
 
   topicList: {
@@ -598,6 +2116,109 @@ const styles = StyleSheet.create({
     color: '#888888',
   },
 
+  collectionList: {
+    gap: 12,
+  },
+
+  collectionCard: {
+    minHeight: 82,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#EAEAEA',
+    borderRadius: 18,
+  },
+
+  collectionIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 15,
+    backgroundColor: '#F3F3F3',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  collectionEmoji: {
+    fontSize: 25,
+  },
+
+  collectionDetails: {
+    flex: 1,
+    minWidth: 0,
+    marginLeft: 14,
+  },
+
+  collectionTitle: {
+    fontSize: 18,
+    lineHeight: 23,
+    fontWeight: '700',
+    color: '#222222',
+  },
+
+  collectionMeta: {
+    marginTop: 4,
+    fontSize: 13,
+    color: '#888888',
+  },
+
+  peopleList: {
+    gap: 12,
+  },
+
+  personCard: {
+    minHeight: 78,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#EAEAEA',
+    borderRadius: 18,
+  },
+
+  personAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#222222',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+
+  personAvatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+
+  personAvatarText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+
+  personDetails: {
+    flex: 1,
+    minWidth: 0,
+    marginLeft: 14,
+  },
+
+  personName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#222222',
+  },
+
+  personUsername: {
+    marginTop: 3,
+    fontSize: 14,
+    color: '#777777',
+  },
+
   topicsLoading: {
     minHeight: 90,
     flexDirection: 'row',
@@ -639,13 +2260,42 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
+  searchPlaceholder: {
+    alignItems: 'center',
+    paddingVertical: 32,
+    paddingHorizontal: 24,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#EAEAEA',
+    borderRadius: 18,
+  },
+
+  searchPlaceholderTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#222222',
+    textAlign: 'center',
+  },
+
+  searchPlaceholderText: {
+    marginTop: 7,
+    fontSize: 15,
+    lineHeight: 21,
+    color: '#777777',
+    textAlign: 'center',
+  },
+
   arrow: {
     marginLeft: 10,
     fontSize: 30,
     color: '#999999',
   },
 
-  pressed: {
+  disabled: {
+  opacity: 0.5,
+},
+
+pressed: {
     opacity: 0.68,
   },
 });

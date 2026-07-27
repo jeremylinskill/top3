@@ -1,3 +1,5 @@
+import TasteMatchBadge from '@/components/taste-match-badge';
+import { COLORS } from '@/constants/colors';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { useComments } from '@/context/comment-context';
 import { useLike } from '@/context/like-context';
@@ -6,11 +8,11 @@ import { UserProfile } from '@/types/user-profile';
 import { formatRelativeTime } from '@/utils/format-relative-time';
 import { Ionicons } from '@expo/vector-icons';
 import {
-    Image,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 
 type Top3CardProps = {
@@ -22,7 +24,28 @@ type Top3CardProps = {
   onCommentsPress?: () => void;
   onTitlePress?: () => void;
   onEditPress?: () => void;
+  highlightQuery?: string;
+  showFollowButton?: boolean;
+  isFollowingAuthor?: boolean;
+  isFollowLoading?: boolean;
+  onFollowPress?: () => void;
+  tasteMatchScore?: number;
+  tasteMatchSharedPickCount?: number;
+  onTasteMatchPress?: () => void;
 };
+
+function formatLabel(value: string) {
+  return value
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map(
+      (word) =>
+        word.charAt(0).toUpperCase() +
+        word.slice(1)
+    )
+    .join(' ');
+}
 
 export default function Top3Card({
   post,
@@ -33,6 +56,14 @@ export default function Top3Card({
   onCommentsPress,
   onTitlePress,
   onEditPress,
+  highlightQuery,
+  showFollowButton = false,
+  isFollowingAuthor = false,
+  isFollowLoading = false,
+  onFollowPress,
+  tasteMatchScore,
+  tasteMatchSharedPickCount = 0,
+  onTasteMatchPress,
 }: Top3CardProps) {
   const {
     isLiked,
@@ -50,6 +81,24 @@ export default function Top3Card({
     (item) =>
       item.id === post.collection.category
   );
+
+  const categoryName =
+    category?.name ??
+    formatLabel(post.collection.category);
+
+  const rawTopic =
+    post.collection.topic?.trim();
+
+  const normalizedTopic =
+    rawTopic?.toLowerCase();
+
+  const displayTitle =
+    rawTopic &&
+    normalizedTopic !== 'general'
+      ? `${categoryName} • ${formatLabel(
+          rawTopic
+        )}`
+      : categoryName;
 
   const publishedText = formatRelativeTime(
     post.publishedAt
@@ -71,6 +120,27 @@ export default function Top3Card({
   const hasComments =
     displayedCommentCount > 0;
 
+  const normalizedHighlightQuery =
+    highlightQuery?.trim().toLowerCase() ?? '';
+
+  function itemMatchesHighlight(
+    title: string,
+    subtitle?: string
+  ) {
+    if (!normalizedHighlightQuery) {
+      return false;
+    }
+
+    const searchableText =
+      `${title} ${subtitle ?? ''}`
+        .trim()
+        .toLowerCase();
+
+    return searchableText.includes(
+      normalizedHighlightQuery
+    );
+  }
+
   function handleLikePress() {
     if (isLoadingLikes) {
       return;
@@ -82,53 +152,105 @@ export default function Top3Card({
   return (
     <View style={styles.card}>
       {showAuthor && author ? (
-        <Pressable
-          style={({ pressed }) => [
-            styles.authorRow,
-            pressed &&
-              onAuthorPress &&
-              styles.pressed,
-          ]}
-          onPress={onAuthorPress}
-          disabled={!onAuthorPress}
-          accessibilityRole={
-            onAuthorPress
-              ? 'button'
-              : undefined
-          }
-          accessibilityLabel={
-            onAuthorPress
-              ? `Open ${author.displayName}'s profile`
-              : undefined
-          }>
-          <View style={styles.avatar}>
-            {author.avatarUrl ? (
-              <Image
-                source={{
-                  uri: author.avatarUrl,
-                }}
-                style={styles.avatarImage}
-                resizeMode="cover"
-              />
-            ) : (
-              <Text style={styles.avatarText}>
-                {author.displayName
-                  .charAt(0)
-                  .toUpperCase()}
+        <View style={styles.authorRow}>
+          <View style={styles.authorContent}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.authorAction,
+                pressed &&
+                  onAuthorPress &&
+                  styles.pressed,
+              ]}
+              onPress={onAuthorPress}
+              disabled={!onAuthorPress}
+              accessibilityRole={
+                onAuthorPress
+                  ? 'button'
+                  : undefined
+              }
+              accessibilityLabel={
+                onAuthorPress
+                  ? `Open ${author.displayName}'s profile`
+                  : undefined
+              }>
+              <View style={styles.avatar}>
+                {author.avatarUrl ? (
+                  <Image
+                    source={{
+                      uri: author.avatarUrl,
+                    }}
+                    style={styles.avatarImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Text style={styles.avatarText}>
+                    {author.displayName
+                      .charAt(0)
+                      .toUpperCase()}
+                  </Text>
+                )}
+              </View>
+
+              <View style={styles.authorDetails}>
+                <Text style={styles.authorName}>
+                  {author.displayName}
+                </Text>
+
+                <Text style={styles.username}>
+                  @{author.username}
+                </Text>
+              </View>
+            </Pressable>
+
+            {typeof tasteMatchScore ===
+            'number' ? (
+              <View style={styles.tasteMatchRow}>
+                <TasteMatchBadge
+                  score={tasteMatchScore}
+                  sharedPickCount={
+                    tasteMatchSharedPickCount
+                  }
+                  onPress={onTasteMatchPress}
+                />
+              </View>
+            ) : null}
+          </View>
+
+          {showFollowButton && onFollowPress ? (
+            <Pressable
+              style={({ pressed }) => [
+                styles.followButton,
+                isFollowingAuthor &&
+                  styles.followingButton,
+                pressed && styles.pressed,
+                isFollowLoading &&
+                  styles.disabled,
+              ]}
+              onPress={onFollowPress}
+              disabled={isFollowLoading}
+              accessibilityRole="button"
+              accessibilityState={{
+                selected: isFollowingAuthor,
+                disabled: isFollowLoading,
+              }}
+              accessibilityLabel={
+                isFollowingAuthor
+                  ? `Unfollow ${author.displayName}`
+                  : `Follow ${author.displayName}`
+              }>
+              <Text
+                style={[
+                  styles.followButtonText,
+                  isFollowingAuthor &&
+                    styles.followingButtonText,
+                ]}>
+                {isFollowingAuthor
+                  ? 'Following'
+                  : 'Follow'}
               </Text>
-            )}
-          </View>
-
-          <View style={styles.authorDetails}>
-            <Text style={styles.authorName}>
-              {author.displayName}
-            </Text>
-
-            <Text style={styles.username}>
-              @{author.username}
-            </Text>
-          </View>
-        </Pressable>
+            </Pressable>
+          ) : null}
+        </View>
       ) : null}
 
       <View style={styles.titleRow}>
@@ -148,7 +270,7 @@ export default function Top3Card({
           }
           accessibilityLabel={
             onTitlePress
-              ? `Browse ${post.collection.title}`
+              ? `Browse ${displayTitle}`
               : undefined
           }>
           <Text style={styles.categoryIcon}>
@@ -156,7 +278,7 @@ export default function Top3Card({
           </Text>
 
           <Text style={styles.title}>
-            {post.collection.title}
+            {displayTitle}
           </Text>
         </Pressable>
 
@@ -169,7 +291,7 @@ export default function Top3Card({
             onPress={onEditPress}
             hitSlop={10}
             accessibilityRole="button"
-            accessibilityLabel={`Edit ${post.collection.title}`}>
+            accessibilityLabel={`Edit ${displayTitle}`}>
             <Ionicons
               name="create-outline"
               size={20}
@@ -192,89 +314,105 @@ export default function Top3Card({
         }
         accessibilityLabel={
           onPress
-            ? `Open post ${post.collection.title}`
+            ? `Open post ${displayTitle}`
             : undefined
         }>
         <View style={styles.ranking}>
           {post.collection.items.map(
-            (item, index) => (
-              <View
-                key={`${post.id}-${index}`}
-                style={[
-                  styles.rankRow,
-                  index < 2 &&
-                    styles.rankDivider,
-                ]}>
-                <Text
-                  style={styles.rankNumber}>
-                  {index + 1}
-                </Text>
+            (item, index) => {
+              const isHighlighted =
+                item !== null &&
+                itemMatchesHighlight(
+                  item.title,
+                  item.subtitle
+                );
 
-                {item?.imageUrl ? (
-                  <Image
-                    source={{
-                      uri: item.imageUrl,
-                    }}
-                    style={styles.itemImage}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View
-                    style={
-                      styles.imagePlaceholder
-                    }>
-                    <Ionicons
-                      name="image-outline"
-                      size={24}
-                      color="#999999"
-                    />
-                  </View>
-                )}
-
+              return (
                 <View
-                  style={styles.itemDetails}>
+                  key={`${post.id}-${index}`}
+                  style={[
+                    styles.rankRow,
+                    index < 2 &&
+                      styles.rankDivider,
+                    isHighlighted &&
+                      styles.highlightedRankRow,
+                  ]}>
                   <Text
-                    style={styles.itemTitle}
-                    numberOfLines={2}
-                    ellipsizeMode="tail">
-                    {item?.title ??
-                      'Not selected'}
+                    style={styles.rankNumber}>
+                    {index + 1}
                   </Text>
 
-                  {item?.subtitle ? (
-                    <Text
-                      style={
-                        styles.itemSubtitle
-                      }
-                      numberOfLines={1}
-                      ellipsizeMode="tail">
-                      {item.subtitle}
-                    </Text>
-                  ) : null}
-
-                  {typeof item?.rating ===
-                  'number' ? (
+                  {item?.imageUrl ? (
+                    <Image
+                      source={{
+                        uri: item.imageUrl,
+                      }}
+                      style={styles.itemImage}
+                      resizeMode="cover"
+                    />
+                  ) : (
                     <View
-                      style={styles.ratingRow}>
-                      <Text
-                        style={
-                          styles.ratingText
-                        }>
-                        {item.rating.toFixed(
-                          1
-                        )}
-                      </Text>
-
+                      style={
+                        styles.imagePlaceholder
+                      }>
                       <Ionicons
-                        name="star"
-                        size={13}
-                        color="#555555"
+                        name="image-outline"
+                        size={24}
+                        color="#999999"
                       />
                     </View>
-                  ) : null}
+                  )}
+
+                  <View
+                    style={styles.itemDetails}>
+                    <Text
+                      style={[
+                        styles.itemTitle,
+                        isHighlighted &&
+                          styles.highlightedItemTitle,
+                      ]}
+                      numberOfLines={2}
+                      ellipsizeMode="tail">
+                      {item?.title ??
+                        'Not selected'}
+                    </Text>
+
+                    {item?.subtitle ? (
+                      <Text
+                        style={
+                          styles.itemSubtitle
+                        }
+                        numberOfLines={1}
+                        ellipsizeMode="tail">
+                        {item.subtitle}
+                      </Text>
+                    ) : null}
+
+                    {typeof item?.rating ===
+                    'number' ? (
+                      <View
+                        style={styles.ratingRow}>
+                        <Text
+                          style={
+                            styles.ratingText
+                          }>
+                          {item.rating.toFixed(
+                            1
+                          )}
+                        </Text>
+
+                        <Ionicons
+                          name="star"
+                          size={13}
+                          color="#555555"
+                        />
+                      </View>
+                    ) : null}
+                  </View>
+
                 </View>
-              </View>
-            )
+              );
+            }
           )}
         </View>
       </Pressable>
@@ -311,8 +449,8 @@ export default function Top3Card({
             }}
             accessibilityLabel={
               postIsLiked
-                ? `Unlike ${post.collection.title}`
-                : `Like ${post.collection.title}`
+                ? `Unlike ${displayTitle}`
+                : `Like ${displayTitle}`
             }>
             <Ionicons
               name={
@@ -366,7 +504,7 @@ export default function Top3Card({
             }}
             accessibilityLabel={
               onCommentsPress
-                ? `Open comments for ${post.collection.title}`
+                ? `Open comments for ${displayTitle}`
                 : undefined
             }>
             <Ionicons
@@ -409,8 +547,51 @@ const styles = StyleSheet.create({
 
   authorRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 18,
+  },
+
+  authorContent: {
+    flex: 1,
+    minWidth: 0,
+  },
+
+  authorAction: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  tasteMatchRow: {
+    marginLeft: 58,
+  },
+
+  followButton: {
+    minWidth: 82,
+    minHeight: 36,
+    marginLeft: 12,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    backgroundColor: '#222222',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  followingButton: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#CCCCCC',
+  },
+
+  followButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+
+  followingButtonText: {
+    color: '#222222',
   },
 
   avatar: {
@@ -506,6 +687,13 @@ const styles = StyleSheet.create({
     borderBottomColor: '#EEEEEE',
   },
 
+  highlightedRankRow: {
+    marginHorizontal: -10,
+    paddingHorizontal: 10,
+    backgroundColor: COLORS.sharedTaste,
+    borderRadius: 12,
+  },
+
   rankNumber: {
     width: 28,
     fontSize: 22,
@@ -541,6 +729,10 @@ const styles = StyleSheet.create({
     lineHeight: 23,
     fontWeight: '600',
     color: '#222222',
+  },
+
+  highlightedItemTitle: {
+    fontWeight: '800',
   },
 
   itemSubtitle: {

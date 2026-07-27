@@ -8,6 +8,10 @@ Top3 helps people express their taste and discover others who share it.
 
 Create Top 3 lists of your favorite things—from movies and books to TV shows and games—and connect through what you love.
 
+Top3 is about helping people express their taste and connect through it.
+
+The exact messaging will be revisited before v1.0 after the social and discovery features are implemented.
+
 ---
 
 # Current Status
@@ -186,3 +190,30 @@ Future provider:
 
 Reason:
 IGDB provides dedicated cover artwork that better matches the portrait card layout used throughout the app.
+
+
+
+Future Enhancement: Trending Algorithm
+
+Current implementation
+
+Trending Categories are ranked by the number of recently published Top 3s (30-day window, with fallback to all-time if there are no recent posts).
+Trending Topics use the same approach.
+
+Future implementation
+Replace the simple count with a weighted trending score that considers engagement.
+
+For example:
+
+Trending Score =
+Published Top 3s
++ (3 × Likes)
++ (5 × Comments)
+
+The goals are to:
+
+Reflect what the community is actively engaging with, not just publishing.
+Allow emerging categories and topics to trend quickly.
+Prevent older categories with many historical posts from dominating indefinitely.
+
+We'll revisit this once the app has meaningful volumes of likes, comments, and user activity.

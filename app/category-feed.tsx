@@ -1,5 +1,6 @@
 import CommentsSheet from '@/components/comments-sheet';
 import ScreenHeader from '@/components/screen-header';
+import SegmentedControl from '@/components/segmented-control';
 import Top3Card from '@/components/top3-card';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { useComments } from '@/context/comment-context';
@@ -7,33 +8,33 @@ import { useLike } from '@/context/like-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
 import {
-    getHydratedFeedPosts,
-    getMockUserById,
+  getHydratedFeedPosts,
+  getMockUserById,
 } from '@/services/post-service';
 import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
 import {
-    calculateCommunityTop3,
-    CommunityTop3Result,
+  calculateCommunityTop3,
+  CommunityTop3Result,
 } from '@/utils/calculate-community-top3';
 import { Ionicons } from '@expo/vector-icons';
 import {
-    router,
-    useLocalSearchParams,
+  router,
+  useLocalSearchParams,
 } from 'expo-router';
 import {
-    useEffect,
-    useMemo,
-    useState,
+  useEffect,
+  useMemo,
+  useState,
 } from 'react';
 import {
-    ActivityIndicator,
-    Image,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -59,6 +60,7 @@ export default function CategoryFeedScreen() {
   const params = useLocalSearchParams<{
     category?: string | string[];
     topic?: string | string[];
+    itemQuery?: string | string[];
   }>();
 
   const categoryId = Array.isArray(
@@ -73,8 +75,17 @@ export default function CategoryFeedScreen() {
     ? params.topic[0]
     : params.topic;
 
+  const itemQueryParam = Array.isArray(
+    params.itemQuery
+  )
+    ? params.itemQuery[0]
+    : params.itemQuery;
+
   const normalizedTopic =
     normalizeValue(topicParam) || 'general';
+
+  const normalizedItemQuery =
+    normalizeValue(itemQueryParam);
 
   const { profile } = useProfile();
 
@@ -178,11 +189,37 @@ export default function CategoryFeedScreen() {
             post.collection.topic
           ) || 'general';
 
-        if (normalizedTopic === 'general') {
-          return postTopic === 'general';
+        const topicMatches =
+          normalizedTopic === 'general'
+            ? postTopic === 'general'
+            : postTopic === normalizedTopic;
+
+        if (!topicMatches) {
+          return false;
         }
 
-        return postTopic === normalizedTopic;
+        if (!normalizedItemQuery) {
+          return true;
+        }
+
+        return post.collection.items.some(
+          (item) => {
+            if (!item) {
+              return false;
+            }
+
+            const searchableItem =
+              normalizeValue(
+                `${item.title} ${
+                  item.subtitle ?? ''
+                }`
+              );
+
+            return searchableItem.includes(
+              normalizedItemQuery
+            );
+          }
+        );
       })
       .sort(
         (first, second) =>
@@ -197,6 +234,7 @@ export default function CategoryFeedScreen() {
     allPosts,
     categoryId,
     normalizedTopic,
+    normalizedItemQuery,
   ]);
 
   const overallResult = useMemo<
@@ -207,14 +245,14 @@ export default function CategoryFeedScreen() {
     }
 
     return calculateCommunityTop3(
-      allPosts,
+      filteredPosts,
       {
         category: categoryId,
         topic: normalizedTopic,
       }
     );
   }, [
-    allPosts,
+    filteredPosts,
     categoryId,
     normalizedTopic,
   ]);
@@ -228,9 +266,16 @@ export default function CategoryFeedScreen() {
       const normalizedCategory =
         normalizeValue(categoryId);
 
+      const queryKey = normalizedItemQuery
+        ? `-${normalizedItemQuery.replace(
+            /[^a-z0-9]+/g,
+            '-'
+          )}`
+        : '';
+
       const postId =
         `community-${normalizedCategory}-` +
-        normalizedTopic;
+        `${normalizedTopic}${queryKey}`;
 
       const items: Post['collection']['items'] =
         [
@@ -241,13 +286,14 @@ export default function CategoryFeedScreen() {
 
       const title =
         normalizedTopic === 'general'
-          ? `Top 3 ${
+          ? category?.name ??
+            overallResult.category
+          : `${
               category?.name ??
               overallResult.category
-            } Overall`
-          : `Top 3 ${formatTopicLabel(
+            } • ${formatTopicLabel(
               topicParam ?? normalizedTopic
-            )} Overall`;
+            )}`;
 
       const stableDate =
         new Date(0).toISOString();
@@ -278,6 +324,7 @@ export default function CategoryFeedScreen() {
       categoryId,
       category?.name,
       normalizedTopic,
+      normalizedItemQuery,
       topicParam,
     ]
   );
@@ -332,18 +379,17 @@ export default function CategoryFeedScreen() {
   }
 
   function openPost(post: Post) {
-    if (post.authorId === profile.id) {
-      selectList(post.collection.id);
-      router.push('/collection');
-      return;
-    }
-
     router.push({
       pathname: '/published-top3',
       params: {
         postId: post.id,
       },
     });
+  }
+
+  function editCollection(post: Post) {
+    selectList(post.collection.id);
+    router.push('/collection');
   }
 
   function openComments(post: Post) {
@@ -422,8 +468,8 @@ export default function CategoryFeedScreen() {
     : null;
 
   const overallTitle = topicLabel
-    ? `Top 3 ${topicLabel} Overall`
-    : `Top 3 ${category.name} Overall`;
+    ? `${category.name} • ${topicLabel}`
+    : category.name;
 
   return (
     <SafeAreaView
@@ -432,73 +478,59 @@ export default function CategoryFeedScreen() {
       <ScreenHeader showBackButton />
 
       <View style={styles.segmentedContainer}>
-        <View style={styles.segmentedControl}>
-          <Pressable
-            style={[
-              styles.segment,
-              activeView === 'lists' &&
-                styles.activeSegment,
-            ]}
-            onPress={() =>
-              setActiveView('lists')
-            }
-            accessibilityRole="button"
-            accessibilityState={{
-              selected:
-                activeView === 'lists',
-            }}
-            accessibilityLabel="Show published lists">
-            <Text
-              style={[
-                styles.segmentText,
-                activeView === 'lists' &&
-                  styles.activeSegmentText,
-              ]}>
-              Lists
-            </Text>
-          </Pressable>
-
-          <Pressable
-            style={[
-              styles.segment,
-              activeView === 'overall' &&
-                styles.activeSegment,
-            ]}
-            onPress={() =>
-              setActiveView('overall')
-            }
-            accessibilityRole="button"
-            accessibilityState={{
-              selected:
-                activeView === 'overall',
-            }}
-            accessibilityLabel="Show overall ranking">
-            <Text
-              style={[
-                styles.segmentText,
-                activeView === 'overall' &&
-                  styles.activeSegmentText,
-              ]}>
-              Overall
-            </Text>
-          </Pressable>
-        </View>
+        <SegmentedControl<CategoryView>
+          value={activeView}
+          options={[
+            {
+              value: 'lists',
+              label: 'Lists',
+              accessibilityLabel:
+                'Show published lists',
+            },
+            {
+              value: 'overall',
+              label: 'Overall',
+              accessibilityLabel:
+                'Show overall ranking',
+            },
+          ]}
+          onChange={setActiveView}
+        />
       </View>
 
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}>
+        {normalizedItemQuery ? (
+          <View style={styles.filterNotice}>
+            <Ionicons
+              name="search-outline"
+              size={16}
+              color="#777777"
+            />
+
+            <Text style={styles.filterNoticeText}>
+              Showing lists containing “
+              {itemQueryParam?.trim()}”
+            </Text>
+          </View>
+        ) : null}
+
         {activeView === 'lists' ? (
           filteredPosts.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyTitle}>
-                Nothing published yet
+                {normalizedItemQuery
+                  ? 'No matching Top 3s'
+                  : 'Nothing published yet'}
               </Text>
 
               <Text style={styles.emptyText}>
-                Published Top 3 lists in this
-                category and topic will appear
-                here.
+                {normalizedItemQuery
+                  ? `No published lists here contain “${
+                      itemQueryParam?.trim() ?? ''
+                    }”.`
+                  : 'Published Top 3 lists in this category and topic will appear here.'}
               </Text>
             </View>
           ) : (
@@ -512,12 +544,16 @@ export default function CategoryFeedScreen() {
                   return null;
                 }
 
+                const isCurrentUserPost =
+                  post.authorId === profile.id;
+
                 return (
                   <Top3Card
                     key={post.id}
                     post={post}
                     author={author}
                     showAuthor
+                    highlightQuery={itemQueryParam}
                     onAuthorPress={() =>
                       openAuthorProfile(
                         post.authorId
@@ -525,6 +561,12 @@ export default function CategoryFeedScreen() {
                     }
                     onPress={() =>
                       openPost(post)
+                    }
+                    onEditPress={
+                      isCurrentUserPost
+                        ? () =>
+                            editCollection(post)
+                        : undefined
                     }
                     onCommentsPress={() =>
                       openComments(post)
@@ -800,42 +842,31 @@ const styles = StyleSheet.create({
     backgroundColor: '#FAFAFA',
   },
 
-  segmentedControl: {
-    flexDirection: 'row',
-    padding: 4,
-    backgroundColor: '#EEEEEE',
-    borderRadius: 12,
-  },
-
-  segment: {
-    flex: 1,
-    minHeight: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 9,
-  },
-
-  activeSegment: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E2E2E2',
-  },
-
-  segmentText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#777777',
-  },
-
-  activeSegmentText: {
-    color: '#222222',
-    fontWeight: '700',
-  },
 
   content: {
     paddingHorizontal: 20,
     paddingTop: 18,
     paddingBottom: 40,
+  },
+
+  filterNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#EAEAEA',
+    borderRadius: 14,
+  },
+
+  filterNoticeText: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#777777',
   },
 
   postList: {

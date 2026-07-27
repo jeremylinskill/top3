@@ -1,34 +1,38 @@
+import { AVATAR } from '@/constants/avatar';
+import { COLORS } from '@/constants/colors';
+import { RADIUS } from '@/constants/radius';
+
 import {
-    Comment,
-    useComments,
+  Comment,
+  useComments,
 } from '@/context/comment-context';
 import { useProfile } from '@/context/profile-context';
 import { Post } from '@/types/post';
 import { formatRelativeTime } from '@/utils/format-relative-time';
 import { Ionicons } from '@expo/vector-icons';
 import {
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from 'react';
 import {
-    Alert,
-    Animated,
-    Easing,
-    Image,
-    Keyboard,
-    Modal,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  Animated,
+  Easing,
+  Image,
+  Keyboard,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 import {
-    KeyboardAvoidingView,
+  KeyboardAvoidingView,
 } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -302,7 +306,7 @@ export default function CommentsSheet({
                 <Ionicons
                   name="close"
                   size={22}
-                  color="#222222"
+                  color={COLORS.text}
                 />
               </Pressable>
             </View>
@@ -377,7 +381,7 @@ export default function CommentsSheet({
                   value={commentText}
                   onChangeText={setCommentText}
                   placeholder="Add a comment…"
-                  placeholderTextColor="#999999"
+                  placeholderTextColor={COLORS.tertiaryText}
                   multiline
                   maxLength={500}
                   returnKeyType="send"
@@ -493,7 +497,7 @@ function CommentRow({
               <Ionicons
                 name="ellipsis-horizontal"
                 size={18}
-                color="#777777"
+                color={COLORS.tertiaryText}
               />
             </Pressable>
           ) : null}
@@ -527,7 +531,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: COLORS.background,
   },
 
   keyboardView: {
@@ -537,9 +541,9 @@ const styles = StyleSheet.create({
 
   sheet: {
     height: '66%',
-    backgroundColor: '#FAFAFA',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    backgroundColor: COLORS.background,
+    borderTopLeftRadius: RADIUS.xxxl,
+    borderTopRightRadius: RADIUS.xxxl,
     overflow: 'hidden',
   },
 
@@ -560,7 +564,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderBottomWidth:
       StyleSheet.hairlineWidth,
-    borderBottomColor: '#DDDDDD',
+    borderBottomColor: COLORS.border,
   },
 
   title: {
@@ -602,7 +606,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#222222',
+    backgroundColor: COLORS.text,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -614,7 +618,7 @@ const styles = StyleSheet.create({
   },
 
   commentAvatarText: {
-    color: '#FFFFFF',
+    color: COLORS.white,
     fontSize: 16,
     fontWeight: '700',
   },
@@ -625,7 +629,7 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     borderBottomWidth:
       StyleSheet.hairlineWidth,
-    borderBottomColor: '#E5E5E5',
+    borderBottomColor: COLORS.border,
   },
 
   commentTopRow: {
@@ -703,19 +707,19 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     paddingHorizontal: 16,
     paddingTop: 10,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: COLORS.background,
     borderTopWidth:
       StyleSheet.hairlineWidth,
-    borderTopColor: '#DDDDDD',
+    borderTopColor: COLORS.border,
   },
 
   avatar: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: AVATAR.sm + 2,
+    height: AVATAR.sm + 2,
+    borderRadius: (AVATAR.sm + 2) / 2,
     marginRight: 10,
     marginBottom: 3,
-    backgroundColor: '#222222',
+    backgroundColor: COLORS.text,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -727,7 +731,7 @@ const styles = StyleSheet.create({
   },
 
   avatarText: {
-    color: '#FFFFFF',
+    color: COLORS.white,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -738,9 +742,9 @@ const styles = StyleSheet.create({
     maxHeight: 120,
     flexDirection: 'row',
     alignItems: 'flex-end',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORS.border,
     borderRadius: 23,
     paddingLeft: 15,
     paddingRight: 6,

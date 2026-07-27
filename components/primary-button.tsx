@@ -1,8 +1,11 @@
+import { COLORS } from '@/constants/colors';
+import { RADIUS } from '@/constants/radius';
+import { TYPOGRAPHY } from '@/constants/typography';
 import {
-    Pressable,
-    StyleSheet,
-    Text,
-    ViewStyle,
+  Pressable,
+  StyleSheet,
+  Text,
+  ViewStyle,
 } from 'react-native';
 
 type PrimaryButtonProps = {
@@ -43,22 +46,21 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 16,
     alignItems: 'center',
-    borderRadius: 14,
-    backgroundColor: '#222222',
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.text,
   },
 
   buttonDisabled: {
-    backgroundColor: '#DDDDDD',
+    backgroundColor: COLORS.border,
   },
 
   buttonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '600',
+    ...TYPOGRAPHY.headline,
+    color: COLORS.white,
     textAlign: 'center',
   },
 
   buttonTextDisabled: {
-    color: '#999999',
+    color: COLORS.tertiaryText,
   },
 });

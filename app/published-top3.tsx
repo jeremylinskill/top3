@@ -1,39 +1,44 @@
 import ScreenHeader from '@/components/screen-header';
 import Top3Card from '@/components/top3-card';
 import {
-    Comment,
-    useComments,
+  Comment,
+  useComments,
 } from '@/context/comment-context';
 import { useProfile } from '@/context/profile-context';
+import { useTop3 } from '@/context/top3-context';
 import {
-    getHydratedFeedPosts,
-    getMockUserById,
+  getHydratedFeedPosts,
+  getMockUserById,
 } from '@/services/post-service';
 import { Post } from '@/types/post';
 import { formatRelativeTime } from '@/utils/format-relative-time';
 import {
-    router,
-    useLocalSearchParams,
+  router,
+  useLocalSearchParams,
 } from 'expo-router';
 import {
-    useEffect,
-    useMemo,
-    useState,
+  useEffect,
+  useMemo,
+  useState,
 } from 'react';
 import {
-    ActivityIndicator,
-    Image,
-    Keyboard,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Image,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+function normalizeTopic(topic?: string) {
+  return topic?.trim().toLowerCase() || 'general';
+}
 
 export default function PublishedTop3Screen() {
   const params = useLocalSearchParams<{
@@ -45,6 +50,11 @@ export default function PublishedTop3Screen() {
     : params.postId;
 
   const { profile } = useProfile();
+
+  const {
+    posts: localPosts,
+    selectList,
+  } = useTop3();
 
   const {
     addComment,
@@ -78,11 +88,13 @@ export default function PublishedTop3Screen() {
       setIsLoadingPost(true);
 
       try {
-        const posts =
-          await getHydratedFeedPosts([]);
+        const hydratedPosts =
+          await getHydratedFeedPosts(
+            localPosts
+          );
 
         const matchingPost =
-          posts.find(
+          hydratedPosts.find(
             (item) => item.id === postId
           ) ?? null;
 
@@ -110,7 +122,7 @@ export default function PublishedTop3Screen() {
     return () => {
       isMounted = false;
     };
-  }, [postId]);
+  }, [postId, localPosts]);
 
   const comments = useMemo(() => {
     if (!postId) {
@@ -138,8 +150,7 @@ export default function PublishedTop3Screen() {
       authorDisplayName:
         profile.displayName,
       authorUsername: profile.username,
-      authorAvatarUrl:
-        profile.avatarUrl,
+      authorAvatarUrl: profile.avatarUrl,
       text: trimmedComment,
     });
 
@@ -190,6 +201,8 @@ export default function PublishedTop3Screen() {
     );
   }
 
+  const currentPost = post;
+
   const authorId = post.authorId;
 
   const author =
@@ -197,8 +210,11 @@ export default function PublishedTop3Screen() {
       ? profile
       : getMockUserById(authorId);
 
+  const isCurrentUserPost =
+    authorId === profile.id;
+
   function openAuthorProfile() {
-    if (authorId === profile.id) {
+    if (isCurrentUserPost) {
       router.push('/(tabs)/profile');
       return;
     }
@@ -209,6 +225,27 @@ export default function PublishedTop3Screen() {
         userId: authorId,
       },
     });
+  }
+
+  function openCollectionFeed() {
+    router.push({
+      pathname: '/category-feed',
+      params: {
+        category: currentPost.collection.category,
+        topic: normalizeTopic(
+          currentPost.collection.topic
+        ),
+      },
+    });
+  }
+
+  function editCollection() {
+    if (!isCurrentUserPost) {
+      return;
+    }
+
+    selectList(currentPost.collection.id);
+    router.push('/collection');
   }
 
   return (
@@ -265,16 +302,12 @@ export default function PublishedTop3Screen() {
               </View>
 
               <View
-                style={
-                  styles.authorDetails
-                }>
-                <Text
-                  style={styles.authorName}>
+                style={styles.authorDetails}>
+                <Text style={styles.authorName}>
                   {author.displayName}
                 </Text>
 
-                <Text
-                  style={styles.username}>
+                <Text style={styles.username}>
                   @{author.username}
                 </Text>
               </View>
@@ -289,6 +322,14 @@ export default function PublishedTop3Screen() {
             post={post}
             author={author}
             showAuthor={false}
+            onTitlePress={
+              openCollectionFeed
+            }
+            onEditPress={
+              isCurrentUserPost
+                ? editCollection
+                : undefined
+            }
           />
 
           <View style={styles.commentsSection}>
@@ -352,7 +393,9 @@ export default function PublishedTop3Screen() {
                 source={{
                   uri: profile.avatarUrl,
                 }}
-                style={styles.composerAvatarImage}
+                style={
+                  styles.composerAvatarImage
+                }
                 resizeMode="cover"
               />
             ) : (
