@@ -1,9 +1,14 @@
+import {
+    getTasteRecommendations,
+    TasteRecommendation,
+} from '@/services/taste-recommendation-service';
 import { Post } from '@/types/post';
 
-type PersonalizedFeedPost = {
+export type PersonalizedFeedPost = {
   post: Post;
   isSuggested: boolean;
   suggestionReason?: string;
+  sharedItemTitles?: string[];
 };
 
 type BuildPersonalizedFeedOptions = {
@@ -16,103 +21,112 @@ function normalizeValue(value?: string) {
   return value?.trim().toLowerCase() ?? '';
 }
 
-function getItemTitles(post: Post) {
-  return post.collection.items
-    .filter(Boolean)
-    .map((item) =>
-      normalizeValue(item?.title)
-    )
-    .filter(Boolean);
+function getPublishedTime(post: Post) {
+  return new Date(post.publishedAt).getTime();
 }
 
-function getSuggestionScore(
-  candidatePost: Post,
-  currentUserPosts: Post[]
+function sortPostsByNewest(
+  first: Post,
+  second: Post
 ) {
-  let score = 0;
+  return (
+    getPublishedTime(second) -
+    getPublishedTime(first)
+  );
+}
 
-  const candidateCategory = normalizeValue(
-    candidatePost.collection.category
+function getSharedItemsForPost(
+  post: Post,
+  recommendation: TasteRecommendation
+) {
+  const sharedItemNames = new Set(
+    recommendation.sharedItems.map(
+      normalizeValue
+    )
   );
 
-  const candidateTopic = normalizeValue(
-    candidatePost.collection.topic
-  );
-
-  const candidateItems = new Set(
-    getItemTitles(candidatePost)
-  );
-
-  let categoryMatched = false;
-  let topicMatched = false;
-  let matchingItemTitle = '';
-
-  currentUserPosts.forEach((userPost) => {
-    const userCategory = normalizeValue(
-      userPost.collection.category
+  return post.collection.items
+    .filter(Boolean)
+    .map((item) => item?.title.trim() ?? '')
+    .filter(Boolean)
+    .filter((title) =>
+      sharedItemNames.has(
+        normalizeValue(title)
+      )
     );
+}
 
-    const userTopic = normalizeValue(
-      userPost.collection.topic
-    );
-
-    if (
-      candidateCategory &&
-      candidateCategory === userCategory
-    ) {
-      score += 3;
-      categoryMatched = true;
-    }
-
-    if (
-      candidateTopic &&
-      candidateTopic !== 'general' &&
-      candidateTopic === userTopic
-    ) {
-      score += 5;
-      topicMatched = true;
-    }
-
-    getItemTitles(userPost).forEach(
-      (itemTitle) => {
-        if (candidateItems.has(itemTitle)) {
-          score += 8;
-
-          if (!matchingItemTitle) {
-            const matchingItem =
-              candidatePost.collection.items.find(
-                (item) =>
-                  normalizeValue(item?.title) ===
-                  itemTitle
-              );
-
-            matchingItemTitle =
-              matchingItem?.title ?? '';
-          }
-        }
+function getSuggestedPostForRecommendation(
+  posts: Post[],
+  recommendation: TasteRecommendation
+) {
+  const eligiblePosts = posts
+    .filter(
+      (post) =>
+        post.authorId ===
+        recommendation.user.id
+    )
+    .map((post) => ({
+      post,
+      sharedItems: getSharedItemsForPost(
+        post,
+        recommendation
+      ),
+    }))
+    .filter(
+      ({ sharedItems }) =>
+        sharedItems.length > 0
+    )
+    .sort((first, second) => {
+      /*
+       * Prefer the card with more concrete shared
+       * ranked picks.
+       */
+      if (
+        second.sharedItems.length !==
+        first.sharedItems.length
+      ) {
+        return (
+          second.sharedItems.length -
+          first.sharedItems.length
+        );
       }
-    );
-  });
 
-  let suggestionReason:
-    | string
-    | undefined;
+      /*
+       * When two cards contain the same number of
+       * shared picks, show the newest card.
+       */
+      return sortPostsByNewest(
+        first.post,
+        second.post
+      );
+    });
 
-  if (matchingItemTitle) {
-    suggestionReason =
-      `Suggested because you ranked ${matchingItemTitle}`;
-  } else if (topicMatched) {
-    suggestionReason =
-      `Suggested because you rank ${candidatePost.collection.topic}`;
-  } else if (categoryMatched) {
-    suggestionReason =
-      `Suggested because you rank ${candidatePost.collection.category}`;
+  return eligiblePosts[0];
+}
+
+function getSuggestionReason(
+  sharedItems: string[]
+) {
+  if (sharedItems.length === 1) {
+    return `You both ranked ${sharedItems[0]}`;
   }
 
-  return {
-    score,
-    suggestionReason,
-  };
+  if (sharedItems.length === 2) {
+    return (
+      `You both ranked ${sharedItems[0]} ` +
+      `and ${sharedItems[1]}`
+    );
+  }
+
+  if (sharedItems.length > 2) {
+    return (
+      `You share ${sharedItems.length} ` +
+      'ranked picks in this Top 3'
+    );
+  }
+
+  return 'Recommended for you';
 }
 
 export function buildPersonalizedFeed({
@@ -122,64 +136,67 @@ export function buildPersonalizedFeed({
 }: BuildPersonalizedFeedOptions): PersonalizedFeedPost[] {
   const followedIds = new Set(
     followedUserIds
+      .map((userId) => userId.trim())
+      .filter(Boolean)
   );
 
-  const currentUserPosts = posts.filter(
-    (post) =>
-      post.authorId === currentUserId
-  );
-
+  /*
+   * Your own posts and posts from followed users
+   * form the main chronological feed.
+   */
   const priorityPosts = posts
     .filter(
       (post) =>
         post.authorId === currentUserId ||
         followedIds.has(post.authorId)
     )
-    .sort(
-      (first, second) =>
-        new Date(
-          second.publishedAt
-        ).getTime() -
-        new Date(
-          first.publishedAt
-        ).getTime()
-    );
+    .sort(sortPostsByNewest);
 
-  const suggestionCandidates = posts
-    .filter(
-      (post) =>
-        post.authorId !== currentUserId &&
-        !followedIds.has(post.authorId)
-    )
-    .map((post) => {
-      const {
-        score,
-        suggestionReason,
-      } = getSuggestionScore(
-        post,
-        currentUserPosts
-      );
+  /*
+   * The Taste Match service is the single source
+   * of truth for recommendation eligibility.
+   */
+  const recommendations =
+    getTasteRecommendations({
+      posts,
+      currentUserId,
+      excludedUserIds: followedUserIds,
+      limit: posts.length,
+    });
 
-      return {
-        post,
-        score,
-        suggestionReason,
-      };
-    })
-    .sort((first, second) => {
-      if (second.score !== first.score) {
-        return second.score - first.score;
+  /*
+   * Show at most one recommended card per person.
+   *
+   * The selected card must itself contain at
+   * least one item shared with the current user.
+   */
+  const suggestionPosts =
+    recommendations.reduce<
+      PersonalizedFeedPost[]
+    >((suggestions, recommendation) => {
+      const suggestedPost =
+        getSuggestedPostForRecommendation(
+          posts,
+          recommendation
+        );
+
+      if (!suggestedPost) {
+        return suggestions;
       }
 
-      return (
-        new Date(
-          second.post.publishedAt
-        ).getTime() -
-        new Date(
-          first.post.publishedAt
-        ).getTime()
-      );
-    });
+      suggestions.push({
+        post: suggestedPost.post,
+        isSuggested: true,
+        suggestionReason:
+          getSuggestionReason(
+            suggestedPost.sharedItems
+          ),
+        sharedItemTitles:
+          suggestedPost.sharedItems,
+      });
+
+      return suggestions;
+    }, []);
 
   const result: PersonalizedFeedPost[] =
     [];
@@ -187,10 +204,13 @@ export function buildPersonalizedFeed({
   let priorityIndex = 0;
   let suggestionIndex = 0;
 
+  /*
+   * Insert one recommendation after every three
+   * priority posts.
+   */
   while (
     priorityIndex < priorityPosts.length ||
-    suggestionIndex <
-      suggestionCandidates.length
+    suggestionIndex < suggestionPosts.length
   ) {
     for (
       let count = 0;
@@ -208,43 +228,30 @@ export function buildPersonalizedFeed({
 
     if (
       suggestionIndex <
-      suggestionCandidates.length
+      suggestionPosts.length
     ) {
-      const suggestion =
-        suggestionCandidates[
-          suggestionIndex
-        ];
-
-      result.push({
-        post: suggestion.post,
-        isSuggested: true,
-        suggestionReason:
-          suggestion.suggestionReason ??
-          'Suggested for you',
-      });
+      result.push(
+        suggestionPosts[suggestionIndex]
+      );
 
       suggestionIndex += 1;
     }
 
+    /*
+     * If no priority posts remain, append the
+     * remaining recommendations in Taste Match
+     * order.
+     */
     if (
       priorityIndex >= priorityPosts.length
     ) {
       while (
         suggestionIndex <
-        suggestionCandidates.length
+        suggestionPosts.length
       ) {
-        const suggestion =
-          suggestionCandidates[
-            suggestionIndex
-          ];
-
-        result.push({
-          post: suggestion.post,
-          isSuggested: true,
-          suggestionReason:
-            suggestion.suggestionReason ??
-            'Suggested for you',
-        });
+        result.push(
+          suggestionPosts[suggestionIndex]
+        );
 
         suggestionIndex += 1;
       }

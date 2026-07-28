@@ -34,6 +34,10 @@ function normalizeTopic(topic?: string) {
   return topic?.trim().toLowerCase() || 'general';
 }
 
+function normalizeItemTitle(title?: string) {
+  return title?.trim().toLowerCase() ?? '';
+}
+
 export default function ProfileScreen({
   userId,
   showBackButton = false,
@@ -169,6 +173,54 @@ export default function ProfileScreen({
     profile.id,
     viewedUserId,
   ]);
+
+  const tasteMatchItemTitlesByPostId =
+    useMemo<Record<string, string[]>>(() => {
+      if (
+        isCurrentUser ||
+        !tasteMatch
+      ) {
+        return {};
+      }
+
+      const normalizedSharedItems = new Set(
+        tasteMatch.sharedItems
+          .map(normalizeItemTitle)
+          .filter(Boolean)
+      );
+
+      return publishedPosts.reduce<
+        Record<string, string[]>
+      >((matchesByPostId, post) => {
+        const matchingTitles =
+          post.collection.items
+            .filter(
+              (
+                item
+              ): item is NonNullable<
+                typeof item
+              > => item !== null
+            )
+            .map((item) => item.title.trim())
+            .filter(Boolean)
+            .filter((title) =>
+              normalizedSharedItems.has(
+                normalizeItemTitle(title)
+              )
+            );
+
+        if (matchingTitles.length > 0) {
+          matchesByPostId[post.id] =
+            matchingTitles;
+        }
+
+        return matchesByPostId;
+      }, {});
+    }, [
+      isCurrentUser,
+      publishedPosts,
+      tasteMatch,
+    ]);
 
   function openPublishedPost(post: Post) {
     router.push({
@@ -315,6 +367,9 @@ export default function ProfileScreen({
           }
           tasteMatchSharedPickCount={
             tasteMatch?.sharedItems.length ?? 0
+          }
+          tasteMatchItemTitlesByPostId={
+            tasteMatchItemTitlesByPostId
           }
           onTasteMatchPress={
             tasteMatch

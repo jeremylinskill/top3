@@ -24,6 +24,7 @@ export type TasteRecommendation = {
 type GetTasteRecommendationsOptions = {
   posts: Post[];
   currentUserId: string;
+  excludedUserIds?: string[];
   limit?: number;
 };
 
@@ -88,11 +89,18 @@ function getMatchingCollectionCount(
 export function getTasteRecommendations({
   posts,
   currentUserId,
+  excludedUserIds = [],
   limit = 5,
 }: GetTasteRecommendationsOptions): TasteRecommendation[] {
   if (!currentUserId || limit <= 0) {
     return [];
   }
+
+  const excludedIds = new Set(
+    excludedUserIds
+      .map((userId) => userId.trim())
+      .filter(Boolean)
+  );
 
   const postsByAuthor =
     groupPostsByAuthor(posts);
@@ -113,9 +121,21 @@ export function getTasteRecommendations({
         return;
       }
 
+      if (excludedIds.has(authorId)) {
+        return;
+      }
+
       const user = getMockUserById(authorId);
 
       if (!user) {
+        return;
+      }
+
+      /*
+       * Only public profiles are eligible to
+       * appear in recommendation lists.
+       */
+      if (user.visibility !== 'public') {
         return;
       }
 
@@ -249,8 +269,11 @@ export function getTasteRecommendationForUser({
   );
 
   /*
-   * Return a Taste Match whenever there is at
-   * least one concrete shared ranked pick.
+   * Direct Taste Match lookups are allowed for
+   * any valid user, including private profiles.
+   *
+   * The public-profile and exclusion rules apply
+   * only to recommendation lists.
    */
   if (match.sharedItems.length === 0) {
     return null;

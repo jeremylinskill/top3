@@ -1,16 +1,18 @@
 import { UserProfile } from '@/types/user-profile';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
-    createContext,
-    ReactNode,
-    useContext,
-    useEffect,
-    useState,
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
 } from 'react';
 
 type ProfileContextValue = {
   profile: UserProfile;
-  updateProfile: (updates: Partial<UserProfile>) => void;
+  updateProfile: (
+    updates: Partial<UserProfile>
+  ) => void;
 };
 
 type ProfileProviderProps = {
@@ -24,10 +26,13 @@ const DEFAULT_PROFILE: UserProfile = {
   displayName: 'Jeremy',
   username: 'jeremy',
   bio: '',
+  visibility: 'public',
 };
 
 const ProfileContext =
-  createContext<ProfileContextValue | undefined>(undefined);
+  createContext<
+    ProfileContextValue | undefined
+  >(undefined);
 
 export function ProfileProvider({
   children,
@@ -42,12 +47,20 @@ export function ProfileProvider({
     async function loadProfile() {
       try {
         const savedProfile =
-          await AsyncStorage.getItem(STORAGE_KEY);
+          await AsyncStorage.getItem(
+            STORAGE_KEY
+          );
 
         if (savedProfile) {
-          setProfile(
-            JSON.parse(savedProfile) as UserProfile
-          );
+          const parsedProfile =
+            JSON.parse(
+              savedProfile
+            ) as Partial<UserProfile>;
+
+          setProfile({
+            ...DEFAULT_PROFILE,
+            ...parsedProfile,
+          });
         }
       } catch (error) {
         console.error(
@@ -105,7 +118,9 @@ export function ProfileProvider({
 }
 
 export function useProfile() {
-  const context = useContext(ProfileContext);
+  const context = useContext(
+    ProfileContext
+  );
 
   if (!context) {
     throw new Error(

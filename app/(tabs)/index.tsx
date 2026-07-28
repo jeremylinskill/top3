@@ -8,11 +8,9 @@ import {
   getHydratedFeedPosts,
   getMockUserById,
 } from '@/services/post-service';
-import { getTasteRecommendationForUser } from '@/services/taste-recommendation-service';
 import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
 import { buildPersonalizedFeed } from '@/utils/build-personalized-feed';
-import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import {
   useEffect,
@@ -29,6 +27,25 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 function normalizeTopic(topic?: string) {
   return topic?.trim().toLowerCase() || 'general';
+}
+
+function formatSuggestionReason(
+  suggestionReason?: string
+) {
+  if (!suggestionReason) {
+    return 'Because this matches your taste';
+  }
+
+  const formattedReason = suggestionReason.replace(
+    /^Suggested because\s+/i,
+    ''
+  );
+
+  if (/^You both ranked\s+/i.test(formattedReason)) {
+    return `Because ${formattedReason.charAt(0).toLowerCase()}${formattedReason.slice(1)}`;
+  }
+
+  return formattedReason;
 }
 
 export default function FeedScreen() {
@@ -108,41 +125,6 @@ export default function FeedScreen() {
     ]
   );
 
-  const tasteMatchByUserId = useMemo(() => {
-    const matches = new Map<
-      string,
-      ReturnType<
-        typeof getTasteRecommendationForUser
-      >
-    >();
-
-    const feedAuthorIds = new Set(
-      personalizedFeed
-        .filter(
-          ({ post }) =>
-            post.authorId !== profile.id
-        )
-        .map(({ post }) => post.authorId)
-    );
-
-    feedAuthorIds.forEach((authorId) => {
-      matches.set(
-        authorId,
-        getTasteRecommendationForUser({
-          posts: feedPosts,
-          currentUserId: profile.id,
-          otherUserId: authorId,
-        })
-      );
-    });
-
-    return matches;
-  }, [
-    feedPosts,
-    personalizedFeed,
-    profile.id,
-  ]);
-
   function getPostAuthor(
     authorId: string
   ): UserProfile | null {
@@ -156,28 +138,8 @@ export default function FeedScreen() {
   function openAuthorProfile(
     authorId: string
   ) {
-    if (authorId === profile.id) {
-      router.push('/(tabs)/profile');
-      return;
-    }
-
     router.push({
       pathname: '/public-profile',
-      params: {
-        userId: authorId,
-      },
-    });
-  }
-
-  function openTasteMatch(
-    authorId: string
-  ) {
-    if (authorId === profile.id) {
-      return;
-    }
-
-    router.push({
-      pathname: '/taste-match',
       params: {
         userId: authorId,
       },
@@ -197,8 +159,7 @@ export default function FeedScreen() {
     router.push({
       pathname: '/category-feed',
       params: {
-        category:
-          post.collection.category,
+        category: post.collection.category,
         topic: normalizeTopic(
           post.collection.topic
         ),
@@ -263,6 +224,8 @@ export default function FeedScreen() {
             ({
               post,
               isSuggested,
+              suggestionReason,
+              sharedItemTitles,
             }) => {
               const author = getPostAuthor(
                 post.authorId
@@ -278,54 +241,29 @@ export default function FeedScreen() {
               const authorIsFollowed =
                 isFollowing(post.authorId);
 
-              const tasteMatch =
-                !isCurrentUserPost
-                  ? tasteMatchByUserId.get(
-                      post.authorId
-                    )
-                  : null;
-
               return (
                 <View
                   key={post.id}
                   style={styles.feedItem}>
-                  {isSuggested ? (
-                    <View
-                      style={
-                        styles.recommendationHeader
-                      }>
-                      <Ionicons
-                        name="sparkles-outline"
-                        size={16}
-                        color="#555555"
-                      />
-
-                      <Text
-                        style={
-                          styles.recommendationTitle
-                        }>
-                        Recommended for you
-                      </Text>
-                    </View>
-                  ) : null}
-
                   <Top3Card
                     post={post}
                     author={author}
                     showAuthor
-                    tasteMatchScore={
-                      tasteMatch?.score
+                    recommendationTitle={
+                      isSuggested
+                        ? 'Recommended for you'
+                        : undefined
                     }
-                    tasteMatchSharedPickCount={
-                      tasteMatch?.sharedItems
-                        .length ?? 0
+                    recommendationReason={
+                      isSuggested
+                        ? formatSuggestionReason(
+                            suggestionReason
+                          )
+                        : undefined
                     }
-                    onTasteMatchPress={
-                      tasteMatch
-                        ? () =>
-                            openTasteMatch(
-                              post.authorId
-                            )
+                    tasteMatchItemTitles={
+                      isSuggested
+                        ? sharedItemTitles
                         : undefined
                     }
                     showFollowButton={
@@ -400,21 +338,6 @@ const styles = StyleSheet.create({
 
   feedItem: {
     marginBottom: 16,
-  },
-
-  recommendationHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 9,
-    paddingHorizontal: 4,
-  },
-
-  recommendationTitle: {
-    marginLeft: 6,
-    fontSize: 14,
-    lineHeight: 19,
-    fontWeight: '700',
-    color: '#555555',
   },
 
   loadingState: {
