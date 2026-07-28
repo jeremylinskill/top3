@@ -1,3 +1,4 @@
+import FollowButton from '@/components/follow-button';
 import TasteMatchBadge from '@/components/taste-match-badge';
 import { COLORS } from '@/constants/colors';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
@@ -25,6 +26,9 @@ type Top3CardProps = {
   onTitlePress?: () => void;
   onEditPress?: () => void;
   highlightQuery?: string;
+  tasteMatchItemTitles?: string[];
+  recommendationTitle?: string;
+  recommendationReason?: string;
   showFollowButton?: boolean;
   isFollowingAuthor?: boolean;
   isFollowLoading?: boolean;
@@ -57,10 +61,10 @@ export default function Top3Card({
   onTitlePress,
   onEditPress,
   highlightQuery,
+  tasteMatchItemTitles = [],
+  recommendationTitle,
+  recommendationReason,
   showFollowButton = false,
-  isFollowingAuthor = false,
-  isFollowLoading = false,
-  onFollowPress,
   tasteMatchScore,
   tasteMatchSharedPickCount = 0,
   onTasteMatchPress,
@@ -123,6 +127,14 @@ export default function Top3Card({
   const normalizedHighlightQuery =
     highlightQuery?.trim().toLowerCase() ?? '';
 
+  const normalizedTasteMatchItems = new Set(
+    tasteMatchItemTitles
+      .map((title) =>
+        title.trim().toLowerCase()
+      )
+      .filter(Boolean)
+  );
+
   function itemMatchesHighlight(
     title: string,
     subtitle?: string
@@ -151,6 +163,30 @@ export default function Top3Card({
 
   return (
     <View style={styles.card}>
+      {recommendationTitle ? (
+        <View style={styles.recommendationBlock}>
+          <View style={styles.recommendationTitleRow}>
+            <Ionicons
+              name="sparkles-outline"
+              size={16}
+              color={COLORS.secondaryText}
+            />
+
+            <Text style={styles.recommendationTitle}>
+              {recommendationTitle}
+            </Text>
+          </View>
+
+          {recommendationReason ? (
+            <Text
+              style={styles.recommendationReason}
+              numberOfLines={3}>
+              {recommendationReason}
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
+
       {showAuthor && author ? (
         <View style={styles.authorRow}>
           <View style={styles.authorContent}>
@@ -216,39 +252,11 @@ export default function Top3Card({
             ) : null}
           </View>
 
-          {showFollowButton && onFollowPress ? (
-            <Pressable
-              style={({ pressed }) => [
-                styles.followButton,
-                isFollowingAuthor &&
-                  styles.followingButton,
-                pressed && styles.pressed,
-                isFollowLoading &&
-                  styles.disabled,
-              ]}
-              onPress={onFollowPress}
-              disabled={isFollowLoading}
-              accessibilityRole="button"
-              accessibilityState={{
-                selected: isFollowingAuthor,
-                disabled: isFollowLoading,
-              }}
-              accessibilityLabel={
-                isFollowingAuthor
-                  ? `Unfollow ${author.displayName}`
-                  : `Follow ${author.displayName}`
-              }>
-              <Text
-                style={[
-                  styles.followButtonText,
-                  isFollowingAuthor &&
-                    styles.followingButtonText,
-                ]}>
-                {isFollowingAuthor
-                  ? 'Following'
-                  : 'Follow'}
-              </Text>
-            </Pressable>
+          {showFollowButton ? (
+            <FollowButton
+              userId={author.id}
+              size="small"
+            />
           ) : null}
         </View>
       ) : null}
@@ -320,20 +328,36 @@ export default function Top3Card({
         <View style={styles.ranking}>
           {post.collection.items.map(
             (item, index) => {
-              const isHighlighted =
+              const isSearchHighlighted =
                 item !== null &&
                 itemMatchesHighlight(
                   item.title,
                   item.subtitle
                 );
 
+              const isTasteMatch =
+                item !== null &&
+                normalizedTasteMatchItems.has(
+                  item.title
+                    .trim()
+                    .toLowerCase()
+                );
+
+              const isHighlighted =
+                isSearchHighlighted ||
+                isTasteMatch;
+
+
               return (
                 <View
                   key={`${post.id}-${index}`}
                   style={[
                     styles.rankRow,
-                    index < 2 &&
-                      styles.rankDivider,
+                    index ===
+                      post.collection.items.length - 1 &&
+                      styles.lastRankRow,
+                    !isHighlighted &&
+                      styles.standardRankRow,
                     isHighlighted &&
                       styles.highlightedRankRow,
                   ]}>
@@ -410,6 +434,14 @@ export default function Top3Card({
                     ) : null}
                   </View>
 
+                  {isTasteMatch ? (
+                    <Ionicons
+                      name="sparkles"
+                      size={14}
+                      color={COLORS.sparkle}
+                      style={styles.tasteMatchIcon}
+                    />
+                  ) : null}
                 </View>
               );
             }
@@ -545,6 +577,37 @@ const styles = StyleSheet.create({
     padding: 18,
   },
 
+  recommendationBlock: {
+    marginTop: -18,
+    marginHorizontal: -18,
+    marginBottom: 18,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 14,
+  },
+
+  recommendationTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  recommendationTitle: {
+    marginLeft: 6,
+    fontSize: 14,
+    lineHeight: 19,
+    fontWeight: '700',
+    color: COLORS.secondaryText,
+  },
+
+  recommendationReason: {
+    marginTop: 3,
+    marginLeft: 22,
+    fontSize: 13,
+    lineHeight: 18,
+    color: COLORS.tertiaryText,
+  },
+
+
   authorRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -567,32 +630,9 @@ const styles = StyleSheet.create({
     marginLeft: 58,
   },
 
-  followButton: {
-    minWidth: 82,
-    minHeight: 36,
-    marginLeft: 12,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-    backgroundColor: '#222222',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
 
-  followingButton: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#CCCCCC',
-  },
 
-  followButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
 
-  followingButtonText: {
-    color: '#222222',
-  },
 
   avatar: {
     width: 46,
@@ -669,22 +709,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  ranking: {
-    borderTopWidth:
-      StyleSheet.hairlineWidth,
-    borderTopColor: '#EEEEEE',
-  },
+  ranking: {},
 
   rankRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 8,
     paddingVertical: 15,
   },
 
-  rankDivider: {
-    borderBottomWidth:
-      StyleSheet.hairlineWidth,
-    borderBottomColor: '#EEEEEE',
+  lastRankRow: {
+    marginBottom: 0,
+  },
+
+  standardRankRow: {
+    marginHorizontal: -10,
+    paddingHorizontal: 10,
+    backgroundColor: COLORS.background,
+    borderRadius: 12,
   },
 
   highlightedRankRow: {
@@ -693,6 +735,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.sharedTaste,
     borderRadius: 12,
   },
+
 
   rankNumber: {
     width: 28,
@@ -722,6 +765,12 @@ const styles = StyleSheet.create({
   itemDetails: {
     flex: 1,
     minWidth: 0,
+  },
+
+  tasteMatchIcon: {
+    flexShrink: 0,
+    marginLeft: 8,
+    marginRight: 18,
   },
 
   itemTitle: {
@@ -760,9 +809,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingTop: 14,
-    borderTopWidth:
-      StyleSheet.hairlineWidth,
-    borderTopColor: '#EEEEEE',
   },
 
   engagement: {

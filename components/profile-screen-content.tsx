@@ -1,3 +1,4 @@
+import FollowButton from '@/components/follow-button';
 import PrimaryButton from '@/components/primary-button';
 import TasteMatchBadge from '@/components/taste-match-badge';
 import Top3Card from '@/components/top3-card';
@@ -9,7 +10,6 @@ import { TYPOGRAPHY } from '@/constants/typography';
 import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
 import {
-    ActivityIndicator,
     Image,
     Pressable,
     StyleSheet,
@@ -27,6 +27,10 @@ type ProfileScreenContentProps = {
 
   tasteMatchScore?: number;
   tasteMatchSharedPickCount?: number;
+  tasteMatchItemTitlesByPostId?: Record<
+    string,
+    string[]
+  >;
 
   isLoadingPosts?: boolean;
 
@@ -55,14 +59,11 @@ export default function ProfileScreenContent({
 
   tasteMatchScore,
   tasteMatchSharedPickCount = 0,
+  tasteMatchItemTitlesByPostId = {},
 
   isLoadingPosts = false,
 
-  isFollowing = false,
-  isLoadingFollowState = false,
-
   onEditProfile,
-  onToggleFollow,
   onFollowersPress,
   onFollowingPress,
   onTasteMatchPress,
@@ -214,50 +215,14 @@ export default function ProfileScreenContent({
             />
           </View>
         ) : null
-      ) : onToggleFollow ? (
-        <Pressable
-          style={({ pressed }) => [
-            styles.followButton,
-            isFollowing &&
-              styles.followingButton,
-            pressed && styles.buttonPressed,
-            isLoadingFollowState &&
-              styles.buttonDisabled,
-          ]}
-          onPress={onToggleFollow}
-          disabled={isLoadingFollowState}
-          accessibilityRole="button"
-          accessibilityState={{
-            selected: isFollowing,
-            disabled: isLoadingFollowState,
-          }}
-          accessibilityLabel={
-            isFollowing
-              ? `Unfollow ${user.displayName}`
-              : `Follow ${user.displayName}`
-          }>
-          {isLoadingFollowState ? (
-            <ActivityIndicator
-              color={
-                isFollowing
-                  ? COLORS.text
-                  : COLORS.white
-              }
-            />
-          ) : (
-            <Text
-              style={[
-                styles.followButtonText,
-                isFollowing &&
-                  styles.followingButtonText,
-              ]}>
-              {isFollowing
-                ? 'Following'
-                : 'Follow'}
-            </Text>
-          )}
-        </Pressable>
-      ) : null}
+      ) : (
+        <View style={styles.profileAction}>
+          <FollowButton
+            userId={user.id}
+            size="large"
+          />
+        </View>
+      )}
 
       <View style={styles.section}>
         {isLoadingPosts ? (
@@ -286,6 +251,13 @@ export default function ProfileScreenContent({
                 post={post}
                 author={user}
                 showAuthor={false}
+                tasteMatchItemTitles={
+                  !isCurrentUser
+                    ? tasteMatchItemTitlesByPostId[
+                        post.id
+                      ] ?? []
+                    : []
+                }
                 onTitlePress={() =>
                   onTitlePress(post)
                 }
@@ -409,37 +381,11 @@ const styles = StyleSheet.create({
     marginTop: 14,
   },
 
-  followButton: {
-    marginTop: 14,
-    minHeight: 52,
-    borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.text,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
 
-  followingButton: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: '#CCCCCC',
-  },
 
-  followButtonText: {
-    ...TYPOGRAPHY.headline,
-    color: COLORS.white,
-  },
 
-  followingButtonText: {
-    color: COLORS.text,
-  },
 
-  buttonPressed: {
-    opacity: 0.75,
-  },
 
-  buttonDisabled: {
-    opacity: 0.6,
-  },
 
   section: {
     marginTop: SPACING.lg,

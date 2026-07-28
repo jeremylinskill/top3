@@ -1,3 +1,4 @@
+import FollowButton from '@/components/follow-button';
 import ScreenHeader from '@/components/screen-header';
 import { COLORS } from '@/constants/colors';
 import { SPACING } from '@/constants/spacing';
@@ -448,6 +449,13 @@ export default function TasteMatchScreen() {
               </Text>
             </View>
 
+            <View style={styles.followAction}>
+              <FollowButton
+                userId={viewedUser.id}
+                size="large"
+              />
+            </View>
+
             {sortedComparisons.length > 0 ? (
               <View style={styles.comparisonList}>
                 {sortedComparisons.map(
@@ -551,12 +559,6 @@ export default function TasteMatchScreen() {
                               </View>
                             ))}
                           </View>
-
-                          <View
-                            style={
-                              styles.columnDivider
-                            }
-                          />
 
                           <View
                             style={
@@ -685,6 +687,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
+  followAction: {
+    marginTop: SPACING.lg,
+  },
+
   comparisonList: {
     marginTop: SPACING.xl,
     gap: SPACING.xl,
@@ -729,6 +735,7 @@ const styles = StyleSheet.create({
   comparisonColumns: {
     flexDirection: 'row',
     alignItems: 'stretch',
+    gap: 8,
   },
 
   comparisonColumn: {
@@ -736,14 +743,8 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
 
-  columnDivider: {
-    width: StyleSheet.hairlineWidth,
-    marginHorizontal: 10,
-    backgroundColor: '#E0E0E0',
-  },
-
   rankItemSpacing: {
-    marginBottom: 10,
+    marginBottom: 8,
   },
 
   rankItem: {
@@ -751,13 +752,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,
+    paddingHorizontal: 8,
+    backgroundColor: COLORS.background,
+    borderRadius: 10,
   },
 
   sharedRankItem: {
-    marginHorizontal: -6,
-    paddingHorizontal: 6,
     backgroundColor: COLORS.sharedTaste,
-    borderRadius: 10,
   },
 
   rankNumber: {
@@ -771,7 +772,8 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.caption,
     flex: 1,
     minWidth: 0,
-    marginHorizontal: 7,
+    marginLeft: 7,
+    marginRight: 5,
     color: COLORS.secondaryText,
   },
 
