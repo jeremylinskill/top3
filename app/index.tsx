@@ -3,10 +3,7 @@ import {
     resetWelcomeStatus,
 } from '@/services/onboarding-service';
 import { router } from 'expo-router';
-import {
-    useEffect,
-    useState,
-} from 'react';
+import { useEffect } from 'react';
 import {
     ActivityIndicator,
     StyleSheet,
@@ -14,9 +11,6 @@ import {
 } from 'react-native';
 
 export default function IndexScreen() {
-  const [isLoading, setIsLoading] =
-    useState(true);
-
   useEffect(() => {
     let isMounted = true;
 
@@ -47,10 +41,6 @@ export default function IndexScreen() {
 
         if (isMounted) {
           router.replace('/welcome');
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
         }
       }
     }

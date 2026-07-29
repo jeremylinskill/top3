@@ -12,7 +12,7 @@ export default function OnboardingScreen() {
       <Text style={styles.title}>Welcome to Top3</Text>
 
       <Text style={styles.subtitle}>
-        Let's find people who share your favourite things.
+        Let&apos;s find people who share your favourite things.
       </Text>
 
       <Pressable
