@@ -4,6 +4,7 @@ import { LikeProvider } from '@/context/like-context';
 import { ProfileProvider } from '@/context/profile-context';
 import { Top3Provider } from '@/context/top3-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { AuthProvider } from '@/providers/auth-provider';
 import {
   DarkTheme,
   DefaultTheme,
@@ -23,61 +24,62 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   return (
-    <GestureHandlerRootView
-      style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <KeyboardProvider>
-        <ProfileProvider>
-          <FollowProvider>
-            <LikeProvider>
-              <CommentProvider>
-                <Top3Provider>
-                  <ThemeProvider
-                    value={
-                      colorScheme === 'dark'
-                        ? DarkTheme
-                        : DefaultTheme
-                    }>
-                    <Stack
-                      screenOptions={{
-                        headerShown: false,
-                      }}>
-                      <Stack.Screen name="index" />
+        <AuthProvider>
+          <ProfileProvider>
+            <FollowProvider>
+              <LikeProvider>
+                <CommentProvider>
+                  <Top3Provider>
+                    <ThemeProvider
+                      value={
+                        colorScheme === 'dark'
+                          ? DarkTheme
+                          : DefaultTheme
+                      }>
+                      <Stack
+                        screenOptions={{
+                          headerShown: false,
+                        }}>
+                        <Stack.Screen name="index" />
 
-                      <Stack.Screen name="welcome" />
+                        <Stack.Screen name="welcome" />
 
-                      <Stack.Screen name="(tabs)" />
+                        <Stack.Screen name="(tabs)" />
 
-                      <Stack.Screen name="collections" />
+                        <Stack.Screen name="collections" />
 
-                      <Stack.Screen name="collection" />
+                        <Stack.Screen name="collection" />
 
-                      <Stack.Screen name="search" />
+                        <Stack.Screen name="search" />
 
-                      <Stack.Screen name="edit-profile" />
+                        <Stack.Screen name="edit-profile" />
 
-                      <Stack.Screen name="public-profile" />
+                        <Stack.Screen name="public-profile" />
 
-                      <Stack.Screen name="published-top3" />
+                        <Stack.Screen name="published-top3" />
 
-                      <Stack.Screen name="community-top3" />
+                        <Stack.Screen name="community-top3" />
 
-                      <Stack.Screen name="overall-top3-topics" />
+                        <Stack.Screen name="overall-top3-topics" />
 
-                      <Stack.Screen
-                        name="modal"
-                        options={{
-                          presentation: 'modal',
-                        }}
-                      />
-                    </Stack>
+                        <Stack.Screen
+                          name="modal"
+                          options={{
+                            presentation: 'modal',
+                          }}
+                        />
+                      </Stack>
 
-                    <StatusBar style="auto" />
-                  </ThemeProvider>
-                </Top3Provider>
-              </CommentProvider>
-            </LikeProvider>
-          </FollowProvider>
-        </ProfileProvider>
+                      <StatusBar style="auto" />
+                    </ThemeProvider>
+                  </Top3Provider>
+                </CommentProvider>
+              </LikeProvider>
+            </FollowProvider>
+          </ProfileProvider>
+        </AuthProvider>
       </KeyboardProvider>
     </GestureHandlerRootView>
   );
