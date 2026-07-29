@@ -23,7 +23,8 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView
+      style={{ flex: 1 }}>
       <KeyboardProvider>
         <ProfileProvider>
           <FollowProvider>
@@ -40,6 +41,10 @@ export default function RootLayout() {
                       screenOptions={{
                         headerShown: false,
                       }}>
+                      <Stack.Screen name="index" />
+
+                      <Stack.Screen name="welcome" />
+
                       <Stack.Screen name="(tabs)" />
 
                       <Stack.Screen name="collections" />
