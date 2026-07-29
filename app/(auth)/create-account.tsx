@@ -13,28 +13,25 @@ export default function CreateAccountScreen() {
   function handleAppleSignUp() {
     Alert.alert(
       'Apple sign-up',
-      'We will connect Apple authentication in the next authentication step.'
+      'Apple authentication will be connected in a later step.'
     );
   }
 
   function handleGoogleSignUp() {
     Alert.alert(
       'Google sign-up',
-      'We will connect Google authentication in the next authentication step.'
+      'Google authentication will be connected in a later step.'
     );
   }
 
   function handleEmailSignUp() {
-    Alert.alert(
-      'Email sign-up',
-      'We will build the email account form in the next authentication step.'
-    );
+    router.push('/sign-up-email');
   }
 
   function handleSignIn() {
     Alert.alert(
       'Sign in',
-      'We will build the existing-account sign-in flow after account creation.'
+      'The sign-in flow will be built after email account creation.'
     );
   }
 
@@ -142,8 +139,8 @@ const styles = StyleSheet.create({
   },
 
   backButtonText: {
-    fontSize: 30,
-    lineHeight: 34,
+    fontSize: 26,
+    lineHeight: 30,
     fontWeight: '400',
     color: '#222222',
   },
