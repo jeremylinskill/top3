@@ -1,24 +1,16 @@
 import EmailSignUpForm from '@/components/email-sign-up-form';
 import { router } from 'expo-router';
 import {
-    Alert,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SignUpEmailScreen() {
   function handleSuccess() {
-    Alert.alert(
-      'Account created',
-      'Your account was created successfully.'
-    );
-
-    // Story 003
-    // This will become:
-    // router.replace('/complete-profile');
+    router.replace('/check-email');
   }
 
   return (

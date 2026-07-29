@@ -92,11 +92,15 @@ export default function EmailSignUpForm({
       return;
     }
 
+    const normalizedEmail = email
+      .trim()
+      .toLowerCase();
+
     try {
       setIsSubmitting(true);
 
       await signUpWithEmail({
-        email: email.trim().toLowerCase(),
+        email: normalizedEmail,
         password,
       });
 
