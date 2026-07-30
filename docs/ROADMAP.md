@@ -1,6 +1,6 @@
 # Top3 Product Roadmap
 
-**Version:** 1.0  
+**Version:** 1.1  
 **Status:** Active Development  
 **Owner:** Jeremy Linskill  
 **Last Updated:** July 30, 2026
@@ -11,9 +11,9 @@
 
 This roadmap outlines the long-term evolution of the Top3 product experience.
 
-Unlike `CURRENT_STATE.md`, which documents the application's current implementation, this roadmap focuses on the future of the product and the experiences we want to create for users.
+Unlike `CURRENT_STATE.md`, which documents the application's current implementation, this roadmap focuses on the future direction of the product and the experiences we want to create for users.
 
-Every roadmap item should strengthen one or more of Top3's four core pillars.
+Every initiative should strengthen one or more of Top3's four core pillars.
 
 ---
 
@@ -21,7 +21,7 @@ Every roadmap item should strengthen one or more of Top3's four core pillars.
 
 Help people discover one another through shared taste.
 
-Top3 isn't simply a place to rank favourites. It's a platform that helps people understand themselves, discover new entertainment, and connect with others through the things they love.
+Top3 isn't simply a place to rank favourites. It's a platform that helps people express who they are, discover new entertainment, and connect with others through the things they love.
 
 Every product decision should reinforce one or more of these pillars:
 
@@ -34,13 +34,15 @@ Every product decision should reinforce one or more of these pillars:
 
 # Current Milestone
 
-## Community Platform
+## Real Community
 
 **Status:** In Progress
 
-Top3 has successfully transitioned from a prototype to a persistent application.
+Top3's social foundation is now complete.
 
-The current milestone focuses on completing the migration from local social features to fully shared, real-time community experiences.
+Authentication, collections, profiles, likes, and comments are fully persisted in Supabase.
+
+The focus now shifts toward replacing the remaining prototype community features with fully shared experiences.
 
 ### Completed
 
@@ -48,130 +50,95 @@ The current milestone focuses on completing the migration from local social feat
 - User Profiles
 - Collection Persistence
 - Shared Likes
-
-### In Progress
-
 - Shared Comments
-
-### Next
-
-- Shared Following
-- Supabase Realtime
-- Community Notifications
-
----
-
-# Phase 1 — Identity ✅
-
-**Status:** Complete
-
-Established the foundation for expressing personal taste.
-
-### Completed
-
-- User authentication
-- User profiles
-- Public profiles
-- Profile privacy
-- Collection creation
-- Collection editing
-- Draft collections
-- Collection publishing
-- Published collection viewing
-- Personal profile experience
-
----
-
-# Phase 2 — Discovery ✅
-
-**Status:** Complete
-
-Expanded the experience beyond personal collections into a discovery platform.
-
-### Completed
-
-- Personalized Feed
-- Discover experience
-- Category browsing
-- Category feeds
-- Trending collections
-- Trending topics
-- Community Top3
-- Overall Top3
-- Taste Match
-- Recommendation engine
-- Recommendation explanations
-- External content search
-- Published collection browsing
-
-The application now helps users discover both entertainment and people through community-generated collections.
-
----
-
-# Phase 3 — Community 🚧
-
-**Status:** Current Focus
-
-Build meaningful interaction between real users.
-
-### Completed
-
-- Shared likes
-- Optimistic social interactions
-- Database-backed community engagement
 
 ### Remaining
 
-- Shared comments
-- Shared follow relationships
+- Shared Following
+- Replace mock community users
 - Realtime synchronization
 - Community notifications
-- Richer profile discovery
-- Conversation improvements
-
-Success for this phase is reached when every social interaction is shared across all users in real time.
 
 ---
 
-# Phase 4 — Intelligence
+# Initiative 1 — Complete the Community
+
+**Status:** Current Focus
+
+Deliver a fully shared social experience.
+
+### Planned
+
+- Migrate Following to Supabase.
+- Replace mock community users with real users.
+- Add Supabase Realtime for Likes, Comments and Following.
+- Improve profile discovery.
+- Expand conversation tools.
+- Add notifications where they improve engagement.
+
+**Success looks like:**
+
+Every meaningful social interaction is shared across all users and updates without requiring manual refresh.
+
+---
+
+# Initiative 2 — Smarter Discovery
 
 **Status:** Planned
 
-Leverage the growing collection graph to create increasingly personalized experiences.
+Use community collections to improve entertainment discovery.
 
 ### Opportunities
 
-- AI-powered recommendations
-- Weekly discovery summaries
-- Taste evolution over time
-- Similarity clusters
-- Smart collection suggestions
-- Personalized community insights
-- Trend forecasting
-- Better recommendation explanations
+- Better recommendations.
+- AI-assisted recommendation explanations.
+- Personalized discovery summaries.
+- Trending creators.
+- Trending collections.
+- Better topic exploration.
+- Improved Taste Match.
+- Recommendation refinement.
+
+**Guiding principle:**
 
 Artificial intelligence should enhance human discovery—not replace it.
 
 ---
 
-# Phase 5 — Platform Growth
+# Initiative 3 — Richer Identity
 
-**Status:** Future
+**Status:** Planned
 
-Expand Top3 into a mature social platform.
+Help people express themselves more completely.
 
 ### Opportunities
 
-- Push notifications
-- Activity feed
-- User achievements
-- Featured creators
-- Collection sharing
-- Collaborative collections
-- Friend invitations
-- Collection history
-- Moderation tools
-- Admin dashboard
+- Profile customization.
+- Collection history.
+- Featured collections.
+- Pinned collections.
+- Personal milestones.
+- User achievements.
+- Collection sharing.
+
+---
+
+# Initiative 4 — Platform Growth
+
+**Status:** Future
+
+Expand Top3 into a mature community platform.
+
+### Opportunities
+
+- Activity feed.
+- Collaborative collections.
+- Friend invitations.
+- Creator features.
+- Moderation tools.
+- Admin dashboard.
+- Analytics.
+- Platform operations.
 
 ---
 
@@ -196,16 +163,16 @@ If a proposed feature doesn't strengthen one or more of these principles, it sho
 
 The product should continue evolving through small, complete vertical slices.
 
-For every major feature:
+For every major initiative:
 
-1. Design the architecture.
-2. Implement one complete vertical slice.
+1. Discuss the architecture.
+2. Build one complete vertical slice.
 3. Validate with `npm run typecheck`.
-4. Test end-to-end.
-5. Commit.
-6. Update project documentation.
-
-This approach has consistently produced stable, incremental progress while minimizing regressions.
+4. Validate with `npm run lint`.
+5. Test end-to-end.
+6. Commit.
+7. Push.
+8. Update project documentation.
 
 ---
 

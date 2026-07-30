@@ -6,10 +6,8 @@ import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
-import {
-  getHydratedFeedPosts,
-  getMockUserById,
-} from '@/services/post-service';
+import { searchPublicProfiles } from '@/lib/supabase/profiles';
+import { getHydratedFeedPosts } from '@/services/post-service';
 import {
   clearRecentSearches,
   getRecentSearches,
@@ -143,6 +141,9 @@ export default function DiscoverScreen() {
 
   const [searchQuery, setSearchQuery] =
     useState('');
+
+  const [profileSearchResults, setProfileSearchResults] =
+    useState<UserProfile[]>([]);
 
   const [recentSearches, setRecentSearches] =
     useState<string[]>([]);
@@ -463,44 +464,6 @@ export default function DiscoverScreen() {
       .slice(0, MAX_TRENDING_TOPICS);
   }, [trendingPosts]);
 
-  const searchablePeople = useMemo<
-    UserProfile[]
-  >(() => {
-    const peopleById = new Map<
-      string,
-      UserProfile
-    >();
-
-    peopleById.set(profile.id, profile);
-
-    allPosts.forEach((post) => {
-      if (peopleById.has(post.authorId)) {
-        return;
-      }
-
-      const author =
-        post.authorId === profile.id
-          ? profile
-          : getMockUserById(post.authorId);
-
-      if (author) {
-        peopleById.set(author.id, author);
-      }
-    });
-
-    return Array.from(
-      peopleById.values()
-    )
-      .filter(
-        (person) => person.id !== profile.id
-      )
-      .sort((first, second) =>
-        first.displayName.localeCompare(
-          second.displayName
-        )
-      );
-  }, [allPosts, profile]);
-
   const tasteRecommendations = useMemo(() => {
     const publishedPostCountByUserId =
       new Map<string, number>();
@@ -578,6 +541,49 @@ export default function DiscoverScreen() {
 
   const normalizedSearchQuery =
     normalizeValue(searchQuery);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    if (!normalizedSearchQuery) {
+      setProfileSearchResults([]);
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    const searchDelay = setTimeout(() => {
+      async function loadProfileSearchResults() {
+        try {
+          const matchingProfiles =
+            await searchPublicProfiles(
+              normalizedSearchQuery,
+              profile.id
+            );
+
+          if (isMounted) {
+            setProfileSearchResults(matchingProfiles);
+          }
+        } catch (error) {
+          console.error(
+            'Failed to search public profiles:',
+            error
+          );
+
+          if (isMounted) {
+            setProfileSearchResults([]);
+          }
+        }
+      }
+
+      void loadProfileSearchResults();
+    }, 250);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(searchDelay);
+    };
+  }, [normalizedSearchQuery, profile.id]);
 
   const isSearching =
     normalizedSearchQuery.length > 0;
@@ -722,24 +728,7 @@ export default function DiscoverScreen() {
     normalizedSearchQuery,
   ]);
 
-  const filteredPeople = useMemo(() => {
-    if (!normalizedSearchQuery) {
-      return [];
-    }
-
-    return searchablePeople.filter((person) => {
-      const searchableText = normalizeValue(
-        `${person.displayName} ${person.username}`
-      );
-
-      return searchableText.includes(
-        normalizedSearchQuery
-      );
-    });
-  }, [
-    searchablePeople,
-    normalizedSearchQuery,
-  ]);
+  const filteredPeople = profileSearchResults;
 
   const resultCount =
     filteredCategories.length +

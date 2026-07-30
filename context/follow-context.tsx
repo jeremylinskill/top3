@@ -1,4 +1,9 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '@/hooks/use-auth';
+import {
+  createFollow,
+  deleteFollow,
+  getFollowSnapshot,
+} from '@/lib/supabase/follows';
 import {
   createContext,
   ReactNode,
@@ -32,14 +37,6 @@ type FollowProviderProps = {
   children: ReactNode;
 };
 
-const STORAGE_KEY =
-  'top3-followed-user-ids';
-
-const MOCK_FOLLOWER_USER_IDS = [
-  'alex',
-  'sarah',
-];
-
 const FollowContext =
   createContext<FollowContextValue | undefined>(
     undefined
@@ -64,103 +61,77 @@ function getUniqueUserIds(
 export function FollowProvider({
   children,
 }: FollowProviderProps) {
+  const { user } = useAuth();
+
   const [followedUserIds, setFollowedUserIds] =
+    useState<string[]>([]);
+
+  const [followerUserIds, setFollowerUserIds] =
     useState<string[]>([]);
 
   const [isLoading, setIsLoading] =
     useState(true);
 
-  const followerUserIds = useMemo(
-    () =>
-      getUniqueUserIds(
-        MOCK_FOLLOWER_USER_IDS
-      ),
-    []
-  );
+  const userId = user?.id;
 
   useEffect(() => {
-    let isMounted = true;
+    let isCancelled = false;
 
-    async function loadFollowedUsers() {
+    async function loadFollows() {
+      setFollowedUserIds([]);
+      setFollowerUserIds([]);
+      setIsLoading(true);
+
+      if (!userId) {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
+
+        return;
+      }
+
       try {
-        const savedValue =
-          await AsyncStorage.getItem(
-            STORAGE_KEY
-          );
+        const snapshot =
+          await getFollowSnapshot(userId);
 
-        if (!savedValue) {
+        if (isCancelled) {
           return;
         }
 
-        const parsedValue: unknown =
-          JSON.parse(savedValue);
-
-        if (
-          Array.isArray(parsedValue) &&
-          parsedValue.every(
-            (item) =>
-              typeof item === 'string'
+        setFollowedUserIds(
+          getUniqueUserIds(
+            snapshot.followedUserIds
           )
-        ) {
-          const uniqueIds =
-            getUniqueUserIds(parsedValue);
+        );
 
-          if (isMounted) {
-            setFollowedUserIds(
-              uniqueIds
-            );
-          }
-        }
+        setFollowerUserIds(
+          getUniqueUserIds(
+            snapshot.followerUserIds
+          )
+        );
       } catch (error) {
         console.error(
-          'Failed to load followed users:',
+          'Failed to load follows:',
           error
         );
       } finally {
-        if (isMounted) {
+        if (!isCancelled) {
           setIsLoading(false);
         }
       }
     }
 
-    loadFollowedUsers();
+    loadFollows();
 
     return () => {
-      isMounted = false;
+      isCancelled = true;
     };
-  }, []);
-
-  useEffect(() => {
-    if (isLoading) {
-      return;
-    }
-
-    async function saveFollowedUsers() {
-      try {
-        await AsyncStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify(
-            followedUserIds
-          )
-        );
-      } catch (error) {
-        console.error(
-          'Failed to save followed users:',
-          error
-        );
-      }
-    }
-
-    saveFollowedUsers();
-  }, [
-    followedUserIds,
-    isLoading,
-  ]);
+  }, [userId]);
 
   const isFollowing = useCallback(
-    (userId: string) => {
+    (targetUserId: string) => {
       const normalizedUserId =
-        normalizeUserId(userId);
+        normalizeUserId(targetUserId);
 
       if (!normalizedUserId) {
         return false;
@@ -174,9 +145,9 @@ export function FollowProvider({
   );
 
   const isFollower = useCallback(
-    (userId: string) => {
+    (targetUserId: string) => {
       const normalizedUserId =
-        normalizeUserId(userId);
+        normalizeUserId(targetUserId);
 
       if (!normalizedUserId) {
         return false;
@@ -190,42 +161,77 @@ export function FollowProvider({
   );
 
   const followUser = useCallback(
-    (userId: string) => {
+    (targetUserId: string) => {
       const normalizedUserId =
-        normalizeUserId(userId);
+        normalizeUserId(targetUserId);
 
-      if (!normalizedUserId) {
+      if (
+        !userId ||
+        !normalizedUserId ||
+        normalizedUserId === userId ||
+        followedUserIds.includes(
+          normalizedUserId
+        )
+      ) {
         return;
       }
 
-      setFollowedUserIds(
-        (currentIds) => {
-          if (
-            currentIds.includes(
-              normalizedUserId
-            )
-          ) {
-            return currentIds;
-          }
+      const currentUserId = userId;
 
-          return [
-            ...currentIds,
-            normalizedUserId,
-          ];
-        }
+      setFollowedUserIds(
+        (currentIds) => [
+          ...currentIds,
+          normalizedUserId,
+        ]
       );
+
+      async function saveFollow() {
+        try {
+          await createFollow(
+            currentUserId,
+            normalizedUserId
+          );
+        } catch (error) {
+          console.error(
+            'Failed to create follow:',
+            error
+          );
+
+          setFollowedUserIds(
+            (currentIds) =>
+              currentIds.filter(
+                (currentId) =>
+                  currentId !==
+                  normalizedUserId
+              )
+          );
+        }
+      }
+
+      saveFollow();
     },
-    []
+    [
+      userId,
+      followedUserIds,
+    ]
   );
 
   const unfollowUser = useCallback(
-    (userId: string) => {
+    (targetUserId: string) => {
       const normalizedUserId =
-        normalizeUserId(userId);
+        normalizeUserId(targetUserId);
 
-      if (!normalizedUserId) {
+      if (
+        !userId ||
+        !normalizedUserId ||
+        !followedUserIds.includes(
+          normalizedUserId
+        )
+      ) {
         return;
       }
+
+      const currentUserId = userId;
 
       setFollowedUserIds(
         (currentIds) =>
@@ -235,41 +241,60 @@ export function FollowProvider({
               normalizedUserId
           )
       );
+
+      async function removeFollow() {
+        try {
+          await deleteFollow(
+            currentUserId,
+            normalizedUserId
+          );
+        } catch (error) {
+          console.error(
+            'Failed to delete follow:',
+            error
+          );
+
+          setFollowedUserIds(
+            (currentIds) => {
+              if (
+                currentIds.includes(
+                  normalizedUserId
+                )
+              ) {
+                return currentIds;
+              }
+
+              return [
+                ...currentIds,
+                normalizedUserId,
+              ];
+            }
+          );
+        }
+      }
+
+      removeFollow();
     },
-    []
+    [
+      userId,
+      followedUserIds,
+    ]
   );
 
   const toggleFollow = useCallback(
-    (userId: string) => {
-      const normalizedUserId =
-        normalizeUserId(userId);
-
-      if (!normalizedUserId) {
+    (targetUserId: string) => {
+      if (isFollowing(targetUserId)) {
+        unfollowUser(targetUserId);
         return;
       }
 
-      setFollowedUserIds(
-        (currentIds) => {
-          if (
-            currentIds.includes(
-              normalizedUserId
-            )
-          ) {
-            return currentIds.filter(
-              (currentId) =>
-                currentId !==
-                normalizedUserId
-            );
-          }
-
-          return [
-            ...currentIds,
-            normalizedUserId,
-          ];
-        }
-      );
+      followUser(targetUserId);
     },
-    []
+    [
+      isFollowing,
+      followUser,
+      unfollowUser,
+    ]
   );
 
   const getFollowingCount =

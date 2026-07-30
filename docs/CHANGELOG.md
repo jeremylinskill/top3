@@ -2,73 +2,117 @@
 
 This document records significant milestones in the evolution of Top3.
 
-Unlike `CURRENT_STATE.md`, which describes the application's current implementation, the changelog provides a historical record of how the product has evolved over time.
+Unlike `CURRENT_STATE.md`, which describes the application's current implementation, this document captures the major architectural and product milestones that shaped the application over time.
 
 ---
 
-# v1.0 — Foundation Complete
+# v1.1 — Social Foundation Complete
 
 **Released:** July 30, 2026
 
-Top3 has evolved from an early prototype into a persistent social platform with authentication, user profiles, collection publishing, community discovery, and database-backed social interactions.
+This release completes the migration of Top3's core social interactions to Supabase. Authentication, collections, profiles, likes, and comments are now persisted through the backend, establishing the application's social foundation.
 
 ---
 
 ## Added
 
-### Core Platform
+### Comments
+
+- Migrated comments from AsyncStorage to Supabase.
+- Added optimistic comment updates.
+- Added live database-backed comment counts.
+- Added comment persistence across sessions.
+
+### Likes
+
+- Completed Supabase-backed Like system.
+- Added optimistic Like updates.
+- Added shared Like counts across users.
+
+### Database
+
+- Verified Row Level Security (RLS) policies.
+- Added and verified foreign key relationships.
+- Added database indexes for Like and Comment queries.
+- Added unique Like constraint (`user_id`, `collection_id`).
+
+### Quality
+
+- Completed application stability pass.
+- Verified TypeScript (`npm run typecheck`).
+- Verified ESLint (`npm run lint`).
+- Removed temporary debugging code.
+- Updated project documentation.
+
+---
+
+## Improved
+
+- Comment responsiveness.
+- Like responsiveness.
+- Feed synchronization.
+- Overall application stability.
+
+---
+
+## Fixed
+
+- Corrected comment counts to reference `collection.id` instead of the synthetic `post.id`.
+- Fixed comment persistence after application restart.
+- Fixed comment count synchronization across the application.
+
+---
+
+# v1.0 — Platform Foundation
+
+**Released:** July 2026
+
+This milestone established the core architecture of Top3 as a persistent social application.
+
+---
+
+## Added
+
+### Platform
 
 - Supabase authentication
 - Persistent user sessions
 - User onboarding
+
+### Profiles
+
 - User profiles
 - Public profiles
 - Profile editing
-- Profile privacy controls
+- Privacy controls
 
 ### Collections
 
 - Collection creation
 - Draft collections
 - Draft persistence
-- Resume existing drafts
+- Resume draft workflow
 - Collection editing
 - Drag-and-drop ranking
 - Collection publishing
-- Published collection viewing
-- Persistent Supabase-backed collections
+- Published collections
 
 ### Discovery
 
 - Personalized Feed
 - Discover experience
 - Category browsing
-- Category feeds
-- Trending collections
-- Trending topics
 - Community Top3
 - Overall Top3
 - Taste Match
 - Recommendation engine
-- Recommendation explanations
 
 ### Social
 
-- Public profile browsing
 - Following (prototype)
 - Comments (prototype)
+- Likes (prototype)
 - Shared highlights
-
-### Likes
-
-- Supabase-backed likes
-- Shared likes between users
-- Optimistic UI updates
-- Like persistence
-- Like count persistence
-- Like service layer
-- Row Level Security policies
-- Foreign key validation
 
 ### External Content
 
@@ -76,48 +120,32 @@ Top3 has evolved from an early prototype into a persistent social platform with 
 - Google Books integration
 - RAWG integration
 - MusicBrainz integration
-- Metadata hydration
-- Artwork enrichment
 
 ### Infrastructure
 
-- Supabase authentication
-- Profile persistence
-- Collection persistence
-- Like persistence
-- Feed persistence
 - EAS Development Build
 - Context-based architecture
-- Feature-specific Supabase service layer
+- Supabase service layer
 
 ---
 
 ## Improved
 
-- Feed personalization
-- Recommendation quality
-- Collection editing workflow
-- Publishing workflow
-- Metadata loading
-- Feed hydration
-- User experience throughout the publishing flow
-- Like responsiveness through optimistic updates
-- Separation of UI state from persistence layer
+- Feed personalization.
+- Recommendation quality.
+- Collection editing workflow.
+- Publishing workflow.
+- Metadata enrichment.
 
 ---
 
 ## Fixed
 
-- Published collections persist correctly to Supabase
-- Draft collections survive application restart
-- Feed reload after restart
-- Profile reload after restart
-- Collection editing reliability
-- Publish synchronization
-- Like persistence across application restarts
-- Like counts remain synchronized with the database
-- Corrected Like persistence to reference `collection.id` rather than the synthetic `post.id`
-- Various TypeScript improvements and stability fixes
+- Collection publishing reliability.
+- Draft persistence.
+- Feed reload after restart.
+- Profile reload after restart.
+- Collection editing reliability.
 
 ---
 
@@ -125,20 +153,20 @@ Top3 has evolved from an early prototype into a persistent social platform with 
 
 ## Added
 
-- Public profiles
-- Taste Match
-- Shared highlights
-- Recommendation engine
+- Public profiles.
+- Taste Match.
+- Shared highlights.
+- Recommendation engine.
 
 ## Improved
 
-- Follow button consistency
-- Feed recommendations
+- Follow button consistency.
+- Feed recommendations.
 
 ## Fixed
 
-- Recommendation eligibility
-- Shared pick highlighting
+- Recommendation eligibility.
+- Shared pick highlighting.
 
 ---
 
@@ -146,12 +174,12 @@ Top3 has evolved from an early prototype into a persistent social platform with 
 
 ## Added
 
-- Likes (prototype)
-- Comments (prototype)
+- Likes (prototype).
+- Comments (prototype).
 
 ## Improved
 
-- Feed experience
+- Feed experience.
 
 ---
 
@@ -159,22 +187,18 @@ Top3 has evolved from an early prototype into a persistent social platform with 
 
 ## Added
 
-- User profiles
+- User profiles.
 
 ---
 
-# Next Milestone — v1.1
+# Next Milestone
 
-The next milestone focuses on completing the migration from local prototype data to fully shared Supabase-backed social features.
+The next milestone will be determined after architectural review and product prioritization.
 
-### Planned
+Likely candidates include:
 
-- Comments persisted to Supabase
-- Following relationships persisted to Supabase
-- Replace mock community users with real users
-- Supabase Realtime subscriptions
-- Live like counts
-- Live comments
-- Live follow updates
-- Community notifications
-- Richer social interactions
+- Following migration to Supabase.
+- Replacing mock community users with real users.
+- Realtime social updates.
+- Notifications.
+- Community and recommendation improvements.

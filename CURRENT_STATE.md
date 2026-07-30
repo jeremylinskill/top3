@@ -2,7 +2,7 @@
 
 **Project:** Top3
 
-**Version:** 1.0
+**Version:** 1.1
 
 **Status:** Active Development
 
@@ -12,9 +12,9 @@
 
 **Last Verified Commit:**
 
-`24ea4d9`
+`b37de99`
 
-**Persist likes to Supabase**
+Complete comments migration to Supabase and stability pass.
 
 ---
 
@@ -30,7 +30,7 @@ None
 
 ## Current Priority
 
-Migrate Comments to Supabase.
+Determine the next major product feature.
 
 Architecture should always be discussed before implementation begins.
 
@@ -201,10 +201,16 @@ Responsible for:
 * Comments
 * Comment counts
 * Comment actions
+* Optimistic UI updates
 
 Persistence
 
-AsyncStorage (temporary)
+✅ Supabase
+
+Supports
+
+* Shared comments
+* Live comment counts
 
 ---
 
@@ -248,14 +254,19 @@ Supabase
 
 Supports
 
-* Drafts
-* Resume Draft
-* Collection Editing
-* Publishing
-* Feed persistence
-* Profile persistence
 * Shared likes
-* Optimistic like updates
+* Optimistic updates
+* Database-backed counts
+
+### Comments
+
+✅ Complete
+
+Supports
+
+* Shared comments
+* Optimistic updates
+* Database-backed counts
 
 ---
 
@@ -263,11 +274,11 @@ Supports
 
 Currently used for:
 
-* Comments
-* Following
+* Following (temporary)
+* Draft collections
 * Recent searches
+* Onboarding state
 * UI preferences
-* Local cache
 
 ---
 
@@ -386,11 +397,18 @@ Supports
 
 Status
 
-✅ Complete (Prototype)
+✅ Complete
 
 Persistence
 
-AsyncStorage
+Supabase
+
+Supports
+
+* Shared between users
+* Optimistic updates
+* Insert/Delete
+* Database-backed counts
 
 ---
 
@@ -462,6 +480,8 @@ There is intentionally no separate post creation workflow.
 
 ✅ Likes
 
+✅ Comments
+
 ---
 
 ## Hybrid
@@ -480,11 +500,9 @@ Community experiences currently combine real authenticated users with mock commu
 
 ## Prototype
 
-⚠ Comments
-
 ⚠ Following
 
-These experiences are fully functional but currently persist locally through AsyncStorage.
+Following is fully functional but currently persists locally through AsyncStorage.
 
 ---
 
@@ -506,24 +524,25 @@ Collections remain the primary object throughout the application.
 
 Social interactions (likes, comments, follows) persist against `collection.id` (Supabase UUID), **not** the synthetic `post.id` used by the feed.
 
+Likes and comments are persisted in Supabase and secured with Row Level Security (RLS). Foreign keys, indexes, and RLS policies are considered part of the application's architecture rather than optional implementation details.
+
 ---
 
 # Known Technical Debt
 
-High Priority
+## High Priority
 
-* Migrate Comments to Supabase.
 * Migrate Following relationships to Supabase.
 * Replace mock community users with real database users.
 
-Medium Priority
+## Medium Priority
 
 * Verify avatar persistence.
 * Scope AsyncStorage keys by authenticated user where appropriate.
-* Improve optimistic update rollback behaviour.
+* Improve optimistic update rollback behaviour for failed Supabase writes.
 * Add Supabase Realtime subscriptions for Likes, Comments and Following.
 
-Low Priority
+## Low Priority
 
 * Review legacy Expo template files.
 * Review placeholder services and unused routes.
@@ -546,11 +565,17 @@ Every feature should follow this process.
 
 `npm run typecheck`
 
-6. Test the feature.
+6. Run:
 
-7. Commit.
+`npm run lint`
 
-8. Update CURRENT_STATE.md if the application state has materially changed.
+7. Test the feature.
+
+8. Commit.
+
+9. Push.
+
+10. Update CURRENT_STATE.md if the application state has materially changed.
 
 ---
 
