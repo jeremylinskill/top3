@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { Post } from '@/types/post';
 import { Top3Item } from '@/types/top3-item';
 import { Top3List } from '@/types/top3-list';
 
@@ -32,7 +33,9 @@ type UpdateCollectionInput = {
   items?: Top3List['items'];
 };
 
-function normalizeItems(items: unknown): Top3List['items'] {
+function normalizeItems(
+  items: unknown
+): Top3List['items'] {
   if (!Array.isArray(items)) {
     return [null, null, null];
   }
@@ -97,6 +100,39 @@ export async function getCollections(
   return (data as CollectionRow[]).map(
     mapCollectionRow
   );
+}
+
+export async function getPublishedPostsByUser(
+  userId: string
+): Promise<Post[]> {
+  const { data, error } = await supabase
+    .from('collections')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('status', 'published')
+    .not('published_at', 'is', null)
+    .order('published_at', {
+      ascending: false,
+    });
+
+  if (error) {
+    throw new Error(
+      `Failed to load published posts: ${error.message}`
+    );
+  }
+
+  return (data as CollectionRow[]).map((row) => {
+    const collection = mapCollectionRow(row);
+
+    return {
+      id: `post-${collection.id}`,
+      authorId: row.user_id,
+      collection,
+      publishedAt: row.published_at!,
+      reactions: 0,
+      comments: 0,
+    };
+  });
 }
 
 export async function createCollection(

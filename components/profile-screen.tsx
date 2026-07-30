@@ -5,9 +5,10 @@ import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
 import { useAuth } from '@/hooks/use-auth';
+import { getPublicProfileById } from '@/lib/supabase/profiles';
 import {
     getHydratedFeedPosts,
-    getMockUserById,
+    getPublishedPostsByUser,
 } from '@/services/post-service';
 import { getTasteRecommendationForUser } from '@/services/taste-recommendation-service';
 import { Post } from '@/types/post';
@@ -19,6 +20,7 @@ import {
     useState,
 } from 'react';
 import {
+    ActivityIndicator,
     Alert,
     ScrollView,
     StyleSheet,
@@ -38,6 +40,35 @@ function normalizeTopic(topic?: string) {
 
 function normalizeItemTitle(title?: string) {
   return title?.trim().toLowerCase() ?? '';
+}
+
+function sortPostsByPublishedDate(
+  posts: Post[]
+): Post[] {
+  return [...posts].sort(
+    (first, second) =>
+      new Date(second.publishedAt).getTime() -
+      new Date(first.publishedAt).getTime()
+  );
+}
+
+function mergePosts(
+  firstPosts: Post[],
+  secondPosts: Post[]
+): Post[] {
+  const postsById = new Map<string, Post>();
+
+  firstPosts.forEach((post) => {
+    postsById.set(post.id, post);
+  });
+
+  secondPosts.forEach((post) => {
+    postsById.set(post.id, post);
+  });
+
+  return sortPostsByPublishedDate(
+    Array.from(postsById.values())
+  );
 }
 
 export default function ProfileScreen({
@@ -75,14 +106,60 @@ export default function ProfileScreen({
     setSelectedCommentsPost,
   ] = useState<Post | null>(null);
 
-  const viewedUser = useMemo<
+  const [viewedUser, setViewedUser] = useState<
     UserProfile | null
-  >(() => {
-    if (!userId || userId === profile.id) {
-      return profile;
+  >(() =>
+    !userId || userId === profile.id
+      ? profile
+      : null
+  );
+
+  const [isLoadingProfile, setIsLoadingProfile] =
+    useState(
+      Boolean(userId && userId !== profile.id)
+    );
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadViewedUser() {
+      if (!userId || userId === profile.id) {
+        setViewedUser(profile);
+        setIsLoadingProfile(false);
+        return;
+      }
+
+      setViewedUser(null);
+      setIsLoadingProfile(true);
+
+      try {
+        const publicProfile =
+          await getPublicProfileById(userId);
+
+        if (isMounted) {
+          setViewedUser(publicProfile);
+        }
+      } catch (error) {
+        console.error(
+          'Failed to load public profile:',
+          error
+        );
+
+        if (isMounted) {
+          setViewedUser(null);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingProfile(false);
+        }
+      }
     }
 
-    return getMockUserById(userId);
+    loadViewedUser();
+
+    return () => {
+      isMounted = false;
+    };
   }, [profile, userId]);
 
   const isCurrentUser =
@@ -105,14 +182,41 @@ export default function ProfileScreen({
     let isMounted = true;
 
     async function loadPosts() {
+      if (!viewedUserId) {
+        if (isMounted) {
+          setAllPosts([]);
+          setIsLoadingPosts(false);
+        }
+
+        return;
+      }
+
       setIsLoadingPosts(true);
 
       try {
-        const hydratedPosts =
+        const hydratedFeedPosts =
           await getHydratedFeedPosts(posts);
 
+        if (viewedUserId === profile.id) {
+          if (isMounted) {
+            setAllPosts(hydratedFeedPosts);
+          }
+
+          return;
+        }
+
+        const viewedUserPosts =
+          await getPublishedPostsByUser(
+            viewedUserId
+          );
+
         if (isMounted) {
-          setAllPosts(hydratedPosts);
+          setAllPosts(
+            mergePosts(
+              hydratedFeedPosts,
+              viewedUserPosts
+            )
+          );
         }
       } catch (error) {
         console.error(
@@ -135,7 +239,7 @@ export default function ProfileScreen({
     return () => {
       isMounted = false;
     };
-  }, [posts]);
+  }, [posts, profile.id, viewedUserId]);
 
   const publishedPosts = useMemo(() => {
     if (!viewedUserId) {
@@ -342,6 +446,26 @@ export default function ProfileScreen({
     setSelectedCommentsPost(null);
   }
 
+  if (isLoadingProfile) {
+    return (
+      <SafeAreaView
+        style={styles.container}
+        edges={['top', 'left', 'right']}>
+        <ScreenHeader
+          showBackButton={showBackButton}
+        />
+
+        <View style={styles.messageContainer}>
+          <ActivityIndicator size="large" />
+
+          <Text style={styles.loadingText}>
+            Loading profile...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   if (!viewedUser) {
     return (
       <SafeAreaView
@@ -476,6 +600,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 80,
     paddingHorizontal: 24,
+  },
+
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#777777',
   },
 
   messageTitle: {

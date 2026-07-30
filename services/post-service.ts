@@ -1,5 +1,8 @@
 import { MOCK_POSTS } from '@/constants/mock-posts';
 import { MOCK_USERS } from '@/constants/mock-users';
+import {
+  getPublishedPostsByUser as getPublishedPostsByUserFromSupabase,
+} from '@/lib/supabase/collections';
 import { searchBooks } from '@/providers/google-books';
 import { searchGames } from '@/providers/rawg';
 import {
@@ -43,10 +46,13 @@ async function hydrateItem(
     return item;
   }
 
-  const cacheKey = `${category}:${normalizeTitle(item.title)}`;
+  const cacheKey = `${category}:${normalizeTitle(
+    item.title
+  )}`;
 
   if (hydratedItemCache.has(cacheKey)) {
-    const cachedItem = hydratedItemCache.get(cacheKey);
+    const cachedItem =
+      hydratedItemCache.get(cacheKey);
 
     return cachedItem
       ? {
@@ -64,20 +70,29 @@ async function hydrateItem(
       case 'movies':
         results = await searchMovies(item.title);
         break;
+
       case 'tv':
         results = await searchTvShows(item.title);
         break;
+
       case 'books':
         results = await searchBooks(item.title);
         break;
+
       case 'games':
         results = await searchGames(item.title);
         break;
     }
 
-    const matchingItem = findBestMatch(item, results);
+    const matchingItem = findBestMatch(
+      item,
+      results
+    );
 
-    hydratedItemCache.set(cacheKey, matchingItem);
+    hydratedItemCache.set(
+      cacheKey,
+      matchingItem
+    );
 
     if (!matchingItem) {
       return item;
@@ -85,7 +100,8 @@ async function hydrateItem(
 
     return {
       ...item,
-      subtitle: matchingItem.subtitle ?? item.subtitle,
+      subtitle:
+        matchingItem.subtitle ?? item.subtitle,
       imageUrl: matchingItem.imageUrl,
       rating: matchingItem.rating,
     };
@@ -107,7 +123,10 @@ async function hydratePost(
   const hydratedItems = await Promise.all(
     post.collection.items.map((item) =>
       item
-        ? hydrateItem(item, post.collection.category)
+        ? hydrateItem(
+            item,
+            post.collection.category
+          )
         : Promise.resolve(null)
     )
   );
@@ -116,33 +135,43 @@ async function hydratePost(
     ...post,
     collection: {
       ...post.collection,
-      items: hydratedItems as Top3List['items'],
+      items:
+        hydratedItems as Top3List['items'],
     },
   };
+}
+
+function sortPostsByPublishedDate(
+  posts: Post[]
+): Post[] {
+  return [...posts].sort(
+    (first, second) =>
+      new Date(second.publishedAt).getTime() -
+      new Date(first.publishedAt).getTime()
+  );
 }
 
 export function getMockPosts() {
   return [...MOCK_POSTS];
 }
 
-export function getMockUserById(userId: string) {
+export function getMockUserById(
+  userId: string
+) {
   return (
-    MOCK_USERS.find((user) => user.id === userId) ??
-    null
+    MOCK_USERS.find(
+      (user) => user.id === userId
+    ) ?? null
   );
 }
 
 export function getFeedPosts(
   currentUserPosts: Post[]
 ) {
-  return [
+  return sortPostsByPublishedDate([
     ...currentUserPosts,
     ...MOCK_POSTS,
-  ].sort(
-    (first, second) =>
-      new Date(second.publishedAt).getTime() -
-      new Date(first.publishedAt).getTime()
-  );
+  ]);
 }
 
 export async function getHydratedFeedPosts(
@@ -155,12 +184,27 @@ export async function getHydratedFeedPosts(
       )
     );
 
-  return [
+  return sortPostsByPublishedDate([
     ...hydratedCurrentUserPosts,
     ...MOCK_POSTS,
-  ].sort(
-    (first, second) =>
-      new Date(second.publishedAt).getTime() -
-      new Date(first.publishedAt).getTime()
+  ]);
+}
+
+export async function getPublishedPostsByUser(
+  userId: string
+): Promise<Post[]> {
+  const publishedPosts =
+    await getPublishedPostsByUserFromSupabase(
+      userId
+    );
+
+  const hydratedPosts = await Promise.all(
+    publishedPosts.map((post) =>
+      hydratePost(post)
+    )
+  );
+
+  return sortPostsByPublishedDate(
+    hydratedPosts
   );
 }
