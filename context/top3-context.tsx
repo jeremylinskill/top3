@@ -1,16 +1,22 @@
-import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { useProfile } from '@/context/profile-context';
+import { useAuth } from '@/hooks/use-auth';
+import {
+  createCollection,
+  getCollections,
+  publishCollection,
+  updateCollection,
+} from '@/lib/supabase/collections';
 import { Post } from '@/types/post';
 import { Top3Item } from '@/types/top3-item';
 import { Top3List } from '@/types/top3-list';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
-    createContext,
-    ReactNode,
-    useContext,
-    useEffect,
-    useMemo,
-    useState,
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
 } from 'react';
 
 type CreateListInput = {
@@ -23,9 +29,12 @@ type Top3ContextValue = {
   lists: Top3List[];
   posts: Post[];
   currentList: Top3List | null;
-  createList: (input: CreateListInput) => string | null;
+  createList: (input: CreateListInput) => string;
   selectList: (listId: string) => void;
-  setItemAtRank: (rank: number, item: Top3Item) => void;
+  setItemAtRank: (
+    rank: number,
+    item: Top3Item
+  ) => void;
   removeItemAtRank: (rank: number) => void;
   setItems: (items: Top3List['items']) => void;
   publishCurrentList: () => void;
@@ -38,53 +47,18 @@ type Top3ProviderProps = {
 type StoredTop3Data = {
   lists: Top3List[];
   posts?: Post[];
-  currentListId: string;
+  currentListId?: string;
 };
 
 const Top3Context =
-  createContext<Top3ContextValue | undefined>(undefined);
-
-const STORAGE_KEY = 'top3-lists';
-
-function createDefaultLists(): Top3List[] {
-  const now = new Date().toISOString();
-
-  return TOP3_CATEGORIES.map((category) => ({
-    id: `${category.id}-general`,
-    category: category.id,
-    title: `Top 3 ${category.name}`,
-    items: [null, null, null],
-    createdAt: now,
-    updatedAt: now,
-  }));
-}
-
-function getListIdentity(
-  list: Pick<Top3List, 'category' | 'topic'>
-) {
-  const category = list.category.trim().toLowerCase();
-
-  const topic =
-    list.topic?.trim().toLowerCase() ?? 'general';
-
-  return `${category}:${topic}`;
-}
-
-function mergeDefaultLists(savedLists: Top3List[]) {
-  const defaultLists = createDefaultLists();
-
-  const existingIdentities = new Set(
-    savedLists.map(getListIdentity)
+  createContext<Top3ContextValue | undefined>(
+    undefined
   );
 
-  const missingDefaults = defaultLists.filter(
-    (defaultList) =>
-      !existingIdentities.has(
-        getListIdentity(defaultList)
-      )
-  );
+const USER_STORAGE_PREFIX = 'top3-lists-v3';
 
-  return [...savedLists, ...missingDefaults];
+function getUserStorageKey(userId: string) {
+  return `${USER_STORAGE_PREFIX}-${userId}`;
 }
 
 function createPostsFromPublishedLists(
@@ -93,15 +67,20 @@ function createPostsFromPublishedLists(
 ): Post[] {
   return lists
     .filter(
-      (list): list is Top3List & { publishedAt: string } =>
-        Boolean(list.publishedAt)
+      (
+        list
+      ): list is Top3List & {
+        publishedAt: string;
+      } => Boolean(list.publishedAt)
     )
     .map((list) => ({
       id: `post-${list.id}`,
       authorId,
       collection: {
         ...list,
-        items: [...list.items] as Top3List['items'],
+        items: [
+          ...list.items,
+        ] as Top3List['items'],
       },
       publishedAt: list.publishedAt,
       reactions: 0,
@@ -109,24 +88,23 @@ function createPostsFromPublishedLists(
     }));
 }
 
-const defaultLists = createDefaultLists();
-const firstDefaultListId = defaultLists[0]?.id ?? '';
-
 export function Top3Provider({
   children,
 }: Top3ProviderProps) {
+  const { user } = useAuth();
   const { profile } = useProfile();
 
-  const [lists, setLists] =
-    useState<Top3List[]>(defaultLists);
+  const [lists, setLists] = useState<Top3List[]>(
+    []
+  );
 
   const [posts, setPosts] = useState<Post[]>([]);
 
   const [currentListId, setCurrentListId] =
-    useState<string>(firstDefaultListId);
+    useState('');
 
-  const [hasLoadedStorage, setHasLoadedStorage] =
-    useState(false);
+  const [loadedUserId, setLoadedUserId] =
+    useState<string | null>(null);
 
   const currentList = useMemo(
     () =>
@@ -137,68 +115,73 @@ export function Top3Provider({
   );
 
   useEffect(() => {
-    async function loadSavedData() {
-      try {
-        const savedData =
-          await AsyncStorage.getItem(STORAGE_KEY);
+    let isCancelled = false;
 
-        if (!savedData) {
+    async function loadCollections() {
+      setLoadedUserId(null);
+      setLists([]);
+      setPosts([]);
+      setCurrentListId('');
+
+      if (!user) {
+        return;
+      }
+
+      const userId = user.id;
+
+      try {
+        const savedLists = await getCollections(
+          userId
+        );
+
+        if (isCancelled) {
           return;
         }
 
-        const parsedData =
-          JSON.parse(savedData) as StoredTop3Data;
-
-        const savedLists = Array.isArray(
-          parsedData.lists
-        )
-          ? parsedData.lists
-          : [];
-
-        const nextLists =
-          mergeDefaultLists(savedLists);
-
-        const savedPosts = Array.isArray(
-          parsedData.posts
-        )
-          ? parsedData.posts
-          : createPostsFromPublishedLists(
-              nextLists,
-              profile.id
-            );
-
-        setLists(nextLists);
-        setPosts(savedPosts);
-
-        const savedCurrentListStillExists =
-          nextLists.some(
-            (list) =>
-              list.id === parsedData.currentListId
+        const savedPosts =
+          createPostsFromPublishedLists(
+            savedLists,
+            userId
           );
 
-        setCurrentListId(
-          savedCurrentListStillExists
-            ? parsedData.currentListId
-            : nextLists[0]?.id ??
-                firstDefaultListId
-        );
+        setLists(savedLists);
+
+        setPosts(savedPosts);
+        setCurrentListId('');
+        setLoadedUserId(userId);
       } catch (error) {
         console.error(
-          'Failed to load saved Top 3 data:',
+          'Failed to load collections from Supabase:',
           error
         );
-      } finally {
-        setHasLoadedStorage(true);
+
+        if (isCancelled) {
+          return;
+        }
+
+        setLists([]);
+        setPosts([]);
+        setCurrentListId('');
+        setLoadedUserId(userId);
       }
     }
 
-    loadSavedData();
-  }, [profile.id]);
+    loadCollections();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [user]);
 
   useEffect(() => {
-    if (!hasLoadedStorage) {
+    if (
+      !user ||
+      loadedUserId !== user.id
+    ) {
       return;
     }
+
+    const userId = user.id;
 
     async function saveData() {
       try {
@@ -209,7 +192,7 @@ export function Top3Provider({
         };
 
         await AsyncStorage.setItem(
-          STORAGE_KEY,
+          getUserStorageKey(userId),
           JSON.stringify(data)
         );
       } catch (error) {
@@ -222,13 +205,16 @@ export function Top3Provider({
 
     saveData();
   }, [
+    user,
+    loadedUserId,
     lists,
     posts,
     currentListId,
-    hasLoadedStorage,
   ]);
 
-  function createList(input: CreateListInput) {
+  function createList(
+    input: CreateListInput
+  ): string {
     const normalizedCategory =
       input.category.trim().toLowerCase();
 
@@ -245,25 +231,33 @@ export function Top3Provider({
         'general';
 
       return (
-        existingCategory === normalizedCategory &&
+        existingCategory ===
+          normalizedCategory &&
         existingTopic === normalizedTopic
       );
     });
 
     if (existingList) {
       setCurrentListId(existingList.id);
-      return null;
+      return existingList.id;
     }
+
+    if (!user) {
+      throw new Error(
+        'A signed-in user is required to create a collection.'
+      );
+    }
+
+    const userId = user.id;
 
     const now = new Date().toISOString();
 
-    const id =
-      `${normalizedCategory}-` +
-      `${normalizedTopic}-` +
-      `${Date.now()}`;
+    const temporaryId =
+      `pending-${normalizedCategory}-` +
+      `${normalizedTopic}-${Date.now()}`;
 
-    const newList: Top3List = {
-      id,
+    const pendingList: Top3List = {
+      id: temporaryId,
       category: input.category,
       topic: input.topic,
       title: input.title,
@@ -274,12 +268,57 @@ export function Top3Provider({
 
     setLists((currentLists) => [
       ...currentLists,
-      newList,
+      pendingList,
     ]);
 
-    setCurrentListId(id);
+    setCurrentListId(temporaryId);
 
-    return id;
+    async function saveCollection() {
+      try {
+        const savedList = await createCollection({
+          userId,
+          category: input.category,
+          topic: input.topic,
+          title: input.title,
+          items: [null, null, null],
+        });
+
+        setLists((currentLists) =>
+          currentLists.map((list) =>
+            list.id === temporaryId
+              ? savedList
+              : list
+          )
+        );
+
+        setCurrentListId((currentId) =>
+          currentId === temporaryId
+            ? savedList.id
+            : currentId
+        );
+      } catch (error) {
+        console.error(
+          'Failed to create collection in Supabase:',
+          error
+        );
+
+        setLists((currentLists) =>
+          currentLists.filter(
+            (list) => list.id !== temporaryId
+          )
+        );
+
+        setCurrentListId((currentId) =>
+          currentId === temporaryId
+            ? ''
+            : currentId
+        );
+      }
+    }
+
+    saveCollection();
+
+    return temporaryId;
   }
 
   function selectList(listId: string) {
@@ -304,27 +343,50 @@ export function Top3Provider({
       return;
     }
 
+    const collectionId = currentList.id;
+    const nextItems = [
+      ...currentList.items,
+    ] as Top3List['items'];
+
+    nextItems[rank - 1] = item;
+
     const now = new Date().toISOString();
 
     setLists((currentLists) =>
-      currentLists.map((list) => {
-        if (list.id !== currentList.id) {
-          return list;
-        }
-
-        const nextItems = [
-          ...list.items,
-        ] as Top3List['items'];
-
-        nextItems[rank - 1] = item;
-
-        return {
-          ...list,
-          items: nextItems,
-          updatedAt: now,
-        };
-      })
+      currentLists.map((list) =>
+        list.id === collectionId
+          ? {
+              ...list,
+              items: nextItems,
+              updatedAt: now,
+            }
+          : list
+      )
     );
+
+    async function saveItems() {
+      try {
+        const savedList = await updateCollection(
+          collectionId,
+          { items: nextItems }
+        );
+
+        setLists((currentLists) =>
+          currentLists.map((list) =>
+            list.id === collectionId
+              ? savedList
+              : list
+          )
+        );
+      } catch (error) {
+        console.error(
+          'Failed to save collection item:',
+          error
+        );
+      }
+    }
+
+    saveItems();
   }
 
   function removeItemAtRank(rank: number) {
@@ -336,45 +398,72 @@ export function Top3Provider({
       return;
     }
 
-    const now = new Date().toISOString();
+    const collectionId = currentList.id;
 
-    setLists((currentLists) =>
-      currentLists.map((list) => {
-        if (list.id !== currentList.id) {
-          return list;
-        }
-
-        const remainingItems = list.items.filter(
-          (item, index): item is Top3Item =>
-            item !== null && index !== rank - 1
-        );
-
-        const nextItems = [
-          ...remainingItems,
-          ...Array(
-            3 - remainingItems.length
-          ).fill(null),
-        ] as Top3List['items'];
-
-        return {
-          ...list,
-          items: nextItems,
-          updatedAt: now,
-        };
-      })
+    const remainingItems = currentList.items.filter(
+      (item, index): item is Top3Item =>
+        item !== null && index !== rank - 1
     );
-  }
 
-  function setItems(items: Top3List['items']) {
-    if (!currentList) {
-      return;
-    }
+    const nextItems = [
+      ...remainingItems,
+      ...Array(3 - remainingItems.length).fill(
+        null
+      ),
+    ] as Top3List['items'];
 
     const now = new Date().toISOString();
 
     setLists((currentLists) =>
       currentLists.map((list) =>
-        list.id === currentList.id
+        list.id === collectionId
+          ? {
+              ...list,
+              items: nextItems,
+              updatedAt: now,
+            }
+          : list
+      )
+    );
+
+    async function saveItems() {
+      try {
+        const savedList = await updateCollection(
+          collectionId,
+          { items: nextItems }
+        );
+
+        setLists((currentLists) =>
+          currentLists.map((list) =>
+            list.id === collectionId
+              ? savedList
+              : list
+          )
+        );
+      } catch (error) {
+        console.error(
+          'Failed to remove collection item:',
+          error
+        );
+      }
+    }
+
+    saveItems();
+  }
+
+  function setItems(
+    items: Top3List['items']
+  ) {
+    if (!currentList) {
+      return;
+    }
+
+    const collectionId = currentList.id;
+    const now = new Date().toISOString();
+
+    setLists((currentLists) =>
+      currentLists.map((list) =>
+        list.id === collectionId
           ? {
               ...list,
               items,
@@ -383,6 +472,30 @@ export function Top3Provider({
           : list
       )
     );
+
+    async function saveItems() {
+      try {
+        const savedList = await updateCollection(
+          collectionId,
+          { items }
+        );
+
+        setLists((currentLists) =>
+          currentLists.map((list) =>
+            list.id === collectionId
+              ? savedList
+              : list
+          )
+        );
+      } catch (error) {
+        console.error(
+          'Failed to reorder collection items:',
+          error
+        );
+      }
+    }
+
+    saveItems();
   }
 
   function publishCurrentList() {
@@ -390,59 +503,84 @@ export function Top3Provider({
       return;
     }
 
-    const now = new Date().toISOString();
+    const collectionId = currentList.id;
 
-    const publishedList: Top3List = {
-      ...currentList,
-      items: [...currentList.items] as Top3List['items'],
-      publishedAt: now,
-      updatedAt: now,
-    };
-
-    setLists((currentLists) =>
-      currentLists.map((list) =>
-        list.id === currentList.id
-          ? publishedList
-          : list
-      )
-    );
-
-    setPosts((currentPosts) => {
-      const existingPostIndex =
-        currentPosts.findIndex(
-          (post) =>
-            post.collection.id === currentList.id &&
-            post.authorId === profile.id
+    async function savePublishedCollection() {
+      try {
+        const savedList = await publishCollection(
+          collectionId
         );
 
-      const nextPost: Post = {
-        id:
-          existingPostIndex >= 0
-            ? currentPosts[existingPostIndex].id
-            : `post-${currentList.id}`,
-        authorId: profile.id,
-        collection: publishedList,
-        publishedAt: now,
-        reactions:
-          existingPostIndex >= 0
-            ? currentPosts[existingPostIndex].reactions
-            : 0,
-        comments:
-          existingPostIndex >= 0
-            ? currentPosts[existingPostIndex].comments
-            : 0,
-      };
+        if (!savedList.publishedAt) {
+          throw new Error(
+            'Published collection is missing its published date.'
+          );
+        }
 
-      if (existingPostIndex < 0) {
-        return [nextPost, ...currentPosts];
+        setLists((currentLists) =>
+          currentLists.map((list) =>
+            list.id === collectionId
+              ? savedList
+              : list
+          )
+        );
+
+        setPosts((currentPosts) => {
+          const existingPostIndex =
+            currentPosts.findIndex(
+              (post) =>
+                post.collection.id ===
+                  collectionId &&
+                post.authorId === profile.id
+            );
+
+          const nextPost: Post = {
+            id:
+              existingPostIndex >= 0
+                ? currentPosts[
+                    existingPostIndex
+                  ].id
+                : `post-${collectionId}`,
+            authorId: profile.id,
+            collection: savedList,
+            publishedAt: savedList.publishedAt!,
+            reactions:
+              existingPostIndex >= 0
+                ? currentPosts[
+                    existingPostIndex
+                  ].reactions
+                : 0,
+            comments:
+              existingPostIndex >= 0
+                ? currentPosts[
+                    existingPostIndex
+                  ].comments
+                : 0,
+          };
+
+          if (existingPostIndex < 0) {
+            return [
+              nextPost,
+              ...currentPosts,
+            ];
+          }
+
+          return currentPosts.map(
+            (post, index) =>
+              index === existingPostIndex
+                ? nextPost
+                : post
+          );
+        });
+      } catch (error) {
+        console.error(
+          'Failed to publish collection in Supabase:',
+          error
+        );
       }
+    }
 
-      return currentPosts.map((post, index) =>
-        index === existingPostIndex
-          ? nextPost
-          : post
-      );
-    });
+    savePublishedCollection();
   }
 
   return (
