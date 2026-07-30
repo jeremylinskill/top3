@@ -4,10 +4,8 @@ import TasteMatchBadge from '@/components/taste-match-badge';
 import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
-import {
-    getHydratedFeedPosts,
-    getMockUserById,
-} from '@/services/post-service';
+import { getPublicProfilesByIds } from '@/lib/supabase/profiles';
+import { getHydratedFeedPosts } from '@/services/post-service';
 import { getTasteRecommendationForUser } from '@/services/taste-recommendation-service';
 import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
@@ -38,6 +36,18 @@ type SocialTab = 'followers' | 'following';
 
 function normalizeValue(value?: string) {
   return value?.trim().toLowerCase() ?? '';
+}
+
+function buildProfileRecord(
+  profiles: UserProfile[]
+): Record<string, UserProfile> {
+  return profiles.reduce<Record<string, UserProfile>>(
+    (record, user) => {
+      record[user.id] = user;
+      return record;
+    },
+    {}
+  );
 }
 
 export default function SocialScreen() {
@@ -75,8 +85,19 @@ export default function SocialScreen() {
     useState('');
 
   const [allPosts, setAllPosts] = useState<Post[]>([]);
+
   const [isLoadingPosts, setIsLoadingPosts] =
     useState(true);
+
+  const [
+    socialProfilesById,
+    setSocialProfilesById,
+  ] = useState<Record<string, UserProfile>>({});
+
+  const [
+    isLoadingProfiles,
+    setIsLoadingProfiles,
+  ] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -114,41 +135,105 @@ export default function SocialScreen() {
     };
   }, [posts]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadSocialProfiles() {
+      setIsLoadingProfiles(true);
+
+      const socialUserIds = Array.from(
+        new Set([
+          ...followedUserIds,
+          ...followerUserIds,
+        ])
+      );
+
+      if (socialUserIds.length === 0) {
+        if (isMounted) {
+          setSocialProfilesById({});
+          setIsLoadingProfiles(false);
+        }
+
+        return;
+      }
+
+      try {
+        const profiles =
+          await getPublicProfilesByIds(
+            socialUserIds
+          );
+
+        if (isMounted) {
+          setSocialProfilesById(
+            buildProfileRecord(profiles)
+          );
+        }
+      } catch (error) {
+        console.error(
+          'Failed to load social profiles:',
+          error
+        );
+
+        if (isMounted) {
+          setSocialProfilesById({});
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingProfiles(false);
+        }
+      }
+    }
+
+    loadSocialProfiles();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [followedUserIds, followerUserIds]);
+
   const followingUsers = useMemo<
     UserProfile[]
   >(() => {
     return followedUserIds
-      .map((userId) =>
-        getMockUserById(userId)
+      .map(
+        (userId) =>
+          socialProfilesById[userId]
       )
       .filter(
         (user): user is UserProfile =>
-          user !== null
+          user !== undefined
       )
       .sort((first, second) =>
         first.displayName.localeCompare(
           second.displayName
         )
       );
-  }, [followedUserIds]);
+  }, [
+    followedUserIds,
+    socialProfilesById,
+  ]);
 
   const followerUsers = useMemo<
     UserProfile[]
   >(() => {
     return followerUserIds
-      .map((userId) =>
-        getMockUserById(userId)
+      .map(
+        (userId) =>
+          socialProfilesById[userId]
       )
       .filter(
         (user): user is UserProfile =>
-          user !== null
+          user !== undefined
       )
       .sort((first, second) =>
         first.displayName.localeCompare(
           second.displayName
         )
       );
-  }, [followerUserIds]);
+  }, [
+    followerUserIds,
+    socialProfilesById,
+  ]);
 
   const followingCount =
     followingUsers.length;
@@ -330,6 +415,7 @@ export default function SocialScreen() {
         }
         onScrollBeginDrag={Keyboard.dismiss}>
         {!isLoading &&
+        !isLoadingProfiles &&
         activeUsers.length > 0 ? (
           <View style={styles.searchContainer}>
             <Ionicons
@@ -373,7 +459,9 @@ export default function SocialScreen() {
           </View>
         ) : null}
 
-        {isLoading || isLoadingPosts ? (
+        {isLoading ||
+        isLoadingPosts ||
+        isLoadingProfiles ? (
           <View style={styles.stateContainer}>
             <Text style={styles.stateText}>
               Loading…

@@ -67,6 +67,44 @@ export async function searchPublicProfiles(
   );
 }
 
+export async function getPublicProfilesByIds(
+  userIds: string[]
+): Promise<UserProfile[]> {
+  const uniqueUserIds = Array.from(
+    new Set(
+      userIds
+        .map((userId) => userId.trim())
+        .filter(Boolean)
+    )
+  );
+
+  if (uniqueUserIds.length === 0) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select(
+      `
+        id,
+        username,
+        display_name,
+        bio,
+        is_public
+      `
+    )
+    .in('id', uniqueUserIds)
+    .eq('is_public', true);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []).map((row) =>
+    mapProfileRow(row as ProfileRow)
+  );
+}
+
 export async function getPublicProfileById(
   userId: string
 ): Promise<UserProfile | null> {

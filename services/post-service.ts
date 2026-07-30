@@ -2,6 +2,7 @@ import { MOCK_POSTS } from '@/constants/mock-posts';
 import { MOCK_USERS } from '@/constants/mock-users';
 import {
   getPublishedPostsByUser as getPublishedPostsByUserFromSupabase,
+  getPublishedPosts as getPublishedPostsFromSupabase,
 } from '@/lib/supabase/collections';
 import { searchBooks } from '@/providers/google-books';
 import { searchGames } from '@/providers/rawg';
@@ -188,6 +189,23 @@ export async function getHydratedFeedPosts(
     ...hydratedCurrentUserPosts,
     ...MOCK_POSTS,
   ]);
+}
+
+export async function getPublishedPosts(): Promise<
+  Post[]
+> {
+  const publishedPosts =
+    await getPublishedPostsFromSupabase();
+
+  const hydratedPosts = await Promise.all(
+    publishedPosts.map((post) =>
+      hydratePost(post)
+    )
+  );
+
+  return sortPostsByPublishedDate(
+    hydratedPosts
+  );
 }
 
 export async function getPublishedPostsByUser(

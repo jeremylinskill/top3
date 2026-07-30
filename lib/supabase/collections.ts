@@ -80,6 +80,21 @@ function mapCollectionRow(
   };
 }
 
+function mapPublishedCollectionRowToPost(
+  row: CollectionRow
+): Post {
+  const collection = mapCollectionRow(row);
+
+  return {
+    id: `post-${collection.id}`,
+    authorId: row.user_id,
+    collection,
+    publishedAt: row.published_at!,
+    reactions: 0,
+    comments: 0,
+  };
+}
+
 export async function getCollections(
   userId: string
 ): Promise<Top3List[]> {
@@ -102,6 +117,29 @@ export async function getCollections(
   );
 }
 
+export async function getPublishedPosts(): Promise<
+  Post[]
+> {
+  const { data, error } = await supabase
+    .from('collections')
+    .select('*')
+    .eq('status', 'published')
+    .not('published_at', 'is', null)
+    .order('published_at', {
+      ascending: false,
+    });
+
+  if (error) {
+    throw new Error(
+      `Failed to load published posts: ${error.message}`
+    );
+  }
+
+  return (data as CollectionRow[]).map(
+    mapPublishedCollectionRowToPost
+  );
+}
+
 export async function getPublishedPostsByUser(
   userId: string
 ): Promise<Post[]> {
@@ -121,18 +159,9 @@ export async function getPublishedPostsByUser(
     );
   }
 
-  return (data as CollectionRow[]).map((row) => {
-    const collection = mapCollectionRow(row);
-
-    return {
-      id: `post-${collection.id}`,
-      authorId: row.user_id,
-      collection,
-      publishedAt: row.published_at!,
-      reactions: 0,
-      comments: 0,
-    };
-  });
+  return (data as CollectionRow[]).map(
+    mapPublishedCollectionRowToPost
+  );
 }
 
 export async function createCollection(

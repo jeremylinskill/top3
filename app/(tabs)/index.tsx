@@ -5,10 +5,8 @@ import { useComments } from '@/context/comment-context';
 import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
-import {
-  getHydratedFeedPosts,
-  getMockUserById,
-} from '@/services/post-service';
+import { getPublicProfilesByIds } from '@/lib/supabase/profiles';
+import { getPublishedPosts } from '@/services/post-service';
 import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
 import { buildPersonalizedFeed } from '@/utils/build-personalized-feed';
@@ -77,6 +75,9 @@ export default function FeedScreen() {
     Post[]
   >([]);
 
+  const [feedAuthors, setFeedAuthors] =
+    useState<Record<string, UserProfile>>({});
+
   const [isLoadingFeed, setIsLoadingFeed] =
     useState(true);
 
@@ -93,10 +94,36 @@ export default function FeedScreen() {
 
       try {
         const nextPosts =
-          await getHydratedFeedPosts(posts);
+          await getPublishedPosts();
+
+        const authorIds = Array.from(
+          new Set(
+            nextPosts
+              .map((post) => post.authorId)
+              .filter(
+                (authorId) =>
+                  authorId !== profile.id
+              )
+          )
+        );
+
+        const authors =
+          await getPublicProfilesByIds(
+            authorIds
+          );
+
+        const nextFeedAuthors =
+          authors.reduce<
+            Record<string, UserProfile>
+          >((authorMap, author) => {
+            authorMap[author.id] = author;
+
+            return authorMap;
+          }, {});
 
         if (isMounted) {
           setFeedPosts(nextPosts);
+          setFeedAuthors(nextFeedAuthors);
         }
       } catch (error) {
         console.error(
@@ -106,6 +133,7 @@ export default function FeedScreen() {
 
         if (isMounted) {
           setFeedPosts(posts);
+          setFeedAuthors({});
         }
       } finally {
         if (isMounted) {
@@ -119,7 +147,7 @@ export default function FeedScreen() {
     return () => {
       isMounted = false;
     };
-  }, [posts]);
+  }, [posts, profile.id]);
 
   const personalizedFeed = useMemo(
     () =>
@@ -181,7 +209,7 @@ export default function FeedScreen() {
       return profile;
     }
 
-    return getMockUserById(authorId);
+    return feedAuthors[authorId] ?? null;
   }
 
   function openAuthorProfile(
