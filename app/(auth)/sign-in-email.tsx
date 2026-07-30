@@ -53,7 +53,7 @@ export default function SignInEmailScreen() {
 
         <View style={styles.signUpContainer}>
           <Text style={styles.signUpPrompt}>
-            Don't have an account?
+            Don&apos;t have an account?
           </Text>
 
           <Pressable
