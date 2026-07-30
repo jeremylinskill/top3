@@ -1,81 +1,146 @@
 # Top3 Product Roadmap
 
-**Version:** 0.1 (Draft)  
-**Status:** Active  
-**Owner:** Jeremy Linskill  
-**Last Updated:** July 28, 2026
+**Version:** 1.0
+**Status:** Active
+**Owner:** Jeremy Linskill
+**Last Updated:** July 30, 2026
 
 ---
 
-## Purpose
+# Purpose
 
-This roadmap outlines the evolution of the Top3 product experience.
+This roadmap outlines the long-term evolution of the Top3 product experience.
 
-Unlike the Technical Roadmap, this document focuses on the user experience rather than implementation details.
+Unlike `CURRENT_STATE.md`, which documents the application's current implementation, this roadmap focuses on where the product is headed and the experiences we want to create for users.
+
+Every roadmap item should strengthen one or more of Top3's four core pillars.
 
 ---
 
-# Vision
+# Product Vision
 
 Help people discover one another through shared taste.
 
-Every roadmap item should strengthen one of these four pillars:
+Top3 isn't simply a place to rank favourites. It's a platform that helps people understand themselves, discover new entertainment, and connect with others through the things they love.
 
-- Identity
-- Discovery
-- Connection
-- Conversation
+Every product decision should reinforce one or more of these pillars:
+
+* **Identity** — Express who you are through your collections.
+* **Discovery** — Find new entertainment, ideas, and people.
+* **Connection** — Build meaningful relationships through shared taste.
+* **Conversation** — Encourage discussion rather than passive consumption.
 
 ---
 
 # Phase 1 — Identity ✅
 
+**Status:** Complete
+
+Established the core experience of expressing personal taste.
+
 Completed
 
-- User Profiles
-- Public Profiles
-- Private Profiles
-- Publishing
-- Editing
-- Profile Visibility
-- Top3 Cards
+* User authentication
+* User profiles
+* Public profiles
+* Profile privacy
+* Collection creation
+* Collection editing
+* Draft collections
+* Collection publishing
+* Published collection viewing
+* Top3 cards
+* Personal profile experience
 
 ---
 
-# Phase 2 — Discovery 🚧
+# Phase 2 — Discovery ✅
 
-Current Focus
+**Status:** Complete
 
-- Better recommendations
-- Category browsing
-- Trending
-- Search improvements
-- Discovery feed
+Expanded the product beyond personal collections into a discovery platform.
+
+Completed
+
+* Personalized Feed
+* Discover experience
+* Category browsing
+* Category feeds
+* Trending collections
+* Trending topics
+* Community Top3
+* Overall Top3
+* Taste Match
+* External content search
+* Recommendation engine
+* Published collection browsing
+
+The application now allows users to discover both content and people through community-generated collections.
 
 ---
 
-# Phase 3 — Connection
+# Phase 3 — Community 🚧
 
-Planned
+**Status:** Current Focus
 
-- Notifications
-- Rich comments
-- Activity feed
-- Better following experience
+Strengthen interactions between real users by moving social features from local prototypes to shared experiences.
+
+Current priorities include:
+
+* Shared likes
+* Shared comments
+* Shared follow relationships
+* Community activity
+* Notifications
+* Improved profile discovery
+* Richer conversations
+* Better social engagement
+
+The goal of this phase is to transform Top3 from a collection platform into a living community.
 
 ---
 
 # Phase 4 — Intelligence
 
-Future
+**Status:** Future
 
-- AI recommendations
-- Weekly insights
-- Taste evolution
-- Similarity clusters
+Leverage the growing collection graph to deliver increasingly personalized experiences.
+
+Potential opportunities include:
+
+* AI-powered recommendations
+* Weekly discovery summaries
+* Taste evolution over time
+* Similarity clusters
+* Smart collection suggestions
+* Personalized community insights
+* Trend forecasting
+* Recommendation explanations
+
+Artificial intelligence should enhance human discovery rather than replace it.
 
 ---
 
 # Long-Term Vision
 
 Top3 becomes the best place to discover people through shared taste.
+
+Success isn't measured by the number of collections users create, but by the conversations, discoveries, and relationships those collections enable.
+
+As the community grows, the collective knowledge of the platform becomes increasingly valuable, making every published collection contribute to a richer discovery experience for everyone.
+
+---
+
+# Guiding Principles
+
+Every future feature should support at least one of these goals:
+
+* Make publishing feel effortless.
+* Help users discover something unexpected.
+* Encourage authentic conversation.
+* Reward thoughtful curation over volume.
+* Keep the experience simple and approachable.
+* Build community through shared interests.
+* Prioritize quality over feature quantity.
+
+If a proposed feature doesn't strengthen one of these principles, it should be reconsidered before development begins.
