@@ -108,10 +108,12 @@ export default function Top3Card({
     post.publishedAt
   )?.replace(/^Updated\s+/i, '');
 
-  const postIsLiked = isLiked(post.id);
+  const likeCollectionId = post.collection.id;
+
+  const postIsLiked = isLiked(likeCollectionId);
 
   const displayedLikeCount = getLikeCount(
-    post.id,
+    likeCollectionId,
     post.reactions
   );
 
@@ -158,7 +160,7 @@ export default function Top3Card({
       return;
     }
 
-    toggleLike(post.id);
+    toggleLike(likeCollectionId);
   }
 
   return (

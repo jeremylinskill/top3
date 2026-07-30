@@ -1,12 +1,18 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '@/hooks/use-auth';
 import {
-    createContext,
-    ReactNode,
-    useCallback,
-    useContext,
-    useEffect,
-    useMemo,
-    useState,
+  createLike,
+  deleteLike,
+  getLikeSnapshot,
+  LikeCountsByCollectionId,
+} from '@/lib/supabase/likes';
+import {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
 } from 'react';
 
 type LikeContextValue = {
@@ -26,8 +32,6 @@ type LikeProviderProps = {
   children: ReactNode;
 };
 
-const STORAGE_KEY = 'top3-liked-post-ids';
-
 const LikeContext =
   createContext<LikeContextValue | undefined>(
     undefined
@@ -36,79 +40,66 @@ const LikeContext =
 export function LikeProvider({
   children,
 }: LikeProviderProps) {
+  const { user } = useAuth();
+
   const [likedPostIds, setLikedPostIds] =
     useState<string[]>([]);
+
+  const [likeCounts, setLikeCounts] =
+    useState<LikeCountsByCollectionId>({});
 
   const [isLoading, setIsLoading] =
     useState(true);
 
+  const userId = user?.id;
+
   useEffect(() => {
-    let isMounted = true;
+    let isCancelled = false;
 
-    async function loadLikedPosts() {
+    async function loadLikes() {
+      setLikedPostIds([]);
+      setLikeCounts({});
+      setIsLoading(true);
+
+      if (!userId) {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
+
+        return;
+      }
+
       try {
-        const savedValue =
-          await AsyncStorage.getItem(STORAGE_KEY);
+        const snapshot =
+          await getLikeSnapshot(userId);
 
-        if (!savedValue) {
+        if (isCancelled) {
           return;
         }
 
-        const parsedValue: unknown =
-          JSON.parse(savedValue);
+        setLikedPostIds(
+          snapshot.likedCollectionIds
+        );
 
-        const isValidLikedPostIds =
-          Array.isArray(parsedValue) &&
-          parsedValue.every(
-            (item) => typeof item === 'string'
-          );
-
-        if (
-          isMounted &&
-          isValidLikedPostIds
-        ) {
-          setLikedPostIds(parsedValue);
-        }
+        setLikeCounts(snapshot.likeCounts);
       } catch (error) {
         console.error(
-          'Failed to load liked posts:',
+          'Failed to load likes:',
           error
         );
       } finally {
-        if (isMounted) {
+        if (!isCancelled) {
           setIsLoading(false);
         }
       }
     }
 
-    loadLikedPosts();
+    loadLikes();
 
     return () => {
-      isMounted = false;
+      isCancelled = true;
     };
-  }, []);
-
-  useEffect(() => {
-    if (isLoading) {
-      return;
-    }
-
-    async function saveLikedPosts() {
-      try {
-        await AsyncStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify(likedPostIds)
-        );
-      } catch (error) {
-        console.error(
-          'Failed to save liked posts:',
-          error
-        );
-      }
-    }
-
-    saveLikedPosts();
-  }, [likedPostIds, isLoading]);
+  }, [userId]);
 
   const isLiked = useCallback(
     (postId: string) =>
@@ -118,54 +109,131 @@ export function LikeProvider({
 
   const likePost = useCallback(
     (postId: string) => {
-      if (!postId) {
+      if (
+        !userId ||
+        !postId ||
+        likedPostIds.includes(postId)
+      ) {
         return;
       }
 
-      setLikedPostIds((currentIds) => {
-        if (currentIds.includes(postId)) {
-          return currentIds;
-        }
+      const currentUserId = userId;
 
-        return [...currentIds, postId];
-      });
+      setLikedPostIds((currentIds) => [
+        ...currentIds,
+        postId,
+      ]);
+
+      setLikeCounts((currentCounts) => ({
+        ...currentCounts,
+        [postId]:
+          (currentCounts[postId] ?? 0) + 1,
+      }));
+
+      async function saveLike() {
+        try {
+          await createLike(
+            currentUserId,
+            postId
+          );
+        } catch (error) {
+          console.error(
+            'Failed to create like:',
+            error
+          );
+
+          setLikedPostIds((currentIds) =>
+            currentIds.filter(
+              (currentId) =>
+                currentId !== postId
+            )
+          );
+
+          setLikeCounts((currentCounts) => ({
+            ...currentCounts,
+            [postId]: Math.max(
+              0,
+              (currentCounts[postId] ?? 1) - 1
+            ),
+          }));
+        }
+      }
+
+      saveLike();
     },
-    []
+    [userId, likedPostIds]
   );
 
   const unlikePost = useCallback(
     (postId: string) => {
-      if (!postId) {
+      if (
+        !userId ||
+        !postId ||
+        !likedPostIds.includes(postId)
+      ) {
         return;
       }
 
+      const currentUserId = userId;
+
       setLikedPostIds((currentIds) =>
         currentIds.filter(
-          (currentId) => currentId !== postId
+          (currentId) =>
+            currentId !== postId
         )
       );
+
+      setLikeCounts((currentCounts) => ({
+        ...currentCounts,
+        [postId]: Math.max(
+          0,
+          (currentCounts[postId] ?? 1) - 1
+        ),
+      }));
+
+      async function removeLike() {
+        try {
+          await deleteLike(
+            currentUserId,
+            postId
+          );
+        } catch (error) {
+          console.error(
+            'Failed to delete like:',
+            error
+          );
+
+          setLikedPostIds((currentIds) => {
+            if (currentIds.includes(postId)) {
+              return currentIds;
+            }
+
+            return [...currentIds, postId];
+          });
+
+          setLikeCounts((currentCounts) => ({
+            ...currentCounts,
+            [postId]:
+              (currentCounts[postId] ?? 0) + 1,
+          }));
+        }
+      }
+
+      removeLike();
     },
-    []
+    [userId, likedPostIds]
   );
 
   const toggleLike = useCallback(
     (postId: string) => {
-      if (!postId) {
+      if (isLiked(postId)) {
+        unlikePost(postId);
         return;
       }
 
-      setLikedPostIds((currentIds) => {
-        if (currentIds.includes(postId)) {
-          return currentIds.filter(
-            (currentId) =>
-              currentId !== postId
-          );
-        }
-
-        return [...currentIds, postId];
-      });
+      likePost(postId);
     },
-    []
+    [isLiked, likePost, unlikePost]
   );
 
   const getLikeCount = useCallback(
@@ -173,16 +241,18 @@ export function LikeProvider({
       postId: string,
       baseCount = 0
     ) => {
-      const safeBaseCount = Math.max(
-        0,
-        baseCount
-      );
+      const databaseCount =
+        likeCounts[postId];
 
-      return isLiked(postId)
-        ? safeBaseCount + 1
-        : safeBaseCount;
+      if (
+        typeof databaseCount === 'number'
+      ) {
+        return databaseCount;
+      }
+
+      return Math.max(0, baseCount);
     },
-    [isLiked]
+    [likeCounts]
   );
 
   const value = useMemo(
