@@ -119,9 +119,10 @@ export default function Top3Card({
 
   const displayedCommentCount =
     getCommentCount(
-      post.id,
+      post.collection.id,
       post.comments
     );
+
 
   const hasComments =
     displayedCommentCount > 0;

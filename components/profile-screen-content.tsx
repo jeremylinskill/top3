@@ -38,6 +38,7 @@ type ProfileScreenContentProps = {
   isLoadingFollowState?: boolean;
 
   onEditProfile?: () => void;
+  onSignOut?: () => void;
   onToggleFollow?: () => void;
   onFollowersPress?: () => void;
   onFollowingPress?: () => void;
@@ -64,6 +65,7 @@ export default function ProfileScreenContent({
   isLoadingPosts = false,
 
   onEditProfile,
+  onSignOut,
   onFollowersPress,
   onFollowingPress,
   onTasteMatchPress,
@@ -207,16 +209,32 @@ export default function ProfileScreenContent({
       </View>
 
       {isCurrentUser ? (
-        onEditProfile ? (
-          <View style={styles.profileAction}>
+        <View style={styles.profileActions}>
+          {onEditProfile ? (
             <PrimaryButton
               title="Edit Profile"
               onPress={onEditProfile}
             />
-          </View>
-        ) : null
+          ) : null}
+
+          {onSignOut ? (
+            <Pressable
+              style={({ pressed }) => [
+                styles.signOutButton,
+                pressed &&
+                  styles.signOutButtonPressed,
+              ]}
+              onPress={onSignOut}
+              accessibilityRole="button"
+              accessibilityLabel="Sign out">
+              <Text style={styles.signOutButtonText}>
+                Sign Out
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
       ) : (
-        <View style={styles.profileAction}>
+        <View style={styles.profileActions}>
           <FollowButton
             userId={user.id}
             size="large"
@@ -377,15 +395,31 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.border,
   },
 
-  profileAction: {
+  profileActions: {
     marginTop: 14,
+    gap: SPACING.sm,
   },
 
+  signOutButton: {
+    minHeight: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.xl,
+    paddingHorizontal: SPACING.lg,
+  },
 
+  signOutButtonPressed: {
+    opacity: 0.55,
+  },
 
-
-
-
+  signOutButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.text,
+  },
 
   section: {
     marginTop: SPACING.lg,

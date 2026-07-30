@@ -1,8 +1,8 @@
 # Top3 Product Roadmap
 
-**Version:** 1.0
-**Status:** Active
-**Owner:** Jeremy Linskill
+**Version:** 1.0  
+**Status:** Active Development  
+**Owner:** Jeremy Linskill  
 **Last Updated:** July 30, 2026
 
 ---
@@ -11,7 +11,7 @@
 
 This roadmap outlines the long-term evolution of the Top3 product experience.
 
-Unlike `CURRENT_STATE.md`, which documents the application's current implementation, this roadmap focuses on where the product is headed and the experiences we want to create for users.
+Unlike `CURRENT_STATE.md`, which documents the application's current implementation, this roadmap focuses on the future of the product and the experiences we want to create for users.
 
 Every roadmap item should strengthen one or more of Top3's four core pillars.
 
@@ -25,10 +25,39 @@ Top3 isn't simply a place to rank favourites. It's a platform that helps people 
 
 Every product decision should reinforce one or more of these pillars:
 
-* **Identity** — Express who you are through your collections.
-* **Discovery** — Find new entertainment, ideas, and people.
-* **Connection** — Build meaningful relationships through shared taste.
-* **Conversation** — Encourage discussion rather than passive consumption.
+- **Identity** — Express who you are through your collections.
+- **Discovery** — Find new entertainment, ideas, and people.
+- **Connection** — Build meaningful relationships through shared taste.
+- **Conversation** — Encourage discussion rather than passive consumption.
+
+---
+
+# Current Milestone
+
+## Community Platform
+
+**Status:** In Progress
+
+Top3 has successfully transitioned from a prototype to a persistent application.
+
+The current milestone focuses on completing the migration from local social features to fully shared, real-time community experiences.
+
+### Completed
+
+- Supabase Authentication
+- User Profiles
+- Collection Persistence
+- Shared Likes
+
+### In Progress
+
+- Shared Comments
+
+### Next
+
+- Shared Following
+- Supabase Realtime
+- Community Notifications
 
 ---
 
@@ -36,21 +65,20 @@ Every product decision should reinforce one or more of these pillars:
 
 **Status:** Complete
 
-Established the core experience of expressing personal taste.
+Established the foundation for expressing personal taste.
 
-Completed
+### Completed
 
-* User authentication
-* User profiles
-* Public profiles
-* Profile privacy
-* Collection creation
-* Collection editing
-* Draft collections
-* Collection publishing
-* Published collection viewing
-* Top3 cards
-* Personal profile experience
+- User authentication
+- User profiles
+- Public profiles
+- Profile privacy
+- Collection creation
+- Collection editing
+- Draft collections
+- Collection publishing
+- Published collection viewing
+- Personal profile experience
 
 ---
 
@@ -58,24 +86,25 @@ Completed
 
 **Status:** Complete
 
-Expanded the product beyond personal collections into a discovery platform.
+Expanded the experience beyond personal collections into a discovery platform.
 
-Completed
+### Completed
 
-* Personalized Feed
-* Discover experience
-* Category browsing
-* Category feeds
-* Trending collections
-* Trending topics
-* Community Top3
-* Overall Top3
-* Taste Match
-* External content search
-* Recommendation engine
-* Published collection browsing
+- Personalized Feed
+- Discover experience
+- Category browsing
+- Category feeds
+- Trending collections
+- Trending topics
+- Community Top3
+- Overall Top3
+- Taste Match
+- Recommendation engine
+- Recommendation explanations
+- External content search
+- Published collection browsing
 
-The application now allows users to discover both content and people through community-generated collections.
+The application now helps users discover both entertainment and people through community-generated collections.
 
 ---
 
@@ -83,64 +112,111 @@ The application now allows users to discover both content and people through com
 
 **Status:** Current Focus
 
-Strengthen interactions between real users by moving social features from local prototypes to shared experiences.
+Build meaningful interaction between real users.
 
-Current priorities include:
+### Completed
 
-* Shared likes
-* Shared comments
-* Shared follow relationships
-* Community activity
-* Notifications
-* Improved profile discovery
-* Richer conversations
-* Better social engagement
+- Shared likes
+- Optimistic social interactions
+- Database-backed community engagement
 
-The goal of this phase is to transform Top3 from a collection platform into a living community.
+### Remaining
+
+- Shared comments
+- Shared follow relationships
+- Realtime synchronization
+- Community notifications
+- Richer profile discovery
+- Conversation improvements
+
+Success for this phase is reached when every social interaction is shared across all users in real time.
 
 ---
 
 # Phase 4 — Intelligence
 
-**Status:** Future
+**Status:** Planned
 
-Leverage the growing collection graph to deliver increasingly personalized experiences.
+Leverage the growing collection graph to create increasingly personalized experiences.
 
-Potential opportunities include:
+### Opportunities
 
-* AI-powered recommendations
-* Weekly discovery summaries
-* Taste evolution over time
-* Similarity clusters
-* Smart collection suggestions
-* Personalized community insights
-* Trend forecasting
-* Recommendation explanations
+- AI-powered recommendations
+- Weekly discovery summaries
+- Taste evolution over time
+- Similarity clusters
+- Smart collection suggestions
+- Personalized community insights
+- Trend forecasting
+- Better recommendation explanations
 
-Artificial intelligence should enhance human discovery rather than replace it.
+Artificial intelligence should enhance human discovery—not replace it.
 
 ---
 
-# Long-Term Vision
+# Phase 5 — Platform Growth
 
-Top3 becomes the best place to discover people through shared taste.
+**Status:** Future
 
-Success isn't measured by the number of collections users create, but by the conversations, discoveries, and relationships those collections enable.
+Expand Top3 into a mature social platform.
 
-As the community grows, the collective knowledge of the platform becomes increasingly valuable, making every published collection contribute to a richer discovery experience for everyone.
+### Opportunities
+
+- Push notifications
+- Activity feed
+- User achievements
+- Featured creators
+- Collection sharing
+- Collaborative collections
+- Friend invitations
+- Collection history
+- Moderation tools
+- Admin dashboard
 
 ---
 
 # Guiding Principles
 
-Every future feature should support at least one of these goals:
+Every future feature should support at least one of these goals.
 
-* Make publishing feel effortless.
-* Help users discover something unexpected.
-* Encourage authentic conversation.
-* Reward thoughtful curation over volume.
-* Keep the experience simple and approachable.
-* Build community through shared interests.
-* Prioritize quality over feature quantity.
+- Make publishing effortless.
+- Help users discover something unexpected.
+- Encourage authentic conversation.
+- Reward thoughtful curation over volume.
+- Build community through shared interests.
+- Keep the experience simple.
+- Prioritize quality over feature quantity.
+- Maintain a content-first design philosophy.
 
-If a proposed feature doesn't strengthen one of these principles, it should be reconsidered before development begins.
+If a proposed feature doesn't strengthen one or more of these principles, it should be reconsidered before development begins.
+
+---
+
+# Technical Strategy
+
+The product should continue evolving through small, complete vertical slices.
+
+For every major feature:
+
+1. Design the architecture.
+2. Implement one complete vertical slice.
+3. Validate with `npm run typecheck`.
+4. Test end-to-end.
+5. Commit.
+6. Update project documentation.
+
+This approach has consistently produced stable, incremental progress while minimizing regressions.
+
+---
+
+# Success Metrics
+
+Top3 succeeds when users:
+
+- Publish collections regularly.
+- Discover entertainment they genuinely enjoy.
+- Find people with similar taste.
+- Return to continue conversations.
+- Build lasting collections that reflect who they are.
+
+The long-term goal is not to maximize content creation, but to create meaningful connections through shared taste.

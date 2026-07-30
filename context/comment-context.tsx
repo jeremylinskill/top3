@@ -1,12 +1,20 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '@/hooks/use-auth';
 import {
-    createContext,
-    ReactNode,
-    useCallback,
-    useContext,
-    useEffect,
-    useMemo,
-    useState,
+  CommentRecord,
+  createComment,
+  deleteComment as deleteSupabaseComment,
+  getCommentCounts as getSupabaseCommentCounts,
+  getCommentsForCollection as getSupabaseCommentsForCollection,
+} from '@/lib/supabase/comments';
+import {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from 'react';
 
 export type Comment = {
@@ -29,197 +37,350 @@ type AddCommentInput = {
   text: string;
 };
 
+type CommentCounts = Record<string, number>;
+
 type CommentContextValue = {
   comments: Comment[];
+  commentCounts: CommentCounts;
+  activeCollectionId: string | null;
   isLoading: boolean;
+  isLoadingCommentCounts: boolean;
+  loadCommentsForCollection: (
+    collectionId: string
+  ) => Promise<void>;
+  clearCommentsForCollection: () => void;
+  loadCommentCounts: (
+    collectionIds: string[]
+  ) => Promise<void>;
   getCommentsForPost: (
-    postId: string
+    collectionId: string
   ) => Comment[];
   getCommentCount: (
-    postId: string,
+    collectionId: string,
     baseCount?: number
   ) => number;
   addComment: (
     input: AddCommentInput
   ) => Comment | null;
-  deleteComment: (commentId: string) => void;
+  deleteComment: (
+    commentId: string
+  ) => void;
 };
 
 type CommentProviderProps = {
   children: ReactNode;
 };
 
-const STORAGE_KEY = 'top3-comments';
-
 const CommentContext =
   createContext<CommentContextValue | undefined>(
     undefined
   );
 
-function createCommentId() {
-  return `comment-${Date.now()}-${Math.random()
+function createOptimisticCommentId() {
+  return `optimistic-comment-${Date.now()}-${Math.random()
     .toString(36)
     .slice(2, 9)}`;
 }
 
-function isValidComment(
-  value: unknown
-): value is Comment {
-  if (
-    !value ||
-    typeof value !== 'object'
-  ) {
-    return false;
-  }
+function mapCommentRecord(
+  comment: CommentRecord
+): Comment {
+  return {
+    id: comment.id,
+    postId: comment.collectionId,
+    authorId: comment.userId,
+    authorDisplayName:
+      comment.authorDisplayName,
+    authorUsername:
+      comment.authorUsername,
+    authorAvatarUrl:
+      comment.authorAvatarUrl,
+    text: comment.content,
+    createdAt: comment.createdAt,
+  };
+}
 
-  const comment = value as Partial<Comment>;
+function sortComments(
+  comments: Comment[]
+): Comment[] {
+  return [...comments].sort(
+    (first, second) =>
+      new Date(first.createdAt).getTime() -
+      new Date(second.createdAt).getTime()
+  );
+}
 
-  return (
-    typeof comment.id === 'string' &&
-    typeof comment.postId === 'string' &&
-    typeof comment.authorId === 'string' &&
-    typeof comment.authorDisplayName ===
-      'string' &&
-    typeof comment.authorUsername ===
-      'string' &&
-    typeof comment.text === 'string' &&
-    typeof comment.createdAt === 'string' &&
-    (comment.authorAvatarUrl === undefined ||
-      typeof comment.authorAvatarUrl ===
-        'string')
+function normalizeCollectionIds(
+  collectionIds: string[]
+): string[] {
+  return Array.from(
+    new Set(
+      collectionIds.filter(
+        (collectionId) =>
+          collectionId.length > 0
+      )
+    )
   );
 }
 
 export function CommentProvider({
   children,
 }: CommentProviderProps) {
+  const { user } = useAuth();
+
   const [comments, setComments] = useState<
     Comment[]
   >([]);
 
+  const [commentCounts, setCommentCounts] =
+    useState<CommentCounts>({});
+
+  const [
+    activeCollectionId,
+    setActiveCollectionId,
+  ] = useState<string | null>(null);
+
   const [isLoading, setIsLoading] =
-    useState(true);
+    useState(false);
+
+  const [
+    isLoadingCommentCounts,
+    setIsLoadingCommentCounts,
+  ] = useState(false);
+
+  const commentsRequestIdRef = useRef(0);
+  const countsRequestIdRef = useRef(0);
+
+  const clearCommentsForCollection =
+    useCallback(() => {
+      commentsRequestIdRef.current += 1;
+
+      setComments([]);
+      setActiveCollectionId(null);
+      setIsLoading(false);
+    }, []);
 
   useEffect(() => {
-    let isMounted = true;
+    commentsRequestIdRef.current += 1;
+    countsRequestIdRef.current += 1;
 
-    async function loadComments() {
-      try {
-        const savedValue =
-          await AsyncStorage.getItem(STORAGE_KEY);
+    setComments([]);
+    setCommentCounts({});
+    setActiveCollectionId(null);
+    setIsLoading(false);
+    setIsLoadingCommentCounts(false);
+  }, [user?.id]);
 
-        if (!savedValue) {
+  const loadCommentsForCollection =
+    useCallback(
+      async (collectionId: string) => {
+        if (!user?.id || !collectionId) {
+          clearCommentsForCollection();
           return;
         }
 
-        const parsedValue: unknown =
-          JSON.parse(savedValue);
+        const requestId =
+          commentsRequestIdRef.current + 1;
+
+        commentsRequestIdRef.current =
+          requestId;
+
+        setActiveCollectionId(collectionId);
+        setComments([]);
+        setIsLoading(true);
+
+        try {
+          const commentRecords =
+            await getSupabaseCommentsForCollection(
+              collectionId
+            );
+
+          if (
+            commentsRequestIdRef.current !==
+            requestId
+          ) {
+            return;
+          }
+
+          const mappedComments =
+            sortComments(
+              commentRecords.map(
+                mapCommentRecord
+              )
+            );
+
+          setComments(mappedComments);
+
+          setCommentCounts(
+            (currentCounts) => ({
+              ...currentCounts,
+              [collectionId]:
+                mappedComments.length,
+            })
+          );
+        } catch (error) {
+          if (
+            commentsRequestIdRef.current !==
+            requestId
+          ) {
+            return;
+          }
+
+          console.error(
+            'Failed to load comments:',
+            error
+          );
+
+          setComments([]);
+        } finally {
+          if (
+            commentsRequestIdRef.current ===
+            requestId
+          ) {
+            setIsLoading(false);
+          }
+        }
+      },
+      [
+        user?.id,
+        clearCommentsForCollection,
+      ]
+    );
+
+  const loadCommentCounts = useCallback(
+    async (collectionIds: string[]) => {
+      if (!user?.id) {
+        setCommentCounts({});
+        setIsLoadingCommentCounts(false);
+        return;
+      }
+
+      const normalizedCollectionIds =
+        normalizeCollectionIds(
+          collectionIds
+        );
+
+      if (
+        normalizedCollectionIds.length === 0
+      ) {
+        setIsLoadingCommentCounts(false);
+        return;
+      }
+
+      const requestId =
+        countsRequestIdRef.current + 1;
+
+      countsRequestIdRef.current =
+        requestId;
+
+      setIsLoadingCommentCounts(true);
+
+      try {
+        const loadedCounts =
+          await getSupabaseCommentCounts(
+            normalizedCollectionIds
+          );
 
         if (
-          Array.isArray(parsedValue) &&
-          parsedValue.every(isValidComment) &&
-          isMounted
+          countsRequestIdRef.current !==
+          requestId
         ) {
-          setComments(parsedValue);
+          return;
         }
+
+        const normalizedCounts =
+          normalizedCollectionIds.reduce<
+            CommentCounts
+          >((counts, collectionId) => {
+            counts[collectionId] =
+              loadedCounts[collectionId] ??
+              0;
+
+            return counts;
+          }, {});
+
+        setCommentCounts(
+          (currentCounts) => ({
+            ...currentCounts,
+            ...normalizedCounts,
+          })
+        );
       } catch (error) {
+        if (
+          countsRequestIdRef.current !==
+          requestId
+        ) {
+          return;
+        }
+
         console.error(
-          'Failed to load comments:',
+          'Failed to load comment counts:',
           error
         );
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
+        if (
+          countsRequestIdRef.current ===
+          requestId
+        ) {
+          setIsLoadingCommentCounts(false);
         }
       }
-    }
-
-    loadComments();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (isLoading) {
-      return;
-    }
-
-    async function saveComments() {
-      try {
-        await AsyncStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify(comments)
-        );
-      } catch (error) {
-        console.error(
-          'Failed to save comments:',
-          error
-        );
-      }
-    }
-
-    saveComments();
-  }, [comments, isLoading]);
+    },
+    [user?.id]
+  );
 
   const getCommentsForPost = useCallback(
-    (postId: string) =>
-      comments
-        .filter(
-          (comment) =>
-            comment.postId === postId
-        )
-        .sort(
-          (first, second) =>
-            new Date(
-              first.createdAt
-            ).getTime() -
-            new Date(
-              second.createdAt
-            ).getTime()
-        ),
-    [comments]
+    (collectionId: string) => {
+      if (
+        activeCollectionId !== collectionId
+      ) {
+        return [];
+      }
+
+      return sortComments(comments);
+    },
+    [activeCollectionId, comments]
   );
 
   const getCommentCount = useCallback(
     (
-      postId: string,
+      collectionId: string,
       baseCount = 0
     ) => {
-      const localCommentCount =
-        comments.filter(
-          (comment) =>
-            comment.postId === postId
-        ).length;
+      const loadedCount =
+        commentCounts[collectionId];
 
-      return (
-        Math.max(0, baseCount) +
-        localCommentCount
-      );
+      if (loadedCount === undefined) {
+        return Math.max(0, baseCount);
+      }
+
+      return Math.max(0, loadedCount);
     },
-    [comments]
+    [commentCounts]
   );
 
   const addComment = useCallback(
     (
       input: AddCommentInput
     ): Comment | null => {
+      const currentUserId = user?.id;
       const trimmedText =
         input.text.trim();
 
       if (
+        !currentUserId ||
         !input.postId ||
-        !input.authorId ||
         !trimmedText
       ) {
         return null;
       }
 
-      const newComment: Comment = {
-        id: createCommentId(),
-        postId: input.postId,
-        authorId: input.authorId,
+      const collectionId = input.postId;
+
+      const optimisticComment: Comment = {
+        id: createOptimisticCommentId(),
+        postId: collectionId,
+        authorId: currentUserId,
         authorDisplayName:
           input.authorDisplayName,
         authorUsername:
@@ -231,32 +392,217 @@ export function CommentProvider({
           new Date().toISOString(),
       };
 
-      setComments((currentComments) => [
-        ...currentComments,
-        newComment,
-      ]);
+      if (
+        activeCollectionId === collectionId
+      ) {
+        setComments((currentComments) =>
+          sortComments([
+            ...currentComments,
+            optimisticComment,
+          ])
+        );
+      }
 
-      return newComment;
+
+      setCommentCounts(
+        (currentCounts) => ({
+          ...currentCounts,
+          [collectionId]:
+            (currentCounts[collectionId] ??
+              0) + 1,
+        })
+      );
+
+
+      const userId = currentUserId;
+
+      async function persistComment() {
+        try {
+          const createdComment =
+            await createComment(
+              userId,
+              collectionId,
+              trimmedText
+            );
+
+          const mappedComment: Comment = {
+            ...mapCommentRecord(
+              createdComment
+            ),
+            authorDisplayName:
+              input.authorDisplayName,
+            authorUsername:
+              input.authorUsername,
+            authorAvatarUrl:
+              input.authorAvatarUrl,
+          };
+
+          setComments((currentComments) => {
+            const optimisticCommentExists =
+              currentComments.some(
+                (comment) =>
+                  comment.id ===
+                  optimisticComment.id
+              );
+
+            if (
+              !optimisticCommentExists
+            ) {
+              return currentComments;
+            }
+
+            return sortComments(
+              currentComments.map(
+                (comment) =>
+                  comment.id ===
+                  optimisticComment.id
+                    ? mappedComment
+                    : comment
+              )
+            );
+          });
+        } catch (error) {
+          console.error(
+            'Failed to create comment:',
+            error
+          );
+
+          setComments((currentComments) =>
+            currentComments.filter(
+              (comment) =>
+                comment.id !==
+                optimisticComment.id
+            )
+          );
+
+          setCommentCounts(
+            (currentCounts) => ({
+              ...currentCounts,
+              [collectionId]: Math.max(
+                0,
+                (currentCounts[
+                  collectionId
+                ] ?? 1) - 1
+              ),
+            })
+          );
+        }
+      }
+
+      void persistComment();
+
+      return optimisticComment;
     },
-    []
+    [
+      user?.id,
+      activeCollectionId,
+      commentCounts,
+      comments,
+    ]
   );
 
   const deleteComment = useCallback(
     (commentId: string) => {
+      const commentToDelete =
+        comments.find(
+          (comment) =>
+            comment.id === commentId
+        );
+
+      if (!commentToDelete) {
+        return;
+      }
+
+      const deletedComment =
+        commentToDelete;
+
+      const collectionId =
+        deletedComment.postId;
+
       setComments((currentComments) =>
         currentComments.filter(
           (comment) =>
             comment.id !== commentId
         )
       );
+
+      setCommentCounts(
+        (currentCounts) => ({
+          ...currentCounts,
+          [collectionId]: Math.max(
+            0,
+            (currentCounts[collectionId] ??
+              comments.length) - 1
+          ),
+        })
+      );
+
+      if (
+        commentId.startsWith(
+          'optimistic-comment-'
+        )
+      ) {
+        return;
+      }
+
+      async function removeComment() {
+        try {
+          await deleteSupabaseComment(
+            commentId
+          );
+        } catch (error) {
+          console.error(
+            'Failed to delete comment:',
+            error
+          );
+
+          setComments((currentComments) => {
+            const commentAlreadyRestored =
+              currentComments.some(
+                (comment) =>
+                  comment.id ===
+                  deletedComment.id
+              );
+
+            if (
+              commentAlreadyRestored
+            ) {
+              return currentComments;
+            }
+
+            return sortComments([
+              ...currentComments,
+              deletedComment,
+            ]);
+          });
+
+          setCommentCounts(
+            (currentCounts) => ({
+              ...currentCounts,
+              [collectionId]:
+                (currentCounts[
+                  collectionId
+                ] ?? 0) + 1,
+            })
+          );
+        }
+      }
+
+      void removeComment();
     },
-    []
+    [comments]
   );
 
   const value = useMemo(
     () => ({
       comments,
+      commentCounts,
+      activeCollectionId,
       isLoading,
+      isLoadingCommentCounts,
+      loadCommentsForCollection,
+      clearCommentsForCollection,
+      loadCommentCounts,
       getCommentsForPost,
       getCommentCount,
       addComment,
@@ -264,7 +610,13 @@ export function CommentProvider({
     }),
     [
       comments,
+      commentCounts,
+      activeCollectionId,
       isLoading,
+      isLoadingCommentCounts,
+      loadCommentsForCollection,
+      clearCommentsForCollection,
+      loadCommentCounts,
       getCommentsForPost,
       getCommentCount,
       addComment,

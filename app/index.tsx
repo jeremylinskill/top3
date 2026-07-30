@@ -1,7 +1,5 @@
-import {
-    hasSeenWelcome,
-    resetWelcomeStatus,
-} from '@/services/onboarding-service';
+import { useAuth } from '@/hooks/use-auth';
+import { hasSeenWelcome } from '@/services/onboarding-service';
 import { router } from 'expo-router';
 import { useEffect } from 'react';
 import {
@@ -11,25 +9,33 @@ import {
 } from 'react-native';
 
 export default function IndexScreen() {
+  const {
+    isAuthenticated,
+    isLoading: isAuthLoading,
+  } = useAuth();
+
   useEffect(() => {
+    if (isAuthLoading) {
+      return;
+    }
+
     let isMounted = true;
 
     async function initializeApp() {
       try {
-        // TEMPORARY:
-        // Reset the welcome status so the
-        // Welcome screen appears every launch.
-        await resetWelcomeStatus();
+        if (isAuthenticated) {
+          router.replace('/(tabs)');
+          return;
+        }
 
-        const hasSeen =
-          await hasSeenWelcome();
+        const hasSeen = await hasSeenWelcome();
 
         if (!isMounted) {
           return;
         }
 
         if (hasSeen) {
-          router.replace('/(tabs)');
+          router.replace('/create-account');
         } else {
           router.replace('/welcome');
         }
@@ -50,7 +56,7 @@ export default function IndexScreen() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isAuthenticated, isAuthLoading]);
 
   return (
     <View style={styles.container}>

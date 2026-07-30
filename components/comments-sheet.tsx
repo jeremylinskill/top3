@@ -56,6 +56,8 @@ export default function CommentsSheet({
     addComment,
     deleteComment,
     getCommentsForPost,
+    loadCommentsForCollection,
+    clearCommentsForCollection,
     isLoading,
   } = useComments();
 
@@ -74,6 +76,9 @@ export default function CommentsSheet({
   const translateY = useRef(
     new Animated.Value(CLOSED_TRANSLATE_Y)
   ).current;
+
+  const collectionId =
+    post?.collection.id ?? null;
 
   useEffect(() => {
     if (!visible) {
@@ -105,7 +110,30 @@ export default function CommentsSheet({
     return () => {
       cancelAnimationFrame(animationFrame);
     };
-  }, [isRendered, visible, translateY]);
+  }, [
+    isRendered,
+    visible,
+    translateY,
+  ]);
+
+  useEffect(() => {
+    if (!visible || !collectionId) {
+      return;
+    }
+
+    void loadCommentsForCollection(
+      collectionId
+    );
+
+    return () => {
+      clearCommentsForCollection();
+    };
+  }, [
+    visible,
+    collectionId,
+    loadCommentsForCollection,
+    clearCommentsForCollection,
+  ]);
 
   useEffect(() => {
     const showEvent =
@@ -143,18 +171,23 @@ export default function CommentsSheet({
   }, []);
 
   const comments = useMemo(() => {
-    if (!post) {
+    if (!collectionId) {
       return [];
     }
 
-    return getCommentsForPost(post.id);
-  }, [post, getCommentsForPost]);
+    return getCommentsForPost(
+      collectionId
+    );
+  }, [
+    collectionId,
+    getCommentsForPost,
+  ]);
 
   const trimmedComment =
     commentText.trim();
 
   const canPost =
-    Boolean(post) &&
+    Boolean(collectionId) &&
     trimmedComment.length > 0 &&
     !isLoading &&
     !isClosing;
@@ -188,16 +221,20 @@ export default function CommentsSheet({
   }
 
   function handlePostComment() {
-    if (!post || !canPost) {
+    if (
+      !collectionId ||
+      !canPost
+    ) {
       return;
     }
 
     const newComment = addComment({
-      postId: post.id,
+      postId: collectionId,
       authorId: profile.id,
       authorDisplayName:
         profile.displayName,
-      authorUsername: profile.username,
+      authorUsername:
+        profile.username,
       authorAvatarUrl:
         profile.avatarUrl,
       text: trimmedComment,
@@ -212,7 +249,9 @@ export default function CommentsSheet({
   function confirmDeleteComment(
     comment: Comment
   ) {
-    if (comment.authorId !== profile.id) {
+    if (
+      comment.authorId !== profile.id
+    ) {
       return;
     }
 
@@ -296,7 +335,8 @@ export default function CommentsSheet({
               <Pressable
                 style={({ pressed }) => [
                   styles.closeButton,
-                  pressed && styles.pressed,
+                  pressed &&
+                    styles.pressed,
                 ]}
                 onPress={handleClose}
                 disabled={isClosing}
@@ -316,42 +356,52 @@ export default function CommentsSheet({
               contentContainerStyle={
                 styles.commentsContent
               }
-              showsVerticalScrollIndicator={false}
+              showsVerticalScrollIndicator={
+                false
+              }
               keyboardShouldPersistTaps="handled">
               {comments.length === 0 ? (
-                <View style={styles.emptyState}>
+                <View
+                  style={styles.emptyState}>
                   <Text
                     style={
                       styles.emptyStateTitle
                     }>
-                    No comments yet
+                    {isLoading
+                      ? 'Loading comments…'
+                      : 'No comments yet'}
                   </Text>
 
-                  <Text
-                    style={
-                      styles.emptyStateText
-                    }>
-                    Be the first to share your
-                    thoughts.
-                  </Text>
+                  {!isLoading ? (
+                    <Text
+                      style={
+                        styles.emptyStateText
+                      }>
+                      Be the first to share your
+                      thoughts.
+                    </Text>
+                  ) : null}
                 </View>
               ) : (
-                <View style={styles.commentList}>
-                  {comments.map((comment) => (
-                    <CommentRow
-                      key={comment.id}
-                      comment={comment}
-                      isOwnComment={
-                        comment.authorId ===
-                        profile.id
-                      }
-                      onDelete={() =>
-                        confirmDeleteComment(
-                          comment
-                        )
-                      }
-                    />
-                  ))}
+                <View
+                  style={styles.commentList}>
+                  {comments.map(
+                    (comment) => (
+                      <CommentRow
+                        key={comment.id}
+                        comment={comment}
+                        isOwnComment={
+                          comment.authorId ===
+                          profile.id
+                        }
+                        onDelete={() =>
+                          confirmDeleteComment(
+                            comment
+                          )
+                        }
+                      />
+                    )
+                  )}
                 </View>
               )}
             </ScrollView>
@@ -363,11 +413,14 @@ export default function CommentsSheet({
                     source={{
                       uri: profile.avatarUrl,
                     }}
-                    style={styles.avatarImage}
+                    style={
+                      styles.avatarImage
+                    }
                     resizeMode="cover"
                   />
                 ) : (
-                  <Text style={styles.avatarText}>
+                  <Text
+                    style={styles.avatarText}>
                     {profile.displayName
                       .charAt(0)
                       .toUpperCase()}
@@ -375,13 +428,20 @@ export default function CommentsSheet({
                 )}
               </View>
 
-              <View style={styles.inputContainer}>
+              <View
+                style={
+                  styles.inputContainer
+                }>
                 <TextInput
                   style={styles.input}
                   value={commentText}
-                  onChangeText={setCommentText}
+                  onChangeText={
+                    setCommentText
+                  }
                   placeholder="Add a comment…"
-                  placeholderTextColor={COLORS.tertiaryText}
+                  placeholderTextColor={
+                    COLORS.tertiaryText
+                  }
                   multiline
                   maxLength={500}
                   returnKeyType="send"
@@ -399,12 +459,15 @@ export default function CommentsSheet({
                   style={({ pressed }) => [
                     styles.postButton,
                     !canPost &&
-                      styles.postButtonDisabled,
+                      styles
+                        .postButtonDisabled,
                     pressed &&
                       canPost &&
                       styles.pressed,
                   ]}
-                  onPress={handlePostComment}
+                  onPress={
+                    handlePostComment
+                  }
                   disabled={!canPost}
                   accessibilityRole="button"
                   accessibilityState={{
@@ -462,7 +525,9 @@ function CommentRow({
           />
         ) : (
           <Text
-            style={styles.commentAvatarText}>
+            style={
+              styles.commentAvatarText
+            }>
             {comment.authorDisplayName
               .charAt(0)
               .toUpperCase()}
@@ -471,15 +536,18 @@ function CommentRow({
       </View>
 
       <View style={styles.commentBody}>
-        <View style={styles.commentTopRow}>
-          <View style={styles.commentMeta}>
+        <View
+          style={styles.commentTopRow}>
+          <View
+            style={styles.commentMeta}>
             <Text
               style={styles.commentAuthor}
               numberOfLines={1}>
               {comment.authorDisplayName}
             </Text>
 
-            <Text style={styles.commentTime}>
+            <Text
+              style={styles.commentTime}>
               {createdAtText}
             </Text>
           </View>
@@ -488,7 +556,8 @@ function CommentRow({
             <Pressable
               style={({ pressed }) => [
                 styles.commentMenuButton,
-                pressed && styles.pressed,
+                pressed &&
+                  styles.pressed,
               ]}
               onPress={onDelete}
               hitSlop={10}
@@ -497,13 +566,16 @@ function CommentRow({
               <Ionicons
                 name="ellipsis-horizontal"
                 size={18}
-                color={COLORS.tertiaryText}
+                color={
+                  COLORS.tertiaryText
+                }
               />
             </Pressable>
           ) : null}
         </View>
 
-        <Text style={styles.commentUsername}>
+        <Text
+          style={styles.commentUsername}>
           @{comment.authorUsername}
         </Text>
 
@@ -523,7 +595,8 @@ const styles = StyleSheet.create({
 
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor:
+      'rgba(0, 0, 0, 0.3)',
   },
 
   keyboardUnderlay: {
@@ -531,7 +604,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: COLORS.background,
+    backgroundColor:
+      COLORS.background,
   },
 
   keyboardView: {
@@ -541,9 +615,12 @@ const styles = StyleSheet.create({
 
   sheet: {
     height: '66%',
-    backgroundColor: COLORS.background,
-    borderTopLeftRadius: RADIUS.xxxl,
-    borderTopRightRadius: RADIUS.xxxl,
+    backgroundColor:
+      COLORS.background,
+    borderTopLeftRadius:
+      RADIUS.xxxl,
+    borderTopRightRadius:
+      RADIUS.xxxl,
     overflow: 'hidden',
   },
 
@@ -564,7 +641,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderBottomWidth:
       StyleSheet.hairlineWidth,
-    borderBottomColor: COLORS.border,
+    borderBottomColor:
+      COLORS.border,
   },
 
   title: {
@@ -629,14 +707,16 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     borderBottomWidth:
       StyleSheet.hairlineWidth,
-    borderBottomColor: COLORS.border,
+    borderBottomColor:
+      COLORS.border,
   },
 
   commentTopRow: {
     minHeight: 24,
     flexDirection: 'row',
     alignItems: 'flex-start',
-    justifyContent: 'space-between',
+    justifyContent:
+      'space-between',
   },
 
   commentMeta: {
@@ -707,16 +787,19 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     paddingHorizontal: 16,
     paddingTop: 10,
-    backgroundColor: COLORS.background,
+    backgroundColor:
+      COLORS.background,
     borderTopWidth:
       StyleSheet.hairlineWidth,
-    borderTopColor: COLORS.border,
+    borderTopColor:
+      COLORS.border,
   },
 
   avatar: {
     width: AVATAR.sm + 2,
     height: AVATAR.sm + 2,
-    borderRadius: (AVATAR.sm + 2) / 2,
+    borderRadius:
+      (AVATAR.sm + 2) / 2,
     marginRight: 10,
     marginBottom: 3,
     backgroundColor: COLORS.text,
@@ -742,7 +825,8 @@ const styles = StyleSheet.create({
     maxHeight: 120,
     flexDirection: 'row',
     alignItems: 'flex-end',
-    backgroundColor: COLORS.surface,
+    backgroundColor:
+      COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: 23,

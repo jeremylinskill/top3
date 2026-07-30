@@ -4,6 +4,7 @@ import ScreenHeader from '@/components/screen-header';
 import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
+import { useAuth } from '@/hooks/use-auth';
 import {
     getHydratedFeedPosts,
     getMockUserById,
@@ -18,6 +19,7 @@ import {
     useState,
 } from 'react';
 import {
+    Alert,
     ScrollView,
     StyleSheet,
     Text,
@@ -42,6 +44,7 @@ export default function ProfileScreen({
   userId,
   showBackButton = false,
 }: ProfileScreenProps) {
+  const { signOut } = useAuth();
   const { profile } = useProfile();
 
   const {
@@ -63,6 +66,9 @@ export default function ProfileScreen({
 
   const [isLoadingPosts, setIsLoadingPosts] =
     useState(true);
+
+  const [isSigningOut, setIsSigningOut] =
+    useState(false);
 
   const [
     selectedCommentsPost,
@@ -260,6 +266,31 @@ export default function ProfileScreen({
     router.push('/edit-profile');
   }
 
+  async function handleSignOut() {
+    if (!isCurrentUser || isSigningOut) {
+      return;
+    }
+
+    setIsSigningOut(true);
+
+    try {
+      await signOut();
+      router.replace('/sign-in-email');
+    } catch (error) {
+      console.error(
+        'Failed to sign out:',
+        error
+      );
+
+      Alert.alert(
+        'Unable to Sign Out',
+        'Something went wrong while signing you out. Please try again.'
+      );
+    } finally {
+      setIsSigningOut(false);
+    }
+  }
+
   function openFollowing() {
     router.push({
       pathname: '/social',
@@ -394,6 +425,11 @@ export default function ProfileScreen({
           onEditProfile={
             isCurrentUser
               ? editProfile
+              : undefined
+          }
+          onSignOut={
+            isCurrentUser
+              ? handleSignOut
               : undefined
           }
           onToggleFollow={

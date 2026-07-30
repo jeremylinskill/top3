@@ -1,11 +1,11 @@
 import AuthProviderButton from '@/components/auth-provider-button';
 import { router } from 'expo-router';
 import {
-    Alert,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -29,11 +29,8 @@ export default function CreateAccountScreen() {
   }
 
   function handleSignIn() {
-    Alert.alert(
-      'Sign in',
-      'The sign-in flow will be built after email account creation.'
-    );
-  }
+  router.push('/sign-in-email');
+}
 
   return (
     <SafeAreaView

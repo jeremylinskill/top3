@@ -1,6 +1,6 @@
 import CollectionForm, {
-    CollectionFormValues,
-    getInitialCollectionFormValues,
+  CollectionFormValues,
+  getInitialCollectionFormValues,
 } from '@/components/collection-form';
 import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
@@ -8,16 +8,15 @@ import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { useTop3 } from '@/context/top3-context';
 import { Top3List } from '@/types/top3-list';
 import {
-    router,
-    useLocalSearchParams,
+  router,
+  useLocalSearchParams,
 } from 'expo-router';
 import { useState } from 'react';
 import {
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -32,8 +31,7 @@ function getInitialValuesForCategory(
   }
 
   const category = TOP3_CATEGORIES.find(
-    (item) =>
-      item.id === requestedCategoryId
+    (item) => item.id === requestedCategoryId
   );
 
   if (!category) {
@@ -145,31 +143,11 @@ export default function CreateCollectionScreen() {
         )?.name
       : undefined;
 
-    const newListId = createList({
+    createList({
       category: formValues.categoryId,
       topic,
       title: formValues.title,
     });
-
-    if (newListId === null) {
-      Alert.alert(
-        'Collection Already Exists',
-        `You already have a ${formValues.title} collection.`,
-        [
-          {
-            text: 'Cancel',
-            style: 'cancel',
-          },
-          {
-            text: 'Open Collection',
-            onPress: () =>
-              router.push('/collection'),
-          },
-        ]
-      );
-
-      return;
-    }
 
     router.push('/collection');
   }

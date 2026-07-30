@@ -1,10 +1,12 @@
+import { useAuth } from '@/hooks/use-auth';
+import { supabase } from '@/lib/supabase';
 import { UserProfile } from '@/types/user-profile';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   createContext,
   ReactNode,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from 'react';
 
@@ -19,12 +21,18 @@ type ProfileProviderProps = {
   children: ReactNode;
 };
 
-const STORAGE_KEY = 'top3-user-profile';
+type ProfileRow = {
+  id: string;
+  username: string;
+  display_name: string;
+  bio: string;
+  is_public: boolean;
+};
 
-const DEFAULT_PROFILE: UserProfile = {
-  id: 'local-user',
-  displayName: 'Jeremy',
-  username: 'jeremy',
+const EMPTY_PROFILE: UserProfile = {
+  id: '',
+  displayName: '',
+  username: '',
   bio: '',
   visibility: 'public',
 };
@@ -34,84 +42,323 @@ const ProfileContext =
     ProfileContextValue | undefined
   >(undefined);
 
+function formatDisplayName(
+  emailUsername: string
+) {
+  const withoutTrailingNumbers =
+    emailUsername.replace(/\d+$/g, '');
+
+  const words = withoutTrailingNumbers
+    .split(/[._-]+/)
+    .map((word) => word.trim())
+    .filter(Boolean);
+
+  if (words.length === 0) {
+    return 'Top3 User';
+  }
+
+  return words
+    .map(
+      (word) =>
+        word.charAt(0).toUpperCase() +
+        word.slice(1).toLowerCase()
+    )
+    .join(' ');
+}
+
+function formatUsername(
+  emailUsername: string
+) {
+  const formattedUsername = emailUsername
+    .toLowerCase()
+    .replace(/[^a-z0-9._]/g, '')
+    .replace(/^[._]+|[._]+$/g, '');
+
+  return formattedUsername || 'top3user';
+}
+
+function createDefaultProfile(
+  userId: string,
+  email?: string
+): UserProfile {
+  const emailUsername =
+    email?.split('@')[0]?.trim() ||
+    'top3user';
+
+  return {
+    id: userId,
+    displayName:
+      formatDisplayName(emailUsername),
+    username: formatUsername(emailUsername),
+    bio: '',
+    visibility: 'public',
+  };
+}
+
+function mapRowToProfile(
+  row: ProfileRow
+): UserProfile {
+  return {
+    id: row.id,
+    displayName: row.display_name,
+    username: row.username,
+    bio: row.bio,
+    visibility: row.is_public
+      ? 'public'
+      : 'private',
+  };
+}
+
+function createProfileInsert(
+  profile: UserProfile
+) {
+  return {
+    id: profile.id,
+    username: profile.username,
+    display_name: profile.displayName,
+    bio: profile.bio,
+    is_public:
+      profile.visibility === 'public',
+  };
+}
+
 export function ProfileProvider({
   children,
 }: ProfileProviderProps) {
-  const [profile, setProfile] =
-    useState<UserProfile>(DEFAULT_PROFILE);
+  const { user } = useAuth();
 
-  const [hasLoadedStorage, setHasLoadedStorage] =
-    useState(false);
+  const [profile, setProfile] =
+    useState<UserProfile>(EMPTY_PROFILE);
+
+  const [loadedUserId, setLoadedUserId] =
+    useState<string | null>(null);
+
+  const userId = user?.id;
+  const userEmail = user?.email;
 
   useEffect(() => {
+    let isCancelled = false;
+
     async function loadProfile() {
+      setProfile(EMPTY_PROFILE);
+      setLoadedUserId(null);
+
+      if (!userId) {
+        return;
+      }
+
+      const defaultProfile =
+        createDefaultProfile(
+          userId,
+          userEmail
+        );
+
       try {
-        const savedProfile =
-          await AsyncStorage.getItem(
-            STORAGE_KEY
+        const {
+          data: existingProfile,
+          error: loadError,
+        } = await supabase
+          .from('profiles')
+          .select(
+            `
+              id,
+              username,
+              display_name,
+              bio,
+              is_public
+            `
+          )
+          .eq('id', userId)
+          .maybeSingle<ProfileRow>();
+
+        if (loadError) {
+          throw loadError;
+        }
+
+        if (isCancelled) {
+          return;
+        }
+
+        if (existingProfile) {
+          setProfile(
+            mapRowToProfile(existingProfile)
           );
 
-        if (savedProfile) {
-          const parsedProfile =
-            JSON.parse(
-              savedProfile
-            ) as Partial<UserProfile>;
-
-          setProfile({
-            ...DEFAULT_PROFILE,
-            ...parsedProfile,
-          });
+          setLoadedUserId(userId);
+          return;
         }
+
+        const {
+          data: createdProfile,
+          error: createError,
+        } = await supabase
+          .from('profiles')
+          .insert(
+            createProfileInsert(
+              defaultProfile
+            )
+          )
+          .select(
+            `
+              id,
+              username,
+              display_name,
+              bio,
+              is_public
+            `
+          )
+          .single<ProfileRow>();
+
+        if (
+          createError?.code === '23505'
+        ) {
+          const uniqueProfile: UserProfile = {
+            ...defaultProfile,
+            username:
+              `${defaultProfile.username}-` +
+              userId.slice(0, 6),
+          };
+
+          const {
+            data: fallbackProfile,
+            error: fallbackError,
+          } = await supabase
+            .from('profiles')
+            .insert(
+              createProfileInsert(
+                uniqueProfile
+              )
+            )
+            .select(
+              `
+                id,
+                username,
+                display_name,
+                bio,
+                is_public
+              `
+            )
+            .single<ProfileRow>();
+
+          if (fallbackError) {
+            throw fallbackError;
+          }
+
+          if (isCancelled) {
+            return;
+          }
+
+          setProfile(
+            mapRowToProfile(
+              fallbackProfile
+            )
+          );
+
+          setLoadedUserId(userId);
+          return;
+        }
+
+        if (createError) {
+          throw createError;
+        }
+
+        if (isCancelled) {
+          return;
+        }
+
+        setProfile(
+          mapRowToProfile(createdProfile)
+        );
+
+        setLoadedUserId(userId);
       } catch (error) {
         console.error(
-          'Failed to load profile:',
+          'Failed to load or create profile:',
           error
         );
-      } finally {
-        setHasLoadedStorage(true);
+
+        if (isCancelled) {
+          return;
+        }
+
+        setProfile(defaultProfile);
+        setLoadedUserId(userId);
       }
     }
 
     loadProfile();
-  }, []);
 
-  useEffect(() => {
-    if (!hasLoadedStorage) {
-      return;
-    }
-
-    async function saveProfile() {
-      try {
-        await AsyncStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify(profile)
-        );
-      } catch (error) {
-        console.error(
-          'Failed to save profile:',
-          error
-        );
-      }
-    }
-
-    saveProfile();
-  }, [profile, hasLoadedStorage]);
+    return () => {
+      isCancelled = true;
+    };
+  }, [userId, userEmail]);
 
   function updateProfile(
     updates: Partial<UserProfile>
   ) {
-    setProfile((currentProfile) => ({
-      ...currentProfile,
-      ...updates,
-    }));
+    if (
+      !userId ||
+      loadedUserId !== userId
+    ) {
+      return;
+    }
+
+    setProfile((currentProfile) => {
+      const nextProfile: UserProfile = {
+        ...currentProfile,
+        ...updates,
+        id: userId,
+      };
+
+      async function saveProfile() {
+        try {
+          const { error } = await supabase
+            .from('profiles')
+            .update({
+              username:
+                nextProfile.username,
+              display_name:
+                nextProfile.displayName,
+              bio: nextProfile.bio,
+              is_public:
+                nextProfile.visibility ===
+                'public',
+              updated_at:
+                new Date().toISOString(),
+            })
+            .eq('id', userId);
+
+          if (error) {
+            throw error;
+          }
+        } catch (error) {
+          console.error(
+            'Failed to update profile:',
+            error
+          );
+
+          setProfile(currentProfile);
+        }
+      }
+
+      saveProfile();
+
+      return nextProfile;
+    });
   }
+
+  const contextValue =
+    useMemo<ProfileContextValue>(
+      () => ({
+        profile,
+        updateProfile,
+      }),
+      [profile]
+    );
 
   return (
     <ProfileContext.Provider
-      value={{
-        profile,
-        updateProfile,
-      }}>
+      value={contextValue}>
       {children}
     </ProfileContext.Provider>
   );

@@ -1,6 +1,7 @@
 import CommentsSheet from '@/components/comments-sheet';
 import ScreenHeader from '@/components/screen-header';
 import Top3Card from '@/components/top3-card';
+import { useComments } from '@/context/comment-context';
 import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
@@ -41,8 +42,14 @@ function formatSuggestionReason(
     ''
   );
 
-  if (/^You both ranked\s+/i.test(formattedReason)) {
-    return `Because ${formattedReason.charAt(0).toLowerCase()}${formattedReason.slice(1)}`;
+  if (
+    /^You both ranked\s+/i.test(
+      formattedReason
+    )
+  ) {
+    return `Because ${formattedReason
+      .charAt(0)
+      .toLowerCase()}${formattedReason.slice(1)}`;
   }
 
   return formattedReason;
@@ -62,6 +69,9 @@ export default function FeedScreen() {
     posts,
     selectList,
   } = useTop3();
+
+  const { loadCommentCounts } =
+    useComments();
 
   const [feedPosts, setFeedPosts] = useState<
     Post[]
@@ -104,7 +114,7 @@ export default function FeedScreen() {
       }
     }
 
-    loadFeedPosts();
+    void loadFeedPosts();
 
     return () => {
       isMounted = false;
@@ -124,6 +134,45 @@ export default function FeedScreen() {
       profile.id,
     ]
   );
+
+  const feedCollectionIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          personalizedFeed.map(
+            ({ post }) =>
+              post.collection.id
+          )
+        )
+      ),
+    [personalizedFeed]
+  );
+
+  const feedCollectionIdsKey = useMemo(
+    () =>
+      [...feedCollectionIds]
+        .sort()
+        .join('|'),
+    [feedCollectionIds]
+  );
+
+  useEffect(() => {
+    if (
+      isLoadingFeed ||
+      !feedCollectionIdsKey
+    ) {
+      return;
+    }
+
+    const collectionIds =
+      feedCollectionIdsKey.split('|');
+
+    void loadCommentCounts(collectionIds);
+  }, [
+    isLoadingFeed,
+    feedCollectionIdsKey,
+    loadCommentCounts,
+  ]);
 
   function getPostAuthor(
     authorId: string
@@ -159,7 +208,8 @@ export default function FeedScreen() {
     router.push({
       pathname: '/category-feed',
       params: {
-        category: post.collection.category,
+        category:
+          post.collection.category,
         topic: normalizeTopic(
           post.collection.topic
         ),
@@ -196,27 +246,41 @@ export default function FeedScreen() {
   return (
     <SafeAreaView
       style={styles.container}
-      edges={['top', 'left', 'right']}>
+      edges={[
+        'top',
+        'left',
+        'right',
+      ]}>
       <ScreenHeader />
 
       <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}>
+        contentContainerStyle={
+          styles.content
+        }
+        showsVerticalScrollIndicator={
+          false
+        }>
         {isLoadingFeed ? (
-          <View style={styles.loadingState}>
-            <Text style={styles.loadingText}>
+          <View
+            style={styles.loadingState}>
+            <Text
+              style={styles.loadingText}>
               Loading feed…
             </Text>
           </View>
-        ) : personalizedFeed.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>
+        ) : personalizedFeed.length ===
+          0 ? (
+          <View
+            style={styles.emptyState}>
+            <Text
+              style={styles.emptyTitle}>
               Nothing published yet
             </Text>
 
-            <Text style={styles.emptyText}>
-              Publish a completed Top 3 to see it
-              here.
+            <Text
+              style={styles.emptyText}>
+              Publish a completed Top 3 to
+              see it here.
             </Text>
           </View>
         ) : (
@@ -227,24 +291,30 @@ export default function FeedScreen() {
               suggestionReason,
               sharedItemTitles,
             }) => {
-              const author = getPostAuthor(
-                post.authorId
-              );
+              const author =
+                getPostAuthor(
+                  post.authorId
+                );
 
               if (!author) {
                 return null;
               }
 
               const isCurrentUserPost =
-                post.authorId === profile.id;
+                post.authorId ===
+                profile.id;
 
               const authorIsFollowed =
-                isFollowing(post.authorId);
+                isFollowing(
+                  post.authorId
+                );
 
               return (
                 <View
                   key={post.id}
-                  style={styles.feedItem}>
+                  style={
+                    styles.feedItem
+                  }>
                   <Top3Card
                     post={post}
                     author={author}
@@ -291,7 +361,9 @@ export default function FeedScreen() {
                       )
                     }
                     onTitlePress={() =>
-                      openCollectionFeed(post)
+                      openCollectionFeed(
+                        post
+                      )
                     }
                     onPress={() =>
                       openPost(post)
@@ -299,7 +371,9 @@ export default function FeedScreen() {
                     onEditPress={
                       isCurrentUserPost
                         ? () =>
-                            editCollection(post)
+                            editCollection(
+                              post
+                            )
                         : undefined
                     }
                     onCommentsPress={() =>

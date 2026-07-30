@@ -12,9 +12,9 @@
 
 **Last Verified Commit:**
 
-`6d21178`
+`24ea4d9`
 
-**Persist published collections to Supabase**
+**Persist likes to Supabase**
 
 ---
 
@@ -30,7 +30,7 @@ None
 
 ## Current Priority
 
-To be determined.
+Migrate Comments to Supabase.
 
 Architecture should always be discussed before implementation begins.
 
@@ -78,6 +78,8 @@ Everything else—including discovery, recommendations, community rankings, Tast
 ## Local Storage
 
 * AsyncStorage
+
+Used only for temporary/local application state that does not yet require server persistence.
 
 ---
 
@@ -159,6 +161,10 @@ Responsible for:
 * Profile visibility
 * User information
 
+Persistence
+
+Supabase
+
 ---
 
 ## FollowProvider
@@ -168,7 +174,9 @@ Responsible for:
 * Following state
 * Follow actions
 
-(Currently stored locally.)
+Persistence
+
+AsyncStorage (temporary)
 
 ---
 
@@ -178,8 +186,11 @@ Responsible for:
 
 * Like state
 * Like actions
+* Optimistic UI updates
 
-(Currently stored locally.)
+Persistence
+
+✅ Supabase
 
 ---
 
@@ -191,7 +202,9 @@ Responsible for:
 * Comment counts
 * Comment actions
 
-(Currently stored locally.)
+Persistence
+
+AsyncStorage (temporary)
 
 ---
 
@@ -206,6 +219,10 @@ Responsible for:
 * Search state
 * Collection editing
 * Metadata hydration
+
+Persistence
+
+Supabase
 
 ---
 
@@ -225,7 +242,11 @@ Responsible for:
 
 ✅ Complete
 
-Supports:
+### Likes
+
+✅ Complete
+
+Supports
 
 * Drafts
 * Resume Draft
@@ -233,6 +254,8 @@ Supports:
 * Publishing
 * Feed persistence
 * Profile persistence
+* Shared likes
+* Optimistic like updates
 
 ---
 
@@ -240,14 +263,11 @@ Supports:
 
 Currently used for:
 
-* Likes
 * Comments
 * Following
 * Recent searches
 * UI preferences
 * Local cache
-
-These features work locally but are not yet shared between users.
 
 ---
 
@@ -258,13 +278,6 @@ These features work locally but are not yet shared between users.
 Status
 
 ✅ Complete
-
-Includes:
-
-* Registration
-* Login
-* Logout
-* Session persistence
 
 Persistence
 
@@ -278,15 +291,6 @@ Status
 
 ✅ Complete
 
-Supports:
-
-* Public profiles
-* Private profiles
-* Username
-* Bio
-* Profile editing
-* Profile visibility
-
 Persistence
 
 Supabase
@@ -299,17 +303,6 @@ Status
 
 ✅ Complete
 
-Supports:
-
-* Draft creation
-* Draft persistence
-* Resume draft
-* Editing
-* Publishing
-* Drag-and-drop ordering
-* Metadata enrichment
-* External search
-
 Persistence
 
 Supabase
@@ -321,14 +314,6 @@ Supabase
 Status
 
 ✅ Complete
-
-Supports:
-
-* Personalized feed
-* Recommendation reasons
-* Published collections
-* Open profiles
-* Edit owned collections
 
 Source
 
@@ -346,16 +331,6 @@ Status
 
 ✅ Complete
 
-Supports:
-
-* Trending
-* Categories
-* Topics
-* Community browsing
-* Search
-* Taste Match
-* Community rankings
-
 ---
 
 ## Community Top3
@@ -363,12 +338,6 @@ Supports:
 Status
 
 ✅ Complete
-
-Supports:
-
-* Community ranking
-* Weighted scoring
-* Aggregated Top3
 
 Calculated locally.
 
@@ -380,12 +349,6 @@ Status
 
 ✅ Complete
 
-Supports:
-
-* Overall rankings
-* Topic browsing
-* Category browsing
-
 Calculated locally.
 
 ---
@@ -396,13 +359,6 @@ Status
 
 ✅ Complete
 
-Supports:
-
-* Match score
-* Shared picks
-* Rank comparison
-* Collection similarity
-
 Calculated locally.
 
 ---
@@ -411,11 +367,18 @@ Calculated locally.
 
 Status
 
-✅ Complete (Prototype)
+✅ Complete
 
 Persistence
 
-AsyncStorage
+Supabase
+
+Supports
+
+* Shared between users
+* Optimistic updates
+* Insert/Delete
+* Database-backed counts
 
 ---
 
@@ -497,6 +460,8 @@ There is intentionally no separate post creation workflow.
 
 ✅ Collections
 
+✅ Likes
+
 ---
 
 ## Hybrid
@@ -515,13 +480,11 @@ Community experiences currently combine real authenticated users with mock commu
 
 ## Prototype
 
-⚠ Likes
-
 ⚠ Comments
 
 ⚠ Following
 
-These experiences are fully functional but currently persist locally through AsyncStorage rather than being shared through Supabase.
+These experiences are fully functional but currently persist locally through AsyncStorage.
 
 ---
 
@@ -541,13 +504,14 @@ Feed personalization is calculated client-side.
 
 Collections remain the primary object throughout the application.
 
+Social interactions (likes, comments, follows) persist against `collection.id` (Supabase UUID), **not** the synthetic `post.id` used by the feed.
+
 ---
 
 # Known Technical Debt
 
 High Priority
 
-* Migrate Likes to Supabase.
 * Migrate Comments to Supabase.
 * Migrate Following relationships to Supabase.
 * Replace mock community users with real database users.
@@ -557,6 +521,7 @@ Medium Priority
 * Verify avatar persistence.
 * Scope AsyncStorage keys by authenticated user where appropriate.
 * Improve optimistic update rollback behaviour.
+* Add Supabase Realtime subscriptions for Likes, Comments and Following.
 
 Low Priority
 
@@ -607,9 +572,9 @@ Before making recommendations:
 
 # Document Purpose
 
-CURRENT_STATE.md exists to provide an accurate snapshot of the current application.
+CURRENT_STATE.md provides an accurate snapshot of the application today.
 
-It is intentionally concise and should describe **what the application is today**, not future aspirations or historical decisions.
+It intentionally documents the current architecture and implementation state.
 
 Strategic direction belongs in `ROADMAP.md`.
 
