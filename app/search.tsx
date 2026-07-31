@@ -1,3 +1,4 @@
+import Chip from '@/components/chip';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
 import SearchResultSkeleton from '@/components/search-result-skeleton';
@@ -475,19 +476,11 @@ export default function SearchScreen() {
 
             <View style={styles.suggestionList}>
               {suggestions.map((suggestion) => (
-                <Pressable
+                <Chip
                   key={suggestion}
-                  style={({ pressed }) => [
-                    styles.suggestionChip,
-                    pressed && styles.suggestionChipPressed,
-                  ]}
+                  label={suggestion}
                   onPress={() => chooseSuggestion(suggestion)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Search for ${suggestion}`}>
-                  <Text style={styles.suggestionText}>
-                    {suggestion}
-                  </Text>
-                </Pressable>
+                />
               ))}
             </View>
           </View>
@@ -647,23 +640,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
-  },
-
-  suggestionChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    backgroundColor: '#F3F3F3',
-    borderRadius: 18,
-  },
-
-  suggestionChipPressed: {
-    opacity: 0.65,
-  },
-
-  suggestionText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#333333',
   },
 
   sectionTitle: {

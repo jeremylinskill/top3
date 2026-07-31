@@ -1,11 +1,11 @@
+import Chip from '@/components/chip';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { Top3List } from '@/types/top3-list';
 import { useMemo } from 'react';
 import {
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 
 export type CollectionFormValues = {
@@ -187,32 +187,15 @@ export default function CollectionForm({
               values.categoryId;
 
             return (
-              <Pressable
+              <Chip
                 key={category.id}
-                style={({ pressed }) => [
-                  styles.optionButton,
-                  isSelected &&
-                    styles.optionButtonSelected,
-                  pressed && styles.pressed,
-                ]}
+                icon={category.icon}
+                label={category.name}
+                selected={isSelected}
                 onPress={() =>
                   chooseCategory(category.id)
                 }
-                accessibilityRole="button"
-                accessibilityState={{
-                  selected: isSelected,
-                }}
-                accessibilityLabel={`Choose ${category.name}`}>
-                <Text
-                  style={[
-                    styles.optionText,
-                    isSelected &&
-                      styles.optionTextSelected,
-                  ]}>
-                  {category.icon}{' '}
-                  {category.name}
-                </Text>
-              </Pressable>
+              />
             );
           }
         )}
@@ -240,32 +223,14 @@ export default function CollectionForm({
                   values.topicId;
 
                 return (
-                  <Pressable
+                  <Chip
                     key={topic.id}
-                    style={({ pressed }) => [
-                      styles.optionButton,
-                      isSelected &&
-                        styles.optionButtonSelected,
-                      pressed &&
-                        styles.pressed,
-                    ]}
+                    label={topic.name}
+                    selected={isSelected}
                     onPress={() =>
                       chooseTopic(topic.id)
                     }
-                    accessibilityRole="button"
-                    accessibilityState={{
-                      selected: isSelected,
-                    }}
-                    accessibilityLabel={`Choose ${topic.name}`}>
-                    <Text
-                      style={[
-                        styles.optionText,
-                        isSelected &&
-                          styles.optionTextSelected,
-                      ]}>
-                      {topic.name}
-                    </Text>
-                  </Pressable>
+                  />
                 );
               }
             )}
@@ -315,32 +280,6 @@ const styles = StyleSheet.create({
     gap: 10,
   },
 
-  optionButton: {
-    minHeight: 48,
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 11,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#D8D8D8',
-    borderRadius: 14,
-  },
-
-  optionButtonSelected: {
-    backgroundColor: '#222222',
-    borderColor: '#222222',
-  },
-
-  optionText: {
-    fontSize: 16,
-    lineHeight: 22,
-    color: '#222222',
-  },
-
-  optionTextSelected: {
-    color: '#FFFFFF',
-  },
-
   emptyState: {
     paddingVertical: 22,
     paddingHorizontal: 18,
@@ -355,9 +294,5 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     color: '#777777',
     textAlign: 'center',
-  },
-
-  pressed: {
-    opacity: 0.68,
   },
 });
