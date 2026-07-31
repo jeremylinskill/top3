@@ -1,4 +1,7 @@
 import AuthProviderButton from '@/components/auth-provider-button';
+import {
+  signInWithApple,
+} from '@/services/auth-service';
 import { router } from 'expo-router';
 import {
   Alert,
@@ -10,12 +13,31 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CreateAccountScreen() {
-  function handleAppleSignUp() {
+  async function handleAppleSignUp() {
+  try {
+    await signInWithApple();
+    router.replace('/');
+  } catch (error) {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      error.code === 'ERR_REQUEST_CANCELED'
+    ) {
+      return;
+    }
+
+    console.error(
+      'Apple sign-in failed:',
+      error
+    );
+
     Alert.alert(
-      'Apple sign-up',
-      'Apple authentication will be connected in a later step.'
+      'Unable to continue with Apple',
+      'Please try again.'
     );
   }
+}
 
   function handleGoogleSignUp() {
     Alert.alert(

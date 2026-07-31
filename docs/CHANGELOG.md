@@ -1,204 +1,295 @@
-# Changelog
+Changelog
 
 This document records significant milestones in the evolution of Top3.
 
-Unlike `CURRENT_STATE.md`, which describes the application's current implementation, this document captures the major architectural and product milestones that shaped the application over time.
+Unlike CURRENT_STATE.md, which describes the application's currentimplementation, this document captures the major architectural andproduct milestones that shaped the application over time.
 
----
+v1.2 --- Design System & Collection Flow Refinement
 
-# v1.1 — Social Foundation Complete
+Released: July 31, 2026
 
-**Released:** July 30, 2026
+This release focused on improving consistency, maintainability, and theoverall collection creation experience. The application now has thebeginnings of a reusable design system, reducing duplicated UI codewhile creating a stronger foundation for future development.
 
-This release completes the migration of Top3's core social interactions to Supabase. Authentication, collections, profiles, likes, and comments are now persisted through the backend, establishing the application's social foundation.
+Added
 
----
+Design System
 
-## Added
+Introduced reusable PageHeader component.
 
-### Comments
+Introduced reusable Chip component.
 
-- Migrated comments from AsyncStorage to Supabase.
-- Added optimistic comment updates.
-- Added live database-backed comment counts.
-- Added comment persistence across sessions.
+Established a shared page layout architecture.
 
-### Likes
+Standardized navigation (ScreenHeader) and page identity(PageHeader) responsibilities.
 
-- Completed Supabase-backed Like system.
-- Added optimistic Like updates.
-- Added shared Like counts across users.
+Search
 
-### Database
+Added curated search suggestions that automatically transition tocommunity-driven suggestions after a category/topic reaches 50published collections.
 
-- Verified Row Level Security (RLS) policies.
-- Added and verified foreign key relationships.
-- Added database indexes for Like and Comment queries.
-- Added unique Like constraint (`user_id`, `collection_id`).
+Improved
 
-### Quality
+Collection Flow
 
-- Completed application stability pass.
-- Verified TypeScript (`npm run typecheck`).
-- Verified ESLint (`npm run lint`).
-- Removed temporary debugging code.
-- Updated project documentation.
+Standardized Create, Search and Collection screen layouts.
 
----
+Unified page spacing and typography.
 
-## Improved
+Unified category, topic and search suggestion chips.
 
-- Comment responsiveness.
-- Like responsiveness.
-- Feed synchronization.
-- Overall application stability.
+Improved overall visual consistency.
 
----
+Architecture
 
-## Fixed
+Reduced duplicated UI implementations.
 
-- Corrected comment counts to reference `collection.id` instead of the synthetic `post.id`.
-- Fixed comment persistence after application restart.
-- Fixed comment count synchronization across the application.
+Expanded reusable component library.
 
----
+Continued migration away from mock UI implementations.
 
-# v1.0 — Platform Foundation
+Documentation
 
-**Released:** July 2026
+Updated DESIGN_SYSTEM.md.
 
-This milestone established the core architecture of Top3 as a persistent social application.
+Updated CURRENT_STATE.md.
 
----
+Updated project architecture documentation.
 
-## Added
+Fixed
 
-### Platform
+Eliminated inconsistent page title layouts.
 
-- Supabase authentication
-- Persistent user sessions
-- User onboarding
+Eliminated duplicated chip implementations across the collectionflow.
 
-### Profiles
+v1.1 --- Social Foundation Complete
 
-- User profiles
-- Public profiles
-- Profile editing
-- Privacy controls
+Released: July 30, 2026
 
-### Collections
+This release completes the migration of Top3's core social interactionsto Supabase. Authentication, collections, profiles, likes, and commentsare now persisted through the backend, establishing the application'ssocial foundation.
 
-- Collection creation
-- Draft collections
-- Draft persistence
-- Resume draft workflow
-- Collection editing
-- Drag-and-drop ranking
-- Collection publishing
-- Published collections
+Added
 
-### Discovery
+Comments
 
-- Personalized Feed
-- Discover experience
-- Category browsing
-- Community Top3
-- Overall Top3
-- Taste Match
-- Recommendation engine
+Migrated comments from AsyncStorage to Supabase.
 
-### Social
+Added optimistic comment updates.
 
-- Following (prototype)
-- Comments (prototype)
-- Likes (prototype)
-- Shared highlights
+Added live database-backed comment counts.
 
-### External Content
+Added comment persistence across sessions.
 
-- TMDB integration
-- Google Books integration
-- RAWG integration
-- MusicBrainz integration
+Likes
 
-### Infrastructure
+Completed Supabase-backed Like system.
 
-- EAS Development Build
-- Context-based architecture
-- Supabase service layer
+Added optimistic Like updates.
 
----
+Added shared Like counts across users.
 
-## Improved
+Database
 
-- Feed personalization.
-- Recommendation quality.
-- Collection editing workflow.
-- Publishing workflow.
-- Metadata enrichment.
+Verified Row Level Security (RLS) policies.
 
----
+Added and verified foreign key relationships.
 
-## Fixed
+Added database indexes for Like and Comment queries.
 
-- Collection publishing reliability.
-- Draft persistence.
-- Feed reload after restart.
-- Profile reload after restart.
-- Collection editing reliability.
+Added unique Like constraint (user_id, collection_id).
 
----
+Quality
 
-# v0.8
+Completed application stability pass.
 
-## Added
+Verified TypeScript (npm run typecheck).
 
-- Public profiles.
-- Taste Match.
-- Shared highlights.
-- Recommendation engine.
+Verified ESLint (npm run lint).
 
-## Improved
+Removed temporary debugging code.
 
-- Follow button consistency.
-- Feed recommendations.
+Updated project documentation.
 
-## Fixed
+Improved
 
-- Recommendation eligibility.
-- Shared pick highlighting.
+Comment responsiveness.
 
----
+Like responsiveness.
 
-# v0.7
+Feed synchronization.
 
-## Added
+Overall application stability.
 
-- Likes (prototype).
-- Comments (prototype).
+Fixed
 
-## Improved
+Corrected comment counts to reference collection.id instead of thesynthetic post.id.
 
-- Feed experience.
+Fixed comment persistence after application restart.
 
----
+Fixed comment count synchronization across the application.
 
-# v0.6
+v1.0 --- Platform Foundation
 
-## Added
+Released: July 2026
 
-- User profiles.
+This milestone established the core architecture of Top3 as a persistentsocial application.
 
----
+Added
 
-# Next Milestone
+Platform
 
-The next milestone will be determined after architectural review and product prioritization.
+Supabase authentication
 
-Likely candidates include:
+Persistent user sessions
 
-- Following migration to Supabase.
-- Replacing mock community users with real users.
-- Realtime social updates.
-- Notifications.
-- Community and recommendation improvements.
+User onboarding
+
+Profiles
+
+User profiles
+
+Public profiles
+
+Profile editing
+
+Privacy controls
+
+Collections
+
+Collection creation
+
+Draft collections
+
+Draft persistence
+
+Resume draft workflow
+
+Collection editing
+
+Drag-and-drop ranking
+
+Collection publishing
+
+Published collections
+
+Discovery
+
+Personalized Feed
+
+Discover experience
+
+Category browsing
+
+Community Top3
+
+Overall Top3
+
+Taste Match
+
+Recommendation engine
+
+Social
+
+Following (prototype)
+
+Comments (prototype)
+
+Likes (prototype)
+
+Shared highlights
+
+External Content
+
+TMDB integration
+
+Google Books integration
+
+RAWG integration
+
+MusicBrainz integration
+
+Infrastructure
+
+EAS Development Build
+
+Context-based architecture
+
+Supabase service layer
+
+Improved
+
+Feed personalization.
+
+Recommendation quality.
+
+Collection editing workflow.
+
+Publishing workflow.
+
+Metadata enrichment.
+
+Fixed
+
+Collection publishing reliability.
+
+Draft persistence.
+
+Feed reload after restart.
+
+Profile reload after restart.
+
+Collection editing reliability.
+
+v0.8
+
+Added
+
+Public profiles.
+
+Taste Match.
+
+Shared highlights.
+
+Recommendation engine.
+
+Improved
+
+Follow button consistency.
+
+Feed recommendations.
+
+Fixed
+
+Recommendation eligibility.
+
+Shared pick highlighting.
+
+v0.7
+
+Added
+
+Likes (prototype).
+
+Comments (prototype).
+
+Improved
+
+Feed experience.
+
+v0.6
+
+Added
+
+User profiles.
+
+Next Milestone
+
+Current focus:
+
+Polish the collection creation experience.
+
+Continue replacing remaining mock community data.
+
+Migrate Following to Supabase.
+
+Add Supabase Realtime for social interactions.
+
+Strengthen discovery and recommendation experiences.

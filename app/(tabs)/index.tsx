@@ -5,6 +5,7 @@ import { useComments } from '@/context/comment-context';
 import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
+import { useAuth } from '@/hooks/use-auth';
 import { getPublicProfilesByIds } from '@/lib/supabase/profiles';
 import { getPublishedPosts } from '@/services/post-service';
 import { Post } from '@/types/post';
@@ -54,6 +55,11 @@ function formatSuggestionReason(
 }
 
 export default function FeedScreen() {
+  const {
+    isAuthenticated,
+    isLoading: isAuthLoading,
+  } = useAuth();
+
   const { profile } = useProfile();
 
   const {
@@ -87,6 +93,17 @@ export default function FeedScreen() {
   ] = useState<Post | null>(null);
 
   useEffect(() => {
+    if (isAuthLoading) {
+      return;
+    }
+
+    if (!isAuthenticated) {
+      setFeedPosts([]);
+      setFeedAuthors({});
+      setIsLoadingFeed(false);
+      return;
+    }
+
     let isMounted = true;
 
     async function loadFeedPosts() {
@@ -147,7 +164,12 @@ export default function FeedScreen() {
     return () => {
       isMounted = false;
     };
-  }, [posts, profile.id]);
+  }, [
+    isAuthenticated,
+    isAuthLoading,
+    posts,
+    profile.id,
+  ]);
 
   const personalizedFeed = useMemo(
   () =>

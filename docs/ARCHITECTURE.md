@@ -1,348 +1,302 @@
-# Top3 Architecture
+Top3 Architecture
 
-**Version:** 1.0  
-**Status:** Active  
-**Owner:** Jeremy Linskill  
-**Last Updated:** July 30, 2026
+Version: 1.1Status: ActiveOwner: Jeremy LinskillLast Updated: July 31, 2026
 
----
+Purpose
 
-# Purpose
+This document describes the long-term architectural principles thatshape Top3.
 
-This document describes the enduring architectural principles that shape Top3.
+Unlike CURRENT_STATE.md, which captures the application'simplementation today, this document explains why the application isstructured the way it is and the architectural rules that should remainstable as the product evolves.
 
-Unlike `CURRENT_STATE.md`, which documents the application's current implementation, this document explains **why** the application is structured the way it is.
-
-Architectural principles should change infrequently.
-
----
-
-# Architectural Philosophy
+Architectural Philosophy
 
 Top3 is a social platform built around one central idea:
 
-> **Collections are the primary object.**
+Collections are the primary object.
 
 Users do not create posts.
 
-They create curated collections.
+They create thoughtfully curated Top 3 collections.
 
-Everything else in the application derives from those collections.
+Everything else in the application---feed, recommendations, discovery,community rankings, likes, comments and Taste Match---exists becausecollections exist.
 
-This keeps the product focused on thoughtful curation rather than continuous content creation.
+The architecture intentionally reinforces thoughtful curation overcontinuous content creation.
 
----
+Core Domain Model
 
-# Core Domain Model
-
-```
 User
-
-↓
-
+   │
+   ▼
 Collection (Draft)
-
-↓
-
+   │
+Publish
+   │
+   ▼
 Collection (Published)
+   │
+   ├── Feed
+   ├── Discover
+   ├── Profiles
+   ├── Community Top3
+   ├── Overall Top3
+   ├── Taste Match
+   ├── Recommendations
+   ├── Likes
+   └── Comments
 
-↓
+Published collections are the single source of truth for nearly everysocial experience.
 
-Community Experience
+Architectural Principles
 
-├── Feed
-├── Discover
-├── Profiles
-├── Community Top3
-├── Overall Top3
-├── Taste Match
-├── Recommendations
-├── Likes
-└── Comments
-```
+Collections are Primary
 
-Collections are the single source of truth for nearly every experience.
+Collections exist independently of the feed.
 
----
+Publishing changes visibility---not identity.
 
-# Domain Principles
+Feed Posts are Projections
 
-## Collections are primary
+Feed posts are UI representations of published collections.
 
-Collections exist independently of the Feed.
+The feed should never become an independent data model.
 
-Publishing simply makes a collection visible.
+One Source of Truth
 
-Collections always remain the authoritative record.
+Every important piece of information should have a single authoritativeowner.
 
----
+Examples:
 
-## Feed posts are projections
+Authentication → Supabase Auth
 
-A feed post is not a separate entity.
+Profiles → profiles
 
-It is a presentation of a published collection.
+Collections → collections
 
-This avoids duplicate data and synchronization problems.
+Likes → likes
 
----
+Comments → comments
 
-## Publishing is one-way
+Progressive Enhancement
 
-Draft
+Prototype locally when appropriate.
 
-↓
+Move functionality to Supabase once the behaviour is validated.
 
-Published Collection
+This approach allows rapid iteration without compromising long-termarchitecture.
 
-Publishing changes visibility.
+Application Architecture
 
-It does not create a second object.
+                 External Providers
+         TMDB • Google Books • RAWG • MusicBrainz
+                         │
+                         ▼
+                     Service Layer
+         Supabase Services + Metadata Providers
+                         │
+                         ▼
+                  Context Providers
+ Auth • Profile • Follow • Like • Comment • Top3
+                         │
+                         ▼
+                 Reusable Components
+ ScreenHeader • PageHeader • Chip
+ PrimaryButton • RankedItemCard
+ CollectionForm • CommentsSheet
+                         │
+                         ▼
+                       Screens
+ Feed • Discover • Search • Collection
+ Profile • Community • Taste Match
+                         │
+                         ▼
+                     Expo Router
 
----
+Each layer owns a single responsibility and should communicate only withadjacent layers.
 
-## Social interactions belong to Collections
+Layer Responsibilities
 
-Likes
+Service Layer
 
-Comments
+Responsible for:
 
-Following
+Supabase reads and writes
 
-All interactions ultimately reference the published collection.
+External metadata providers
 
-The synthetic `post.id` exists only for UI rendering.
+Data mapping
 
----
+Hydration
 
-# Application Layers
+Network concerns
 
-```
+UI should never communicate directly with external APIs when a serviceexists.
+
+Context Layer
+
+Responsible for:
+
+Shared application state
+
+Optimistic updates
+
+Business logic
+
+Session-aware behaviour
+
+Providers should coordinate data, not render UI.
+
+Presentation Layer
+
+Responsible for reusable UI building blocks.
+
+Current foundation:
+
+Layout
+
+ScreenHeader
+
+PageHeader
+
+Controls
+
+Chip
+
+PrimaryButton
+
+Content
+
+RankedItemCard
+
+Top3Card
+
+CommentsSheet
+
+Forms
+
+CollectionForm
+
+Reusable components should become the default solution wheneverduplication appears.
+
+Screen Layer
+
+Screens compose reusable components into complete user experiences.
+
+Screens should contain minimal business logic.
+
+Persistence Strategy
+
 Supabase
 
-↓
-
-Context Providers
-
-↓
-
-Reusable Components
-
-↓
-
-Screens
-
-↓
-
-Navigation
-```
-
-Each layer has a single responsibility.
-
----
-
-# Context Responsibilities
-
-## AuthProvider
+System of record for:
 
 Authentication
 
-Current session
-
-Current user
-
----
-
-## ProfileProvider
-
-User profile
-
-Profile updates
-
-Visibility
-
----
-
-## FollowProvider
-
-Following relationships
-
-Follow actions
-
----
-
-## LikeProvider
-
-Likes
-
-Optimistic updates
-
-Shared counts
-
----
-
-## CommentProvider
-
-Comments
-
-Comment counts
-
-Optimistic updates
-
----
-
-## Top3Provider
+Profiles
 
 Collections
 
-Publishing
-
-Editing
-
-Feed hydration
-
-Metadata
-
----
-
-# Persistence Strategy
-
-## Supabase
-
-Source of truth for:
-
-- Authentication
-- Profiles
-- Collections
-- Likes
-- Comments
-
----
-
-## AsyncStorage
-
-Used only where shared persistence is unnecessary.
-
-Current examples:
-
-- Following (temporary)
-- Draft workflow
-- Recent searches
-- Onboarding state
-- UI preferences
-
----
-
-# Product Flow
-
-```
-Create Collection
-
-↓
-
-Publish
-
-↓
-
-Community Discovery
-
-↓
-
 Likes
-
-↓
 
 Comments
 
-↓
+AsyncStorage
 
-Connections
+Reserved for local-only state such as:
 
-↓
+Draft workflow
 
-Future Recommendations
-```
+Recent searches
+
+UI preferences
+
+Temporary prototype features
+
+Product Flow
+
+Create Collection
+        │
+        ▼
+Publish Collection
+        │
+        ▼
+Community Discovery
+        │
+        ├── Likes
+        ├── Comments
+        ├── Following
+        └── Taste Match
+                │
+                ▼
+      Recommendations & Discovery
 
 Publishing is the gateway to every community experience.
 
----
+Design System Architecture
 
-# Design Principles
+The design system is now a core architectural layer rather than acollection of isolated components.
 
-Every new feature should strengthen one or more of these goals.
+Hierarchy:
 
-- Collections remain central.
-- Content before decoration.
-- Simplicity over feature count.
-- Reuse existing systems whenever possible.
-- Extend architecture instead of duplicating it.
-- Build complete vertical slices.
-- Prefer one source of truth.
+ScreenHeader
+      │
+PageHeader
+      │
+Section
+      │
+Chip / Card / Button
+      │
+Content
 
----
+New screens should assemble existing components before introducing newones.
 
-# Architectural Decisions
+Architectural Decisions
 
-## No My Collections screen
+Collections remain the primary domain object.
 
-Published collections are managed directly from the user's profile and feed.
+Published collections drive community experiences.
 
-Drafts resume naturally through the Create flow.
+Likes and comments reference collection.id, not synthetic feedidentifiers.
 
----
+Drafts resume through the Create flow.
 
-## Collections drive everything
+There is intentionally no separate "My Collections" screen.
 
-Community rankings
+Prefer complete vertical slices over partially implemented systems.
 
-Taste Match
+Reuse before creating new components.
 
-Recommendations
+Future Direction
 
-Feed
+Future enhancements should extend the existing architecture rather thanreplacing it.
 
-Discover
+Planned areas include:
 
-All derive from published collections.
+Following migration to Supabase
 
----
+Supabase Realtime
 
-## Shared interactions
+Notifications
 
-Likes and comments are persisted in Supabase.
+AI-assisted recommendations
 
-Interactions reference `collection.id`, not the synthetic feed `post.id`.
+Personalized discovery
 
----
+Remaining mock community replacement
 
-## Progressive enhancement
+Document Maintenance
 
-Prototype functionality may begin locally before migrating to shared persistence.
+Update this document only when architectural principles or systemstructure change.
 
-This allows rapid iteration while preserving architectural consistency.
+Routine implementation work belongs in:
 
----
+CURRENT_STATE.md
 
-# Future Architectural Direction
+CHANGELOG.md
 
-The following enhancements should build upon—not replace—the existing architecture.
+Product planning belongs in:
 
-- Shared Following
-- Supabase Realtime
-- Notifications
-- AI-assisted recommendations
-- Community insights
+ROADMAP.md
 
-Future features should continue extending the existing collection-centric model.
+Design evolution belongs in:
 
----
-
-# Document Maintenance
-
-Update this document only when architectural decisions change.
-
-Routine feature additions should instead update:
-
-- CURRENT_STATE.md
-- CHANGELOG.md
-- ROADMAP.md
+DESIGN_SYSTEM.md

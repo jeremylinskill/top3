@@ -1,216 +1,73 @@
-# Top3 Design System
+Top3 Design System
 
-**Version:** 0.1 (Draft)  
-**Status:** Active  
-**Owner:** Jeremy Linskill  
-**Last Updated:** July 28, 2026
+Version: 1.0Status: ActiveOwner: Jeremy LinskillLast Updated: July 31, 2026
 
----
+Document Purpose
 
-## Document Purpose
+This document defines the visual language, interaction principles,reusable UI components, and interface patterns that make up Top3.
 
-This document defines the visual language, interaction principles, and reusable UI components that make up Top3.
+It exists to ensure consistency across every screen. New features shouldbuild upon this system rather than introducing new visual patterns.
 
-It exists to ensure consistency across every screen and interaction. New features should build upon this system rather than introducing new visual patterns.
+Whenever possible, existing components should be reused before new onesare created.
 
-Whenever possible, existing components should be reused before new ones are created.
+Revision History
 
----
+Version               Date         Author            Summary
 
-## Revision History
+1.0                   July 31,     Jeremy Linskill   Introduced reusable2026                           PageHeader andChip components,standardizedcollection flow,expanded reusablecomponent libraryand documented UIarchitecture.
 
-| Version | Date | Author | Summary |
-|----------|------------|------------------|--------------------------------------------------------------|
-| 0.1 | July 28, 2026 | Jeremy Linskill | Initial design system documenting the visual language and reusable components used throughout Top3. |
-
----
-
-# Design Philosophy
+Design Philosophy
 
 The interface should quietly disappear.
 
-Top3 is not about interface design.
+Top3 is about discovering people through shared taste---not showcasinginterface design.
 
-It is about helping people discover one another through shared taste.
+Every visual decision should reduce cognitive load and help peopleunderstand content more quickly.
 
-Every design decision should make content easier to understand—not draw attention to itself.
+Design Principles
 
----
+Content Before Chrome
 
-# Design Principles
+Content is always the hero.
 
-## Content Before Chrome
+Simplicity Over Decoration
 
-The ranked items are always the primary focus.
+Every visual element must have a purpose.
 
-Visual styling exists only to support understanding.
+Consistency Creates Confidence
 
----
+Users should never relearn an interaction.
 
-## Simplicity Over Decoration
+Recognition Over Explanation
 
-Every visual element should have a purpose.
+Use visual patterns before explanatory text.
 
-If an element does not improve understanding or usability, it should be removed.
+Progressive Disclosure
 
----
+Only reveal information when it becomes useful.
 
-## Consistency Creates Confidence
+Foundations
 
-Users should never have to learn the same interaction twice.
+Color Philosophy
 
-Buttons, cards, spacing, typography, and interactions should behave consistently throughout the app.
+Colors communicate meaning rather than decoration.
 
----
+Purpose          Usage
 
-## Recognition Over Explanation
+Primary          Primary actions and selected statesSurface          Cards and elevated containersBackground       #F8F8F8 application backgroundSecondary Text   Metadata and supporting informationError            Destructive actionsGold             Shared #1 picks onlyLavender         Shared taste highlights
 
-Where possible, communicate visually instead of through text.
+Typography
 
-Examples:
+Typography establishes hierarchy primarily through weight.
 
-- Shared picks are highlighted.
-- Taste Match uses consistent colors.
-- Follow buttons always look and behave the same.
+Style             Usage
 
----
+Display           Hero numbers and percentagesPage Title        Screen identitySection Heading   Group titlesBody              Primary reading textCaption           Metadata
 
-## Progressive Disclosure
+Spacing Scale
 
-Show only what users need at each moment.
+Always use:
 
-Avoid overwhelming users with options or information.
-
----
-
-# Visual Language
-
-## Color Philosophy
-
-Colors communicate meaning.
-
-They should rarely be decorative.
-
-### Primary
-
-Used for:
-
-- Primary actions
-- Primary buttons
-
----
-
-### Surface
-
-Used for:
-
-- Cards
-- Elevated content
-- Containers
-
----
-
-### Background
-
-Used for:
-
-- Screen backgrounds
-- Secondary row backgrounds
-
----
-
-### Shared Taste
-
-Lavender
-
-Represents:
-
-- Shared favorites
-- Taste Match highlights
-
-This color should only appear when there is a meaningful connection.
-
----
-
-### Gold
-
-Reserved exclusively for:
-
-- Shared #1 picks
-- Trophy icon
-
-Gold represents exceptional alignment.
-
----
-
-### Secondary Text
-
-Used for:
-
-- Metadata
-- Supporting information
-
----
-
-### Error
-
-Reserved only for destructive actions or validation.
-
----
-
-# Typography
-
-Typography should create hierarchy through weight—not excessive size.
-
-## Display
-
-Reserved for hero numbers and key metrics.
-
-Examples:
-
-- Taste Match %
-- Counts
-
----
-
-## Heading
-
-Used for:
-
-- Screen titles
-- Card titles
-
----
-
-## Body
-
-Used for:
-
-- Descriptions
-- Bios
-- Comments
-
----
-
-## Caption
-
-Used for:
-
-- Ranked items
-- Metadata
-- Supporting labels
-
----
-
-# Spacing
-
-Whitespace is intentional.
-
-It should improve readability rather than simply fill space.
-
-## Base Scale
-
-```
 4
 8
 12
@@ -220,301 +77,267 @@ It should improve readability rather than simply fill space.
 32
 40
 48
-```
 
-Spacing should always use this scale.
+Avoid arbitrary spacing.
 
-Avoid arbitrary values whenever possible.
+Core UI Components
 
----
+These components form the foundation of every screen.
 
-# Corner Radius
-
-Rounded corners communicate friendliness.
-
-They should be used consistently.
-
-Standard radius values are defined centrally in:
-
-```
-constants/radius.ts
-```
-
----
-
-# Shadows
-
-Shadows should be subtle.
-
-They exist only to separate surfaces.
-
-Avoid dramatic elevation.
-
-Standard shadow styles are defined centrally in:
-
-```
-constants/shadows.ts
-```
-
----
-
-# Cards
-
-Cards are the primary building block of Top3.
-
----
-
-## Top3 Card
+ScreenHeader
 
 Purpose
 
-Display a published Top 3.
+Navigation
 
-Contains
+Back button
 
-- Category
-- Topic
-- Ranked items
-- Likes
-- Comments
-- Author (optional)
+Centered "Top 3" branding
 
-### Rules
+Rules
 
-- White background
-- Rounded corners
-- 8px spacing between ranked rows
-- Shared picks use lavender backgrounds
-- Shared #1 uses trophy
-- Shared picks use sparkle icon
-- Minimal visual chrome
+Never contains page titles.
 
----
+Appears on every primary screen.
 
-## Recommendation Card
+PageHeader
 
 Purpose
 
-Introduce users with similar taste.
+Communicates page identity.
 
-Contains
+Supports
 
-- Recommendation reason
-- Taste Match
-- Follow button
-- Top3 Card
+Title
 
----
+Optional subtitle
 
-## Taste Match Card
+Used by
+
+Create Collection
+
+Search
+
+Collection
+
+Rules
+
+Always appears directly below ScreenHeader.
+
+Owns page spacing.
+
+Do not create custom page title layouts.
+
+Chip
 
 Purpose
 
-Summarize compatibility between two users.
+Reusable selectable pill.
 
-Contains
+Used for
 
-- Match percentage
-- Shared picks
-- Follow button
+Categories
 
----
+Topics
 
-## Profile Card
+Search suggestions
+
+Future filter chips
+
+Supports
+
+Optional emoji icon
+
+Selected state
+
+Press interaction
+
+Rules
+
+White by default
+
+Dark when selected
+
+Shared sizing and typography
+
+Never create custom chip styles without updating this component.
+
+PrimaryButton
 
 Purpose
 
-Display profile statistics.
+Primary call-to-action.
 
-Contains
+Examples
 
-- Avatar
-- Bio
-- Stats
-- Actions
+Continue
 
----
+Publish Top 3
 
-# Buttons
+Save
 
-Buttons communicate action.
+RankedItemCard
 
----
+Purpose
 
-## Primary Button
+Display an individual ranked item.
 
-Used for:
+Supports
 
-- Save
-- Publish
-- Continue
+Placeholder state
 
----
+Artwork
 
-## Secondary Button
+Ranking
 
-Used for:
+Metadata
 
-- Less prominent actions
+Used throughout feed, profiles and collection editing.
 
----
+CollectionForm
 
-## Follow Button
+Purpose
 
-States
+Shared collection creation/editing experience.
 
-- Follow
-- Following
+CommentsSheet
 
-Behavior
+Purpose
 
-- Same appearance everywhere
-- Reusable component
-- Never duplicated
+Reusable modal for comments.
 
----
+Layout Patterns
 
-# Icons
+ScreenHeader
+      ↓
+PageHeader
+      ↓
+Content
+      ↓
+Primary Action
 
-Icons should reinforce meaning.
+Every primary screen should follow this hierarchy.
 
-Never decorate.
+Cards
 
----
+Top3 cards remain the primary content container.
 
-## Sparkle
+Principles
 
-Meaning
+White surface
 
-Shared taste.
+Minimal chrome
 
----
+Clear ranking
 
-## Trophy
+Easy scanning
 
-Meaning
+Consistent spacing
 
-Shared #1 pick.
+Motion
 
-Reserved only for exceptional alignment.
+Motion should support understanding.
 
----
+Examples
 
-## Heart
+Press feedback
 
-Meaning
+Drag interactions
 
-Like.
+Screen transitions
 
----
+Publishing confirmation
 
-## Comment
+Animations should be subtle and fast.
 
-Meaning
+Accessibility
 
-Conversation.
+Maintain accessible contrast.
 
----
+Support screen readers.
 
-# Lists
+Use accessibility labels.
 
-Ranked lists are the heart of Top3.
+Comfortable touch targets.
 
-Every ranked list should:
+Do not rely on colour alone.
 
-- Feel lightweight
-- Be easy to scan
-- Prioritize titles over controls
+Component Reuse
 
-Rows should never feel cluttered.
+Before creating a component ask:
 
----
+Can an existing component solve this problem?
 
-# Motion
+Current reusable library
 
-Animation should support understanding.
+Layout
 
-Never distract.
+ScreenHeader
 
-Examples:
+PageHeader
 
-- Button press feedback
-- Card elevation
-- Follow state transition
-- Shared highlight fade
+Controls
 
-Animations should feel quick and subtle.
+Chip
 
----
+PrimaryButton
 
-# Accessibility
+Content
 
-Top3 should be usable by everyone.
+RankedItemCard
 
-Guidelines
+Top3Card
 
-- Maintain accessible contrast ratios.
-- Do not rely solely on color.
-- Support Dynamic Type where practical.
-- Every interactive element should have an accessibility label.
-- Touch targets should be comfortable.
+CommentsSheet
 
----
+TasteMatchBadge
 
-# Component Reuse
+Forms
 
-Before creating a new component, ask:
+CollectionForm
 
-Can an existing component be reused?
+Design System Evolution
 
-Existing reusable components include:
+The design system should evolve with the product.
 
-- Top3Card
-- FollowButton
-- TasteMatchBadge
-- PrimaryButton
-- SegmentedControl
-- ScreenHeader
-- CommentsSheet
+Preferred workflow:
 
-New components should only be created when an existing one cannot reasonably be extended.
+Build a feature.
 
----
+Identify duplication.
 
-# Design Checklist
+Extract a reusable component.
 
-Before shipping any new screen, verify:
+Reuse it consistently.
 
-✓ Uses design system colors.
+Update this document.
 
-✓ Uses design system typography.
+Avoid creating highly configurable components until multiple real usecases justify the added complexity.
 
-✓ Uses standard spacing scale.
+Design Review Checklist
 
-✓ Reuses existing components.
+Before shipping any screen:
 
-✓ Maintains accessibility.
+Uses shared components.
 
-✓ Supports light visual hierarchy.
+Uses standard spacing.
 
-✓ Keeps content as the primary focus.
+Uses shared typography.
 
-✓ Avoids unnecessary decoration.
+Uses shared colours.
 
----
+Maintains accessibility.
 
-# Guiding Principle
+Prioritizes content.
+
+Avoids unnecessary decoration.
+
+Guiding Principle
 
 Great design should feel inevitable.
 
-Users should focus on discovering people and ideas—not learning the interface.
+People should remember the collections they discovered---not theinterface they used to discover them.
 
-If someone notices the interface before they notice the content, we've probably overdesigned it.
+Document Maintenance
 
----
-
-## Document Maintenance
-
-This document should evolve alongside the design system.
-
-Whenever a new reusable component, interaction pattern, or visual language is introduced, this document should be updated before the feature is considered complete.
+Whenever a reusable component, interaction pattern, or layout conventionchanges, update this document before considering the feature complete.

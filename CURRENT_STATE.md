@@ -1,476 +1,154 @@
-# CURRENT_STATE.md
+CURRENT_STATE.md
 
-**Project:** Top3
+Project: Top3
 
-**Version:** 1.1
+Version: 1.2Status: Active DevelopmentLast Updated: July 31, 2026Current Branch: main
 
-**Status:** Active Development
+Last Verified Commit: c440990 --- Introduce reusable chipcomponent.
 
-**Last Updated:** July 30, 2026
+Dashboard
 
-**Current Branch:** `main`
-
-**Last Verified Commit:**
-
-`b37de99`
-
-Complete comments migration to Supabase and stability pass.
-
----
-
-# Dashboard
-
-## Project Status
+Project Status
 
 🟢 Active Development
 
-## Current Feature
+Current Feature
 
-None
+UX and design system refinement.
 
-## Current Priority
+Current Priority
 
-Determine the next major product feature.
+Polish the collection creation flow before introducing the next majorfeature.
 
 Architecture should always be discussed before implementation begins.
 
-## Typecheck
+Typecheck
 
 ✅ Passing
 
-## Known Blocking Bugs
+Known Blocking Bugs
 
 None
 
----
+Project Summary
 
-# Project Summary
+Top3 is a social discovery platform that helps people discoverentertainment and connect with others through curated Top 3 collections.
 
-Top3 is a social discovery platform that helps people discover entertainment and connect with others through curated Top 3 collections.
+Collections are the foundation of the application. Everythingelse---including discovery, recommendations, community rankings, TasteMatch, and user interaction---is derived from published collections.
 
-Collections are the foundation of the application.
+Technology Stack
 
-Everything else—including discovery, recommendations, community rankings, Taste Match and user interaction—is derived from published collections.
+Framework
 
----
+React Native
 
-# Technology Stack
+Expo SDK 54
 
-## Framework
+Expo Router
 
-* React Native
-* Expo SDK 54
-* Expo Router
-* TypeScript
+TypeScript
 
-## Development
+Development
 
-* EAS Development Build
+EAS Development Build
 
-## Backend
+Backend
 
-* Supabase
+Supabase
 
-## State Management
+State Management
 
-* React Context
+React Context
 
-## Local Storage
+Local Storage
 
-* AsyncStorage
+AsyncStorage (temporary/local state only)
 
-Used only for temporary/local application state that does not yet require server persistence.
+Navigation
 
----
+Bottom Tabs
 
-# Navigation
+Feed
 
-## Bottom Tabs
+Discover
 
-* Feed
-* Discover
-* Create
-* Profile
+Create
 
-## Additional Screens
+Profile
 
-* Authentication
-* Collection Creation
-* Collection Editing
-* Published Collection
-* Category Feed
-* Community Top3
-* Overall Top3
-* Search
-* Public Profile
-* Taste Match
-* Followers
-* Following
-* Edit Profile
+Additional Screens
 
----
+Authentication
 
-# Architecture
+Collection Creation
+
+Collection Editing
+
+Published Collection
+
+Category Feed
+
+Community Top3
+
+Overall Top3
+
+Search
+
+Public Profile
+
+Taste Match
+
+Followers
+
+Following
+
+Edit Profile
+
+Architecture
 
 Application Providers
 
-```
 AuthProvider
-
 ↓
-
 ProfileProvider
-
 ↓
-
 FollowProvider
-
 ↓
-
 LikeProvider
-
 ↓
-
 CommentProvider
-
 ↓
-
 Top3Provider
-```
 
----
+Presentation Layer
 
-# Provider Responsibilities
+Layout
 
-## AuthProvider
+ScreenHeader
 
-Responsible for:
+PageHeader
 
-* Authentication
-* Session restoration
-* Current user
+Controls
 
----
+Chip
 
-## ProfileProvider
+PrimaryButton
 
-Responsible for:
+Content
 
-* Loading profile
-* Updating profile
-* Profile visibility
-* User information
+RankedItemCard
 
-Persistence
+Top3Card
 
-Supabase
+CommentsSheet
 
----
+Forms
 
-## FollowProvider
-
-Responsible for:
-
-* Following state
-* Follow actions
-
-Persistence
-
-AsyncStorage (temporary)
-
----
-
-## LikeProvider
-
-Responsible for:
-
-* Like state
-* Like actions
-* Optimistic UI updates
-
-Persistence
-
-✅ Supabase
-
----
-
-## CommentProvider
-
-Responsible for:
-
-* Comments
-* Comment counts
-* Comment actions
-* Optimistic UI updates
-
-Persistence
-
-✅ Supabase
-
-Supports
-
-* Shared comments
-* Live comment counts
-
----
-
-## Top3Provider
-
-Responsible for:
-
-* Collections
-* Drafts
-* Publishing
-* Feed generation
-* Search state
-* Collection editing
-* Metadata hydration
+CollectionForm
 
 Persistence
 
 Supabase
-
----
-
-# Persistence
-
-## Supabase
-
-### Authentication
-
-✅ Complete
-
-### Profiles
-
-✅ Complete
-
-### Collections
-
-✅ Complete
-
-### Likes
-
-✅ Complete
-
-Supports
-
-* Shared likes
-* Optimistic updates
-* Database-backed counts
-
-### Comments
-
-✅ Complete
-
-Supports
-
-* Shared comments
-* Optimistic updates
-* Database-backed counts
-
----
-
-## AsyncStorage
-
-Currently used for:
-
-* Following (temporary)
-* Draft collections
-* Recent searches
-* Onboarding state
-* UI preferences
-
----
-
-# Feature Inventory
-
-## Authentication
-
-Status
-
-✅ Complete
-
-Persistence
-
-Supabase
-
----
-
-## Profiles
-
-Status
-
-✅ Complete
-
-Persistence
-
-Supabase
-
----
-
-## Collections
-
-Status
-
-✅ Complete
-
-Persistence
-
-Supabase
-
----
-
-## Feed
-
-Status
-
-✅ Complete
-
-Source
-
-Published collections
-
-plus
-
-Community mock content
-
----
-
-## Discover
-
-Status
-
-✅ Complete
-
----
-
-## Community Top3
-
-Status
-
-✅ Complete
-
-Calculated locally.
-
----
-
-## Overall Top3
-
-Status
-
-✅ Complete
-
-Calculated locally.
-
----
-
-## Taste Match
-
-Status
-
-✅ Complete
-
-Calculated locally.
-
----
-
-## Likes
-
-Status
-
-✅ Complete
-
-Persistence
-
-Supabase
-
-Supports
-
-* Shared between users
-* Optimistic updates
-* Insert/Delete
-* Database-backed counts
-
----
-
-## Comments
-
-Status
-
-✅ Complete
-
-Persistence
-
-Supabase
-
-Supports
-
-* Shared between users
-* Optimistic updates
-* Insert/Delete
-* Database-backed counts
-
----
-
-## Following
-
-Status
-
-✅ Complete (Prototype)
-
-Persistence
-
-AsyncStorage
-
----
-
-# External Data Providers
-
-Movies
-
-TMDB
-
-Television
-
-TMDB
-
-Books
-
-Google Books
-
-Games
-
-RAWG
-
-Music
-
-MusicBrainz
-
-Additional metadata support exists through Open Library.
-
----
-
-# Product Architecture
-
-Collections are the single source of content.
-
-Published collections become feed posts.
-
-Community rankings derive from published collections.
-
-Taste Match derives from published collections.
-
-Recommendations derive from published collections.
-
-Discovery derives from published collections.
-
-There is intentionally no separate post creation workflow.
-
----
-
-# Current Source of Truth
-
-## Real
 
 ✅ Authentication
 
@@ -482,125 +160,134 @@ There is intentionally no separate post creation workflow.
 
 ✅ Comments
 
----
+AsyncStorage
 
-## Hybrid
+Following (temporary)
 
-⚠ Feed
+Draft collections
 
-⚠ Discover
+Recent searches
 
-⚠ Community
+Onboarding state
 
-⚠ Taste Match
+UI preferences
 
-Community experiences currently combine real authenticated users with mock community data.
+Collection Flow
 
----
+Recent improvements:
 
-## Prototype
+Shared PageHeader across Create, Search and Collection.
 
-⚠ Following
+Shared Chip component for categories, topics and searchsuggestions.
 
-Following is fully functional but currently persists locally through AsyncStorage.
+Standardized layout and spacing across the collection flow.
 
----
+Curated search suggestions remain until a category/topic reaches50 published collections, then become community-driven.
 
-# Architectural Decisions
+Current Source of Truth
 
-Collections are edited from Feed and Profile.
+Real
 
-There is intentionally no My Collections screen.
+Authentication
 
-Drafts are resumed through the Create flow.
+Profiles
 
-Publishing converts a draft collection into a published collection.
+Collections
 
-Community rankings are calculated client-side.
+Likes
 
-Feed personalization is calculated client-side.
+Comments
 
-Collections remain the primary object throughout the application.
+Hybrid
 
-Social interactions (likes, comments, follows) persist against `collection.id` (Supabase UUID), **not** the synthetic `post.id` used by the feed.
+Feed
 
-Likes and comments are persisted in Supabase and secured with Row Level Security (RLS). Foreign keys, indexes, and RLS policies are considered part of the application's architecture rather than optional implementation details.
+Discover
 
----
+Community
 
-# Known Technical Debt
+Taste Match
 
-## High Priority
+Prototype
 
-* Migrate Following relationships to Supabase.
-* Replace mock community users with real database users.
+Following (AsyncStorage)
 
-## Medium Priority
+Recent Milestones
 
-* Verify avatar persistence.
-* Scope AsyncStorage keys by authenticated user where appropriate.
-* Improve optimistic update rollback behaviour for failed Supabase writes.
-* Add Supabase Realtime subscriptions for Likes, Comments and Following.
+July 31, 2026
 
-## Low Priority
+Introduced reusable PageHeader.
 
-* Review legacy Expo template files.
-* Review placeholder services and unused routes.
+Introduced reusable Chip.
 
----
+Standardized Create, Search and Collection layouts.
 
-# Development Workflow
+Unified category, topic and search suggestion chips.
 
-Every feature should follow this process.
+Continued migration away from mock UI implementations.
 
-1. Discuss architecture.
+Known Technical Debt
 
-2. Build one complete vertical slice.
+High Priority
 
-3. Modify as few files as practical.
+Migrate Following to Supabase.
 
-4. Provide complete file replacements whenever possible.
+Replace remaining mock community users with real users.
 
-5. Run:
+Medium Priority
 
-`npm run typecheck`
+Verify avatar persistence.
 
-6. Run:
+Scope AsyncStorage keys by authenticated user.
 
-`npm run lint`
+Improve optimistic rollback.
 
-7. Test the feature.
+Add Supabase Realtime for Likes, Comments and Following.
 
-8. Commit.
+Low Priority
 
-9. Push.
+Review legacy Expo template files.
 
-10. Update CURRENT_STATE.md if the application state has materially changed.
+Remove placeholder services and unused routes.
 
----
+Development Workflow
 
-# Notes for Future Chats
+Discuss architecture.
 
-Before making recommendations:
+Build one complete vertical slice.
 
-1. Read this document.
+Modify as few files as practical.
 
-2. Treat the current codebase as the source of truth.
+Prefer complete file replacements.
 
-3. Do not recommend rebuilding implemented features.
+Run npm run typecheck
 
-4. Ask before assuming functionality is missing.
+Run npm run lint
 
-5. Discuss architecture before implementation.
+Test.
 
----
+Commit.
 
-# Document Purpose
+Push.
 
-CURRENT_STATE.md provides an accurate snapshot of the application today.
+Update documentation.
 
-It intentionally documents the current architecture and implementation state.
+Notes for Future Chats
 
-Strategic direction belongs in `ROADMAP.md`.
+Read this document first.
 
-Historical milestones belong in `CHANGELOG.md`.
+Treat the codebase as the source of truth.
+
+Do not recommend rebuilding implemented features.
+
+Ask before assuming functionality is missing.
+
+Discuss architecture before implementation.
+
+Document Purpose
+
+CURRENT_STATE.md provides an accurate snapshot of the application'scurrent architecture and implementation.
+
+Strategic direction belongs in ROADMAP.md.
+
+Historical milestones belong in CHANGELOG.md.
