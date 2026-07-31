@@ -6,12 +6,14 @@ import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { TYPOGRAPHY } from '@/constants/typography';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
+import { getPublicProfilesByIds } from '@/lib/supabase/profiles';
 import {
     getHydratedFeedPosts,
-    getMockUserById,
+    getPublishedPostsByUser,
 } from '@/services/post-service';
 import { getTasteRecommendationForUser } from '@/services/taste-recommendation-service';
 import { Post } from '@/types/post';
+import { UserProfile } from '@/types/user-profile';
 import {
     SharedRankComparison,
 } from '@/utils/calculate-taste-match';
@@ -231,13 +233,35 @@ export default function TasteMatchScreen() {
   const [isLoading, setIsLoading] =
     useState(true);
 
-  const viewedUser = useMemo(() => {
+  const [viewedUser, setViewedUser] =
+  useState<UserProfile | null>(null);
+
+  useEffect(() => {
+  let isMounted = true;
+
+  async function loadViewedUser() {
     if (!userId || userId === profile.id) {
-      return null;
+      if (isMounted) {
+        setViewedUser(null);
+      }
+      return;
     }
 
-    return getMockUserById(userId);
-  }, [profile.id, userId]);
+    const profiles = await getPublicProfilesByIds([
+      userId,
+    ]);
+
+    if (isMounted) {
+      setViewedUser(profiles[0] ?? null);
+    }
+  }
+
+  loadViewedUser();
+
+  return () => {
+    isMounted = false;
+  };
+}, [profile.id, userId]);
 
   useEffect(() => {
     let isMounted = true;
@@ -247,11 +271,26 @@ export default function TasteMatchScreen() {
 
       try {
         const hydratedPosts =
-          await getHydratedFeedPosts(posts);
+  await getHydratedFeedPosts(posts);
 
-        if (isMounted) {
-          setAllPosts(hydratedPosts);
-        }
+const viewedUserPosts = userId
+  ? await getPublishedPostsByUser(userId)
+  : [];
+
+const mergedPosts = [
+  ...hydratedPosts,
+  ...viewedUserPosts.filter(
+    (post) =>
+      !hydratedPosts.some(
+        (hydratedPost) =>
+          hydratedPost.id === post.id
+      )
+  ),
+];
+
+if (isMounted) {
+  setAllPosts(mergedPosts);
+}
       } catch (error) {
         console.error(
           'Failed to load taste match:',
@@ -280,11 +319,14 @@ export default function TasteMatchScreen() {
       return null;
     }
 
-    return getTasteRecommendationForUser({
-      posts: allPosts,
-      currentUserId: profile.id,
-      otherUserId: viewedUser.id,
-    });
+return getTasteRecommendationForUser({
+  posts: allPosts,
+  profilesByUserId: {
+    [viewedUser.id]: viewedUser,
+  },
+  currentUserId: profile.id,
+  otherUserId: viewedUser.id,
+});
   }, [
     allPosts,
     isLoading,

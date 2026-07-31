@@ -9,13 +9,29 @@ function normalizeSearch(value: string) {
   return value.trim();
 }
 
-export async function getRecentSearches(): Promise<
-  string[]
-> {
+function getRecentSearchesStorageKey(
+  userId: string
+) {
+  const normalizedUserId = userId.trim();
+
+  return `${RECENT_SEARCHES_STORAGE_KEY}:${normalizedUserId}`;
+}
+
+export async function getRecentSearches(
+  userId: string
+): Promise<string[]> {
+  const normalizedUserId = userId.trim();
+
+  if (!normalizedUserId) {
+    return [];
+  }
+
   try {
     const storedValue =
       await AsyncStorage.getItem(
-        RECENT_SEARCHES_STORAGE_KEY
+        getRecentSearchesStorageKey(
+          normalizedUserId
+        )
       );
 
     if (!storedValue) {
@@ -45,18 +61,28 @@ export async function getRecentSearches(): Promise<
 }
 
 export async function saveRecentSearch(
+  userId: string,
   search: string
 ): Promise<string[]> {
+  const normalizedUserId = userId.trim();
   const normalizedSearch =
     normalizeSearch(search);
 
+  if (!normalizedUserId) {
+    return [];
+  }
+
   if (!normalizedSearch) {
-    return getRecentSearches();
+    return getRecentSearches(
+      normalizedUserId
+    );
   }
 
   try {
     const existingSearches =
-      await getRecentSearches();
+      await getRecentSearches(
+        normalizedUserId
+      );
 
     const nextSearches = [
       normalizedSearch,
@@ -68,7 +94,9 @@ export async function saveRecentSearch(
     ].slice(0, MAX_RECENT_SEARCHES);
 
     await AsyncStorage.setItem(
-      RECENT_SEARCHES_STORAGE_KEY,
+      getRecentSearchesStorageKey(
+        normalizedUserId
+      ),
       JSON.stringify(nextSearches)
     );
 
@@ -83,10 +111,20 @@ export async function saveRecentSearch(
   }
 }
 
-export async function clearRecentSearches(): Promise<void> {
+export async function clearRecentSearches(
+  userId: string
+): Promise<void> {
+  const normalizedUserId = userId.trim();
+
+  if (!normalizedUserId) {
+    return;
+  }
+
   try {
     await AsyncStorage.removeItem(
-      RECENT_SEARCHES_STORAGE_KEY
+      getRecentSearchesStorageKey(
+        normalizedUserId
+      )
     );
   } catch (error) {
     console.error(

@@ -278,6 +278,7 @@ export default function SocialScreen() {
         user.id,
         getTasteRecommendationForUser({
           posts: allPosts,
+          profilesByUserId: socialProfilesById,
           currentUserId: profile.id,
           otherUserId: user.id,
         })
@@ -285,7 +286,12 @@ export default function SocialScreen() {
     });
 
     return matches;
-  }, [activeUsers, allPosts, profile.id]);
+  }, [
+  activeUsers,
+  allPosts,
+  socialProfilesById,
+  profile.id,
+]);
 
   function changeTab(tab: SocialTab) {
     setActiveTab(tab);

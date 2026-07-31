@@ -6,7 +6,10 @@ import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
-import { searchPublicProfiles } from '@/lib/supabase/profiles';
+import {
+  getPublicProfilesByIds,
+  searchPublicProfiles,
+} from '@/lib/supabase/profiles';
 import { getHydratedFeedPosts } from '@/services/post-service';
 import {
   clearRecentSearches,
@@ -136,6 +139,11 @@ export default function DiscoverScreen() {
     Post[]
   >([]);
 
+  const [
+  profilesByUserId,
+  setProfilesByUserId,
+] = useState<Record<string, UserProfile>>({});
+
   const [isLoading, setIsLoading] =
     useState(true);
 
@@ -159,7 +167,7 @@ export default function DiscoverScreen() {
 
     async function loadRecentSearches() {
       const storedSearches =
-        await getRecentSearches();
+        await getRecentSearches(profile.id);
 
       if (isMounted) {
         setRecentSearches(storedSearches);
@@ -171,7 +179,7 @@ export default function DiscoverScreen() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [profile.id]);
 
   useEffect(() => {
     let isMounted = true;
@@ -183,9 +191,31 @@ export default function DiscoverScreen() {
         const hydratedPosts =
           await getHydratedFeedPosts(posts);
 
-        if (isMounted) {
-          setAllPosts(hydratedPosts);
-        }
+          const authorIds = Array.from(
+  new Set(
+    hydratedPosts.map(
+      (post) => post.authorId
+    )
+  )
+);
+
+const authors =
+  await getPublicProfilesByIds(authorIds);
+
+const nextProfilesByUserId =
+  Object.fromEntries(
+    authors.map((author) => [
+      author.id,
+      author,
+    ])
+  );
+
+       if (isMounted) {
+  setAllPosts(hydratedPosts);
+  setProfilesByUserId(
+    nextProfilesByUserId
+  );
+}
       } catch (error) {
         console.error(
           'Failed to load Discover content:',
@@ -479,13 +509,11 @@ export default function DiscoverScreen() {
 
     const recommendationCandidates =
       getTasteRecommendations({
-        posts: allPosts,
-        currentUserId: profile.id,
-        limit: Math.max(
-          allPosts.length,
-          20
-        ),
-      });
+  posts: allPosts,
+  profilesByUserId,
+  currentUserId: profile.id,
+  limit: 5,
+});
 
     return recommendationCandidates
       .filter(
@@ -535,6 +563,7 @@ export default function DiscoverScreen() {
       .slice(0, 3);
   }, [
     allPosts,
+    profilesByUserId,
     followedUserIds,
     profile.id,
   ]);
@@ -806,8 +835,9 @@ export default function DiscoverScreen() {
 
     const nextSearches =
       await saveRecentSearch(
-        normalizedSearch
-      );
+  profile.id,
+  normalizedSearch
+);
 
     setRecentSearches(nextSearches);
   }
@@ -840,12 +870,17 @@ export default function DiscoverScreen() {
         normalizeValue(recentSearchToRemove)
     );
 
-    await clearRecentSearches();
+    await clearRecentSearches(
+  profile.id
+);
 
     for (const recentSearch of [
       ...nextSearches,
     ].reverse()) {
-      await saveRecentSearch(recentSearch);
+      await saveRecentSearch(
+  profile.id,
+  recentSearch
+);
     }
 
     setRecentSearches(nextSearches);
@@ -857,7 +892,7 @@ export default function DiscoverScreen() {
   }
 
   async function clearAllRecentSearches() {
-    await clearRecentSearches();
+   await clearRecentSearches(profile.id);
     setRecentSearches([]);
   }
 

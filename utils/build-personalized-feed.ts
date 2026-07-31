@@ -13,6 +13,10 @@ export type PersonalizedFeedPost = {
 
 type BuildPersonalizedFeedOptions = {
   posts: Post[];
+  profilesByUserId: Record<
+    string,
+    TasteRecommendation['user']
+  >;
   currentUserId: string;
   followedUserIds: string[];
 };
@@ -131,6 +135,7 @@ function getSuggestionReason(
 
 export function buildPersonalizedFeed({
   posts,
+  profilesByUserId,
   currentUserId,
   followedUserIds,
 }: BuildPersonalizedFeedOptions): PersonalizedFeedPost[] {
@@ -157,12 +162,13 @@ export function buildPersonalizedFeed({
    * of truth for recommendation eligibility.
    */
   const recommendations =
-    getTasteRecommendations({
-      posts,
-      currentUserId,
-      excludedUserIds: followedUserIds,
-      limit: posts.length,
-    });
+  getTasteRecommendations({
+    posts,
+    profilesByUserId,
+    currentUserId,
+    excludedUserIds: followedUserIds,
+    limit: posts.length,
+  });
 
   /*
    * Show at most one recommended card per person.

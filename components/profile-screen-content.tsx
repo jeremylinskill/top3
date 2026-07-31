@@ -64,8 +64,12 @@ export default function ProfileScreenContent({
 
   isLoadingPosts = false,
 
+  isFollowing = false,
+  isLoadingFollowState = false,
+
   onEditProfile,
   onSignOut,
+  onToggleFollow,
   onFollowersPress,
   onFollowingPress,
   onTasteMatchPress,
@@ -238,6 +242,9 @@ export default function ProfileScreenContent({
           <FollowButton
             userId={user.id}
             size="large"
+            isFollowing={isFollowing}
+            isLoading={isLoadingFollowState}
+            onPress={onToggleFollow}
           />
         </View>
       )}

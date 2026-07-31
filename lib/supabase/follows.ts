@@ -5,6 +5,11 @@ export type FollowSnapshot = {
   followerUserIds: string[];
 };
 
+export type FollowCounts = {
+  followingCount: number;
+  followerCount: number;
+};
+
 type FollowRow = {
   follower_id: string;
   following_id: string;
@@ -47,6 +52,50 @@ export async function getFollowSnapshot(
   return {
     followedUserIds,
     followerUserIds,
+  };
+}
+
+export async function getFollowCounts(
+  userId: string
+): Promise<FollowCounts> {
+  const [
+    followingResult,
+    followerResult,
+  ] = await Promise.all([
+    supabase
+      .from('follows')
+      .select('*', {
+        count: 'exact',
+        head: true,
+      })
+      .eq('follower_id', userId),
+
+    supabase
+      .from('follows')
+      .select('*', {
+        count: 'exact',
+        head: true,
+      })
+      .eq('following_id', userId),
+  ]);
+
+  if (followingResult.error) {
+    throw new Error(
+      `Failed to load following count: ${followingResult.error.message}`
+    );
+  }
+
+  if (followerResult.error) {
+    throw new Error(
+      `Failed to load follower count: ${followerResult.error.message}`
+    );
+  }
+
+  return {
+    followingCount:
+      followingResult.count ?? 0,
+    followerCount:
+      followerResult.count ?? 0,
   };
 }
 

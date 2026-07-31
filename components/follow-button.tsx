@@ -20,6 +20,9 @@ type FollowButtonProps = {
   size?: FollowButtonSize;
   style?: ViewStyle;
   disabled?: boolean;
+  isFollowing?: boolean;
+  isLoading?: boolean;
+  onPress?: () => void;
 };
 
 export default function FollowButton({
@@ -27,6 +30,9 @@ export default function FollowButton({
   size = 'large',
   style,
   disabled = false,
+  isFollowing: controlledIsFollowing,
+  isLoading: controlledIsLoading,
+  onPress,
 }: FollowButtonProps) {
   const {
     isFollowing,
@@ -37,16 +43,27 @@ export default function FollowButton({
   const normalizedUserId = userId.trim();
 
   const userIsFollowed =
-    normalizedUserId.length > 0 &&
-    isFollowing(normalizedUserId);
+    controlledIsFollowing ??
+    (
+      normalizedUserId.length > 0 &&
+      isFollowing(normalizedUserId)
+    );
+
+  const buttonIsLoading =
+    controlledIsLoading ?? isLoading;
 
   const buttonIsDisabled =
     disabled ||
-    isLoading ||
+    buttonIsLoading ||
     normalizedUserId.length === 0;
 
   function handlePress() {
     if (buttonIsDisabled) {
+      return;
+    }
+
+    if (onPress) {
+      onPress();
       return;
     }
 
@@ -81,7 +98,7 @@ export default function FollowButton({
           ? 'Unfollow this person'
           : 'Follow this person'
       }>
-      {isLoading ? (
+      {buttonIsLoading ? (
         <ActivityIndicator
           size="small"
           color={

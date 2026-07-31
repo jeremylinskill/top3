@@ -9,7 +9,6 @@ import {
 import { Post } from '@/types/post';
 import { Top3Item } from '@/types/top3-item';
 import { Top3List } from '@/types/top3-list';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   createContext,
   ReactNode,
@@ -54,12 +53,6 @@ const Top3Context =
   createContext<Top3ContextValue | undefined>(
     undefined
   );
-
-const USER_STORAGE_PREFIX = 'top3-lists-v3';
-
-function getUserStorageKey(userId: string) {
-  return `${USER_STORAGE_PREFIX}-${userId}`;
-}
 
 function createPostsFromPublishedLists(
   lists: Top3List[],
@@ -172,45 +165,6 @@ export function Top3Provider({
       isCancelled = true;
     };
   }, [user]);
-
-  useEffect(() => {
-    if (
-      !user ||
-      loadedUserId !== user.id
-    ) {
-      return;
-    }
-
-    const userId = user.id;
-
-    async function saveData() {
-      try {
-        const data: StoredTop3Data = {
-          lists,
-          posts,
-          currentListId,
-        };
-
-        await AsyncStorage.setItem(
-          getUserStorageKey(userId),
-          JSON.stringify(data)
-        );
-      } catch (error) {
-        console.error(
-          'Failed to save Top 3 data:',
-          error
-        );
-      }
-    }
-
-    saveData();
-  }, [
-    user,
-    loadedUserId,
-    lists,
-    posts,
-    currentListId,
-  ]);
 
   function createList(
     input: CreateListInput

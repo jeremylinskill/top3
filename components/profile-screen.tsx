@@ -5,6 +5,8 @@ import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
 import { useAuth } from '@/hooks/use-auth';
+import type { FollowCounts } from '@/lib/supabase/follows';
+import { getFollowCounts } from '@/lib/supabase/follows';
 import { getPublicProfileById } from '@/lib/supabase/profiles';
 import {
     getHydratedFeedPosts,
@@ -102,6 +104,14 @@ export default function ProfileScreen({
     useState(false);
 
   const [
+    viewedUserFollowCounts,
+    setViewedUserFollowCounts,
+  ] = useState<FollowCounts>({
+    followingCount: 0,
+    followerCount: 0,
+  });
+
+  const [
     selectedCommentsPost,
     setSelectedCommentsPost,
   ] = useState<Post | null>(null);
@@ -177,6 +187,52 @@ export default function ProfileScreen({
 
   const currentUserFollowerCount =
     getFollowerCount();
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadViewedUserFollowCounts() {
+      if (!viewedUserId || isCurrentUser) {
+        if (isMounted) {
+          setViewedUserFollowCounts({
+            followingCount: 0,
+            followerCount: 0,
+          });
+        }
+
+        return;
+      }
+
+      try {
+        const followCounts =
+          await getFollowCounts(viewedUserId);
+
+        if (isMounted) {
+          setViewedUserFollowCounts(
+            followCounts
+          );
+        }
+      } catch (error) {
+        console.error(
+          'Failed to load profile follow counts:',
+          error
+        );
+
+        if (isMounted) {
+          setViewedUserFollowCounts({
+            followingCount: 0,
+            followerCount: 0,
+          });
+        }
+      }
+    }
+
+    loadViewedUserFollowCounts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isCurrentUser, viewedUserId]);
 
   useEffect(() => {
     let isMounted = true;
@@ -271,11 +327,14 @@ export default function ProfileScreen({
       return null;
     }
 
-    return getTasteRecommendationForUser({
-      posts: allPosts,
-      currentUserId: profile.id,
-      otherUserId: viewedUserId,
-    });
+   return getTasteRecommendationForUser({
+  posts: allPosts,
+  profilesByUserId: {
+    [viewedUser.id]: viewedUser,
+  },
+  currentUserId: profile.id,
+  otherUserId: viewedUserId,
+});
   }, [
     allPosts,
     isCurrentUser,
@@ -435,6 +494,17 @@ export default function ProfileScreen({
       return;
     }
 
+    setViewedUserFollowCounts(
+      (currentCounts) => ({
+        ...currentCounts,
+        followerCount: Math.max(
+          0,
+          currentCounts.followerCount +
+            (userIsFollowed ? -1 : 1)
+        ),
+      })
+    );
+
     toggleFollow(viewedUserId);
   }
 
@@ -508,14 +578,12 @@ export default function ProfileScreen({
           followerCount={
             isCurrentUser
               ? currentUserFollowerCount
-              : userIsFollowed
-                ? 1
-                : 0
+              : viewedUserFollowCounts.followerCount
           }
           followingCount={
             isCurrentUser
               ? currentUserFollowingCount
-              : 0
+              : viewedUserFollowCounts.followingCount
           }
           tasteMatchScore={
             tasteMatch?.score

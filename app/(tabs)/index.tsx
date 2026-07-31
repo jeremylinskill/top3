@@ -150,14 +150,16 @@ export default function FeedScreen() {
   }, [posts, profile.id]);
 
   const personalizedFeed = useMemo(
-    () =>
-      buildPersonalizedFeed({
-        posts: feedPosts,
-        currentUserId: profile.id,
-        followedUserIds,
-      }),
+  () =>
+    buildPersonalizedFeed({
+      posts: feedPosts,
+      profilesByUserId: feedAuthors,
+      currentUserId: profile.id,
+      followedUserIds,
+    }),
     [
       feedPosts,
+      feedAuthors,
       followedUserIds,
       profile.id,
     ]

@@ -1,4 +1,3 @@
-import { getMockUserById } from '@/services/post-service';
 import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
 import {
@@ -23,6 +22,10 @@ export type TasteRecommendation = {
 
 type GetTasteRecommendationsOptions = {
   posts: Post[];
+  profilesByUserId: Record<
+    string,
+    UserProfile
+  >;
   currentUserId: string;
   excludedUserIds?: string[];
   limit?: number;
@@ -30,6 +33,10 @@ type GetTasteRecommendationsOptions = {
 
 type GetTasteRecommendationForUserOptions = {
   posts: Post[];
+  profilesByUserId: Record<
+    string,
+    UserProfile
+  >;
   currentUserId: string;
   otherUserId: string;
 };
@@ -88,6 +95,7 @@ function getMatchingCollectionCount(
 
 export function getTasteRecommendations({
   posts,
+  profilesByUserId,
   currentUserId,
   excludedUserIds = [],
   limit = 5,
@@ -125,11 +133,11 @@ export function getTasteRecommendations({
         return;
       }
 
-      const user = getMockUserById(authorId);
+      const user = profilesByUserId[authorId];
 
-      if (!user) {
-        return;
-      }
+if (!user) {
+  return;
+}
 
       /*
        * Only public profiles are eligible to
@@ -229,6 +237,7 @@ export function getTasteRecommendations({
 
 export function getTasteRecommendationForUser({
   posts,
+  profilesByUserId,
   currentUserId,
   otherUserId,
 }: GetTasteRecommendationForUserOptions): TasteRecommendation | null {
@@ -240,7 +249,7 @@ export function getTasteRecommendationForUser({
     return null;
   }
 
-  const user = getMockUserById(otherUserId);
+  const user = profilesByUserId[otherUserId];
 
   if (!user) {
     return null;
