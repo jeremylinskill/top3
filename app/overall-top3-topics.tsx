@@ -1,25 +1,25 @@
 import ScreenHeader from '@/components/screen-header';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { useTop3 } from '@/context/top3-context';
-import { getHydratedFeedPosts } from '@/services/post-service';
+import { getPublishedPosts } from '@/services/post-service';
 import { Post } from '@/types/post';
 import { Ionicons } from '@expo/vector-icons';
 import {
-    router,
-    useLocalSearchParams,
+  router,
+  useLocalSearchParams,
 } from 'expo-router';
 import {
-    useEffect,
-    useMemo,
-    useState,
+  useEffect,
+  useMemo,
+  useState,
 } from 'react';
 import {
-    ActivityIndicator,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -50,7 +50,7 @@ export default function OverallTop3TopicsScreen() {
     ? params.category[0]
     : params.category;
 
-  const { posts } = useTop3();
+  useTop3();
 
   const [allPosts, setAllPosts] = useState<
     Post[]
@@ -72,11 +72,11 @@ export default function OverallTop3TopicsScreen() {
       setIsLoading(true);
 
       try {
-        const hydratedPosts =
-          await getHydratedFeedPosts(posts);
+        const publishedPosts =
+          await getPublishedPosts();
 
         if (isMounted) {
-          setAllPosts(hydratedPosts);
+          setAllPosts(publishedPosts);
         }
       } catch (error) {
         console.error(
@@ -85,7 +85,7 @@ export default function OverallTop3TopicsScreen() {
         );
 
         if (isMounted) {
-          setAllPosts(posts);
+          setAllPosts([]);
         }
       } finally {
         if (isMounted) {
@@ -99,7 +99,7 @@ export default function OverallTop3TopicsScreen() {
     return () => {
       isMounted = false;
     };
-  }, [posts]);
+  }, []);
 
   const topics = useMemo(() => {
     if (!categoryId) {

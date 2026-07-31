@@ -8,10 +8,7 @@ import { useAuth } from '@/hooks/use-auth';
 import type { FollowCounts } from '@/lib/supabase/follows';
 import { getFollowCounts } from '@/lib/supabase/follows';
 import { getPublicProfileById } from '@/lib/supabase/profiles';
-import {
-    getHydratedFeedPosts,
-    getPublishedPostsByUser,
-} from '@/services/post-service';
+import { getPublishedPostsByUser } from '@/services/post-service';
 import { getTasteRecommendationForUser } from '@/services/taste-recommendation-service';
 import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
@@ -80,10 +77,7 @@ export default function ProfileScreen({
   const { signOut } = useAuth();
   const { profile } = useProfile();
 
-  const {
-    posts,
-    selectList,
-  } = useTop3();
+  const { selectList } = useTop3();
 
   const {
     isFollowing,
@@ -250,26 +244,32 @@ export default function ProfileScreen({
       setIsLoadingPosts(true);
 
       try {
-        const hydratedFeedPosts =
-          await getHydratedFeedPosts(posts);
+        const currentUserPostsPromise =
+          getPublishedPostsByUser(profile.id);
 
         if (viewedUserId === profile.id) {
+          const currentUserPosts =
+            await currentUserPostsPromise;
+
           if (isMounted) {
-            setAllPosts(hydratedFeedPosts);
+            setAllPosts(currentUserPosts);
           }
 
           return;
         }
 
-        const viewedUserPosts =
-          await getPublishedPostsByUser(
-            viewedUserId
-          );
+        const [
+          currentUserPosts,
+          viewedUserPosts,
+        ] = await Promise.all([
+          currentUserPostsPromise,
+          getPublishedPostsByUser(viewedUserId),
+        ]);
 
         if (isMounted) {
           setAllPosts(
             mergePosts(
-              hydratedFeedPosts,
+              currentUserPosts,
               viewedUserPosts
             )
           );
@@ -281,7 +281,7 @@ export default function ProfileScreen({
         );
 
         if (isMounted) {
-          setAllPosts(posts);
+          setAllPosts([]);
         }
       } finally {
         if (isMounted) {
@@ -295,7 +295,7 @@ export default function ProfileScreen({
     return () => {
       isMounted = false;
     };
-  }, [posts, profile.id, viewedUserId]);
+  }, [profile.id, viewedUserId]);
 
   const publishedPosts = useMemo(() => {
     if (!viewedUserId) {
@@ -340,6 +340,7 @@ export default function ProfileScreen({
     isCurrentUser,
     isLoadingPosts,
     profile.id,
+    viewedUser,
     viewedUserId,
   ]);
 

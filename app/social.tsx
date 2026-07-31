@@ -5,7 +5,7 @@ import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
 import { getPublicProfilesByIds } from '@/lib/supabase/profiles';
-import { getHydratedFeedPosts } from '@/services/post-service';
+import { getPublishedPosts } from '@/services/post-service';
 import { getTasteRecommendationForUser } from '@/services/taste-recommendation-service';
 import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
@@ -56,7 +56,7 @@ export default function SocialScreen() {
   }>();
 
   const { profile } = useProfile();
-  const { posts } = useTop3();
+  useTop3();
 
   const initialTabParam = Array.isArray(
     params.tab
@@ -106,11 +106,11 @@ export default function SocialScreen() {
       setIsLoadingPosts(true);
 
       try {
-        const hydratedPosts =
-          await getHydratedFeedPosts(posts);
+        const publishedPosts =
+          await getPublishedPosts();
 
         if (isMounted) {
-          setAllPosts(hydratedPosts);
+          setAllPosts(publishedPosts);
         }
       } catch (error) {
         console.error(
@@ -119,7 +119,7 @@ export default function SocialScreen() {
         );
 
         if (isMounted) {
-          setAllPosts(posts);
+          setAllPosts([]);
         }
       } finally {
         if (isMounted) {
@@ -133,7 +133,7 @@ export default function SocialScreen() {
     return () => {
       isMounted = false;
     };
-  }, [posts]);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;

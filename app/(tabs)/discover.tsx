@@ -10,7 +10,7 @@ import {
   getPublicProfilesByIds,
   searchPublicProfiles,
 } from '@/lib/supabase/profiles';
-import { getHydratedFeedPosts } from '@/services/post-service';
+import { getPublishedPosts } from '@/services/post-service';
 import {
   clearRecentSearches,
   getRecentSearches,
@@ -126,7 +126,7 @@ function formatResultCaption(
 
 export default function DiscoverScreen() {
   const { profile } = useProfile();
-  const { posts } = useTop3();
+  useTop3();
 
   const {
     followedUserIds,
@@ -188,34 +188,34 @@ export default function DiscoverScreen() {
       setIsLoading(true);
 
       try {
-        const hydratedPosts =
-          await getHydratedFeedPosts(posts);
+        const publishedPosts =
+          await getPublishedPosts();
 
-          const authorIds = Array.from(
-  new Set(
-    hydratedPosts.map(
-      (post) => post.authorId
-    )
-  )
-);
+        const authorIds = Array.from(
+          new Set(
+            publishedPosts.map(
+              (post) => post.authorId
+            )
+          )
+        );
 
-const authors =
-  await getPublicProfilesByIds(authorIds);
+        const authors =
+          await getPublicProfilesByIds(authorIds);
 
-const nextProfilesByUserId =
-  Object.fromEntries(
-    authors.map((author) => [
-      author.id,
-      author,
-    ])
-  );
+        const nextProfilesByUserId =
+          Object.fromEntries(
+            authors.map((author) => [
+              author.id,
+              author,
+            ])
+          );
 
-       if (isMounted) {
-  setAllPosts(hydratedPosts);
-  setProfilesByUserId(
-    nextProfilesByUserId
-  );
-}
+        if (isMounted) {
+          setAllPosts(publishedPosts);
+          setProfilesByUserId(
+            nextProfilesByUserId
+          );
+        }
       } catch (error) {
         console.error(
           'Failed to load Discover content:',
@@ -223,7 +223,7 @@ const nextProfilesByUserId =
         );
 
         if (isMounted) {
-          setAllPosts(posts);
+          setAllPosts([]);
         }
       } finally {
         if (isMounted) {
@@ -237,7 +237,7 @@ const nextProfilesByUserId =
     return () => {
       isMounted = false;
     };
-  }, [posts]);
+  }, []);
 
   const publishedCountByCategory = useMemo(
     () => {

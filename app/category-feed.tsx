@@ -7,9 +7,9 @@ import { useComments } from '@/context/comment-context';
 import { useLike } from '@/context/like-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
+import { getPublicProfilesByIds } from '@/lib/supabase/profiles';
 import {
-  getHydratedFeedPosts,
-  getMockUserById,
+  getPublishedPosts
 } from '@/services/post-service';
 import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
@@ -110,6 +110,9 @@ export default function CategoryFeedScreen() {
     Post[]
   >([]);
 
+  const [profilesByUserId, setProfilesByUserId] =
+  useState<Record<string, UserProfile>>({});
+
   const [isLoading, setIsLoading] =
     useState(true);
 
@@ -134,12 +137,26 @@ export default function CategoryFeedScreen() {
       setIsLoading(true);
 
       try {
-        const hydratedPosts =
-          await getHydratedFeedPosts(posts);
+        const publishedPosts =
+  await getPublishedPosts();
 
-        if (isMounted) {
-          setAllPosts(hydratedPosts);
-        }
+  const authorProfiles =
+  await getPublicProfilesByIds(
+    publishedPosts.map((post) => post.authorId)
+  );
+
+const nextProfilesByUserId =
+  Object.fromEntries(
+    authorProfiles.map((authorProfile) => [
+      authorProfile.id,
+      authorProfile,
+    ])
+  );
+
+if (isMounted) {
+  setAllPosts(publishedPosts);
+  setProfilesByUserId(nextProfilesByUserId);
+}
       } catch (error) {
         console.error(
           'Failed to load category feed:',
@@ -352,15 +369,17 @@ export default function CategoryFeedScreen() {
   const communityHasComments =
     displayedCommunityCommentCount > 0;
 
-  function getPostAuthor(
-    authorId: string
-  ): UserProfile | null {
-    if (authorId === profile.id) {
-      return profile;
-    }
-
-    return getMockUserById(authorId);
+ function getPostAuthor(
+  authorId: string
+): UserProfile | null {
+  if (authorId === profile.id) {
+    return profile;
   }
+
+  return (
+    profilesByUserId[authorId] ?? null
+  );
+}
 
   function openAuthorProfile(
     authorId: string

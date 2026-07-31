@@ -6,11 +6,10 @@ import {
 } from '@/context/comment-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
-import {
-  getHydratedFeedPosts,
-  getMockUserById,
-} from '@/services/post-service';
+import { getPublicProfileById } from '@/lib/supabase/profiles';
+import { getPublishedPosts } from '@/services/post-service';
 import { Post } from '@/types/post';
+import { UserProfile } from '@/types/user-profile';
 import { formatRelativeTime } from '@/utils/format-relative-time';
 import {
   router,
@@ -51,10 +50,7 @@ export default function PublishedTop3Screen() {
 
   const { profile } = useProfile();
 
-  const {
-    posts: localPosts,
-    selectList,
-  } = useTop3();
+  const { selectList } = useTop3();
 
   const {
     addComment,
@@ -65,6 +61,9 @@ export default function PublishedTop3Screen() {
   const [post, setPost] = useState<Post | null>(
     null
   );
+
+  const [author, setAuthor] =
+    useState<UserProfile | null>(null);
 
   const [isLoadingPost, setIsLoadingPost] =
     useState(true);
@@ -88,18 +87,28 @@ export default function PublishedTop3Screen() {
       setIsLoadingPost(true);
 
       try {
-        const hydratedPosts =
-          await getHydratedFeedPosts(
-            localPosts
-          );
+        const publishedPosts =
+          await getPublishedPosts();
 
         const matchingPost =
-          hydratedPosts.find(
+          publishedPosts.find(
             (item) => item.id === postId
           ) ?? null;
 
+        let matchingAuthor: UserProfile | null = null;
+
+        if (matchingPost) {
+          matchingAuthor =
+            matchingPost.authorId === profile.id
+              ? profile
+              : await getPublicProfileById(
+                  matchingPost.authorId
+                );
+        }
+
         if (isMounted) {
           setPost(matchingPost);
+          setAuthor(matchingAuthor);
         }
       } catch (error) {
         console.error(
@@ -109,6 +118,7 @@ export default function PublishedTop3Screen() {
 
         if (isMounted) {
           setPost(null);
+          setAuthor(null);
         }
       } finally {
         if (isMounted) {
@@ -122,7 +132,7 @@ export default function PublishedTop3Screen() {
     return () => {
       isMounted = false;
     };
-  }, [postId, localPosts]);
+  }, [postId, profile]);
 
   const comments = useMemo(() => {
     if (!postId) {
@@ -204,11 +214,6 @@ export default function PublishedTop3Screen() {
   const currentPost = post;
 
   const authorId = post.authorId;
-
-  const author =
-    authorId === profile.id
-      ? profile
-      : getMockUserById(authorId);
 
   const isCurrentUserPost =
     authorId === profile.id;

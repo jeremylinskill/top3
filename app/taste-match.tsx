@@ -8,7 +8,7 @@ import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
 import { getPublicProfilesByIds } from '@/lib/supabase/profiles';
 import {
-    getHydratedFeedPosts,
+    getPublishedPosts,
     getPublishedPostsByUser,
 } from '@/services/post-service';
 import { getTasteRecommendationForUser } from '@/services/taste-recommendation-service';
@@ -224,7 +224,7 @@ export default function TasteMatchScreen() {
     : params.userId;
 
   const { profile } = useProfile();
-  const { posts } = useTop3();
+  useTop3();
 
   const [allPosts, setAllPosts] = useState<
     Post[]
@@ -270,27 +270,35 @@ export default function TasteMatchScreen() {
       setIsLoading(true);
 
       try {
-        const hydratedPosts =
-  await getHydratedFeedPosts(posts);
+        const publishedPostsPromise =
+          getPublishedPosts();
 
-const viewedUserPosts = userId
-  ? await getPublishedPostsByUser(userId)
-  : [];
+        const viewedUserPostsPromise = userId
+          ? getPublishedPostsByUser(userId)
+          : Promise.resolve([]);
 
-const mergedPosts = [
-  ...hydratedPosts,
-  ...viewedUserPosts.filter(
-    (post) =>
-      !hydratedPosts.some(
-        (hydratedPost) =>
-          hydratedPost.id === post.id
-      )
-  ),
-];
+        const [
+          publishedPosts,
+          viewedUserPosts,
+        ] = await Promise.all([
+          publishedPostsPromise,
+          viewedUserPostsPromise,
+        ]);
 
-if (isMounted) {
-  setAllPosts(mergedPosts);
-}
+        const mergedPosts = [
+          ...publishedPosts,
+          ...viewedUserPosts.filter(
+            (post) =>
+              !publishedPosts.some(
+                (publishedPost) =>
+                  publishedPost.id === post.id
+              )
+          ),
+        ];
+
+        if (isMounted) {
+          setAllPosts(mergedPosts);
+        }
       } catch (error) {
         console.error(
           'Failed to load taste match:',
@@ -298,7 +306,7 @@ if (isMounted) {
         );
 
         if (isMounted) {
-          setAllPosts(posts);
+          setAllPosts([]);
         }
       } finally {
         if (isMounted) {
@@ -312,7 +320,7 @@ if (isMounted) {
     return () => {
       isMounted = false;
     };
-  }, [posts]);
+  }, [userId]);
 
   const tasteMatch = useMemo(() => {
     if (!viewedUser || isLoading) {

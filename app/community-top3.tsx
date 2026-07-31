@@ -3,27 +3,28 @@ import ScreenHeader from '@/components/screen-header';
 import { useComments } from '@/context/comment-context';
 import { useLike } from '@/context/like-context';
 import { useTop3 } from '@/context/top3-context';
-import { getHydratedFeedPosts } from '@/services/post-service';
+import { getPublishedPosts } from '@/services/post-service';
 import { Post } from '@/types/post';
 import {
-    calculateCommunityTop3,
-    CommunityTop3Result,
+  calculateCommunityTop3,
+  CommunityTop3Result,
 } from '@/utils/calculate-community-top3';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import {
-    useEffect,
-    useMemo,
-    useState,
+  useEffect,
+  useMemo,
+  useState,
 } from 'react';
 import {
-    ActivityIndicator,
-    Image,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -80,12 +81,27 @@ export default function CommunityTop3Screen() {
       setIsLoading(true);
 
       try {
-        const hydratedPosts =
-          await getHydratedFeedPosts(posts);
+const publishedPosts =
+  await getPublishedPosts();
 
-        if (isMounted) {
-          setAllPosts(hydratedPosts);
-        }
+Alert.alert(
+  'Community published posts',
+  JSON.stringify(
+    publishedPosts.map((post) => ({
+      id: post.id,
+      authorId: post.authorId,
+      category: post.collection.category,
+      topic: post.collection.topic,
+      title: post.collection.title,
+    })),
+    null,
+    2
+  )
+);
+
+if (isMounted) {
+  setAllPosts(publishedPosts);
+}
       } catch (error) {
         console.error(
           'Failed to load overall Top 3:',
@@ -275,10 +291,14 @@ export default function CommunityTop3Screen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}>
         <View style={styles.headingSection}>
-          <Text style={styles.title}>
-            {pageTitle}
-          </Text>
-        </View>
+  <Text style={styles.title}>
+    TEST {pageTitle}
+  </Text>
+
+  <Text>
+    Supabase returned {allPosts.length} published posts
+  </Text>
+</View>
 
         {result.items.length === 0 ? (
           <View style={styles.emptyState}>

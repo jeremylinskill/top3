@@ -1,5 +1,3 @@
-import { MOCK_POSTS } from '@/constants/mock-posts';
-import { MOCK_USERS } from '@/constants/mock-users';
 import {
   getPublishedPostsByUser as getPublishedPostsByUserFromSupabase,
   getPublishedPosts as getPublishedPostsFromSupabase,
@@ -150,45 +148,6 @@ function sortPostsByPublishedDate(
       new Date(second.publishedAt).getTime() -
       new Date(first.publishedAt).getTime()
   );
-}
-
-export function getMockPosts() {
-  return [...MOCK_POSTS];
-}
-
-export function getMockUserById(
-  userId: string
-) {
-  return (
-    MOCK_USERS.find(
-      (user) => user.id === userId
-    ) ?? null
-  );
-}
-
-export function getFeedPosts(
-  currentUserPosts: Post[]
-) {
-  return sortPostsByPublishedDate([
-    ...currentUserPosts,
-    ...MOCK_POSTS,
-  ]);
-}
-
-export async function getHydratedFeedPosts(
-  currentUserPosts: Post[]
-): Promise<Post[]> {
-  const hydratedCurrentUserPosts =
-    await Promise.all(
-      currentUserPosts.map((post) =>
-        hydratePost(post)
-      )
-    );
-
-  return sortPostsByPublishedDate([
-    ...hydratedCurrentUserPosts,
-    ...MOCK_POSTS,
-  ]);
 }
 
 export async function getPublishedPosts(): Promise<
