@@ -1,6 +1,7 @@
 import AuthProviderButton from '@/components/auth-provider-button';
 import {
   signInWithApple,
+  signInWithGoogle,
 } from '@/services/auth-service';
 import { router } from 'expo-router';
 import {
@@ -14,36 +15,53 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CreateAccountScreen() {
   async function handleAppleSignUp() {
-  try {
-    await signInWithApple();
-    router.replace('/');
-  } catch (error) {
-    if (
-      typeof error === 'object' &&
-      error !== null &&
-      'code' in error &&
-      error.code === 'ERR_REQUEST_CANCELED'
-    ) {
-      return;
+    try {
+      await signInWithApple();
+      router.replace('/');
+    } catch (error) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        error.code === 'ERR_REQUEST_CANCELED'
+      ) {
+        return;
+      }
+
+      console.error(
+        'Apple sign-in failed:',
+        error
+      );
+
+      Alert.alert(
+        'Unable to continue with Apple',
+        'Please try again.'
+      );
     }
-
-    console.error(
-      'Apple sign-in failed:',
-      error
-    );
-
-    Alert.alert(
-      'Unable to continue with Apple',
-      'Please try again.'
-    );
   }
-}
 
-  function handleGoogleSignUp() {
-    Alert.alert(
-      'Google sign-up',
-      'Google authentication will be connected in a later step.'
-    );
+  async function handleGoogleSignUp() {
+    try {
+      const result = await signInWithGoogle();
+
+      if (!result) {
+        return;
+      }
+
+      router.replace('/');
+    } catch (error) {
+      console.error(
+        'Google sign-in failed:',
+        error
+      );
+
+      Alert.alert(
+        'Unable to continue with Google',
+        error instanceof Error
+          ? error.message
+          : 'Please try again.'
+      );
+    }
   }
 
   function handleEmailSignUp() {
@@ -51,8 +69,8 @@ export default function CreateAccountScreen() {
   }
 
   function handleSignIn() {
-  router.push('/sign-in-email');
-}
+    router.push('/sign-in-email');
+  }
 
   return (
     <SafeAreaView
@@ -68,7 +86,9 @@ export default function CreateAccountScreen() {
             styles.backButton,
             pressed && styles.pressed,
           ]}>
-          <Text style={styles.backButtonText}>←</Text>
+          <Text style={styles.backButtonText}>
+            ←
+          </Text>
         </Pressable>
 
         <View style={styles.header}>

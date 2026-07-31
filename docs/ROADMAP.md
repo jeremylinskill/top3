@@ -1,23 +1,16 @@
-# Top3 Product Roadmap
+Top3 Product Roadmap
 
-**Version:** 1.1  
-**Status:** Active Development  
-**Owner:** Jeremy Linskill  
-**Last Updated:** July 30, 2026
+Version: 1.2Status: Active DevelopmentOwner: Jeremy LinskillLast Updated: July 31, 2026
 
----
-
-# Purpose
+Purpose
 
 This roadmap outlines the long-term evolution of the Top3 product experience.
 
-Unlike `CURRENT_STATE.md`, which documents the application's current implementation, this roadmap focuses on the future direction of the product and the experiences we want to create for users.
+Unlike CURRENT_STATE.md, which documents the application's current implementation, this roadmap focuses on the future direction of the product and the experiences we want to create for users.
 
 Every initiative should strengthen one or more of Top3's four core pillars.
 
----
-
-# Product Vision
+Product Vision
 
 Help people discover one another through shared taste.
 
@@ -25,165 +18,212 @@ Top3 isn't simply a place to rank favourites. It's a platform that helps people 
 
 Every product decision should reinforce one or more of these pillars:
 
-- **Identity** — Express who you are through your collections.
-- **Discovery** — Find new entertainment, ideas, and people.
-- **Connection** — Build meaningful relationships through shared taste.
-- **Conversation** — Encourage discussion rather than passive consumption.
+Identity — Express who you are through your collections.
 
----
+Discovery — Find new entertainment, ideas, and people.
 
-# Current Milestone
+Connection — Build meaningful relationships through shared taste.
 
-## Real Community
+Conversation — Encourage discussion rather than passive consumption.
 
-**Status:** In Progress
+Current Milestone
 
-Top3's social foundation is now complete.
+Production-Ready Authentication
 
-Authentication, collections, profiles, likes, and comments are fully persisted in Supabase.
+Status: In Progress
 
-The focus now shifts toward replacing the remaining prototype community features with fully shared experiences.
+Top3 now has a production-ready authentication foundation.
 
-### Completed
+Completed
 
-- Supabase Authentication
-- User Profiles
-- Collection Persistence
-- Shared Likes
-- Shared Comments
+Email authentication
 
-### Remaining
+Native Sign in with Apple
 
-- Shared Following
-- Replace mock community users
-- Realtime synchronization
-- Community notifications
+Persistent Supabase sessions
 
----
+User profiles
 
-# Initiative 1 — Complete the Community
+Collection persistence
 
-**Status:** Current Focus
+Shared Likes
 
-Deliver a fully shared social experience.
+Shared Comments
 
-### Planned
+Feed authentication guard
 
-- Migrate Following to Supabase.
-- Replace mock community users with real users.
-- Add Supabase Realtime for Likes, Comments and Following.
-- Improve profile discovery.
-- Expand conversation tools.
-- Add notifications where they improve engagement.
+Remaining
 
-**Success looks like:**
+Google Sign-In
+
+Shared Following
+
+Replace mock community users
+
+Realtime synchronization
+
+Community notifications
+
+Initiative 1 — Complete the Community
+
+Status: Current Focus
+
+Deliver a fully shared social experience backed by real users.
+
+Near-Term Priorities
+
+Complete Google Sign-In.
+
+Migrate Following to Supabase.
+
+Replace remaining mock community users.
+
+Add Supabase Realtime for Likes, Comments and Following.
+
+Improve profile discovery.
+
+Expand conversation tools.
+
+Introduce notifications where they improve engagement.
+
+Success looks like:
 
 Every meaningful social interaction is shared across all users and updates without requiring manual refresh.
 
----
+Initiative 2 — Smarter Discovery
 
-# Initiative 2 — Smarter Discovery
-
-**Status:** Planned
+Status: Planned
 
 Use community collections to improve entertainment discovery.
 
-### Opportunities
+Opportunities
 
-- Better recommendations.
-- AI-assisted recommendation explanations.
-- Personalized discovery summaries.
-- Trending creators.
-- Trending collections.
-- Better topic exploration.
-- Improved Taste Match.
-- Recommendation refinement.
+Better recommendations.
 
-**Guiding principle:**
+AI-assisted recommendation explanations.
+
+Personalized discovery summaries.
+
+Trending creators.
+
+Trending collections.
+
+Better topic exploration.
+
+Improved Taste Match.
+
+Recommendation refinement.
+
+Spotify integration and music categories.
+
+Additional entertainment data providers.
+
+Guiding Principle
 
 Artificial intelligence should enhance human discovery—not replace it.
 
----
+Initiative 3 — Richer Identity
 
-# Initiative 3 — Richer Identity
-
-**Status:** Planned
+Status: Planned
 
 Help people express themselves more completely.
 
-### Opportunities
+Opportunities
 
-- Profile customization.
-- Collection history.
-- Featured collections.
-- Pinned collections.
-- Personal milestones.
-- User achievements.
-- Collection sharing.
+Profile customization.
 
----
+Collection history.
 
-# Initiative 4 — Platform Growth
+Featured collections.
 
-**Status:** Future
+Pinned collections.
+
+Personal milestones.
+
+User achievements.
+
+Collection sharing.
+
+Initiative 4 — Platform Growth
+
+Status: Future
 
 Expand Top3 into a mature community platform.
 
-### Opportunities
+Opportunities
 
-- Activity feed.
-- Collaborative collections.
-- Friend invitations.
-- Creator features.
-- Moderation tools.
-- Admin dashboard.
-- Analytics.
-- Platform operations.
+Activity feed.
 
----
+Collaborative collections.
 
-# Guiding Principles
+Friend invitations.
+
+Creator features.
+
+Moderation tools.
+
+Admin dashboard.
+
+Analytics.
+
+Platform operations.
+
+Guiding Principles
 
 Every future feature should support at least one of these goals.
 
-- Make publishing effortless.
-- Help users discover something unexpected.
-- Encourage authentic conversation.
-- Reward thoughtful curation over volume.
-- Build community through shared interests.
-- Keep the experience simple.
-- Prioritize quality over feature quantity.
-- Maintain a content-first design philosophy.
+Make publishing effortless.
+
+Help users discover something unexpected.
+
+Encourage authentic conversation.
+
+Reward thoughtful curation over volume.
+
+Build community through shared interests.
+
+Keep the experience simple.
+
+Prioritize quality over feature quantity.
+
+Maintain a content-first design philosophy.
 
 If a proposed feature doesn't strengthen one or more of these principles, it should be reconsidered before development begins.
 
----
-
-# Technical Strategy
+Technical Strategy
 
 The product should continue evolving through small, complete vertical slices.
 
 For every major initiative:
 
-1. Discuss the architecture.
-2. Build one complete vertical slice.
-3. Validate with `npm run typecheck`.
-4. Validate with `npm run lint`.
-5. Test end-to-end.
-6. Commit.
-7. Push.
-8. Update project documentation.
+Discuss the architecture.
 
----
+Build one complete vertical slice.
 
-# Success Metrics
+Validate with npm run typecheck.
+
+Validate with npm run lint.
+
+Test end-to-end.
+
+Commit.
+
+Push.
+
+Update project documentation.
+
+Success Metrics
 
 Top3 succeeds when users:
 
-- Publish collections regularly.
-- Discover entertainment they genuinely enjoy.
-- Find people with similar taste.
-- Return to continue conversations.
-- Build lasting collections that reflect who they are.
+Publish collections regularly.
+
+Discover entertainment they genuinely enjoy.
+
+Find people with similar taste.
+
+Return to continue conversations.
+
+Build lasting collections that reflect who they are.
 
 The long-term goal is not to maximize content creation, but to create meaningful connections through shared taste.

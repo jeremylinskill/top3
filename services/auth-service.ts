@@ -1,5 +1,9 @@
 import { supabase } from '@/lib/supabase';
 import {
+    GoogleSignin,
+    isSuccessResponse,
+} from '@react-native-google-signin/google-signin';
+import {
     Session,
     User,
 } from '@supabase/supabase-js';
@@ -13,6 +17,19 @@ export interface SignUpWithEmailParams {
 export interface SignInWithEmailParams {
   email: string;
   password: string;
+}
+
+const googleIosClientId =
+  process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+
+const googleWebClientId =
+  process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+
+if (googleIosClientId && googleWebClientId) {
+  GoogleSignin.configure({
+    iosClientId: googleIosClientId,
+    webClientId: googleWebClientId,
+  });
 }
 
 export async function signUpWithEmail({
@@ -131,6 +148,49 @@ export async function signInWithApple() {
   return {
     ...data,
     appleCredential: credential,
+  };
+}
+
+export async function signInWithGoogle() {
+  if (!googleIosClientId) {
+    throw new Error(
+      'The Google iOS client ID is not configured.'
+    );
+  }
+
+  if (!googleWebClientId) {
+    throw new Error(
+      'The Google Web client ID is not configured.'
+    );
+  }
+
+  const response = await GoogleSignin.signIn();
+
+  if (!isSuccessResponse(response)) {
+    return null;
+  }
+
+  const { idToken } = response.data;
+
+  if (!idToken) {
+    throw new Error(
+      'Google did not return an identity token.'
+    );
+  }
+
+  const { data, error } =
+    await supabase.auth.signInWithIdToken({
+      provider: 'google',
+      token: idToken,
+    });
+
+  if (error) {
+    throw error;
+  }
+
+  return {
+    ...data,
+    googleUser: response.data.user,
   };
 }
 

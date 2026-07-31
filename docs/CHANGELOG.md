@@ -2,13 +2,87 @@ Changelog
 
 This document records significant milestones in the evolution of Top3.
 
-Unlike CURRENT_STATE.md, which describes the application's currentimplementation, this document captures the major architectural andproduct milestones that shaped the application over time.
+Unlike CURRENT_STATE.md, which describes the application's current implementation, this document captures the major architectural and product milestones that shaped the application over time.
 
-v1.2 --- Design System & Collection Flow Refinement
+v1.3 — Native Apple Authentication
 
 Released: July 31, 2026
 
-This release focused on improving consistency, maintainability, and theoverall collection creation experience. The application now has thebeginnings of a reusable design system, reducing duplicated UI codewhile creating a stronger foundation for future development.
+This release adds native Sign in with Apple and completes the first production-ready social authentication provider for Top3.
+
+Added
+
+Authentication
+
+Added native Sign in with Apple using expo-apple-authentication.
+
+Added Apple identity token exchange through Supabase Auth.
+
+Added support for both new-user registration and returning-user sign-in.
+
+Added persistent Apple-authenticated Supabase sessions.
+
+Added Apple name metadata preservation when available during first authorization.
+
+Platform Configuration
+
+Enabled the Sign in with Apple capability for the iOS bundle identifier.
+
+Added ios.usesAppleSignIn to Expo configuration.
+
+Added the expo-apple-authentication config plugin.
+
+Created and installed a new EAS iOS development build.
+
+Enabled the Apple provider in Supabase.
+
+Added com.jeremylinskillsteam.top3 as the Apple Client ID.
+
+Feed
+
+Added an authentication guard before loading published collections.
+
+Improved
+
+Authentication Flow
+
+Integrated Apple authentication into the existing auth-service.ts architecture.
+
+Reused the existing AuthProvider and onAuthStateChange session flow.
+
+Routed successful Apple authentication through the existing application entry point.
+
+Preserved email authentication and email verification behaviour.
+
+Session Handling
+
+Improved first-login session initialization.
+
+Improved session restoration after reinstalling or reopening the app.
+
+Prevented authenticated screens from querying Supabase before auth initialization completes.
+
+Fixed
+
+Fixed the Feed permission error that could occur immediately after a user's first successful Apple sign-in.
+
+Fixed the authentication timing race that caused the Feed to query collections before the Supabase session was ready.
+
+Improved handling of cancelled Apple authorization attempts so cancellations do not display as authentication failures.
+
+Documentation
+
+Updated CURRENT_STATE.md to version 1.3.
+
+Recorded native Apple authentication as complete.
+
+Added Google Sign-In as the next planned authentication provider.
+
+v1.2 — Design System & Collection Flow Refinement
+
+Released: July 31, 2026
+
+This release focused on improving consistency, maintainability, and the overall collection creation experience. The application now has the beginnings of a reusable design system, reducing duplicated UI code while creating a stronger foundation for future development.
 
 Added
 
@@ -20,11 +94,11 @@ Introduced reusable Chip component.
 
 Established a shared page layout architecture.
 
-Standardized navigation (ScreenHeader) and page identity(PageHeader) responsibilities.
+Standardized navigation (ScreenHeader) and page identity (PageHeader) responsibilities.
 
 Search
 
-Added curated search suggestions that automatically transition tocommunity-driven suggestions after a category/topic reaches 50published collections.
+Added curated search suggestions that automatically transition to community-driven suggestions after a category/topic reaches 50 published collections.
 
 Improved
 
@@ -58,13 +132,13 @@ Fixed
 
 Eliminated inconsistent page title layouts.
 
-Eliminated duplicated chip implementations across the collectionflow.
+Eliminated duplicated chip implementations across the collection flow.
 
-v1.1 --- Social Foundation Complete
+v1.1 — Social Foundation Complete
 
 Released: July 30, 2026
 
-This release completes the migration of Top3's core social interactionsto Supabase. Authentication, collections, profiles, likes, and commentsare now persisted through the backend, establishing the application'ssocial foundation.
+This release completes the migration of Top3's core social interactions to Supabase. Authentication, collections, profiles, likes, and comments are now persisted through the backend, establishing the application's social foundation.
 
 Added
 
@@ -120,99 +194,99 @@ Overall application stability.
 
 Fixed
 
-Corrected comment counts to reference collection.id instead of thesynthetic post.id.
+Corrected comment counts to reference collection.id instead of the synthetic post.id.
 
 Fixed comment persistence after application restart.
 
 Fixed comment count synchronization across the application.
 
-v1.0 --- Platform Foundation
+v1.0 — Platform Foundation
 
 Released: July 2026
 
-This milestone established the core architecture of Top3 as a persistentsocial application.
+This milestone established the core architecture of Top3 as a persistent social application.
 
 Added
 
 Platform
 
-Supabase authentication
+Supabase authentication.
 
-Persistent user sessions
+Persistent user sessions.
 
-User onboarding
+User onboarding.
 
 Profiles
 
-User profiles
+User profiles.
 
-Public profiles
+Public profiles.
 
-Profile editing
+Profile editing.
 
-Privacy controls
+Privacy controls.
 
 Collections
 
-Collection creation
+Collection creation.
 
-Draft collections
+Draft collections.
 
-Draft persistence
+Draft persistence.
 
-Resume draft workflow
+Resume draft workflow.
 
-Collection editing
+Collection editing.
 
-Drag-and-drop ranking
+Drag-and-drop ranking.
 
-Collection publishing
+Collection publishing.
 
-Published collections
+Published collections.
 
 Discovery
 
-Personalized Feed
+Personalized Feed.
 
-Discover experience
+Discover experience.
 
-Category browsing
+Category browsing.
 
-Community Top3
+Community Top3.
 
-Overall Top3
+Overall Top3.
 
-Taste Match
+Taste Match.
 
-Recommendation engine
+Recommendation engine.
 
 Social
 
-Following (prototype)
+Following (prototype).
 
-Comments (prototype)
+Comments (prototype).
 
-Likes (prototype)
+Likes (prototype).
 
-Shared highlights
+Shared highlights.
 
 External Content
 
-TMDB integration
+TMDB integration.
 
-Google Books integration
+Google Books integration.
 
-RAWG integration
+RAWG integration.
 
-MusicBrainz integration
+MusicBrainz integration.
 
 Infrastructure
 
-EAS Development Build
+EAS Development Build.
 
-Context-based architecture
+Context-based architecture.
 
-Supabase service layer
+Supabase service layer.
 
 Improved
 
@@ -284,12 +358,14 @@ Next Milestone
 
 Current focus:
 
-Polish the collection creation experience.
+Complete Google Sign-In integration.
 
-Continue replacing remaining mock community data.
+Continue polishing authentication and onboarding.
 
 Migrate Following to Supabase.
 
-Add Supabase Realtime for social interactions.
+Replace remaining mock community users with real users.
+
+Add Supabase Realtime for Likes, Comments and Following.
 
 Strengthen discovery and recommendation experiences.
