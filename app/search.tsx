@@ -1,3 +1,4 @@
+import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
 import SearchResultSkeleton from '@/components/search-result-skeleton';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
@@ -8,6 +9,7 @@ import {
   searchMovies,
   searchTvShows,
 } from '@/providers/tmdb';
+import { getPublishedPosts } from '@/services/post-service';
 import { Top3Item } from '@/types/top3-item';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -15,8 +17,6 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Image,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -39,8 +39,96 @@ const SEARCH_PROVIDERS: Record<string, SearchProvider> = {
 };
 
 const MINIMUM_SEARCH_LENGTH = 3;
+const MINIMUM_COLLECTIONS_FOR_POPULARITY = 50;
 
 const SEARCH_CACHE = new Map<string, Top3Item[]>();
+
+const CATEGORY_SUGGESTIONS: Record<string, string[]> = {
+  movies: [
+    'The Godfather',
+    'Parasite',
+    'Spirited Away',
+    'The Dark Knight',
+    'Everything Everywhere All at Once',
+  ],
+  tv: [
+    'Breaking Bad',
+    'The Bear',
+    'Succession',
+    'Severance',
+    'The Last of Us',
+  ],
+  books: [
+    'The Hobbit',
+    'Dune',
+    'The Handmaid’s Tale',
+    'Project Hail Mary',
+    'The Great Gatsby',
+  ],
+  games: [
+    'The Legend of Zelda',
+    'Baldur’s Gate 3',
+    'Red Dead Redemption 2',
+    'Hades',
+    'The Last of Us',
+  ],
+};
+
+const TOPIC_SUGGESTIONS: Record<string, string[]> = {
+  comedy: [
+    'The Office',
+    'Parks and Recreation',
+    'Schitt’s Creek',
+    'Ted Lasso',
+    'Brooklyn Nine-Nine',
+  ],
+  drama: [
+    'The Sopranos',
+    'Mad Men',
+    'Succession',
+    'The Wire',
+    'Better Call Saul',
+  ],
+  documentary: [
+    'Planet Earth',
+    'The Last Dance',
+    'Free Solo',
+    '13th',
+    'Won’t You Be My Neighbor?',
+  ],
+  horror: [
+    'The Shining',
+    'Get Out',
+    'Hereditary',
+    'The Haunting of Hill House',
+    'Resident Evil',
+  ],
+  sciencefiction: [
+    'Dune',
+    'Blade Runner 2049',
+    'The Expanse',
+    'Mass Effect',
+    'Foundation',
+  ],
+  fantasy: [
+    'The Lord of the Rings',
+    'Game of Thrones',
+    'The Witcher',
+    'Baldur’s Gate 3',
+    'The Name of the Wind',
+  ],
+};
+
+function normalizeValue(value?: string) {
+  return value?.trim().toLowerCase() ?? '';
+}
+
+function normalizeSuggestionKey(value?: string) {
+  return value
+    ?.trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '') ?? '';
+}
 
 export default function SearchScreen() {
   const { rank } = useLocalSearchParams();
@@ -50,6 +138,10 @@ export default function SearchScreen() {
   const [searchResults, setSearchResults] = useState<Top3Item[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [
+    popularSuggestions,
+    setPopularSuggestions,
+  ] = useState<string[]>([]);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -82,9 +174,153 @@ export default function SearchScreen() {
 
   const isGeneralTopic = selectedTopic?.id === 'general';
 
+  const suggestionKey = normalizeSuggestionKey(
+    selectedTopic?.id ?? selectedTopic?.name
+  );
+
+  const fallbackSuggestions =
+    TOPIC_SUGGESTIONS[suggestionKey] ??
+    CATEGORY_SUGGESTIONS[currentList?.category ?? ''] ??
+    [];
+
+  const suggestions =
+    popularSuggestions.length > 0
+      ? popularSuggestions
+      : fallbackSuggestions;
+
   const trimmedQuery = searchQuery.trim();
   const canSearch =
     trimmedQuery.length >= MINIMUM_SEARCH_LENGTH;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadPopularSuggestions() {
+      const categoryId = currentList?.category;
+      const topic = currentList?.topic;
+
+      if (!categoryId) {
+        setPopularSuggestions([]);
+        return;
+      }
+
+      try {
+        const publishedPosts = await getPublishedPosts();
+
+        const normalizedCategory =
+          normalizeValue(categoryId);
+
+        const normalizedTopic =
+          normalizeValue(topic) || 'general';
+
+        const matchingPosts = publishedPosts.filter(
+          (post) => {
+            const postCategory = normalizeValue(
+              post.collection.category
+            );
+
+            const postTopic =
+              normalizeValue(post.collection.topic) ||
+              'general';
+
+            return (
+              postCategory === normalizedCategory &&
+              postTopic === normalizedTopic
+            );
+          }
+        );
+
+        if (
+          matchingPosts.length <
+          MINIMUM_COLLECTIONS_FOR_POPULARITY
+        ) {
+          if (isMounted) {
+            setPopularSuggestions([]);
+          }
+
+          return;
+        }
+
+        const scores = new Map<
+          string,
+          {
+            title: string;
+            score: number;
+            appearances: number;
+          }
+        >();
+
+        matchingPosts.forEach((post) => {
+            post.collection.items.forEach(
+              (item, index) => {
+                if (!item) {
+                  return;
+                }
+
+                const itemKey =
+                  item.id?.toString() ||
+                  normalizeValue(item.title);
+
+                if (!itemKey) {
+                  return;
+                }
+
+                const rankScore = 3 - index;
+                const existing = scores.get(itemKey);
+
+                scores.set(itemKey, {
+                  title: item.title,
+                  score:
+                    (existing?.score ?? 0) +
+                    rankScore,
+                  appearances:
+                    (existing?.appearances ?? 0) + 1,
+                });
+              }
+            );
+          });
+
+        const nextSuggestions = Array.from(
+          scores.values()
+        )
+          .sort((a, b) => {
+            if (b.score !== a.score) {
+              return b.score - a.score;
+            }
+
+            if (b.appearances !== a.appearances) {
+              return b.appearances - a.appearances;
+            }
+
+            return a.title.localeCompare(b.title);
+          })
+          .slice(0, 5)
+          .map((entry) => entry.title);
+
+        if (isMounted) {
+          setPopularSuggestions(nextSuggestions);
+        }
+      } catch (error) {
+        console.error(
+          'Failed to load popular search suggestions:',
+          error
+        );
+
+        if (isMounted) {
+          setPopularSuggestions([]);
+        }
+      }
+    }
+
+    loadPopularSuggestions();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    currentList?.category,
+    currentList?.topic,
+  ]);
 
   useEffect(() => {
     async function loadResults() {
@@ -182,6 +418,10 @@ export default function SearchScreen() {
     }).start();
   }, [fadeAnim, isLoading, searchResults]);
 
+  function chooseSuggestion(suggestion: string) {
+    setSearchQuery(suggestion);
+  }
+
   function selectItem(item: Top3Item) {
     const selectedRank = Number(rank);
 
@@ -205,15 +445,13 @@ export default function SearchScreen() {
     : `${topicName} Results`;
 
   return (
-    <KeyboardAvoidingView
-      style={styles.keyboardContainer}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={90}>
-      <SafeAreaView style={styles.container}>
-        <ScreenHeader title={searchTitle} />
+    <SafeAreaView style={styles.container}>
+      <ScreenHeader showBackButton />
 
-        <View style={styles.content}>
-          <TextInput
+      <PageHeader title={searchTitle} />
+
+      <View style={styles.content}>
+        <TextInput
             style={styles.searchInput}
             placeholder={searchPlaceholder}
             value={searchQuery}
@@ -222,12 +460,38 @@ export default function SearchScreen() {
             autoCapitalize="words"
           />
 
-          {!canSearch ? (
-            <Text style={styles.searchHelper}>
-              Type at least {MINIMUM_SEARCH_LENGTH}{' '}
-              characters to search.
+        {!canSearch ? (
+          <Text style={styles.searchHelper}>
+            Type at least {MINIMUM_SEARCH_LENGTH}{' '}
+            characters to search.
+          </Text>
+        ) : null}
+
+        {!hasSearched && !canSearch && suggestions.length > 0 ? (
+          <View style={styles.suggestionsSection}>
+            <Text style={styles.suggestionsTitle}>
+              Suggestions
             </Text>
-          ) : null}
+
+            <View style={styles.suggestionList}>
+              {suggestions.map((suggestion) => (
+                <Pressable
+                  key={suggestion}
+                  style={({ pressed }) => [
+                    styles.suggestionChip,
+                    pressed && styles.suggestionChipPressed,
+                  ]}
+                  onPress={() => chooseSuggestion(suggestion)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Search for ${suggestion}`}>
+                  <Text style={styles.suggestionText}>
+                    {suggestion}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        ) : null}
 
           {isLoading ? (
             <>
@@ -334,28 +598,22 @@ export default function SearchScreen() {
               </Animated.View>
             </>
           )}
-        </View>
-      </SafeAreaView>
-    </KeyboardAvoidingView>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  keyboardContainer: {
-    flex: 1,
-  },
-
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#F8F8F8',
   },
 
   content: {
-  flex: 1,
-  paddingHorizontal: 20,
-  paddingTop: 24,
-  backgroundColor: '#FFFFFF',
-},
+    flex: 1,
+    paddingHorizontal: 20,
+    backgroundColor: '#F8F8F8',
+  },
 
   searchInput: {
     borderWidth: 1,
@@ -368,10 +626,44 @@ const styles = StyleSheet.create({
   },
 
   searchHelper: {
-    fontSize: 14,
-    color: '#777777',
     marginTop: -14,
     marginBottom: 20,
+    fontSize: 14,
+    color: '#777777',
+  },
+
+  suggestionsSection: {
+    marginTop: 4,
+  },
+
+  suggestionsTitle: {
+    marginBottom: 12,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#222222',
+  },
+
+  suggestionList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+
+  suggestionChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: '#F3F3F3',
+    borderRadius: 18,
+  },
+
+  suggestionChipPressed: {
+    opacity: 0.65,
+  },
+
+  suggestionText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333333',
   },
 
   sectionTitle: {

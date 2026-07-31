@@ -2,6 +2,7 @@ import CollectionForm, {
   CollectionFormValues,
   getInitialCollectionFormValues,
 } from '@/components/collection-form';
+import PageHeader from '@/components/page-header';
 import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
@@ -15,7 +16,6 @@ import { useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -158,21 +158,16 @@ export default function CreateCollectionScreen() {
       edges={['top', 'left', 'right']}>
       <ScreenHeader />
 
+      <PageHeader
+        title="Share your taste"
+        subtitle="What would you like to rank today?"
+      />
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled">
-        <View style={styles.headingSection}>
-          <Text style={styles.title}>
-            Share your taste
-          </Text>
-
-          <Text style={styles.subtitle}>
-            What would you like to rank today?
-          </Text>
-        </View>
-
         <CollectionForm
           existingLists={lists}
           values={formValues}
@@ -194,43 +189,24 @@ export default function CreateCollectionScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#F8F8F8',
   },
 
   scrollView: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#F8F8F8',
   },
 
   content: {
     paddingHorizontal: 20,
-    paddingTop: 24,
     paddingBottom: 40,
-  },
-
-  headingSection: {
-    marginBottom: 24,
-  },
-
-  title: {
-    fontSize: 30,
-    lineHeight: 36,
-    fontWeight: '700',
-    color: '#222222',
-  },
-
-  subtitle: {
-    marginTop: 8,
-    fontSize: 16,
-    lineHeight: 22,
-    color: '#777777',
   },
 
   bottomBar: {
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 8,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#F8F8F8',
     borderTopWidth:
       StyleSheet.hairlineWidth,
     borderTopColor: '#EAEAEA',

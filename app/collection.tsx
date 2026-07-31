@@ -1,3 +1,4 @@
+import PageHeader from '@/components/page-header';
 import PrimaryButton from '@/components/primary-button';
 import RankedItemCard from '@/components/ranked-item-card';
 import ScreenHeader from '@/components/screen-header';
@@ -11,13 +12,13 @@ import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-    Alert,
-    Pressable,
-    StyleSheet,
-    View,
+  Alert,
+  Pressable,
+  StyleSheet,
+  View
 } from 'react-native';
 import DraggableFlatList, {
-    RenderItemParams,
+  RenderItemParams,
 } from 'react-native-draggable-flatlist';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -26,7 +27,8 @@ type DraggableRow = {
   item: Top3Item;
 };
 
-const DRAG_INSTRUCTION_KEY = 'top3-drag-instruction-seen';
+const DRAG_INSTRUCTION_KEY =
+  'top3-drag-instruction-seen';
 
 export default function CollectionScreen() {
   const {
@@ -100,15 +102,15 @@ export default function CollectionScreen() {
   if (!currentList) {
     return (
       <SafeAreaView style={styles.container}>
-        <ScreenHeader
-          title="No Collection Selected"
-          showBackButton
-        />
+        <ScreenHeader showBackButton />
+
+        <PageHeader title="No Collection Selected" />
       </SafeAreaView>
     );
   }
 
-  const category = currentList.category as CategoryId;
+  const category =
+    currentList.category as CategoryId;
 
   const draggableRows: DraggableRow[] =
     selectedItems.map((item) => ({
@@ -117,7 +119,8 @@ export default function CollectionScreen() {
     }));
 
   const relativeTime = formatRelativeTime(
-    currentList.publishedAt ?? currentList.updatedAt
+    currentList.publishedAt ??
+      currentList.updatedAt
   );
 
   const timeText = relativeTime?.replace(
@@ -174,7 +177,8 @@ export default function CollectionScreen() {
         {
           text: 'Remove',
           style: 'destructive',
-          onPress: () => removeItemAtRank(rank),
+          onPress: () =>
+            removeItemAtRank(rank),
         },
         {
           text: 'Cancel',
@@ -223,7 +227,10 @@ export default function CollectionScreen() {
             placeholder={`Choose item #${rank}`}
             category={category}
             onPress={() =>
-              openItemActions(rank, row.item.title)
+              openItemActions(
+                rank,
+                row.item.title
+              )
             }
           />
 
@@ -273,7 +280,9 @@ export default function CollectionScreen() {
                   item={null}
                   placeholder={`Choose item #${rank}`}
                   category={category}
-                  onPress={() => openSearch(rank)}
+                  onPress={() =>
+                    openSearch(rank)
+                  }
                 />
               </View>
             );
@@ -305,10 +314,11 @@ export default function CollectionScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScreenHeader
+      <ScreenHeader showBackButton />
+
+      <PageHeader
         title={currentList.title}
-        subtitle={subtitle}
-        showBackButton
+        subtitle={subtitle ?? undefined}
       />
 
       <View style={styles.listArea}>
@@ -317,10 +327,14 @@ export default function CollectionScreen() {
             data={draggableRows}
             keyExtractor={(row) => row.key}
             renderItem={renderItem}
-            ListFooterComponent={renderEmptySlots}
+            ListFooterComponent={
+              renderEmptySlots
+            }
             scrollEnabled={false}
             onDragBegin={setActiveIndex}
-            onRelease={() => setActiveIndex(null)}
+            onRelease={() =>
+              setActiveIndex(null)
+            }
             onDragEnd={({ data }) =>
               saveReorderedItems(data)
             }
@@ -363,7 +377,7 @@ const styles = StyleSheet.create({
 
   listContent: {
     paddingHorizontal: 8,
-    paddingTop: 8,
+    paddingTop: 0,
     paddingBottom: 24,
   },
 
@@ -427,7 +441,8 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 8,
     backgroundColor: '#FAFAFA',
-    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopWidth:
+      StyleSheet.hairlineWidth,
     borderTopColor: '#DDDDDD',
   },
 });
