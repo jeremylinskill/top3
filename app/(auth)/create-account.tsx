@@ -40,29 +40,39 @@ export default function CreateAccountScreen() {
     }
   }
 
-  async function handleGoogleSignUp() {
-    try {
-      const result = await signInWithGoogle();
+async function handleGoogleSignUp() {
+  try {
+    const result = await signInWithGoogle();
 
-      if (!result) {
-        return;
-      }
-
-      router.replace('/');
-    } catch (error) {
-      console.error(
-        'Google sign-in failed:',
-        error
-      );
-
-      Alert.alert(
-        'Unable to continue with Google',
-        error instanceof Error
-          ? error.message
-          : 'Please try again.'
-      );
+    if (!result) {
+      return;
     }
+
+    router.replace('/');
+  } catch (error) {
+    // User closed the Google account picker.
+    if (
+      error instanceof Error &&
+      (
+        error.message.includes('cancel') ||
+        error.message.includes('cancelled') ||
+        error.message.includes('canceled')
+      )
+    ) {
+      return;
+    }
+
+    console.error(
+      'Google sign-in failed:',
+      error
+    );
+
+    Alert.alert(
+      'Unable to continue with Google',
+      'Please try again.'
+    );
   }
+}
 
   function handleEmailSignUp() {
     router.push('/sign-up-email');
