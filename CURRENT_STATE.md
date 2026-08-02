@@ -2,7 +2,7 @@ CURRENT_STATE.md
 
 Project: Top3
 
-Version: 1.3
+Version: 1.4
 
 Status: Active Development
 
@@ -12,9 +12,9 @@ Current Branch: main
 
 Last Verified Commit
 
-2a3828f
+927fdda
 
-Add native Sign in with Apple support
+Add native Sign in with Google support
 
 Dashboard
 
@@ -24,11 +24,11 @@ Project Status
 
 Current Feature
 
-Native authentication and onboarding.
+Authentication milestone complete.
 
 Current Priority
 
-Complete the authentication experience before expanding content categories.
+Review the current product state and determine the next focused milestone before beginning implementation.
 
 Architecture should always be discussed before implementation begins.
 
@@ -76,7 +76,7 @@ Local Storage
 
 AsyncStorage
 
-Used only for temporary/local application state.
+AsyncStorage is used only for temporary or local application state that does not yet require shared server persistence.
 
 Navigation
 
@@ -95,6 +95,8 @@ Additional Screens
 Authentication
 
 Welcome
+
+Create Account
 
 Email Sign Up
 
@@ -174,6 +176,10 @@ EmailSignUpForm
 
 Authentication
 
+Authentication is implemented through a shared service layer and Supabase Auth.
+
+The existing AuthProvider restores persisted sessions and responds to authentication state changes for email, Apple, and Google accounts.
+
 Email Authentication
 
 Status: ✅ Complete
@@ -184,9 +190,11 @@ Email sign up
 
 Email sign in
 
-Session persistence
-
 Email verification flow
+
+Persistent Supabase sessions
+
+Automatic session restoration
 
 Apple Sign In
 
@@ -196,19 +204,61 @@ Supports:
 
 Native iOS authentication
 
-Apple Developer integration
+Apple Developer capability integration
 
-Supabase identity token exchange
+Expo Apple Authentication
+
+Supabase identity-token exchange
 
 Persistent Supabase sessions
 
-Existing account sign in
+Existing-user sign in
 
-New account creation
+New-user account creation
+
+Silent handling of user cancellation
+
+Friendly user-facing error messages
 
 Google Sign In
 
-Status: 🚧 Planned
+Status: ✅ Complete
+
+Supports:
+
+Native Google account selection on iOS
+
+Google Cloud OAuth configuration
+
+Separate iOS and Web OAuth clients
+
+Expo Google Sign-In configuration and iOS URL scheme
+
+Supabase identity-token exchange
+
+Persistent Supabase sessions
+
+Existing-user sign in
+
+New-user account creation
+
+Silent handling of user cancellation
+
+Friendly user-facing error messages
+
+Google Provider Configuration
+
+Supabase Google authentication is configured with:
+
+Web OAuth Client ID
+
+iOS OAuth Client ID
+
+Web OAuth Client Secret stored only in Supabase
+
+Nonce checks skipped for compatibility with the native iOS Google Sign-In flow
+
+The Google Client Secret must never be stored in the mobile application, committed to Git, or added to the app's public environment variables.
 
 Persistence
 
@@ -242,13 +292,13 @@ Collection Flow
 
 Recent improvements:
 
-Shared PageHeader across Create, Search and Collection.
+Shared PageHeader across Create, Search, and Collection.
 
-Shared Chip component for categories, topics and search suggestions.
+Shared Chip component for categories, topics, and search suggestions.
 
-Standardized spacing, typography and page hierarchy.
+Standardized spacing, typography, and page hierarchy.
 
-Curated search suggestions remain until a category/topic reaches 50 published collections before switching to community-driven suggestions.
+Curated search suggestions remain until a category/topic reaches 50 published collections, then become community-driven.
 
 Current Source of Truth
 
@@ -278,7 +328,9 @@ Community experiences currently combine real authenticated users with mock commu
 
 Prototype
 
-⚠ Following (AsyncStorage)
+⚠ Following
+
+Following is functional but currently persists through AsyncStorage.
 
 Recent Milestones
 
@@ -286,33 +338,61 @@ July 31, 2026
 
 Authentication
 
-Native Sign in with Apple completed.
+Completed native Sign in with Apple.
 
-Apple Developer capability enabled.
+Completed native Sign in with Google.
 
-Supabase Apple provider configured.
+Configured Apple Developer and Google Cloud authentication requirements.
 
-Persistent Apple sessions implemented.
+Configured Apple and Google providers in Supabase.
 
-Authentication integrated into the existing provider architecture.
+Added persistent Supabase sessions for Apple and Google users.
+
+Integrated both providers into the existing authentication service.
+
+Preserved the existing email authentication and verification flow.
+
+Added silent cancellation handling for Apple and Google sign-in.
+
+Replaced technical authentication alerts with friendly user-facing messages.
+
+Google Sign In
+
+Added @react-native-google-signin/google-signin.
+
+Added Google Sign-In Expo config plugin.
+
+Added the reversed iOS client ID URL scheme.
+
+Added public iOS and Web Google Client IDs to the application environment.
+
+Created separate Google Cloud iOS and Web OAuth clients.
+
+Added both accepted Google OAuth audiences to Supabase.
+
+Enabled Supabase nonce-check compatibility for the native iOS flow.
+
+Built and installed a new EAS iOS development client.
 
 Feed
 
-Added authentication guard before loading published collections.
+Added an authentication guard before loading published collections.
 
-Eliminated first-launch authentication race condition.
+Eliminated the first-login authentication race condition.
 
-Preserved secure RLS policies.
+Prevented anonymous collection queries during session initialization.
+
+Preserved secure Row Level Security policies.
 
 Design System
 
 Introduced reusable PageHeader.
 
-Introduced reusable Chip component.
+Introduced reusable Chip.
 
-Standardized Create, Search and Collection layouts.
+Standardized Create, Search, and Collection layouts.
 
-Unified category, topic and search suggestion chips.
+Unified category, topic, and search suggestion chips.
 
 Continued migration away from duplicated UI components.
 
@@ -324,17 +404,17 @@ Migrate Following to Supabase.
 
 Replace remaining mock community users with real users.
 
-Complete Google Sign-In integration.
-
 Medium Priority
 
 Verify avatar persistence.
 
-Scope AsyncStorage keys by authenticated user.
+Scope AsyncStorage keys by authenticated user where appropriate.
 
 Improve optimistic rollback behaviour.
 
-Add Supabase Realtime for Likes, Comments and Following.
+Add Supabase Realtime for Likes, Comments, and Following.
+
+Review whether the Google nonce compatibility setting should be hardened in a future authentication pass.
 
 Low Priority
 
@@ -343,6 +423,8 @@ Review legacy Expo template files.
 Remove placeholder services and unused routes.
 
 Development Workflow
+
+Every feature should follow this process:
 
 Discuss architecture.
 
@@ -362,19 +444,25 @@ Commit.
 
 Push.
 
-Update documentation.
+Update documentation when the application state has materially changed.
 
 Notes for Future Chats
 
+Before making recommendations:
+
 Read this document first.
 
-Treat the codebase as the source of truth.
+Treat the current codebase as the source of truth.
 
 Do not recommend rebuilding implemented features.
 
 Ask before assuming functionality is missing.
 
 Discuss architecture before implementation.
+
+Proceed one focused step at a time.
+
+Do not automatically choose the next major feature without reviewing the roadmap and current product state.
 
 Document Purpose
 

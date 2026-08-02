@@ -23,7 +23,7 @@ export default function WelcomeScreen() {
        * Story 002 will replace this with
        * /create-account.
        */
-      router.replace('/create-account');
+      router.replace('/(tabs)');
     } catch (error) {
       console.error(
         'Failed to complete welcome flow:',

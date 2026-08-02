@@ -1,6 +1,6 @@
 Top3 Product Roadmap
 
-Version: 1.2Status: Active DevelopmentOwner: Jeremy LinskillLast Updated: July 31, 2026
+Version: 1.3Status: Active DevelopmentOwner: Jeremy LinskillLast Updated: July 31, 2026
 
 Purpose
 
@@ -28,17 +28,19 @@ Conversation — Encourage discussion rather than passive consumption.
 
 Current Milestone
 
-Production-Ready Authentication
+Shared Community Foundation
 
 Status: In Progress
 
-Top3 now has a production-ready authentication foundation.
+Top3 now has a production-ready authentication system and a solid backend foundation. The current milestone is completing the transition from prototype community features to fully shared experiences.
 
 Completed
 
 Email authentication
 
 Native Sign in with Apple
+
+Native Sign in with Google
 
 Persistent Supabase sessions
 
@@ -54,11 +56,9 @@ Feed authentication guard
 
 Remaining
 
-Google Sign-In
-
 Shared Following
 
-Replace mock community users
+Replace remaining mock community users
 
 Realtime synchronization
 
@@ -72,23 +72,21 @@ Deliver a fully shared social experience backed by real users.
 
 Near-Term Priorities
 
-Complete Google Sign-In.
-
 Migrate Following to Supabase.
 
 Replace remaining mock community users.
 
-Add Supabase Realtime for Likes, Comments and Following.
+Add Supabase Realtime for Likes, Comments, and Following.
 
 Improve profile discovery.
 
 Expand conversation tools.
 
-Introduce notifications where they improve engagement.
+Introduce notifications where they genuinely improve the experience.
 
 Success looks like:
 
-Every meaningful social interaction is shared across all users and updates without requiring manual refresh.
+Every meaningful social interaction is shared, persistent, and updates naturally across all users.
 
 Initiative 2 — Smarter Discovery
 
@@ -168,9 +166,9 @@ Analytics.
 
 Platform operations.
 
-Guiding Principles
+Product Principles
 
-Every future feature should support at least one of these goals.
+Every future feature should support one or more of these goals.
 
 Make publishing effortless.
 
@@ -188,7 +186,9 @@ Prioritize quality over feature quantity.
 
 Maintain a content-first design philosophy.
 
-If a proposed feature doesn't strengthen one or more of these principles, it should be reconsidered before development begins.
+Use AI to strengthen human discovery, not replace it.
+
+If a proposed feature does not strengthen one or more of these principles, it should be reconsidered before development begins.
 
 Technical Strategy
 
@@ -211,6 +211,22 @@ Commit.
 Push.
 
 Update project documentation.
+
+Selecting the Next Milestone
+
+After each completed milestone:
+
+Review CURRENT_STATE.md.
+
+Review this roadmap.
+
+Identify the most important product problem to solve next.
+
+Discuss the architecture before implementation.
+
+Complete one vertical slice.
+
+Update all project documentation.
 
 Success Metrics
 

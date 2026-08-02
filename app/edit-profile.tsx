@@ -1,24 +1,29 @@
+import PageHeader from '@/components/page-header';
 import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
+import { COLORS } from '@/constants/colors';
 import { useProfile } from '@/context/profile-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import {
-    Alert,
-    Image,
-    Keyboard,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  Image,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+const MAX_AVATAR_FILE_SIZE =
+  5 * 1024 * 1024;
 
 export default function EditProfileScreen() {
   const { profile, updateProfile } = useProfile();
@@ -33,13 +38,19 @@ export default function EditProfileScreen() {
     profile.username
   );
 
-  const [bio, setBio] = useState(profile.bio ?? '');
+  const [bio, setBio] = useState(
+    profile.bio ?? ''
+  );
 
   const [avatarUrl, setAvatarUrl] = useState(
     profile.avatarUrl ?? ''
   );
 
-  const trimmedDisplayName = displayName.trim();
+  const [isSaving, setIsSaving] =
+    useState(false);
+
+  const trimmedDisplayName =
+    displayName.trim();
 
   const trimmedUsername = username
     .trim()
@@ -47,7 +58,8 @@ export default function EditProfileScreen() {
 
   const canSave =
     trimmedDisplayName.length > 0 &&
-    trimmedUsername.length > 0;
+    trimmedUsername.length > 0 &&
+    !isSaving;
 
   async function chooseAvatar() {
     const permission =
@@ -71,11 +83,28 @@ export default function EditProfileScreen() {
       });
 
     if (
-      !result.canceled &&
-      result.assets.length > 0
+      result.canceled ||
+      result.assets.length === 0
     ) {
-      setAvatarUrl(result.assets[0].uri);
+      return;
     }
+
+    const asset = result.assets[0];
+
+    if (
+      typeof asset.fileSize === 'number' &&
+      asset.fileSize >
+        MAX_AVATAR_FILE_SIZE
+    ) {
+      Alert.alert(
+        'Image too large',
+        'Please choose an image smaller than 5 MB.'
+      );
+
+      return;
+    }
+
+    setAvatarUrl(asset.uri);
   }
 
   function focusBioField() {
@@ -86,28 +115,46 @@ export default function EditProfileScreen() {
     }, 250);
   }
 
-  function saveProfile() {
+  async function saveProfile() {
     if (!canSave) {
       return;
     }
 
     Keyboard.dismiss();
+    setIsSaving(true);
 
-    updateProfile({
-      displayName: trimmedDisplayName,
-      username: trimmedUsername,
-      bio: bio.trim(),
-      avatarUrl: avatarUrl || undefined,
-    });
+    try {
+      await updateProfile({
+        displayName: trimmedDisplayName,
+        username: trimmedUsername,
+        bio: bio.trim(),
+        avatarUrl:
+          avatarUrl || undefined,
+      });
 
-    router.back();
+      router.back();
+    } catch (error) {
+      console.error(
+        'Failed to save profile:',
+        error
+      );
+
+      Alert.alert(
+        'Unable to save profile',
+        'Please try again.'
+      );
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScreenHeader
+      <ScreenHeader showBackButton />
+
+      <PageHeader
         title="Edit Profile"
-        showBackButton
+        align="center"
       />
 
       <KeyboardAvoidingView
@@ -133,10 +180,19 @@ export default function EditProfileScreen() {
             accessible={false}>
             <View style={styles.avatarSection}>
               <Pressable
-                style={styles.avatarButton}
+                style={({ pressed }) => [
+                  styles.avatarButton,
+                  pressed &&
+                    !isSaving &&
+                    styles.avatarButtonPressed,
+                  isSaving &&
+                    styles.avatarButtonDisabled,
+                ]}
                 onPress={chooseAvatar}
+                disabled={isSaving}
                 accessibilityRole="button"
-                accessibilityLabel="Change profile photo">
+                accessibilityLabel="Change profile photo"
+                accessibilityHint="Opens your photo library">
                 {avatarUrl ? (
                   <Image
                     source={{ uri: avatarUrl }}
@@ -159,6 +215,23 @@ export default function EditProfileScreen() {
                   />
                 </View>
               </Pressable>
+
+              <Pressable
+                onPress={chooseAvatar}
+                disabled={isSaving}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Change profile photo"
+                style={({ pressed }) => [
+                  styles.avatarHelpButton,
+                  pressed &&
+                    !isSaving &&
+                    styles.avatarHelpButtonPressed,
+                ]}>
+                <Text style={styles.avatarHelpText}>
+                  Tap photo to change
+                </Text>
+              </Pressable>
             </View>
 
             <View style={styles.field}>
@@ -171,8 +244,12 @@ export default function EditProfileScreen() {
                 value={displayName}
                 onChangeText={setDisplayName}
                 placeholder="Your name"
+                placeholderTextColor={
+                  COLORS.tertiaryText
+                }
                 autoCapitalize="words"
                 autoCorrect={false}
+                editable={!isSaving}
                 maxLength={50}
                 returnKeyType="next"
               />
@@ -184,7 +261,9 @@ export default function EditProfileScreen() {
               </Text>
 
               <View style={styles.usernameInput}>
-                <Text style={styles.atSymbol}>@</Text>
+                <Text style={styles.atSymbol}>
+                  @
+                </Text>
 
                 <TextInput
                   style={styles.usernameTextInput}
@@ -195,8 +274,12 @@ export default function EditProfileScreen() {
                     )
                   }
                   placeholder="username"
+                  placeholderTextColor={
+                    COLORS.tertiaryText
+                  }
                   autoCapitalize="none"
                   autoCorrect={false}
+                  editable={!isSaving}
                   maxLength={30}
                   returnKeyType="next"
                 />
@@ -204,7 +287,9 @@ export default function EditProfileScreen() {
             </View>
 
             <View style={styles.field}>
-              <Text style={styles.label}>Bio</Text>
+              <Text style={styles.label}>
+                Bio
+              </Text>
 
               <TextInput
                 style={[
@@ -215,6 +300,10 @@ export default function EditProfileScreen() {
                 onChangeText={setBio}
                 onFocus={focusBioField}
                 placeholder="Tell people about your taste."
+                placeholderTextColor={
+                  COLORS.tertiaryText
+                }
+                editable={!isSaving}
                 multiline
                 textAlignVertical="top"
                 maxLength={160}
@@ -229,7 +318,11 @@ export default function EditProfileScreen() {
 
         <View style={styles.bottomBar}>
           <PrimaryButton
-            title="Save Profile"
+            title={
+              isSaving
+                ? 'Saving...'
+                : 'Save Profile'
+            }
             onPress={saveProfile}
             disabled={!canSave}
           />
@@ -242,7 +335,7 @@ export default function EditProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: COLORS.background,
   },
 
   keyboardContainer: {
@@ -251,12 +344,11 @@ const styles = StyleSheet.create({
 
   scrollView: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.background,
   },
 
   content: {
     paddingHorizontal: 20,
-    paddingTop: 24,
     paddingBottom: 48,
   },
 
@@ -269,10 +361,18 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: '#222222',
+    backgroundColor: COLORS.text,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'visible',
+  },
+
+  avatarButtonPressed: {
+    opacity: 0.75,
+  },
+
+  avatarButtonDisabled: {
+    opacity: 0.6,
   },
 
   avatarImage: {
@@ -294,11 +394,26 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#222222',
+    backgroundColor: COLORS.text,
     borderWidth: 3,
-    borderColor: '#FFFFFF',
+    borderColor: COLORS.background,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  avatarHelpButton: {
+    marginTop: 12,
+  },
+
+  avatarHelpButtonPressed: {
+    opacity: 0.6,
+  },
+
+  avatarHelpText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: COLORS.tertiaryText,
+    textAlign: 'center',
   },
 
   field: {
@@ -309,25 +424,25 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     fontSize: 16,
     fontWeight: '600',
-    color: '#222222',
+    color: COLORS.text,
   },
 
   input: {
     borderWidth: 1,
-    borderColor: '#CCCCCC',
+    borderColor: COLORS.border,
     borderRadius: 12,
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 14,
     paddingVertical: 14,
     fontSize: 17,
-    color: '#222222',
+    color: COLORS.text,
   },
 
   usernameInput: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#CCCCCC',
+    borderColor: COLORS.border,
     borderRadius: 12,
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 14,
@@ -335,14 +450,14 @@ const styles = StyleSheet.create({
 
   atSymbol: {
     fontSize: 17,
-    color: '#777777',
+    color: COLORS.tertiaryText,
   },
 
   usernameTextInput: {
     flex: 1,
     paddingVertical: 14,
     fontSize: 17,
-    color: '#222222',
+    color: COLORS.text,
   },
 
   bioInput: {
@@ -353,15 +468,16 @@ const styles = StyleSheet.create({
     marginTop: 6,
     textAlign: 'right',
     fontSize: 13,
-    color: '#888888',
+    color: COLORS.tertiaryText,
   },
 
   bottomBar: {
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 16,
-    backgroundColor: '#FAFAFA',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#DDDDDD',
+    backgroundColor: COLORS.background,
+    borderTopWidth:
+      StyleSheet.hairlineWidth,
+    borderTopColor: COLORS.border,
   },
 });

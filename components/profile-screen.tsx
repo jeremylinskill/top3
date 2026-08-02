@@ -439,7 +439,7 @@ export default function ProfileScreen({
 
     try {
       await signOut();
-      router.replace('/sign-in-email');
+      router.replace('/sign-in');
     } catch (error) {
       console.error(
         'Failed to sign out:',

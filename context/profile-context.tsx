@@ -1,5 +1,6 @@
 import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/lib/supabase';
+import { uploadAvatar } from '@/lib/supabase/storage';
 import { UserProfile } from '@/types/user-profile';
 import {
   createContext,
@@ -14,7 +15,7 @@ type ProfileContextValue = {
   profile: UserProfile;
   updateProfile: (
     updates: Partial<UserProfile>
-  ) => void;
+  ) => Promise<void>;
 };
 
 type ProfileProviderProps = {
@@ -26,6 +27,7 @@ type ProfileRow = {
   username: string;
   display_name: string;
   bio: string;
+  avatar_url: string | null;
   is_public: boolean;
 };
 
@@ -34,6 +36,7 @@ const EMPTY_PROFILE: UserProfile = {
   displayName: '',
   username: '',
   bio: '',
+  avatarUrl: undefined,
   visibility: 'public',
 };
 
@@ -91,6 +94,7 @@ function createDefaultProfile(
       formatDisplayName(emailUsername),
     username: formatUsername(emailUsername),
     bio: '',
+    avatarUrl: undefined,
     visibility: 'public',
   };
 }
@@ -103,6 +107,7 @@ function mapRowToProfile(
     displayName: row.display_name,
     username: row.username,
     bio: row.bio,
+    avatarUrl: row.avatar_url ?? undefined,
     visibility: row.is_public
       ? 'public'
       : 'private',
@@ -117,9 +122,35 @@ function createProfileInsert(
     username: profile.username,
     display_name: profile.displayName,
     bio: profile.bio,
+    avatar_url: profile.avatarUrl ?? null,
     is_public:
       profile.visibility === 'public',
   };
+}
+
+function isLocalAvatarUri(
+  avatarUrl?: string
+) {
+  if (!avatarUrl) {
+    return false;
+  }
+
+  return (
+    avatarUrl.startsWith('file://') ||
+    avatarUrl.startsWith('content://') ||
+    avatarUrl.startsWith('ph://') ||
+    avatarUrl.startsWith('asset-library://')
+  );
+}
+
+function addCacheVersion(
+  publicUrl: string
+) {
+  const separator = publicUrl.includes('?')
+    ? '&'
+    : '?';
+
+  return `${publicUrl}${separator}v=${Date.now()}`;
 }
 
 export function ProfileProvider({
@@ -165,6 +196,7 @@ export function ProfileProvider({
               username,
               display_name,
               bio,
+              avatar_url,
               is_public
             `
           )
@@ -204,6 +236,7 @@ export function ProfileProvider({
               username,
               display_name,
               bio,
+              avatar_url,
               is_public
             `
           )
@@ -235,6 +268,7 @@ export function ProfileProvider({
                 username,
                 display_name,
                 bio,
+                avatar_url,
                 is_public
               `
             )
@@ -293,9 +327,9 @@ export function ProfileProvider({
     };
   }, [userId, userEmail]);
 
-  function updateProfile(
+  async function updateProfile(
     updates: Partial<UserProfile>
-  ) {
+  ): Promise<void> {
     if (
       !userId ||
       loadedUserId !== userId
@@ -303,48 +337,72 @@ export function ProfileProvider({
       return;
     }
 
-    setProfile((currentProfile) => {
-      const nextProfile: UserProfile = {
-        ...currentProfile,
-        ...updates,
-        id: userId,
-      };
+    const previousProfile = profile;
 
-      async function saveProfile() {
-        try {
-          const { error } = await supabase
-            .from('profiles')
-            .update({
-              username:
-                nextProfile.username,
-              display_name:
-                nextProfile.displayName,
-              bio: nextProfile.bio,
-              is_public:
-                nextProfile.visibility ===
-                'public',
-              updated_at:
-                new Date().toISOString(),
-            })
-            .eq('id', userId);
+    const optimisticProfile: UserProfile = {
+      ...previousProfile,
+      ...updates,
+      id: userId,
+    };
 
-          if (error) {
-            throw error;
-          }
-        } catch (error) {
-          console.error(
-            'Failed to update profile:',
-            error
-          );
+    setProfile(optimisticProfile);
 
-          setProfile(currentProfile);
-        }
+    try {
+      let persistedAvatarUrl =
+        optimisticProfile.avatarUrl;
+
+      if (
+        updates.avatarUrl &&
+        isLocalAvatarUri(updates.avatarUrl)
+      ) {
+        const uploadedAvatar =
+          await uploadAvatar({
+            userId,
+            localUri: updates.avatarUrl,
+          });
+
+        persistedAvatarUrl = addCacheVersion(
+          uploadedAvatar.publicUrl
+        );
       }
 
-      saveProfile();
+      const savedProfile: UserProfile = {
+        ...optimisticProfile,
+        avatarUrl:
+          persistedAvatarUrl || undefined,
+      };
 
-      return nextProfile;
-    });
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          username: savedProfile.username,
+          display_name:
+            savedProfile.displayName,
+          bio: savedProfile.bio,
+          avatar_url:
+            savedProfile.avatarUrl ?? null,
+          is_public:
+            savedProfile.visibility ===
+            'public',
+          updated_at:
+            new Date().toISOString(),
+        })
+        .eq('id', userId);
+
+      if (error) {
+        throw error;
+      }
+
+      setProfile(savedProfile);
+    } catch (error) {
+      console.error(
+        'Failed to update profile:',
+        error
+      );
+
+      setProfile(previousProfile);
+      throw error;
+    }
   }
 
   const contextValue =

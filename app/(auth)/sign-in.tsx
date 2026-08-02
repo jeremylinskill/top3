@@ -4,22 +4,22 @@ import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
 import { COLORS } from '@/constants/colors';
 import {
-  signInWithApple,
-  signInWithGoogle,
+    signInWithApple,
+    signInWithGoogle,
 } from '@/services/auth-service';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { router } from 'expo-router';
 import {
-  Alert,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
+    Alert,
+    Pressable,
+    StyleSheet,
+    Text,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function CreateAccountScreen() {
-  async function handleAppleSignUp() {
+export default function SignInScreen() {
+  async function handleAppleSignIn() {
     try {
       await signInWithApple();
       router.replace('/');
@@ -45,7 +45,7 @@ export default function CreateAccountScreen() {
     }
   }
 
-  async function handleGoogleSignUp() {
+  async function handleGoogleSignIn() {
     try {
       const result = await signInWithGoogle();
 
@@ -78,12 +78,12 @@ export default function CreateAccountScreen() {
     }
   }
 
-  function handleEmailSignUp() {
-    router.push('/sign-up-email');
+  function handleEmailSignIn() {
+    router.push('/sign-in-email');
   }
 
-  function handleSignIn() {
-    router.push('/sign-in');
+  function handleCreateAccount() {
+    router.replace('/create-account');
   }
 
   return (
@@ -92,13 +92,11 @@ export default function CreateAccountScreen() {
       edges={['top', 'bottom']}>
       <ScreenHeader />
 
-    <PageHeader
-  title="Create your account"
-  subtitle={
-    'Start discovering people who share\nyour favorite things.'
-  }
-  align="center"
-/>
+      <PageHeader
+        title="Welcome back"
+        subtitle="Sign in to continue discovering people who share your favorite things."
+        align="center"
+      />
 
       <View style={styles.content}>
         <View style={styles.options}>
@@ -113,11 +111,11 @@ export default function CreateAccountScreen() {
             }
             cornerRadius={12}
             style={styles.appleButton}
-            onPress={handleAppleSignUp}
+            onPress={handleAppleSignIn}
           />
 
           <GoogleAuthButton
-            onPress={handleGoogleSignUp}
+            onPress={handleGoogleSignIn}
           />
 
           <View style={styles.divider}>
@@ -131,26 +129,26 @@ export default function CreateAccountScreen() {
           </View>
 
           <EmailAuthButton
-            onPress={handleEmailSignUp}
+            onPress={handleEmailSignIn}
           />
         </View>
 
-        <View style={styles.signInContainer}>
-          <Text style={styles.signInPrompt}>
-            Already have an account?
+        <View style={styles.signUpContainer}>
+          <Text style={styles.signUpPrompt}>
+            Don&apos;t have an account?
           </Text>
 
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Sign in"
+            accessibilityLabel="Create account"
             hitSlop={8}
-            onPress={handleSignIn}
+            onPress={handleCreateAccount}
             style={({ pressed }) => [
-              styles.signInButton,
+              styles.signUpButton,
               pressed && styles.pressed,
             ]}>
-            <Text style={styles.signInButtonText}>
-              Sign In
+            <Text style={styles.signUpButtonText}>
+              Create one
             </Text>
           </Pressable>
         </View>
@@ -201,24 +199,24 @@ const styles = StyleSheet.create({
     color: COLORS.tertiaryText,
   },
 
-  signInContainer: {
+  signUpContainer: {
     marginTop: 'auto',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
 
-  signInPrompt: {
+  signUpPrompt: {
     fontSize: 16,
     lineHeight: 22,
     color: COLORS.tertiaryText,
   },
 
-  signInButton: {
+  signUpButton: {
     marginLeft: 5,
   },
 
-  signInButtonText: {
+  signUpButtonText: {
     fontSize: 16,
     lineHeight: 22,
     fontWeight: '700',
