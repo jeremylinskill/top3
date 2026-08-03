@@ -4,6 +4,174 @@ This document records significant milestones in the evolution of Top3.
 
 Unlike CURRENT_STATE.md, which describes the application's current implementation, this document captures the major architectural and product milestones that shaped the application over time.
 
+v1.5 — Persistent Profile Avatars & Authentication Experience
+
+Released: August 2, 2026
+
+This release adds persistent profile avatars through Supabase Storage and completes a broader refinement of the authentication and profile experience.
+
+Added
+
+Profile Avatars
+
+Added an avatar_url column to the Supabase profiles table.
+
+Added a public Supabase Storage bucket named avatars.
+
+Added user-specific avatar storage paths based on the authenticated user ID.
+
+Added persistent avatar uploads through lib/supabase/storage.ts.
+
+Added public avatar URL generation.
+
+Added support for replacing an existing avatar.
+
+Added avatar loading across sessions and devices.
+
+Added a local avatar preview before saving.
+
+Added a saving state while profile updates are in progress.
+
+Added a “Tap photo to change” affordance.
+
+Added client-side avatar file-size validation.
+
+Added a 5 MB bucket-level file-size restriction.
+
+Added image MIME-type restrictions.
+
+Storage Security
+
+Added authenticated upload policies scoped to each user's own avatar folder.
+
+Added authenticated update policies scoped to each user's own avatar folder.
+
+Added authenticated delete policies scoped to each user's own avatar folder.
+
+Added authenticated select access scoped to each user's own avatar folder to support Storage upsert.
+
+Removed broad public object-listing access while preserving public avatar URLs.
+
+Authentication Experience
+
+Added a dedicated provider-choice Sign In screen.
+
+Added Apple, Google, and Email options to both account creation and sign in.
+
+Added a reusable GoogleAuthButton.
+
+Added a reusable EmailAuthButton.
+
+Added Google's approved colour G SVG asset.
+
+Added the official native Apple authentication button.
+
+Added dedicated Email Sign In and Email Sign Up form screens.
+
+Routed users who sign out to the provider-choice Sign In screen.
+
+Design System
+
+Expanded PageHeader to support left- and centre-aligned layouts.
+
+Applied PageHeader to authentication screens.
+
+Applied PageHeader to Edit Profile.
+
+Clarified the role of ScreenHeader as the top navigation bar.
+
+Clarified the role of PageHeader as the page title and optional subtitle below the navigation bar.
+
+Standardized page-title placement across authentication, collection, and profile screens.
+
+Tooling
+
+Added react-native-svg.
+
+Added react-native-svg-transformer.
+
+Added metro.config.js for SVG imports.
+
+Added svg.d.ts for SVG TypeScript declarations.
+
+Added Expo FileSystem support for avatar uploads.
+
+Improved
+
+Profile Persistence
+
+Updated ProfileProvider to load and persist avatar_url.
+
+Updated profile mapping between Supabase rows and the application UserProfile type.
+
+Updated profile saving to wait for avatar upload and database persistence before navigating away.
+
+Added optimistic profile updates with rollback on failure.
+
+Added cache-busting when replacing an avatar.
+
+Disabled profile editing while a save is in progress.
+
+Added friendly failure feedback when a profile update cannot be completed.
+
+Authentication Navigation
+
+Standardized provider-selection flow for account creation and returning-user sign in.
+
+Removed unnecessary back buttons from top-level provider-choice screens.
+
+Preserved back navigation on Email Sign In and Email Sign Up screens.
+
+Updated sign-out navigation so users return to the full Sign In provider-choice screen instead of the email-only form.
+
+User Interface
+
+Standardized authentication-screen backgrounds and shared colour tokens.
+
+Standardized title and subtitle layouts with PageHeader.
+
+Improved the visual consistency of Apple, Google, and Email authentication buttons.
+
+Improved Edit Profile avatar discoverability and pressed-state feedback.
+
+Fixed
+
+Fixed avatar persistence after app restart.
+
+Fixed avatar persistence after sign out and sign in.
+
+Fixed replacement of an existing avatar by adding the scoped authenticated select policy required by Storage upsert.
+
+Fixed profile navigation occurring before avatar upload completed.
+
+Fixed inconsistent title placement across authentication and profile screens.
+
+Fixed signed-out users being routed directly to the Email Sign In form.
+
+Verified
+
+Verified avatar upload to Supabase Storage.
+
+Verified avatar URL persistence in the profiles table.
+
+Verified avatar replacement.
+
+Verified avatar persistence after force-closing and reopening the app.
+
+Verified avatar persistence after signing out and signing back in.
+
+Verified TypeScript with npm run typecheck.
+
+Documentation
+
+Updated CURRENT_STATE.md to version 1.5.
+
+Recorded commit 32b5478 as the last verified milestone.
+
+Recorded persistent profile avatars as complete.
+
+Updated authentication, navigation, design-system, and technical-debt documentation.
+
 v1.4 — Native Authentication Complete
 
 Released: July 31, 2026
@@ -78,7 +246,7 @@ Authentication
 
 Added native Sign in with Apple using expo-apple-authentication.
 
-Added Apple identity token exchange through Supabase Auth.
+Added Apple identity-token exchange through Supabase Auth.
 
 Added support for both new-user registration and returning-user sign-in.
 
@@ -158,13 +326,13 @@ Standardized Create, Search, and Collection layouts.
 
 Unified spacing, typography, and chip styling.
 
-Expanded reusable component library.
+Expanded the reusable component library.
 
 Continued migration away from duplicated UI.
 
 Fixed
 
-Eliminated inconsistent page title layouts.
+Eliminated inconsistent page-title layouts.
 
 Eliminated duplicated chip implementations.
 
@@ -172,7 +340,7 @@ v1.1 — Social Foundation Complete
 
 Released: July 30, 2026
 
-Completed migration of comments and likes to Supabase, establishing the application's backend social foundation.
+This release completed the migration of comments and likes to Supabase, establishing the application's backend social foundation.
 
 Added
 
@@ -182,7 +350,7 @@ Supabase-backed likes.
 
 Optimistic updates.
 
-Verified RLS policies.
+Verified Row Level Security policies.
 
 Database indexes and constraints.
 
@@ -200,7 +368,7 @@ Overall stability.
 
 Fixed
 
-Comment count synchronization.
+Comment-count synchronization.
 
 Persistence after restart.
 
@@ -210,7 +378,7 @@ v1.0 — Platform Foundation
 
 Released: July 2026
 
-Established the core architecture of Top3 as a persistent social application.
+This milestone established the core architecture of Top3 as a persistent social application.
 
 Added
 
@@ -264,10 +432,20 @@ Next Milestone
 
 The next product milestone has intentionally not been selected.
 
-Before beginning the next major feature, review:
+Before beginning the next major feature:
 
-CURRENT_STATE.md
+Review CURRENT_STATE.md.
 
-ROADMAP.md
+Review ROADMAP.md.
 
-Then agree on the next architectural direction before implementation begins.
+Confirm which current implementation areas remain real, hybrid, or prototype.
+
+Agree on the next architectural direction before implementation begins.
+
+Current high-priority candidates include:
+
+Migrating Following from AsyncStorage to Supabase.
+
+Replacing remaining mock community users with real users.
+
+Adding Supabase Realtime after shared community data is complete.

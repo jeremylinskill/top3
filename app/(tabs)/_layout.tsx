@@ -1,8 +1,18 @@
+import { useNotifications } from '@/context/notification-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
 
 export default function TabLayout() {
+  const { unreadCount } = useNotifications();
+
+  const notificationBadge =
+    unreadCount === 0
+      ? undefined
+      : unreadCount > 9
+        ? '9+'
+        : unreadCount;
+
   return (
     <Tabs
       initialRouteName="index"
@@ -95,6 +105,35 @@ export default function TabLayout() {
                 focused
                   ? 'add-circle'
                   : 'add-circle-outline'
+              }
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          title: 'Notifications',
+          tabBarBadge: notificationBadge,
+          tabBarBadgeStyle: {
+            fontSize: 10,
+            minWidth: 18,
+            height: 18,
+            lineHeight: 18,
+          },
+          tabBarIcon: ({
+            color,
+            size,
+            focused,
+          }) => (
+            <Ionicons
+              name={
+                focused
+                  ? 'notifications'
+                  : 'notifications-outline'
               }
               size={size}
               color={color}

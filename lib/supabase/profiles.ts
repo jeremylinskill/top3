@@ -9,6 +9,7 @@ type ProfileRow = {
   username: string;
   display_name: string;
   bio: string | null;
+  avatar_url: string | null;
   is_public: boolean;
 };
 
@@ -23,6 +24,7 @@ function mapProfileRow(
     username: row.username,
     displayName: row.display_name,
     bio: row.bio ?? undefined,
+    avatarUrl: row.avatar_url ?? undefined,
     visibility,
   };
 }
@@ -45,6 +47,7 @@ export async function searchPublicProfiles(
         username,
         display_name,
         bio,
+        avatar_url,
         is_public
       `
     )
@@ -90,6 +93,7 @@ export async function getPublicProfilesByIds(
         username,
         display_name,
         bio,
+        avatar_url,
         is_public
       `
     )
@@ -116,6 +120,7 @@ export async function getPublicProfileById(
         username,
         display_name,
         bio,
+        avatar_url,
         is_public
       `
     )

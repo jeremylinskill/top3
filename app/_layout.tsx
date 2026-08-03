@@ -2,6 +2,7 @@ import { AuthGate } from '@/components/auth-gate';
 import { CommentProvider } from '@/context/comment-context';
 import { FollowProvider } from '@/context/follow-context';
 import { LikeProvider } from '@/context/like-context';
+import { NotificationProvider } from '@/context/notification-context';
 import { ProfileProvider } from '@/context/profile-context';
 import { Top3Provider } from '@/context/top3-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -30,56 +31,60 @@ export default function RootLayout() {
         <AuthProvider>
           <AuthGate>
             <ProfileProvider>
-              <FollowProvider>
-                <LikeProvider>
-                  <CommentProvider>
-                    <Top3Provider>
-                      <ThemeProvider
-                        value={
-                          colorScheme === 'dark'
-                            ? DarkTheme
-                            : DefaultTheme
-                        }>
-                        <Stack
-                          screenOptions={{
-                            headerShown: false,
-                          }}>
-                          <Stack.Screen name="index" />
+              <NotificationProvider>
+                <FollowProvider>
+                  <LikeProvider>
+                    <CommentProvider>
+                      <Top3Provider>
+                        <ThemeProvider
+                          value={
+                            colorScheme === 'dark'
+                              ? DarkTheme
+                              : DefaultTheme
+                          }>
+                          <Stack
+                            screenOptions={{
+                              headerShown: false,
+                            }}>
+                            <Stack.Screen name="index" />
 
-                          <Stack.Screen name="welcome" />
+                            <Stack.Screen name="welcome" />
 
-                          <Stack.Screen name="(tabs)" />
+                            <Stack.Screen name="(tabs)" />
 
-                          <Stack.Screen name="collections" />
+                            <Stack.Screen name="collections" />
 
-                          <Stack.Screen name="collection" />
+                            <Stack.Screen name="collection" />
 
-                          <Stack.Screen name="search" />
+                            <Stack.Screen name="search" />
 
-                          <Stack.Screen name="edit-profile" />
+                            <Stack.Screen name="edit-profile" />
 
-                          <Stack.Screen name="public-profile" />
+                            <Stack.Screen name="notifications" />
 
-                          <Stack.Screen name="published-top3" />
+                            <Stack.Screen name="public-profile" />
 
-                          <Stack.Screen name="community-top3" />
+                            <Stack.Screen name="published-top3" />
 
-                          <Stack.Screen name="overall-top3-topics" />
+                            <Stack.Screen name="community-top3" />
 
-                          <Stack.Screen
-                            name="modal"
-                            options={{
-                              presentation: 'modal',
-                            }}
-                          />
-                        </Stack>
+                            <Stack.Screen name="overall-top3-topics" />
 
-                        <StatusBar style="auto" />
-                      </ThemeProvider>
-                    </Top3Provider>
-                  </CommentProvider>
-                </LikeProvider>
-              </FollowProvider>
+                            <Stack.Screen
+                              name="modal"
+                              options={{
+                                presentation: 'modal',
+                              }}
+                            />
+                          </Stack>
+
+                          <StatusBar style="auto" />
+                        </ThemeProvider>
+                      </Top3Provider>
+                    </CommentProvider>
+                  </LikeProvider>
+                </FollowProvider>
+              </NotificationProvider>
             </ProfileProvider>
           </AuthGate>
         </AuthProvider>

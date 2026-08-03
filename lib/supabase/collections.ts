@@ -33,6 +33,11 @@ type UpdateCollectionInput = {
   items?: Top3List['items'];
 };
 
+export type CollectionSummary = {
+  id: string;
+  title: string;
+};
+
 function normalizeItems(
   items: unknown
 ): Top3List['items'] {
@@ -162,6 +167,44 @@ export async function getPublishedPostsByUser(
   return (data as CollectionRow[]).map(
     mapPublishedCollectionRowToPost
   );
+}
+
+export async function getCollectionsByIds(
+  collectionIds: string[]
+): Promise<CollectionSummary[]> {
+  const uniqueCollectionIds = Array.from(
+    new Set(
+      collectionIds
+        .map((collectionId) =>
+          collectionId.trim()
+        )
+        .filter(Boolean)
+    )
+  );
+
+  if (uniqueCollectionIds.length === 0) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from('collections')
+    .select(
+      `
+        id,
+        title
+      `
+    )
+    .in('id', uniqueCollectionIds);
+
+  if (error) {
+    throw new Error(
+      `Failed to load collection summaries: ${error.message}`
+    );
+  }
+
+  return (
+    data as CollectionSummary[]
+  ) ?? [];
 }
 
 export async function createCollection(
