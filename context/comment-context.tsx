@@ -6,6 +6,7 @@ import {
   getCommentCounts as getSupabaseCommentCounts,
   getCommentsForCollection as getSupabaseCommentsForCollection,
 } from '@/lib/supabase/comments';
+import { subscribeToTableChanges } from '@/lib/supabase/realtime';
 import {
   createContext,
   ReactNode,
@@ -150,6 +151,10 @@ export function CommentProvider({
 
   const commentsRequestIdRef = useRef(0);
   const countsRequestIdRef = useRef(0);
+  const activeCollectionIdRef =
+    useRef<string | null>(null);
+  const trackedCollectionIdsRef =
+    useRef<string[]>([]);
 
   const clearCommentsForCollection =
     useCallback(() => {
@@ -170,6 +175,16 @@ export function CommentProvider({
     setIsLoading(false);
     setIsLoadingCommentCounts(false);
   }, [user?.id]);
+
+  useEffect(() => {
+    activeCollectionIdRef.current =
+      activeCollectionId;
+  }, [activeCollectionId]);
+
+  useEffect(() => {
+    trackedCollectionIdsRef.current =
+      Object.keys(commentCounts);
+  }, [commentCounts]);
 
   const loadCommentsForCollection =
     useCallback(
@@ -328,6 +343,105 @@ export function CommentProvider({
     },
     [user?.id]
   );
+
+  const refreshCommentsFromRealtime =
+    useCallback(async () => {
+      const collectionId =
+        activeCollectionIdRef.current;
+
+      if (!user?.id || !collectionId) {
+        return;
+      }
+
+      try {
+        const commentRecords =
+          await getSupabaseCommentsForCollection(
+            collectionId
+          );
+
+        if (
+          activeCollectionIdRef.current !==
+          collectionId
+        ) {
+          return;
+        }
+
+        const mappedComments = sortComments(
+          commentRecords.map(mapCommentRecord)
+        );
+
+        setComments(mappedComments);
+        setCommentCounts(
+          (currentCounts) => ({
+            ...currentCounts,
+            [collectionId]:
+              mappedComments.length,
+          })
+        );
+      } catch (error) {
+        console.error(
+          'Failed to refresh comments from Realtime:',
+          error
+        );
+      }
+    }, [user?.id]);
+
+  const refreshCommentCountsFromRealtime =
+    useCallback(async () => {
+      if (!user?.id) {
+        return;
+      }
+
+      const collectionIds =
+        trackedCollectionIdsRef.current;
+
+      if (collectionIds.length === 0) {
+        return;
+      }
+
+      try {
+        const loadedCounts =
+          await getSupabaseCommentCounts(
+            collectionIds
+          );
+
+        setCommentCounts(
+          (currentCounts) => ({
+            ...currentCounts,
+            ...loadedCounts,
+          })
+        );
+      } catch (error) {
+        console.error(
+          'Failed to refresh comment counts from Realtime:',
+          error
+        );
+      }
+    }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) {
+      return;
+    }
+
+    const unsubscribe =
+      subscribeToTableChanges({
+        channelName: `comments-${user.id}`,
+        table: 'comments',
+        onChange: async () => {
+          await Promise.all([
+            refreshCommentsFromRealtime(),
+            refreshCommentCountsFromRealtime(),
+          ]);
+        },
+      });
+
+    return unsubscribe;
+  }, [
+    user?.id,
+    refreshCommentsFromRealtime,
+    refreshCommentCountsFromRealtime,
+  ]);
 
   const getCommentsForPost = useCallback(
     (collectionId: string) => {

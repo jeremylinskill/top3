@@ -1,6 +1,6 @@
 Top3 Product Roadmap
 
-Version: 1.3Status: Active DevelopmentOwner: Jeremy LinskillLast Updated: July 31, 2026
+Version: 1.4Status: Active DevelopmentOwner: Jeremy LinskillLast Updated: August 2, 2026
 
 Purpose
 
@@ -28,7 +28,7 @@ Conversation — Encourage discussion rather than passive consumption.
 
 Current Milestone
 
-Shared Community Foundation
+Shared Community Platform
 
 Status: In Progress
 
@@ -56,13 +56,13 @@ Feed authentication guard
 
 Remaining
 
-Shared Following
+Shared Following ✅
 
 Replace remaining mock community users
 
 Realtime synchronization
 
-Community notifications
+In-app notifications
 
 Initiative 1 — Complete the Community
 
@@ -72,17 +72,17 @@ Deliver a fully shared social experience backed by real users.
 
 Near-Term Priorities
 
-Migrate Following to Supabase.
+Complete Feed and Discover migration away from mock community data.
 
 Replace remaining mock community users.
 
-Add Supabase Realtime for Likes, Comments, and Following.
+Add Supabase Realtime for Likes, Comments, Following, and Notifications.
 
 Improve profile discovery.
 
 Expand conversation tools.
 
-Introduce notifications where they genuinely improve the experience.
+Expand the new notification system with realtime and push notifications.
 
 Success looks like:
 

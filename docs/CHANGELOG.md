@@ -1,3 +1,75 @@
+v1.6 — In-App Notifications
+
+Released: August 2, 2026
+
+This release introduces Top3's in-app notification system, completing the core social engagement loop. Notifications are now generated automatically for likes, comments, and follows through Supabase database triggers and surfaced through a dedicated Notifications experience.
+
+Added
+
+Notifications
+
+Added Supabase-backed notifications.
+
+Added NotificationProvider.
+
+Added Notifications tab.
+
+Added bottom-tab unread badge.
+
+Added relative timestamps.
+
+Added actor profile enrichment.
+
+Added collection title enrichment.
+
+Added read / unread state.
+
+Added "Mark all as read".
+
+Added pull-to-refresh support.
+
+Added navigation to published collections from like and comment notifications.
+
+Added navigation to public profiles from follow notifications.
+
+Database Automation
+
+Added automatic notification trigger for likes.
+
+Added automatic notification trigger for comments.
+
+Added automatic notification trigger for follows.
+
+Improved
+
+Social Experience
+
+Completed the in-app notification experience for likes, comments, and follows.
+
+Unified notification loading through a shared context provider.
+
+Improved notification readability with actor names, avatars, and contextual collection titles.
+
+Verified
+
+Verified end-to-end like notifications.
+
+Verified end-to-end comment notifications.
+
+Verified end-to-end follow notifications.
+
+Verified unread badge updates.
+
+Verified notification navigation.
+
+Verified TypeScript with npm run typecheck.
+
+Documentation
+
+Updated CURRENT_STATE.md to version 1.6.
+
+Recorded commit b2dad2c as the last verified milestone.
+
 CHANGELOG.md
 
 This document records significant milestones in the evolution of Top3.
@@ -444,8 +516,8 @@ Agree on the next architectural direction before implementation begins.
 
 Current high-priority candidates include:
 
-Migrating Following from AsyncStorage to Supabase.
-
 Replacing remaining mock community users with real users.
 
-Adding Supabase Realtime after shared community data is complete.
+Complete Feed and Discover migration away from mock data.
+
+Add Supabase Realtime for Likes, Comments, Following, and Notifications.

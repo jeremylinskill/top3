@@ -5,6 +5,7 @@ import {
   getLikeSnapshot,
   LikeCountsByCollectionId,
 } from '@/lib/supabase/likes';
+import { subscribeToTableChanges } from '@/lib/supabase/realtime';
 import {
   createContext,
   ReactNode,
@@ -53,6 +54,53 @@ export function LikeProvider({
 
   const userId = user?.id;
 
+  const refreshLikes = useCallback(
+    async ({
+      showLoading = false,
+      clearExisting = false,
+    }: {
+      showLoading?: boolean;
+      clearExisting?: boolean;
+    } = {}) => {
+      if (clearExisting) {
+        setLikedPostIds([]);
+        setLikeCounts({});
+      }
+
+      if (!userId) {
+        setLikedPostIds([]);
+        setLikeCounts({});
+        setIsLoading(false);
+        return;
+      }
+
+      if (showLoading) {
+        setIsLoading(true);
+      }
+
+      try {
+        const snapshot =
+          await getLikeSnapshot(userId);
+
+        setLikedPostIds(
+          snapshot.likedCollectionIds
+        );
+
+        setLikeCounts(snapshot.likeCounts);
+      } catch (error) {
+        console.error(
+          'Failed to load likes:',
+          error
+        );
+      } finally {
+        if (showLoading) {
+          setIsLoading(false);
+        }
+      }
+    },
+    [userId]
+  );
+
   useEffect(() => {
     let isCancelled = false;
 
@@ -94,12 +142,30 @@ export function LikeProvider({
       }
     }
 
-    loadLikes();
+    void loadLikes();
 
     return () => {
       isCancelled = true;
     };
   }, [userId]);
+
+  useEffect(() => {
+    if (!userId) {
+      return;
+    }
+
+    const unsubscribe =
+      subscribeToTableChanges({
+        channelName: `likes-${userId}`,
+        table: 'likes',
+        onChange: () =>
+          refreshLikes({
+            showLoading: false,
+          }),
+      });
+
+    return unsubscribe;
+  }, [userId, refreshLikes]);
 
   const isLiked = useCallback(
     (postId: string) =>
@@ -159,7 +225,7 @@ export function LikeProvider({
         }
       }
 
-      saveLike();
+      void saveLike();
     },
     [userId, likedPostIds]
   );
@@ -219,7 +285,7 @@ export function LikeProvider({
         }
       }
 
-      removeLike();
+      void removeLike();
     },
     [userId, likedPostIds]
   );

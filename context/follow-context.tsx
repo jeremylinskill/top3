@@ -4,6 +4,7 @@ import {
   deleteFollow,
   getFollowSnapshot,
 } from '@/lib/supabase/follows';
+import { subscribeToTableChanges } from '@/lib/supabase/realtime';
 import {
   createContext,
   ReactNode,
@@ -74,6 +75,59 @@ export function FollowProvider({
 
   const userId = user?.id;
 
+  const refreshFollows = useCallback(
+    async ({
+      showLoading = false,
+      clearExisting = false,
+    }: {
+      showLoading?: boolean;
+      clearExisting?: boolean;
+    } = {}) => {
+      if (clearExisting) {
+        setFollowedUserIds([]);
+        setFollowerUserIds([]);
+      }
+
+      if (!userId) {
+        setFollowedUserIds([]);
+        setFollowerUserIds([]);
+        setIsLoading(false);
+        return;
+      }
+
+      if (showLoading) {
+        setIsLoading(true);
+      }
+
+      try {
+        const snapshot =
+          await getFollowSnapshot(userId);
+
+        setFollowedUserIds(
+          getUniqueUserIds(
+            snapshot.followedUserIds
+          )
+        );
+
+        setFollowerUserIds(
+          getUniqueUserIds(
+            snapshot.followerUserIds
+          )
+        );
+      } catch (error) {
+        console.error(
+          'Failed to load follows:',
+          error
+        );
+      } finally {
+        if (showLoading) {
+          setIsLoading(false);
+        }
+      }
+    },
+    [userId]
+  );
+
   useEffect(() => {
     let isCancelled = false;
 
@@ -121,12 +175,33 @@ export function FollowProvider({
       }
     }
 
-    loadFollows();
+    void loadFollows();
 
     return () => {
       isCancelled = true;
     };
   }, [userId]);
+
+  useEffect(() => {
+    if (!userId) {
+      return;
+    }
+
+    const unsubscribe =
+      subscribeToTableChanges({
+        channelName: `follows-${userId}`,
+        table: 'follows',
+        onChange: () =>
+          refreshFollows({
+            showLoading: false,
+          }),
+      });
+
+    return unsubscribe;
+  }, [
+    userId,
+    refreshFollows,
+  ]);
 
   const isFollowing = useCallback(
     (targetUserId: string) => {
@@ -208,7 +283,7 @@ export function FollowProvider({
         }
       }
 
-      saveFollow();
+      void saveFollow();
     },
     [
       userId,
@@ -273,7 +348,7 @@ export function FollowProvider({
         }
       }
 
-      removeFollow();
+      void removeFollow();
     },
     [
       userId,

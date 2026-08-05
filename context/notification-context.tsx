@@ -9,9 +9,8 @@ import {
     markNotificationRead as markReadInDatabase,
     Notification,
 } from '@/lib/supabase/notifications';
-import {
-    getPublicProfilesByIds,
-} from '@/lib/supabase/profiles';
+import { getPublicProfilesByIds } from '@/lib/supabase/profiles';
+import { subscribeToTableChanges } from '@/lib/supabase/realtime';
 import { UserProfile } from '@/types/user-profile';
 import {
     createContext,
@@ -160,8 +159,29 @@ export function NotificationProvider({
     }, [userId]);
 
   useEffect(() => {
-    refreshNotifications();
+    void refreshNotifications();
   }, [refreshNotifications]);
+
+  useEffect(() => {
+    if (!userId) {
+      return;
+    }
+
+    const unsubscribe =
+      subscribeToTableChanges({
+        channelName:
+          `notifications-${userId}`,
+        table: 'notifications',
+        filter:
+          `recipient_user_id=eq.${userId}`,
+        onChange: refreshNotifications,
+      });
+
+    return unsubscribe;
+  }, [
+    userId,
+    refreshNotifications,
+  ]);
 
   const unreadCount = useMemo(
     () =>

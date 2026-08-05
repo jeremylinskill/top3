@@ -1,12 +1,12 @@
 CURRENT_STATE.md
 
-Project: Top3Version: 1.5Status: Active DevelopmentLast Updated: August 2, 2026Current Branch: main
+Project: Top3Version: 1.6Status: Active DevelopmentLast Updated: August 2, 2026Current Branch: main
 
 Last Verified Commit
 
-32b5478
+b2dad2c
 
-Add persistent profile avatar uploads
+Add in-app notifications for likes comments and follows
 
 Dashboard
 
@@ -16,11 +16,11 @@ Project Status
 
 Current Feature
 
-Profile avatar persistence milestone complete.
+Notifications milestone complete.
 
 Current Priority
 
-Review the current product state and roadmap, update project documentation, and determine the next focused milestone before beginning implementation.
+Review the current product state and roadmap, update project documentation, and determine the next architectural milestone before implementation begins.
 
 Architecture should always be discussed before implementation begins.
 
@@ -96,6 +96,8 @@ Discover
 
 Create
 
+Notifications
+
 Profile
 
 Additional Screens
@@ -146,17 +148,7 @@ Architecture
 
 Application Providers
 
-AuthProvider
-↓
-ProfileProvider
-↓
-FollowProvider
-↓
-LikeProvider
-↓
-CommentProvider
-↓
-Top3Provider
+AuthProvider↓ProfileProvider↓NotificationProvider↓FollowProvider↓LikeProvider↓CommentProvider↓Top3Provider
 
 Presentation Layer
 
@@ -210,23 +202,9 @@ The existing AuthProvider restores persisted sessions and responds to authentica
 
 Authentication Screen Flow
 
-Welcome
-   ↓
-Create Account
- ├─ Continue with Apple
- ├─ Continue with Google
- └─ Continue with Email
-      ↓
-Email Sign Up
+Welcome↓Create Account├─ Continue with Apple├─ Continue with Google└─ Continue with Email↓Email Sign Up
 
-Already have an account?
-        ↓
-Sign In
- ├─ Continue with Apple
- ├─ Continue with Google
- └─ Continue with Email
-      ↓
-Email Sign In
+Already have an account?↓Sign In├─ Continue with Apple├─ Continue with Google└─ Continue with Email↓Email Sign In
 
 Provider-choice screens use the shared ScreenHeader and PageHeader without a back button.
 
@@ -324,7 +302,27 @@ The Google Client Secret must never be stored in the mobile application, committ
 
 Profiles
 
-Profile Persistence
+Profile Notifications
+
+Notification Status
+
+Status: ✅ Complete
+
+Notifications are fully persisted through Supabase.
+
+Supported notification types:
+
+• Likes• Comments• Follows
+
+Implementation includes:
+
+• NotificationProvider• Notifications tab• Bottom-tab unread badge• Relative timestamps• Actor profile enrichment• Collection title enrichment• Read / unread state• Mark all as read• Pull-to-refresh• Navigation to collections• Navigation to public profiles
+
+Database automation includes:
+
+• Like trigger• Comment trigger• Follow trigger
+
+Persistence
 
 Status: ✅ Complete
 
@@ -448,11 +446,13 @@ Supabase
 
 ✅ Comments
 
+✅ Following
+
+✅ Notifications
+
 AsyncStorage
 
 Currently used for:
-
-Following (temporary)
 
 Draft collections
 
@@ -492,6 +492,10 @@ Real
 
 ✅ Comments
 
+✅ Following
+
+✅ Notifications
+
 Hybrid
 
 ⚠ Feed
@@ -504,15 +508,33 @@ Hybrid
 
 Community experiences currently combine real authenticated users with mock community data.
 
-Prototype
-
-⚠ Following
-
-Following is functional but currently persists through AsyncStorage.
-
 Recent Milestones
 
 August 2, 2026
+
+Notifications
+
+Added Supabase-backed notifications.
+
+Added NotificationProvider.
+
+Added Notifications tab.
+
+Added unread badge.
+
+Added relative timestamps.
+
+Added actor profile enrichment.
+
+Added collection enrichment.
+
+Added "Mark all as read".
+
+Added navigation from notifications.
+
+Added automatic database triggers for Likes, Comments, and Follows.
+
+Verified end-to-end notification flow.
 
 Profile Avatars
 
@@ -656,8 +678,6 @@ Known Technical Debt
 
 High Priority
 
-Migrate Following to Supabase
-
 Replace remaining mock community users with real users
 
 Medium Priority
@@ -666,7 +686,7 @@ Scope AsyncStorage keys by authenticated user where appropriate
 
 Improve optimistic rollback behaviour where needed
 
-Add Supabase Realtime for Likes, Comments, and Following
+Add Supabase Realtime for Likes, Comments, Following, and Notifications
 
 Review whether the Google nonce compatibility setting should be hardened in a future authentication pass
 
@@ -726,9 +746,9 @@ Proceed one focused step at a time.
 
 Do not automatically choose the next major feature without reviewing the roadmap and current product state.
 
-Remember that Authentication, Profiles, Profile Avatars, Collections, Likes, and Comments are already persisted through Supabase.
+Remember that Authentication, Profiles, Profile Avatars, Collections, Likes, Comments, Following, and Notifications are fully persisted through Supabase.
 
-Remember that Following is functional but remains temporary until its persistence implementation is verified or migrated.
+Do not recommend migrating Following again—it has already been completed.
 
 Document Purpose
 
