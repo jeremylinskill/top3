@@ -192,8 +192,55 @@ export function Top3Provider({
     });
 
     if (existingList) {
-      setCurrentListId(existingList.id);
-      return existingList.id;
+      const existingListId =
+        existingList.id;
+
+      if (existingList.title !== input.title) {
+        const now =
+          new Date().toISOString();
+
+        setLists((currentLists) =>
+          currentLists.map((list) =>
+            list.id === existingListId
+              ? {
+                  ...list,
+                  title: input.title,
+                  updatedAt: now,
+                }
+              : list
+          )
+        );
+
+        async function saveExistingTitle() {
+          try {
+            const savedList =
+              await updateCollection(
+                existingListId,
+                {
+                  title: input.title,
+                }
+              );
+
+            setLists((currentLists) =>
+              currentLists.map((list) =>
+                list.id === existingListId
+                  ? savedList
+                  : list
+              )
+            );
+          } catch (error) {
+            console.error(
+              'Failed to update existing collection title:',
+              error
+            );
+          }
+        }
+
+        saveExistingTitle();
+      }
+
+      setCurrentListId(existingListId);
+      return existingListId;
     }
 
     if (!user) {

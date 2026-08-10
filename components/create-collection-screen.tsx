@@ -4,10 +4,10 @@ import CollectionForm, {
 } from '@/components/collection-form';
 import PageHeader from '@/components/page-header';
 import PrimaryButton from '@/components/primary-button';
-import ScreenHeader from '@/components/screen-header';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { useTop3 } from '@/context/top3-context';
 import { Top3List } from '@/types/top3-list';
+import { buildCollectionTitle } from '@/utils/build-collection-title';
 import {
   router,
   useLocalSearchParams,
@@ -79,15 +79,13 @@ function getInitialValuesForCategory(
       );
 
       if (!alreadyExists) {
-        const title =
-          requestedTopic.id === 'general'
-            ? `Top 3 ${category.name}`
-            : `Top 3 ${requestedTopic.name} ${category.name}`;
-
         return {
           categoryId: category.id,
           topicId: requestedTopic.id,
-          title,
+          title: buildCollectionTitle(
+            category.id,
+            requestedTopic.id
+          ),
         };
       }
     }
@@ -128,15 +126,13 @@ function getInitialValuesForCategory(
     };
   }
 
-  const title =
-    firstTopic.id === 'general'
-      ? `Top 3 ${category.name}`
-      : `Top 3 ${firstTopic.name} ${category.name}`;
-
   return {
     categoryId: category.id,
     topicId: firstTopic.id,
-    title,
+    title: buildCollectionTitle(
+      category.id,
+      firstTopic.id
+    ),
   };
 }
 
@@ -205,8 +201,6 @@ export default function CreateCollectionScreen() {
     <SafeAreaView
       style={styles.container}
       edges={['top', 'left', 'right']}>
-      <ScreenHeader showBackButton />
-
       <PageHeader
         title="Share your favorites"
         subtitle="What would you like to rank today?"

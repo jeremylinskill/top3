@@ -9,6 +9,9 @@ import {
   searchBooks,
 } from './google-books';
 import {
+  searchMusic,
+} from './music';
+import {
   getPopularMovies,
   getPopularTvShows,
   searchMovies,
@@ -35,6 +38,7 @@ const SEARCH_PROVIDERS: Record<
   books: searchBooks,
   tv: searchTvShows,
   games: searchGames,
+  music: searchMusic,
 };
 
 const POPULAR_SUGGESTIONS_PROVIDERS: Partial<

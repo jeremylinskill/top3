@@ -1,6 +1,7 @@
 import Chip from '@/components/chip';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { Top3List } from '@/types/top3-list';
+import { buildCollectionTitle } from '@/utils/build-collection-title';
 import { useMemo } from 'react';
 import {
   StyleSheet,
@@ -27,33 +28,6 @@ const SORTED_CATEGORIES = [
 ].sort((first, second) =>
   first.name.localeCompare(second.name)
 );
-
-function buildTitle(
-  categoryId: string,
-  topicId: string
-) {
-  const category = SORTED_CATEGORIES.find(
-    (item) => item.id === categoryId
-  );
-
-  if (!category) {
-    return '';
-  }
-
-  if (!topicId) {
-    return `Top 3 ${category.name}`;
-  }
-
-  const topic = category.topics.find(
-    (item) => item.id === topicId
-  );
-
-  if (!topic || topic.id === 'general') {
-    return `Top 3 ${category.name}`;
-  }
-
-  return `Top 3 ${topic.name} ${category.name}`;
-}
 
 function getAvailableTopics(
   categoryId: string,
@@ -116,7 +90,7 @@ export function getInitialCollectionFormValues(
   return {
     categoryId: firstCategory.id,
     topicId: '',
-    title: buildTitle(
+    title: buildCollectionTitle(
       firstCategory.id,
       ''
     ),
@@ -146,7 +120,7 @@ export default function CollectionForm({
     onChange({
       categoryId: nextCategoryId,
       topicId: '',
-      title: buildTitle(
+      title: buildCollectionTitle(
         nextCategoryId,
         ''
       ),
@@ -167,7 +141,7 @@ export default function CollectionForm({
     onChange({
       categoryId: values.categoryId,
       topicId: updatedTopicId,
-      title: buildTitle(
+      title: buildCollectionTitle(
         values.categoryId,
         updatedTopicId
       ),

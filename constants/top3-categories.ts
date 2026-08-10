@@ -1,10 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 
+
 export type CategoryId =
   | 'movies'
   | 'books'
   | 'tv'
-  | 'games';
+  | 'games'
+  | 'music';
+
 
 export type Top3Topic = {
   id: string;
@@ -14,6 +17,7 @@ export type Top3Topic = {
   tmdbGenreId?: number;
 };
 
+
 export type Top3Category = {
   id: CategoryId;
   name: string;
@@ -21,6 +25,7 @@ export type Top3Category = {
   placeholderIcon: keyof typeof Ionicons.glyphMap;
   topics: Top3Topic[];
 };
+
 
 export const TOP3_CATEGORIES: Top3Category[] = [
   {
@@ -315,6 +320,20 @@ export const TOP3_CATEGORIES: Top3Category[] = [
         name: 'Puzzle',
         icon: '🧩',
         searchItemName: 'puzzle game',
+      },
+    ],
+  },
+  {
+    id: 'music',
+    name: 'Music',
+    icon: '🎵',
+    placeholderIcon: 'musical-note-outline',
+    topics: [
+      {
+        id: 'songs',
+        name: 'Songs',
+        icon: '🎵',
+        searchItemName: 'song',
       },
     ],
   },

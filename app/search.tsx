@@ -732,9 +732,9 @@ function chooseSuggestion(
     router.back();
   }
 
-  const searchTitle = isGeneralTopic
-    ? `Search ${categoryName}`
-    : `Search ${topicName} ${categoryName}`;
+const searchTitle = isGeneralTopic
+  ? `Search ${categoryName}`
+  : `Search ${topicName}`;
 
   const searchPlaceholder =
     `Search for a ${searchItemName}...`;
