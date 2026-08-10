@@ -1,3 +1,171 @@
+CHANGELOG.md
+
+This document records significant milestones in the evolution of Top3.
+
+Unlike CURRENT_STATE.md, which describes the application's current implementation, this document captures the major architectural and product milestones that shaped the application over time.
+
+v1.9 — Discovery, Search & Recommendation Refinement
+
+Released: August 10, 2026
+
+This release strengthens Top3's discovery experience across Books, Video Games, the Home Feed, and Taste Match. It completes the migration from RAWG to IGDB, establishes a shared search-provider architecture, improves search and suggestion quality, and refines how personalized Taste Match recommendations are presented and explored.
+
+Added
+
+Video Game Search
+
+Added IGDB as the active Video Games data provider.
+
+Added the authenticated Supabase Edge Function igdb-search.
+
+Added server-side Twitch OAuth authentication for IGDB.
+
+Added in-memory Twitch access-token caching in the Edge Function.
+
+Added IGDB cover art, release year, and normalized five-star ratings.
+
+Added prefix fallback searching for partial game titles.
+
+Added search aliases where required to improve common-title matching.
+
+Shared Search Architecture
+
+Added providers/search.ts as the shared category-to-provider registry.
+
+Added providers/games.ts.
+
+Added lib/supabase/igdb.ts.
+
+Added reusable hooks/use-debounced-value.ts.
+
+Standardized search debounce at 300 ms across Movies, TV Shows, Books, and Video Games.
+
+Discovery & Suggestions
+
+Added curated book suggestions.
+
+Added reusable SearchInput.
+
+Added reusable Card.
+
+Added reusable SecondaryActionPill.
+
+Added reusable SectionHeader.
+
+Feed
+
+Added native pull-to-refresh to the Home feed.
+
+Improved
+
+Video Game Search
+
+Improved game-title relevance scoring so exact and stronger title matches rank ahead of loosely related results.
+
+Improved partial-title searches through prefix fallback.
+
+Filtered secondary IGDB content such as DLC, expansions, bundles, and mods where possible.
+
+Improved generic Video Games suggestions.
+
+Book Search
+
+Improved Google Books result relevance.
+
+Improved edition deduplication so alternate editions can be consolidated without incorrectly removing distinct books that share title words.
+
+Improved handling of searches where query terms appear within longer, distinct book titles.
+
+Improved default Books discovery through curated popular suggestions.
+
+Personalized Feed & Recommendations
+
+Refined personalized Feed recommendation presentation.
+
+Added Taste Match recommendation explanations based on shared ranked picks.
+
+Made the full recommendation explanation block tappable.
+
+Connected recommendation explanations directly to the recommended user's Taste Match screen.
+
+Preserved recommendation styling as a compact two-line treatment.
+
+Taste Match
+
+Added an animated count-up for the Taste Match percentage on screen load.
+
+Refined animation pacing so the count slows naturally as it approaches the final score.
+
+Updated the Taste Match summary area to use a white background.
+
+Applied the shared purple accent to Taste Match summary and recommendation messaging.
+
+Matched the summary-card keyline treatment to the ranked-picks card.
+
+Tightened spacing within the ranked-picks presentation.
+
+Refined recommendation-message line spacing.
+
+Feed Refresh
+
+Pull-to-refresh reloads published posts and author data.
+
+Refreshing preserves the existing feed instead of returning to the full initial Loading feed… state.
+
+Product & UI
+
+Added and refined Settings, About, and Privacy screens.
+
+Continued consolidation of shared colours, spacing, and reusable presentation patterns.
+
+Refined follow-request and notification presentation.
+
+Changed
+
+Video Game Provider
+
+Replaced RAWG with IGDB after repeated RAWG Cloudflare HTTP 522 origin failures.
+
+Removed providers/rawg.ts from the active application.
+
+Removed RAWG-specific genre IDs from constants/top3-categories.ts.
+
+Removed the RAWG API key from the application environment.
+
+Search Routing
+
+Moved application search routing to the shared provider registry.
+
+Moved post hydration to the shared searchByCategory() path.
+
+Preserved provider-specific ranking, fallback, filtering, and API behaviour within each provider.
+
+Verified
+
+Verified improved Books search and suggestion behaviour on device.
+
+Verified improved Video Games search and suggestion behaviour on device.
+
+Verified Taste Match percentage animation and visual refinements on device.
+
+Verified recommendation explanation navigation to Taste Match.
+
+Verified Home feed pull-to-refresh.
+
+Verified TypeScript with npm run typecheck.
+
+Deployed the updated igdb-search Supabase Edge Function.
+
+Committed and pushed checkpoint f833160 — Polish discovery, recommendations, and social experience.
+
+Documentation
+
+Updated CURRENT_STATE.md to version 2.0.
+
+Recorded the completed discovery, search, recommendation, Taste Match, and Feed-refresh work.
+
+Preserved startup authentication monitoring as active technical debt.
+
 v1.8 --- Private Accounts, Settings & Authentication Stability
 
 Released: August 6, 2026
@@ -203,12 +371,6 @@ Documentation
 Updated CURRENT_STATE.md to version 1.6.
 
 Recorded commit b2dad2c as the last verified milestone.
-
-CHANGELOG.md
-
-This document records significant milestones in the evolution of Top3.
-
-Unlike CURRENT_STATE.md, which describes the application's currentimplementation, this document captures the major architectural andproduct milestones that shaped the application over time.
 
 v1.5 --- Persistent Profile Avatars & Authentication Experience
 
@@ -633,29 +795,3 @@ Draft persistence.
 Feed and profile restoration.
 
 Collection editing reliability.
-
-Next Milestone
-
-The next product milestone has intentionally not been selected.
-
-Before beginning the next major feature:
-
-Review CURRENT_STATE.md.
-
-Review ROADMAP.md.
-
-Confirm which current implementation areas remain real, hybrid, orprototype.
-
-Agree on the next architectural direction before implementation begins.
-
-Current high-priority candidates include:
-
-Replacing remaining mock community users with real users.
-
-Complete Feed and Discover migration away from mock data.
-
-Complete Feed and Discover migration away from remaining mock communitydata.
-
-Expand discovery and recommendation experiences.
-
-Perform a comprehensive stabilization and performance pass.

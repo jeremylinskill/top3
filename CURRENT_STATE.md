@@ -1,12 +1,12 @@
 CURRENT_STATE.md
 
-Project: Top3Version: 1.9Status: Active DevelopmentLast Updated: August 7, 2026Current Branch: main
+Project: Top3Version: 2.0Status: Active DevelopmentLast Updated: August 10, 2026Current Branch: main
 
 Last Verified Commit
 
-a3c2225
+f833160
 
-Add Supabase Realtime subscriptions
+Polish discovery, recommendations, and social experience
 
 Dashboard
 
@@ -16,11 +16,11 @@ Project Status
 
 Current Feature
 
-IGDB migration and shared search architecture complete.
+Discovery, recommendations, search quality, and social experience polish complete.
 
 Current Priority
 
-Monitor startup authentication stability, continue search-quality refinement, and continue improving discovery, recommendations, and overall product quality.
+Monitor startup authentication stability and continue improving discovery, feed relevance, recommendations, and overall product quality.
 
 Architecture should always be discussed before implementation begins.
 
@@ -215,6 +215,16 @@ RankedItemCard
 Top3Card
 
 CommentsSheet
+
+SearchInput
+
+Card
+
+SecondaryActionPill
+
+SectionHeader
+
+TasteMatchBadge
 
 Profile avatar controls
 
@@ -530,9 +540,23 @@ Reusable useDebouncedValue hook provides a 300 ms search debounce across all sea
 
 Video game search uses IGDB through a Supabase Edge Function, including prefix fallback and relevance scoring for partial-title searches
 
+Book search includes improved edition deduplication and relevance handling so distinct titles are not incorrectly collapsed by partial title matches
+
+Books use curated popular suggestions where appropriate rather than relying only on generic provider search results
+
+Feed supports pull-to-refresh without returning to the full initial-loading state
+
+Personalized feed recommendations include Taste Match recommendation explanations derived from shared ranked picks
+
+Recommendation explanation blocks on Top3Card are tappable and navigate to the recommended user's Taste Match details
+
+Taste Match details animate the match percentage on load with eased pacing near the final score
+
+Taste Match presentation uses the shared purple accent for match information and recommendation messaging
+
 Current Source of Truth
 
-Real
+Shared Supabase-backed data
 
 ✅ Authentication
 
@@ -550,7 +574,7 @@ Real
 
 ✅ Notifications
 
-Real
+Real community experiences
 
 ✅ Feed
 
@@ -725,6 +749,50 @@ Standardized Create, Search, and Collection layouts
 Unified category, topic, and search suggestion chips
 
 Continued migration away from duplicated UI components
+
+August 10, 2026
+
+Discovery, Recommendations & Search Quality
+
+Improved Google Books search relevance and edition deduplication so distinct books with overlapping title words remain discoverable.
+
+Added curated book suggestions for stronger default discovery.
+
+Completed the shared Video Games search path through IGDB and improved generic game suggestions and partial-title search quality.
+
+Refined personalized Feed recommendations and Taste Match recommendation explanations.
+
+Made the full recommendation explanation block on Top3Card tappable and connected it to the recommended user's Taste Match screen.
+
+Taste Match
+
+Added an animated count-up for the Taste Match percentage.
+
+Refined the animation pacing so it slows naturally as it approaches the final score.
+
+Updated Taste Match presentation with a white summary card, shared purple accent treatment, matching keylines, and tighter ranked-pick spacing.
+
+Refined recommendation messaging styling and spacing.
+
+Feed
+
+Added native pull-to-refresh to the Home feed.
+
+Refresh reloads published posts and author data without showing the full initial-loading state.
+
+Product & UI
+
+Added and refined Settings, About, and Privacy screens.
+
+Added reusable SearchInput, Card, SecondaryActionPill, and SectionHeader UI components.
+
+Continued consolidation of shared colours, spacing, and presentation patterns.
+
+Checkpoint
+
+Verified npm run typecheck passes.
+
+Committed and pushed checkpoint f833160 — Polish discovery, recommendations, and social experience.
 
 Known Technical Debt
 

@@ -1,216 +1,188 @@
 Top3 Product Roadmap
 
-Version: 1.7Status: Active DevelopmentOwner: Jeremy LinskillLast Updated: August 6, 2026
+Version: 1.8Status: Active DevelopmentOwner: Jeremy LinskillLast Updated: August 10, 2026Last Verified Commit: f833160 — Polish discovery, recommendations, and social experience
 
 Purpose
 
-This roadmap outlines the long-term evolution of the Top3 productexperience.
+This roadmap outlines the long-term evolution of the Top3 product experience.
 
-Unlike CURRENT_STATE.md, which documents the application's currentimplementation, this roadmap focuses on the future direction of theproduct and the experiences we want to create for users.
+Unlike CURRENT_STATE.md, which documents the application's current implementation, this roadmap focuses on the future direction of the product and the experiences we want to create for users.
 
-Every initiative should strengthen one or more of Top3's four corepillars.
+Every initiative should strengthen one or more of Top3's four core pillars.
 
 Product Vision
 
 Help people discover one another through shared taste.
 
-Top3 isn't simply a place to rank favourites. It's a platform that helpspeople express who they are, discover new entertainment, and connectwith others through the things they love.
+Top3 isn't simply a place to rank favourites. It's a platform that helps people express who they are, discover new entertainment, and connect with others through the things they love.
 
 Core Pillars
 
-Identity --- Express who you are through your collections.
+Identity — Express who you are through your collections.
 
-Discovery --- Find new entertainment, ideas, and people.
+Discovery — Find new entertainment, ideas, and people.
 
-Connection --- Build meaningful relationships through sharedtaste.
+Connection — Build meaningful relationships through shared taste.
 
-Conversation --- Encourage discussion rather than passiveconsumption.
+Conversation — Encourage discussion rather than passive consumption.
 
 Current Milestone
 
-Shared Community Platform
+Discovery & Personalization
 
-Status: Core Platform Complete ✅
+Status: Current Focus 🚧
 
-Top3 now has a stable social foundation built on Supabase.Authentication, persistence, realtime synchronization, private accounts,follow requests, notifications, and the new Settings experience are inplace. The next phase shifts toward improving discovery, engagement, andlong-term retention.
+Top3's core community platform is now in place.
 
-Completed
+Authentication, profiles, collection persistence, social interactions, private accounts, follow requests, notifications, realtime synchronization, Settings, search providers, Feed, Discover, and Taste Match provide a stable foundation for the next stage of the product.
 
-Email authentication
+Recent work has begun shifting Top3 from simply surfacing community content toward making discovery more relevant to each user. Personalized Feed recommendations can now use Taste Match and shared ranked picks to explain why another user's collection may be interesting.
 
-Sign in with Apple
+The current milestone is to strengthen that discovery system before expanding into more advanced recommendation intelligence or major new platform features.
 
-Sign in with Google
+Foundation Completed
 
-Persistent Supabase sessions
+• Email authentication• Sign in with Apple• Sign in with Google• Persistent Supabase sessions• Stable authentication initialization• User profiles• Profile avatars• Profile editing• Privacy settings• Public and private accounts• Follow requests• Following / Followers• Collection persistence• Shared Likes• Shared Comments• In-app notifications• Settings• About• Supabase Realtime for Notifications, Likes, Comments, and Following• Feed• Discover• Community Top3• Overall Top3• Taste Match• Personalized Feed recommendations• Taste Match recommendation explanations• Shared search-provider architecture• TMDb search for Movies and TV Shows• Google Books search with Open Library fallback• IGDB search for Video Games through a Supabase Edge Function• Feed pull-to-refresh
 
-Stable authentication initialization
+Current Priorities
 
-User profiles
+• Improve Feed relevance and ranking• Improve personalized recommendation quality• Expand Discover browsing and filtering• Improve profile discovery• Continue refining Taste Match as a discovery signal• Continue search-quality and provider-resiliency improvements• Expand conversation and engagement opportunities• Continue performance and stability optimization• Prepare architecture for push notifications
 
-Profile editing
-
-Privacy settings
-
-Public & private accounts
-
-Follow requests
-
-Following / Followers
-
-Collection persistence
-
-Shared Likes
-
-Shared Comments
-
-In-app notifications
-
-Settings
-
-About
-
-Supabase Realtime (Notifications, Likes, Comments, Following)
-
-Next Focus
-
-Complete the follow request workflow
-
-Improve feed ranking and personalization
-
-Expand Discover experiences
-
-Improve profile discovery
-
-Prepare push notifications
-
-Improve search reliability and provider resiliency
-
-Initiative 1 --- Strengthen Discovery
+Initiative 1 — Strengthen Discovery
 
 Status: Current Focus
 
-Build richer discovery experiences on top of the completed socialplatform.
+Improve the discovery experiences that already exist so users consistently encounter relevant people, collections, and entertainment without needing to search for them directly.
+
+Completed Foundations
+
+• Personalized Feed recommendations• Taste Match recommendation explanations• Navigation from Feed recommendations into Taste Match• Community Top3• Overall Top3• Similar Taste discovery• Trending topics and categories• Shared search-provider architecture• Improved Google Books relevance and edition deduplication• Curated Books suggestions• IGDB Video Games integration• Improved partial-title and relevance-ranked game search• Feed pull-to-refresh
 
 Near-Term Priorities
 
-Improve feed relevance and ranking
-
-Expand Discover browsing and filtering
-
-Improve profile discovery
-
-Expand conversation tools
-
-Continue performance optimization
-
-Gracefully handle external API failures (TMDB, Google Books, RAWG)
-
-Prepare architecture for push notifications
+• Improve Feed relevance and ranking• Improve recommendation quality signals• Expand Discover browsing and filtering• Improve profile discovery• Refine recommendation explanations where useful• Continue improving search relevance across providers• Gracefully handle external API failures across TMDb, Google Books, Open Library, and IGDB• Expand conversation tools around discovered content• Continue performance optimization• Prepare architecture for push notifications
 
 Success Looks Like
 
-Users consistently discover interesting people, collections, andentertainment without needing to search for them directly.
+Users consistently discover interesting people, collections, and entertainment without needing to search for them directly.
 
-Initiative 2 --- Smarter Discovery
+Recommendations feel relevant and understandable rather than arbitrary.
+
+Discovery leads naturally into profiles, Taste Match, collections, follows, and conversations.
+
+Initiative 2 — Smarter Discovery
 
 Status: Planned
 
-Use community collections to make discovering entertainment effortless.
+Build more advanced intelligence on top of the existing discovery foundation.
+
+The goal is not simply to generate more recommendations. It is to use community taste, collection behaviour, and meaningful signals to make discovery increasingly useful and personal.
 
 Opportunities
 
-Trending collections
-
-Trending creators
-
-Enhanced Taste Match
-
-AI-assisted recommendation explanations
-
-Personalized recommendations
-
-Better topic exploration
-
-Spotify integration
-
-Additional entertainment providers
-
-Recommendation quality signals
+• Community-derived recommendation signals• Trending collections• Trending creators• Richer Taste Match analysis• More sophisticated personalized recommendations• AI-assisted recommendation explanations• Better topic exploration• Recommendation quality feedback signals• Cross-category taste insights• Spotify integration• Additional entertainment providers
 
 Guiding Principle
 
-AI should strengthen human discovery---not replace it.
+AI should strengthen human discovery—not replace it.
 
-Initiative 3 --- Richer Identity
+Recommendation intelligence should help users understand connections between people and content while keeping human taste and curation at the centre of the experience.
+
+Initiative 3 — Richer Identity
 
 Status: Planned
 
-Help people express themselves more completely.
+Help people express themselves more completely through their profile and collections.
+
+Top3 collections already create a strong taste identity. Future identity features should make that identity easier to understand and share without turning profiles into overly complex social-media pages.
 
 Opportunities
 
-Profile customization
+• Profile customization• Featured collections• Pinned collections• Collection history• Collection sharing• User achievements• Activity summaries• Taste summaries
 
-Featured collections
+Success Looks Like
 
-Pinned collections
+A user's profile quickly communicates what they care about, what they recommend, and how their taste connects with the wider community.
 
-Collection history
+Initiative 4 — Conversation & Engagement
 
-Collection sharing
+Status: Planned
 
-User achievements
+Build on Likes, Comments, Following, Notifications, and recommendations to encourage meaningful interaction around shared interests.
 
-Activity summaries
+Opportunities
 
-Initiative 4 --- Platform Growth
+• Richer comment experiences• Conversation prompts around shared picks• Recommendation-driven discussion• Improved social activity context• Collection sharing• Friend invitations• Push notifications• Re-engagement experiences
+
+Guiding Principle
+
+Top3 should encourage conversation because users discovered something meaningful in common—not because the product is optimizing for passive engagement.
+
+Initiative 5 — Platform Growth
 
 Status: Future
 
-Expand Top3 into a mature community platform.
+Expand Top3 into a mature, scalable community platform after the core discovery, identity, and conversation experiences are strong.
 
 Opportunities
 
-Activity feed
+• Broader activity experiences• Collaborative collections• Creator tools• Moderation• Reporting and safety tools• Admin dashboard• Product analytics• Community events• Additional content categories• Additional entertainment providers
 
-Collaborative collections
+Push Notifications
 
-Friend invitations
+Status: Planned
 
-Push notifications
+Top3 already has Supabase-backed in-app notifications with realtime updates.
 
-Creator tools
+Push notifications should extend that system rather than introduce a separate notification model.
 
-Moderation
+Potential Notifications
 
-Admin dashboard
+• New follower• Follow request• Follow request accepted• Like• Comment• Relevant social or recommendation activity where appropriate
 
-Analytics
+Before Implementation
 
-Community events
+• Define which events genuinely deserve interruption• Establish notification preferences• Review Expo / native push architecture• Determine server-side delivery architecture• Preserve the existing in-app notification system as the source of truth
+
+Search & Provider Strategy
+
+Status: Active Foundation
+
+Search supports the collection-creation and discovery experience across multiple external content providers.
+
+Current Providers
+
+• TMDb — Movies• TMDb — TV Shows• Google Books — Books• Open Library — Book fallback• IGDB — Video Games• Twitch OAuth — Server-side IGDB authentication
+
+Current Direction
+
+• Keep application-level search behaviour consistent• Keep provider-specific ranking and fallback logic inside each provider• Continue improving relevance rather than maximizing raw result volume• Prefer useful, recognizable suggestions over generic provider results• Preserve distinct works while intelligently deduplicating editions or duplicate records• Gracefully handle provider outages and degraded responses• Avoid exposing provider secrets to the mobile client
 
 Product Principles
 
 Every future feature should:
 
-Make publishing effortless.
+• Make publishing effortless.
 
-Help users discover something unexpected.
+• Help users discover something unexpected.
 
-Encourage authentic conversation.
+• Help users understand why something is being recommended.
 
-Reward thoughtful curation over volume.
+• Encourage authentic conversation.
 
-Build community through shared interests.
+• Reward thoughtful curation over volume.
 
-Keep the experience simple.
+• Build community through shared interests.
 
-Maintain a content-first design philosophy.
+• Keep the experience simple.
 
-Use AI to strengthen human discovery---not replace it.
+• Maintain a content-first design philosophy.
 
-Prioritize quality and reliability before adding new features.
+• Use AI to strengthen human discovery—not replace it.
+
+• Prioritize quality and reliability before adding new features.
+
+• Extend existing product patterns before creating parallel systems.
 
 Technical Strategy
 
@@ -222,13 +194,21 @@ Discuss architecture.
 
 Build one complete vertical slice.
 
+Modify as few files as practical.
+
 Run npm run typecheck.
+
+Run function-specific validation where required.
 
 Test end-to-end on device.
 
 Commit.
 
-Update CURRENT_STATE.md, CHANGELOG.md, and ROADMAP.md.
+Push.
+
+Update project documentation when the application state has materially changed.
+
+New infrastructure should extend existing architecture wherever practical rather than creating duplicate systems.
 
 Selecting the Next Milestone
 
@@ -236,30 +216,52 @@ After each completed milestone:
 
 Review CURRENT_STATE.md.
 
+Review FEATURES.md.
+
 Review ROADMAP.md.
 
 Identify the highest-value product problem.
+
+Confirm the architectural direction before implementation.
 
 Implement one complete vertical slice.
 
 Stabilize and verify.
 
-Update project documentation.
+Update CURRENT_STATE.md, CHANGELOG.md, FEATURES.md, and ROADMAP.md where appropriate.
+
+The roadmap should guide priorities without forcing implementation simply because an idea appears here.
 
 Success Metrics
 
 Top3 succeeds when users:
 
-Publish collections regularly.
+• Publish collections regularly.
 
-Discover entertainment they genuinely enjoy.
+• Discover entertainment they genuinely enjoy.
 
-Find people with similar taste.
+• Find people with similar taste.
 
-Build trusted communities.
+• Understand why recommendations are relevant to them.
 
-Return to continue conversations.
+• Build trusted communities.
 
-Build lasting collections that reflect who they are.
+• Return to continue conversations.
 
-The long-term goal is not to maximize content creation, but to createmeaningful connections through shared taste.
+• Build lasting collections that reflect who they are.
+
+The long-term goal is not to maximize content creation or passive engagement, but to create meaningful connections through shared taste.
+
+Revision History
+
+Version 1.8 — August 10, 2026
+
+Updated the roadmap through commit f833160.
+
+Key changes:
+
+• Moved the active milestone from Shared Community Platform to Discovery & Personalization.• Recorded the shared community platform as a completed foundation.• Removed completion of the follow-request workflow from future priorities.• Recognized personalized Feed recommendations and Taste Match explanations as implemented foundations.• Updated Video Games provider strategy from RAWG to IGDB.• Updated search priorities to reflect the shared provider architecture and recent Books and Games improvements.• Clarified the distinction between strengthening current discovery and future smarter discovery.• Added Conversation & Engagement as a distinct planned initiative.• Clarified push notifications as an extension of the existing in-app notification architecture.• Added the current Search & Provider Strategy.• Updated milestone-selection and documentation workflow.
+
+Version 1.7 — August 6, 2026
+
+Established Shared Community Platform as the completed core-platform milestone and shifted the roadmap toward discovery, engagement, retention, and future platform growth.
