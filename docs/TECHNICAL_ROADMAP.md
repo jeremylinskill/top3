@@ -1,17 +1,14 @@
-# Top3 Technical Roadmap
+Top3 Technical Roadmap
 
 Purpose
 
-Track engineering decisions,
-providers,
-architecture,
-and implementation milestones.
+Track engineering decisions,providers,architecture,and implementation milestones.
 
----
-
-# Search Providers
+Search Providers
 
 Movies
+
+Provider
 
 TMDB
 
@@ -19,39 +16,63 @@ Status
 
 Complete
 
----
-
 Books
+
+Providers
 
 Google Books
 
-Open Library
+Open Library (fallback)
 
 Status
 
 Complete
 
----
-
 Games
 
-RAWG
+Provider
 
-Future
-
-IGDB
+IGDB (via Supabase Edge Function)
 
 Status
 
-Planned
+Complete
 
----
+Notes
 
-# Backend
+Server-side Twitch OAuth authentication
+
+Supabase Edge Function (igdb-search)
+
+Prefix matching and relevance scoring
+
+Cover art, release year, and normalized ratings
+
+Backend
 
 Authentication
 
-Planned
+Complete
+
+Profiles
+
+Complete
+
+Collections
+
+Complete
+
+Likes
+
+Complete
+
+Comments
+
+Complete
+
+Following
+
+Complete
 
 Notifications
 
@@ -59,16 +80,26 @@ Planned
 
 Storage
 
+Complete
+
+Realtime Updates
+
 Planned
 
----
+Infrastructure Goals
 
-# Infrastructure Goals
+Configuration-driven categories ✅
 
-Configuration-driven categories
+Shared search provider registry ✅
 
-Provider abstraction
+Provider abstraction ✅
 
-Backend migration
+Supabase Edge Functions ✅
 
-Caching improvements
+Reusable search debounce hook ✅
+
+Search result caching improvements
+
+Realtime synchronization
+
+Continued discovery and recommendation improvements

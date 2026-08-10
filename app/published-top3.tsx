@@ -6,7 +6,7 @@ import {
 } from '@/context/comment-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
-import { getPublicProfileById } from '@/lib/supabase/profiles';
+import { getProfileById } from '@/lib/supabase/profiles';
 import { getPublishedPosts } from '@/services/post-service';
 import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
@@ -101,7 +101,7 @@ export default function PublishedTop3Screen() {
           matchingAuthor =
             matchingPost.authorId === profile.id
               ? profile
-              : await getPublicProfileById(
+              : await getProfileById(
                   matchingPost.authorId
                 );
         }

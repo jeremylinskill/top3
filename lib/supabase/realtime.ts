@@ -28,14 +28,25 @@ export function subscribeToTableChanges({
       }
     )
     .subscribe((status, error) => {
-      if (
-        status === 'CHANNEL_ERROR' ||
-        status === 'TIMED_OUT'
-      ) {
-        console.error(
-          `Realtime subscription failed for ${table}:`,
-          error
-        );
+      switch (status) {
+        case 'SUBSCRIBED':
+          return;
+
+        case 'CHANNEL_ERROR':
+          console.warn(
+            `Realtime subscription error for ${table}:`,
+            error
+          );
+          return;
+
+        case 'TIMED_OUT':
+          console.warn(
+            `Realtime subscription timed out for ${table}.`
+          );
+          return;
+
+        default:
+          return;
       }
     });
 

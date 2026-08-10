@@ -17,6 +17,19 @@ function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
+function getSignInErrorMessage(error: unknown) {
+  if (
+    error instanceof Error &&
+    error.message
+      .toLowerCase()
+      .includes('invalid login credentials')
+  ) {
+    return 'The email or password you entered is incorrect.';
+  }
+
+  return 'Something went wrong while signing you in. Please try again.';
+}
+
 export default function EmailSignInForm({
   onSuccess,
 }: EmailSignInFormProps) {
@@ -60,7 +73,7 @@ export default function EmailSignInForm({
   }
 
   async function handleSubmit() {
-    if (!validateForm()) {
+    if (!validateForm() || isSubmitting) {
       return;
     }
 
@@ -78,16 +91,28 @@ export default function EmailSignInForm({
 
       onSuccess();
     } catch (error) {
-      console.error(
-        'Failed to sign in:',
-        error
-      );
+      const message =
+        getSignInErrorMessage(error);
+
+      if (
+        !(
+          error instanceof Error &&
+          error.message
+            .toLowerCase()
+            .includes(
+              'invalid login credentials'
+            )
+        )
+      ) {
+        console.error(
+          'Failed to sign in:',
+          error
+        );
+      }
 
       Alert.alert(
         'Unable to sign in',
-        error instanceof Error
-          ? error.message
-          : 'Please check your email and password and try again.'
+        message
       );
     } finally {
       setIsSubmitting(false);
@@ -97,7 +122,9 @@ export default function EmailSignInForm({
   return (
     <View style={styles.container}>
       <View style={styles.field}>
-        <Text style={styles.label}>Email</Text>
+        <Text style={styles.label}>
+          Email
+        </Text>
 
         <TextInput
           accessibilityLabel="Email"
@@ -117,7 +144,9 @@ export default function EmailSignInForm({
       </View>
 
       <View style={styles.field}>
-        <Text style={styles.label}>Password</Text>
+        <Text style={styles.label}>
+          Password
+        </Text>
 
         <TextInput
           accessibilityLabel="Password"
@@ -126,7 +155,9 @@ export default function EmailSignInForm({
           autoCorrect={false}
           editable={!isSubmitting}
           onChangeText={setPassword}
-          onSubmitEditing={handleSubmit}
+          onSubmitEditing={() => {
+            void handleSubmit();
+          }}
           placeholder="Enter your password"
           placeholderTextColor="#999999"
           returnKeyType="done"
@@ -141,7 +172,9 @@ export default function EmailSignInForm({
         <AuthProviderButton
           disabled={isSubmitting}
           loading={isSubmitting}
-          onPress={handleSubmit}
+          onPress={() => {
+            void handleSubmit();
+          }}
           title="Sign In"
           variant="primary"
         />

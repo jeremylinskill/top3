@@ -1,34 +1,36 @@
 import ScreenHeader from '@/components/screen-header';
+import SearchInput from '@/components/search-input';
 import SegmentedControl from '@/components/segmented-control';
 import TasteMatchBadge from '@/components/taste-match-badge';
 import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
-import { getPublicProfilesByIds } from '@/lib/supabase/profiles';
+import { getProfilesByIds } from '@/lib/supabase/profiles';
 import { getPublishedPosts } from '@/services/post-service';
 import { getTasteRecommendationForUser } from '@/services/taste-recommendation-service';
 import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
 import { Ionicons } from '@expo/vector-icons';
 import {
-    router,
-    useLocalSearchParams,
+  router,
+  useLocalSearchParams,
 } from 'expo-router';
 import {
-    useEffect,
-    useMemo,
-    useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from 'react';
 import {
-    Image,
-    Keyboard,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  Image,
+  Keyboard,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -73,8 +75,12 @@ export default function SocialScreen() {
     followedUserIds,
     followerUserIds,
     isFollowing,
+    isFollowRequested,
     toggleFollow,
     unfollowUser,
+    requestFollow,
+    cancelFollowRequest,
+    removeFollower,
     isLoading,
   } = useFollow();
 
@@ -93,6 +99,10 @@ export default function SocialScreen() {
     socialProfilesById,
     setSocialProfilesById,
   ] = useState<Record<string, UserProfile>>({});
+
+  const socialProfilesByIdRef = useRef<
+    Record<string, UserProfile>
+  >({});
 
   const [
     isLoadingProfiles,
@@ -139,8 +149,6 @@ export default function SocialScreen() {
     let isMounted = true;
 
     async function loadSocialProfiles() {
-      setIsLoadingProfiles(true);
-
       const socialUserIds = Array.from(
         new Set([
           ...followedUserIds,
@@ -150,6 +158,7 @@ export default function SocialScreen() {
 
       if (socialUserIds.length === 0) {
         if (isMounted) {
+          socialProfilesByIdRef.current = {};
           setSocialProfilesById({});
           setIsLoadingProfiles(false);
         }
@@ -157,15 +166,53 @@ export default function SocialScreen() {
         return;
       }
 
+      const missingUserIds =
+        socialUserIds.filter(
+          (userId) =>
+            !socialProfilesByIdRef.current[
+              userId
+            ]
+        );
+
+      if (missingUserIds.length === 0) {
+        if (isMounted) {
+          setIsLoadingProfiles(false);
+        }
+
+        return;
+      }
+
+      const isInitialLoad =
+        Object.keys(
+          socialProfilesByIdRef.current
+        ).length === 0;
+
+      if (isInitialLoad) {
+        setIsLoadingProfiles(true);
+      }
+
       try {
         const profiles =
-          await getPublicProfilesByIds(
-            socialUserIds
+          await getProfilesByIds(
+            missingUserIds
           );
 
         if (isMounted) {
+          const loadedProfiles =
+            buildProfileRecord(profiles);
+
           setSocialProfilesById(
-            buildProfileRecord(profiles)
+            (currentProfiles) => {
+              const nextProfiles = {
+                ...currentProfiles,
+                ...loadedProfiles,
+              };
+
+              socialProfilesByIdRef.current =
+                nextProfiles;
+
+              return nextProfiles;
+            }
           );
         }
       } catch (error) {
@@ -174,17 +221,24 @@ export default function SocialScreen() {
           error
         );
 
-        if (isMounted) {
+        if (
+          isMounted &&
+          isInitialLoad
+        ) {
+          socialProfilesByIdRef.current = {};
           setSocialProfilesById({});
         }
       } finally {
-        if (isMounted) {
+        if (
+          isMounted &&
+          isInitialLoad
+        ) {
           setIsLoadingProfiles(false);
         }
       }
     }
 
-    loadSocialProfiles();
+    void loadSocialProfiles();
 
     return () => {
       isMounted = false;
@@ -327,15 +381,51 @@ export default function SocialScreen() {
   }
 
   function handleFollowToggle(
-    userId: string
+    user: UserProfile
   ) {
-    toggleFollow(userId);
+    if (isFollowing(user.id)) {
+      toggleFollow(user.id);
+      return;
+    }
+
+    if (isFollowRequested(user.id)) {
+      cancelFollowRequest(user.id);
+      return;
+    }
+
+    if (user.visibility === 'private') {
+      requestFollow(user.id);
+      return;
+    }
+
+    toggleFollow(user.id);
   }
 
   function removeFollowedUser(
     userId: string
   ) {
     unfollowUser(userId);
+  }
+
+  function confirmRemoveFollower(
+    user: UserProfile
+  ) {
+    Alert.alert(
+      'Remove follower?',
+      `${user.displayName} will no longer follow you. They can request to follow you again in the future.`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () =>
+            removeFollower(user.id),
+        },
+      ]
+    );
   }
 
   function getEmptyTitle() {
@@ -423,45 +513,14 @@ export default function SocialScreen() {
         {!isLoading &&
         !isLoadingProfiles &&
         activeUsers.length > 0 ? (
-          <View style={styles.searchContainer}>
-            <Ionicons
-              name="search-outline"
-              size={19}
-              color="#777777"
-            />
-
-            <TextInput
-              style={styles.searchInput}
+          <View style={styles.searchWrapper}>
+            <SearchInput
               value={searchQuery}
               onChangeText={setSearchQuery}
               placeholder={getSearchPlaceholder()}
-              placeholderTextColor="#999999"
-              autoCapitalize="none"
-              autoCorrect={false}
-              returnKeyType="search"
-              clearButtonMode="never"
-              accessibilityLabel={
-                getSearchPlaceholder()
-              }
+              accessibilityLabel={getSearchPlaceholder()}
+              onClear={clearSearch}
             />
-
-            {searchQuery.length > 0 ? (
-              <Pressable
-                style={({ pressed }) => [
-                  styles.clearButton,
-                  pressed && styles.pressed,
-                ]}
-                onPress={clearSearch}
-                hitSlop={10}
-                accessibilityRole="button"
-                accessibilityLabel="Clear search">
-                <Ionicons
-                  name="close-circle"
-                  size={20}
-                  color="#999999"
-                />
-              </Pressable>
-            ) : null}
           </View>
         ) : null}
 
@@ -500,6 +559,20 @@ export default function SocialScreen() {
             {filteredUsers.map((user) => {
               const userIsFollowed =
                 isFollowing(user.id);
+
+              const userHasRequested =
+                isFollowRequested(user.id);
+
+              const followerActionLabel =
+                userIsFollowed
+                  ? 'Following'
+                  : userHasRequested
+                    ? 'Requested'
+                    : 'Follow';
+
+              const usesSecondaryActionStyle =
+                userIsFollowed ||
+                userHasRequested;
 
               const tasteMatch =
                 tasteMatchByUserId.get(user.id);
@@ -583,36 +656,61 @@ export default function SocialScreen() {
                       </Text>
                     </Pressable>
                   ) : (
-                    <Pressable
-                      style={({ pressed }) => [
-                        styles.followerActionButton,
-                        !userIsFollowed &&
-                          styles.followButton,
-                        pressed && styles.pressed,
-                      ]}
-                      onPress={() =>
-                        handleFollowToggle(user.id)
-                      }
-                      accessibilityRole="button"
-                      accessibilityState={{
-                        selected: userIsFollowed,
-                      }}
-                      accessibilityLabel={
-                        userIsFollowed
-                          ? `Unfollow ${user.displayName}`
-                          : `Follow ${user.displayName}`
-                      }>
-                      <Text
-                        style={[
-                          styles.followerActionText,
-                          !userIsFollowed &&
-                            styles.followButtonText,
-                        ]}>
-                        {userIsFollowed
-                          ? 'Following'
-                          : 'Follow'}
-                      </Text>
-                    </Pressable>
+                    <View style={styles.followerActions}>
+                      <Pressable
+                        style={({ pressed }) => [
+                          styles.followerActionButton,
+                          !usesSecondaryActionStyle &&
+                            styles.followButton,
+                          pressed && styles.pressed,
+                        ]}
+                        onPress={() =>
+                          handleFollowToggle(user)
+                        }
+                        accessibilityRole="button"
+                        accessibilityState={{
+                          selected:
+                            userIsFollowed ||
+                            userHasRequested,
+                        }}
+                        accessibilityLabel={
+                          userIsFollowed
+                            ? `Unfollow ${user.displayName}`
+                            : userHasRequested
+                              ? `Cancel follow request for ${user.displayName}`
+                              : user.visibility === 'private'
+                                ? `Request to follow ${user.displayName}`
+                                : `Follow ${user.displayName}`
+                        }>
+                        <Text
+                          style={[
+                            styles.followerActionText,
+                            !usesSecondaryActionStyle &&
+                              styles.followButtonText,
+                          ]}
+                          numberOfLines={1}>
+                          {followerActionLabel}
+                        </Text>
+                      </Pressable>
+
+                      <Pressable
+                        style={({ pressed }) => [
+                          styles.removeFollowerButton,
+                          pressed && styles.pressed,
+                        ]}
+                        onPress={() =>
+                          confirmRemoveFollower(user)
+                        }
+                        hitSlop={8}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Remove ${user.displayName} as a follower`}>
+                        <Ionicons
+                          name="close-outline"
+                          size={20}
+                          color="#777777"
+                        />
+                      </Pressable>
+                    </View>
                   )}
                 </View>
               );
@@ -644,35 +742,10 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
 
-  searchContainer: {
-    minHeight: 50,
-    flexDirection: 'row',
-    alignItems: 'center',
+  searchWrapper: {
     marginBottom: 18,
-    paddingLeft: 15,
-    paddingRight: 9,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#EAEAEA',
-    borderRadius: 16,
   },
 
-  searchInput: {
-    flex: 1,
-    minHeight: 48,
-    marginLeft: 10,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: '#222222',
-  },
-
-  clearButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
 
   stateContainer: {
     alignItems: 'center',
@@ -792,8 +865,24 @@ const styles = StyleSheet.create({
     color: '#222222',
   },
 
+  followerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 12,
+  },
+
+  removeFollowerButton: {
+    width: 38,
+    height: 38,
+    marginLeft: 6,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
   followerActionButton: {
     minWidth: 94,
+    maxWidth: 150,
     minHeight: 38,
     marginLeft: 12,
     paddingHorizontal: 14,

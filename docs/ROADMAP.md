@@ -1,50 +1,62 @@
 Top3 Product Roadmap
 
-Version: 1.4Status: Active DevelopmentOwner: Jeremy LinskillLast Updated: August 2, 2026
+Version: 1.7Status: Active DevelopmentOwner: Jeremy LinskillLast Updated: August 6, 2026
 
 Purpose
 
-This roadmap outlines the long-term evolution of the Top3 product experience.
+This roadmap outlines the long-term evolution of the Top3 productexperience.
 
-Unlike CURRENT_STATE.md, which documents the application's current implementation, this roadmap focuses on the future direction of the product and the experiences we want to create for users.
+Unlike CURRENT_STATE.md, which documents the application's currentimplementation, this roadmap focuses on the future direction of theproduct and the experiences we want to create for users.
 
-Every initiative should strengthen one or more of Top3's four core pillars.
+Every initiative should strengthen one or more of Top3's four corepillars.
 
 Product Vision
 
 Help people discover one another through shared taste.
 
-Top3 isn't simply a place to rank favourites. It's a platform that helps people express who they are, discover new entertainment, and connect with others through the things they love.
+Top3 isn't simply a place to rank favourites. It's a platform that helpspeople express who they are, discover new entertainment, and connectwith others through the things they love.
 
-Every product decision should reinforce one or more of these pillars:
+Core Pillars
 
-Identity — Express who you are through your collections.
+Identity --- Express who you are through your collections.
 
-Discovery — Find new entertainment, ideas, and people.
+Discovery --- Find new entertainment, ideas, and people.
 
-Connection — Build meaningful relationships through shared taste.
+Connection --- Build meaningful relationships through sharedtaste.
 
-Conversation — Encourage discussion rather than passive consumption.
+Conversation --- Encourage discussion rather than passiveconsumption.
 
 Current Milestone
 
 Shared Community Platform
 
-Status: In Progress
+Status: Core Platform Complete ✅
 
-Top3 now has a production-ready authentication system and a solid backend foundation. The current milestone is completing the transition from prototype community features to fully shared experiences.
+Top3 now has a stable social foundation built on Supabase.Authentication, persistence, realtime synchronization, private accounts,follow requests, notifications, and the new Settings experience are inplace. The next phase shifts toward improving discovery, engagement, andlong-term retention.
 
 Completed
 
 Email authentication
 
-Native Sign in with Apple
+Sign in with Apple
 
-Native Sign in with Google
+Sign in with Google
 
 Persistent Supabase sessions
 
+Stable authentication initialization
+
 User profiles
+
+Profile editing
+
+Privacy settings
+
+Public & private accounts
+
+Follow requests
+
+Following / Followers
 
 Collection persistence
 
@@ -52,75 +64,85 @@ Shared Likes
 
 Shared Comments
 
-Feed authentication guard
-
-Remaining
-
-Shared Following ✅
-
-Replace remaining mock community users
-
-Realtime synchronization
-
 In-app notifications
 
-Initiative 1 — Complete the Community
+Settings
+
+About
+
+Supabase Realtime (Notifications, Likes, Comments, Following)
+
+Next Focus
+
+Complete the follow request workflow
+
+Improve feed ranking and personalization
+
+Expand Discover experiences
+
+Improve profile discovery
+
+Prepare push notifications
+
+Improve search reliability and provider resiliency
+
+Initiative 1 --- Strengthen Discovery
 
 Status: Current Focus
 
-Deliver a fully shared social experience backed by real users.
+Build richer discovery experiences on top of the completed socialplatform.
 
 Near-Term Priorities
 
-Complete Feed and Discover migration away from mock community data.
+Improve feed relevance and ranking
 
-Replace remaining mock community users.
+Expand Discover browsing and filtering
 
-Add Supabase Realtime for Likes, Comments, Following, and Notifications.
+Improve profile discovery
 
-Improve profile discovery.
+Expand conversation tools
 
-Expand conversation tools.
+Continue performance optimization
 
-Expand the new notification system with realtime and push notifications.
+Gracefully handle external API failures (TMDB, Google Books, RAWG)
 
-Success looks like:
+Prepare architecture for push notifications
 
-Every meaningful social interaction is shared, persistent, and updates naturally across all users.
+Success Looks Like
 
-Initiative 2 — Smarter Discovery
+Users consistently discover interesting people, collections, andentertainment without needing to search for them directly.
+
+Initiative 2 --- Smarter Discovery
 
 Status: Planned
 
-Use community collections to improve entertainment discovery.
+Use community collections to make discovering entertainment effortless.
 
 Opportunities
 
-Better recommendations.
+Trending collections
 
-AI-assisted recommendation explanations.
+Trending creators
 
-Personalized discovery summaries.
+Enhanced Taste Match
 
-Trending creators.
+AI-assisted recommendation explanations
 
-Trending collections.
+Personalized recommendations
 
-Better topic exploration.
+Better topic exploration
 
-Improved Taste Match.
+Spotify integration
 
-Recommendation refinement.
+Additional entertainment providers
 
-Spotify integration and music categories.
-
-Additional entertainment data providers.
+Recommendation quality signals
 
 Guiding Principle
 
-Artificial intelligence should enhance human discovery—not replace it.
+AI should strengthen human discovery---not replace it.
 
-Initiative 3 — Richer Identity
+Initiative 3 --- Richer Identity
 
 Status: Planned
 
@@ -128,21 +150,21 @@ Help people express themselves more completely.
 
 Opportunities
 
-Profile customization.
+Profile customization
 
-Collection history.
+Featured collections
 
-Featured collections.
+Pinned collections
 
-Pinned collections.
+Collection history
 
-Personal milestones.
+Collection sharing
 
-User achievements.
+User achievements
 
-Collection sharing.
+Activity summaries
 
-Initiative 4 — Platform Growth
+Initiative 4 --- Platform Growth
 
 Status: Future
 
@@ -150,25 +172,27 @@ Expand Top3 into a mature community platform.
 
 Opportunities
 
-Activity feed.
+Activity feed
 
-Collaborative collections.
+Collaborative collections
 
-Friend invitations.
+Friend invitations
 
-Creator features.
+Push notifications
 
-Moderation tools.
+Creator tools
 
-Admin dashboard.
+Moderation
 
-Analytics.
+Admin dashboard
 
-Platform operations.
+Analytics
+
+Community events
 
 Product Principles
 
-Every future feature should support one or more of these goals.
+Every future feature should:
 
 Make publishing effortless.
 
@@ -182,35 +206,29 @@ Build community through shared interests.
 
 Keep the experience simple.
 
-Prioritize quality over feature quantity.
-
 Maintain a content-first design philosophy.
 
-Use AI to strengthen human discovery, not replace it.
+Use AI to strengthen human discovery---not replace it.
 
-If a proposed feature does not strengthen one or more of these principles, it should be reconsidered before development begins.
+Prioritize quality and reliability before adding new features.
 
 Technical Strategy
 
-The product should continue evolving through small, complete vertical slices.
+Continue evolving through small, complete vertical slices.
 
-For every major initiative:
+For every milestone:
 
-Discuss the architecture.
+Discuss architecture.
 
 Build one complete vertical slice.
 
-Validate with npm run typecheck.
+Run npm run typecheck.
 
-Validate with npm run lint.
-
-Test end-to-end.
+Test end-to-end on device.
 
 Commit.
 
-Push.
-
-Update project documentation.
+Update CURRENT_STATE.md, CHANGELOG.md, and ROADMAP.md.
 
 Selecting the Next Milestone
 
@@ -218,15 +236,15 @@ After each completed milestone:
 
 Review CURRENT_STATE.md.
 
-Review this roadmap.
+Review ROADMAP.md.
 
-Identify the most important product problem to solve next.
+Identify the highest-value product problem.
 
-Discuss the architecture before implementation.
+Implement one complete vertical slice.
 
-Complete one vertical slice.
+Stabilize and verify.
 
-Update all project documentation.
+Update project documentation.
 
 Success Metrics
 
@@ -238,8 +256,10 @@ Discover entertainment they genuinely enjoy.
 
 Find people with similar taste.
 
+Build trusted communities.
+
 Return to continue conversations.
 
 Build lasting collections that reflect who they are.
 
-The long-term goal is not to maximize content creation, but to create meaningful connections through shared taste.
+The long-term goal is not to maximize content creation, but to createmeaningful connections through shared taste.

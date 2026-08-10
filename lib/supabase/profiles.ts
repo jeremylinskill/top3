@@ -29,13 +29,120 @@ function mapProfileRow(
   };
 }
 
+function getUniqueUserIds(
+  userIds: string[]
+) {
+  return Array.from(
+    new Set(
+      userIds
+        .map((userId) => userId.trim())
+        .filter(Boolean)
+    )
+  );
+}
+
 export async function searchPublicProfiles(
   query: string,
   currentUserId: string
 ): Promise<UserProfile[]> {
   const normalizedQuery = query.trim();
+  const normalizedCurrentUserId =
+    currentUserId.trim();
 
   if (!normalizedQuery) {
+    return [];
+  }
+
+  let profilesQuery = supabase
+    .from('profiles')
+    .select(
+      `
+        id,
+        username,
+        display_name,
+        bio,
+        avatar_url,
+        is_public
+      `
+    )
+    .or(
+      `username.ilike.%${normalizedQuery}%,display_name.ilike.%${normalizedQuery}%`
+    )
+    .order('display_name', {
+      ascending: true,
+    })
+    .limit(20);
+
+  if (normalizedCurrentUserId) {
+    profilesQuery = profilesQuery.neq(
+      'id',
+      normalizedCurrentUserId
+    );
+  }
+
+  const { data, error } =
+    await profilesQuery;
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []).map((row) =>
+    mapProfileRow(row as ProfileRow)
+  );
+}
+
+export async function getNewestPublicProfiles(
+  currentUserId: string,
+  limit = 5
+): Promise<UserProfile[]> {
+  const normalizedUserId =
+    currentUserId.trim();
+
+  if (!normalizedUserId) {
+    return [];
+  }
+
+  const safeLimit = Math.min(
+    Math.max(limit, 1),
+    20
+  );
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select(
+      `
+        id,
+        username,
+        display_name,
+        bio,
+        avatar_url,
+        is_public
+      `
+    )
+    .eq('is_public', true)
+    .neq('id', normalizedUserId)
+    .order('created_at', {
+      ascending: false,
+    })
+    .limit(safeLimit);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []).map((row) =>
+    mapProfileRow(row as ProfileRow)
+  );
+}
+
+export async function getProfilesByIds(
+  userIds: string[]
+): Promise<UserProfile[]> {
+  const uniqueUserIds =
+    getUniqueUserIds(userIds);
+
+  if (uniqueUserIds.length === 0) {
     return [];
   }
 
@@ -51,15 +158,7 @@ export async function searchPublicProfiles(
         is_public
       `
     )
-    .eq('is_public', true)
-    .neq('id', currentUserId)
-    .or(
-      `username.ilike.%${normalizedQuery}%,display_name.ilike.%${normalizedQuery}%`
-    )
-    .order('display_name', {
-      ascending: true,
-    })
-    .limit(20);
+    .in('id', uniqueUserIds);
 
   if (error) {
     throw error;
@@ -73,13 +172,8 @@ export async function searchPublicProfiles(
 export async function getPublicProfilesByIds(
   userIds: string[]
 ): Promise<UserProfile[]> {
-  const uniqueUserIds = Array.from(
-    new Set(
-      userIds
-        .map((userId) => userId.trim())
-        .filter(Boolean)
-    )
-  );
+  const uniqueUserIds =
+    getUniqueUserIds(userIds);
 
   if (uniqueUserIds.length === 0) {
     return [];
@@ -109,9 +203,15 @@ export async function getPublicProfilesByIds(
   );
 }
 
-export async function getPublicProfileById(
+export async function getProfileById(
   userId: string
 ): Promise<UserProfile | null> {
+  const normalizedUserId = userId.trim();
+
+  if (!normalizedUserId) {
+    return null;
+  }
+
   const { data, error } = await supabase
     .from('profiles')
     .select(
@@ -124,8 +224,7 @@ export async function getPublicProfileById(
         is_public
       `
     )
-    .eq('id', userId)
-    .eq('is_public', true)
+    .eq('id', normalizedUserId)
     .maybeSingle();
 
   if (error) {

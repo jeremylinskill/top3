@@ -6,9 +6,13 @@ export const COLORS = {
   secondaryText: '#666666',
   tertiaryText: '#888888',
 
+  // Accent
+  accent: '#007AFF',
+
   // Taste Match
-  sharedTaste: '#F4F1FF',
-  sharedTasteBorder: '#E6E1F5',
+  tasteMatchAccent: '#5928ed',
+  tasteMatchBackground: '#FFFC00',
+  tasteMatchBorder: '#FFFC00',
 
   // Status
   heart: '#FF4B4B',

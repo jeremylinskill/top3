@@ -12,7 +12,6 @@ export type Top3Topic = {
   icon: string;
   searchItemName: string;
   tmdbGenreId?: number;
-rawgGenreId?: number;
 };
 
 export type Top3Category = {
@@ -252,80 +251,71 @@ export const TOP3_CATEGORIES: Top3Category[] = [
     ],
   },
   {
-  id: 'games',
-  name: 'Video Games',
-  icon: '🎮',
-  placeholderIcon: 'game-controller-outline',
-  topics: [
-    {
-      id: 'general',
-      name: 'General',
-      icon: '🎮',
-      searchItemName: 'video game',
-    },
-    {
-      id: 'action',
-      name: 'Action',
-      icon: '⚔️',
-      searchItemName: 'action game',
-      rawgGenreId: 4,
-    },
-    {
-      id: 'adventure',
-      name: 'Adventure',
-      icon: '🗺️',
-      searchItemName: 'adventure game',
-      rawgGenreId: 3,
-    },
-    {
-      id: 'rpg',
-      name: 'RPG',
-      icon: '🧙',
-      searchItemName: 'role-playing game',
-      rawgGenreId: 5,
-    },
-    {
-      id: 'shooter',
-      name: 'Shooter',
-      icon: '🔫',
-      searchItemName: 'shooter game',
-      rawgGenreId: 2,
-    },
-    {
-      id: 'strategy',
-      name: 'Strategy',
-      icon: '♟️',
-      searchItemName: 'strategy game',
-      rawgGenreId: 10,
-    },
-    {
-      id: 'simulation',
-      name: 'Simulation',
-      icon: '🏗️',
-      searchItemName: 'simulation game',
-      rawgGenreId: 14,
-    },
-    {
-      id: 'racing',
-      name: 'Racing',
-      icon: '🏎️',
-      searchItemName: 'racing game',
-      rawgGenreId: 1,
-    },
-    {
-      id: 'sports',
-      name: 'Sports',
-      icon: '⚽',
-      searchItemName: 'sports game',
-      rawgGenreId: 15,
-    },
-    {
-      id: 'puzzle',
-      name: 'Puzzle',
-      icon: '🧩',
-      searchItemName: 'puzzle game',
-      rawgGenreId: 7,
-    },
-  ],
-},
+    id: 'games',
+    name: 'Video Games',
+    icon: '🎮',
+    placeholderIcon: 'game-controller-outline',
+    topics: [
+      {
+        id: 'general',
+        name: 'General',
+        icon: '🎮',
+        searchItemName: 'video game',
+      },
+      {
+        id: 'action',
+        name: 'Action',
+        icon: '⚔️',
+        searchItemName: 'action game',
+      },
+      {
+        id: 'adventure',
+        name: 'Adventure',
+        icon: '🗺️',
+        searchItemName: 'adventure game',
+      },
+      {
+        id: 'rpg',
+        name: 'RPG',
+        icon: '🧙',
+        searchItemName: 'role-playing game',
+      },
+      {
+        id: 'shooter',
+        name: 'Shooter',
+        icon: '🔫',
+        searchItemName: 'shooter game',
+      },
+      {
+        id: 'strategy',
+        name: 'Strategy',
+        icon: '♟️',
+        searchItemName: 'strategy game',
+      },
+      {
+        id: 'simulation',
+        name: 'Simulation',
+        icon: '🏗️',
+        searchItemName: 'simulation game',
+      },
+      {
+        id: 'racing',
+        name: 'Racing',
+        icon: '🏎️',
+        searchItemName: 'racing game',
+      },
+      {
+        id: 'sports',
+        name: 'Sports',
+        icon: '⚽',
+        searchItemName: 'sports game',
+      },
+      {
+        id: 'puzzle',
+        name: 'Puzzle',
+        icon: '🧩',
+        searchItemName: 'puzzle game',
+      },
+    ],
+  },
 ];

@@ -21,6 +21,8 @@ type FollowButtonProps = {
   style?: ViewStyle;
   disabled?: boolean;
   isFollowing?: boolean;
+  isRequested?: boolean;
+  isPrivate?: boolean;
   isLoading?: boolean;
   onPress?: () => void;
 };
@@ -31,6 +33,8 @@ export default function FollowButton({
   style,
   disabled = false,
   isFollowing: controlledIsFollowing,
+  isRequested = false,
+  isPrivate = false,
   isLoading: controlledIsLoading,
   onPress,
 }: FollowButtonProps) {
@@ -57,6 +61,17 @@ export default function FollowButton({
     buttonIsLoading ||
     normalizedUserId.length === 0;
 
+  const usesSecondaryStyle =
+    userIsFollowed || isRequested;
+
+  const buttonLabel = userIsFollowed
+    ? 'Following'
+    : isRequested
+      ? 'Requested'
+      : isPrivate
+        ? 'Request to Follow'
+        : 'Follow';
+
   function handlePress() {
     if (buttonIsDisabled) {
       return;
@@ -77,8 +92,8 @@ export default function FollowButton({
         size === 'small'
           ? styles.smallButton
           : styles.largeButton,
-        userIsFollowed &&
-          styles.followingButton,
+        usesSecondaryStyle &&
+          styles.secondaryButton,
         pressed &&
           !buttonIsDisabled &&
           styles.pressed,
@@ -90,19 +105,24 @@ export default function FollowButton({
       disabled={buttonIsDisabled}
       accessibilityRole="button"
       accessibilityState={{
-        selected: userIsFollowed,
+        selected:
+          userIsFollowed || isRequested,
         disabled: buttonIsDisabled,
       }}
       accessibilityLabel={
         userIsFollowed
           ? 'Unfollow this person'
-          : 'Follow this person'
+          : isRequested
+            ? 'Cancel follow request'
+            : isPrivate
+              ? 'Request to follow this person'
+              : 'Follow this person'
       }>
       {buttonIsLoading ? (
         <ActivityIndicator
           size="small"
           color={
-            userIsFollowed
+            usesSecondaryStyle
               ? COLORS.text
               : COLORS.white
           }
@@ -114,12 +134,10 @@ export default function FollowButton({
             size === 'small'
               ? styles.smallButtonText
               : styles.largeButtonText,
-            userIsFollowed &&
-              styles.followingButtonText,
+            usesSecondaryStyle &&
+              styles.secondaryButtonText,
           ]}>
-          {userIsFollowed
-            ? 'Following'
-            : 'Follow'}
+          {buttonLabel}
         </Text>
       )}
     </Pressable>
@@ -147,7 +165,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
   },
 
-  followingButton: {
+  secondaryButton: {
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -167,7 +185,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 
-  followingButtonText: {
+  secondaryButtonText: {
     color: COLORS.text,
   },
 

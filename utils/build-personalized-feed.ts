@@ -1,6 +1,6 @@
 import {
-    getTasteRecommendations,
-    TasteRecommendation,
+  getTasteRecommendations,
+  TasteRecommendation,
 } from '@/services/taste-recommendation-service';
 import { Post } from '@/types/post';
 

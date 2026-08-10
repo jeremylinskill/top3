@@ -313,6 +313,7 @@ export default function EditProfileScreen() {
                 {bio.length}/160
               </Text>
             </View>
+
           </Pressable>
         </ScrollView>
 

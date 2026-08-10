@@ -20,14 +20,37 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+function normalizeValue(value?: string) {
+  return value?.trim().toLowerCase() ?? '';
+}
+
+function collectionAlreadyExists(
+  existingLists: Top3List[],
+  categoryId: string,
+  topicName?: string
+) {
+  const normalizedCategoryId =
+    normalizeValue(categoryId);
+
+  const normalizedTopic =
+    normalizeValue(topicName);
+
+  return existingLists.some((list) => {
+    return (
+      Boolean(list.publishedAt) &&
+      normalizeValue(list.category) === normalizedCategoryId &&
+      normalizeValue(list.topic) === normalizedTopic
+    );
+  });
+}
+
 function getInitialValuesForCategory(
   existingLists: Top3List[],
-  requestedCategoryId?: string
+  requestedCategoryId?: string,
+  requestedTopicId?: string
 ): CollectionFormValues {
   if (!requestedCategoryId) {
-    return getInitialCollectionFormValues(
-      existingLists
-    );
+    return getInitialCollectionFormValues(existingLists);
   }
 
   const category = TOP3_CATEGORIES.find(
@@ -35,36 +58,53 @@ function getInitialValuesForCategory(
   );
 
   if (!category) {
-    return getInitialCollectionFormValues(
-      existingLists
+    return getInitialCollectionFormValues(existingLists);
+  }
+
+  if (requestedTopicId) {
+    const requestedTopic = category.topics.find(
+      (topic) => topic.id === requestedTopicId
     );
+
+    if (requestedTopic) {
+      const topicName =
+        requestedTopic.id === 'general'
+          ? undefined
+          : requestedTopic.name;
+
+      const alreadyExists = collectionAlreadyExists(
+        existingLists,
+        category.id,
+        topicName
+      );
+
+      if (!alreadyExists) {
+        const title =
+          requestedTopic.id === 'general'
+            ? `Top 3 ${category.name}`
+            : `Top 3 ${requestedTopic.name} ${category.name}`;
+
+        return {
+          categoryId: category.id,
+          topicId: requestedTopic.id,
+          title,
+        };
+      }
+    }
   }
 
   const availableTopics = category.topics
     .filter((topic) => {
-      const normalizedTopic =
+      const topicName =
         topic.id === 'general'
-          ? ''
-          : topic.name
-              .trim()
-              .toLowerCase();
+          ? undefined
+          : topic.name;
 
-      return !existingLists.some((list) => {
-        const existingTopic =
-          list.topic
-            ?.trim()
-            .toLowerCase() ?? '';
-
-        return (
-          list.category
-            .trim()
-            .toLowerCase() ===
-            category.id
-              .trim()
-              .toLowerCase() &&
-          existingTopic === normalizedTopic
-        );
-      });
+      return !collectionAlreadyExists(
+        existingLists,
+        category.id,
+        topicName
+      );
     })
     .sort((first, second) => {
       if (first.id === 'general') {
@@ -75,9 +115,7 @@ function getInitialValuesForCategory(
         return 1;
       }
 
-      return first.name.localeCompare(
-        second.name
-      );
+      return first.name.localeCompare(second.name);
     });
 
   const firstTopic = availableTopics[0];
@@ -103,18 +141,28 @@ function getInitialValuesForCategory(
 }
 
 export default function CreateCollectionScreen() {
-  const { categoryId } =
+  const params =
     useLocalSearchParams<{
-      categoryId?: string;
+      categoryId?: string | string[];
+      topicId?: string | string[];
     }>();
+
+  const categoryId = Array.isArray(params.categoryId)
+    ? params.categoryId[0]
+    : params.categoryId;
+
+  const topicId = Array.isArray(params.topicId)
+    ? params.topicId[0]
+    : params.topicId;
 
   const { createList, lists } = useTop3();
 
   const [formValues, setFormValues] =
-    useState<CollectionFormValues>(() =>
+    useState(() =>
       getInitialValuesForCategory(
         lists,
-        categoryId
+        categoryId,
+        topicId
       )
     );
 
@@ -128,8 +176,7 @@ export default function CreateCollectionScreen() {
     }
 
     const category = TOP3_CATEGORIES.find(
-      (item) =>
-        item.id === formValues.categoryId
+      (item) => item.id === formValues.categoryId
     );
 
     if (!category) {
@@ -138,14 +185,16 @@ export default function CreateCollectionScreen() {
 
     const topic = formValues.topicId
       ? category.topics.find(
-          (item) =>
-            item.id === formValues.topicId
+          (item) => item.id === formValues.topicId
         )?.name
       : undefined;
 
     createList({
       category: formValues.categoryId,
-      topic,
+      topic:
+        formValues.topicId === 'general'
+          ? undefined
+          : topic,
       title: formValues.title,
     });
 
@@ -156,10 +205,10 @@ export default function CreateCollectionScreen() {
     <SafeAreaView
       style={styles.container}
       edges={['top', 'left', 'right']}>
-      <ScreenHeader />
+      <ScreenHeader showBackButton />
 
       <PageHeader
-        title="Share your taste"
+        title="Share your favorites"
         subtitle="What would you like to rank today?"
       />
 

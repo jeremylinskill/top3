@@ -1,22 +1,27 @@
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
+import Card from '@/components/ui/card';
+import SecondaryActionPill from '@/components/ui/secondary-action-pill';
+import SectionHeader from '@/components/ui/section-header';
 import { COLORS } from '@/constants/colors';
 import {
-    EnrichedNotification,
-    useNotifications,
+  EnrichedFollowRequest,
+  EnrichedNotification,
+  useNotifications,
 } from '@/context/notification-context';
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    Pressable,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -102,17 +107,26 @@ function formatNotificationTime(
 export default function NotificationsScreen() {
   const {
     notifications,
+    pendingFollowRequests,
     unreadCount,
+    pendingFollowRequestCount,
     isLoading,
     refreshNotifications,
     markNotificationRead,
     markAllNotificationsRead,
+    acceptFollowRequest,
+    declineFollowRequest,
   } = useNotifications();
 
   const [
     isMarkingAllRead,
     setIsMarkingAllRead,
   ] = useState(false);
+
+  const [
+    activeFollowRequestId,
+    setActiveFollowRequestId,
+  ] = useState<string | null>(null);
 
   async function handleNotificationPress(
     notification: EnrichedNotification
@@ -154,6 +168,69 @@ export default function NotificationsScreen() {
     }
   }
 
+  function openRequesterProfile(
+    request: EnrichedFollowRequest
+  ) {
+    router.push({
+      pathname: '/public-profile',
+      params: {
+        userId: request.requesterUserId,
+      },
+    });
+  }
+
+  async function handleAcceptFollowRequest(
+    requestId: string
+  ) {
+    if (activeFollowRequestId) {
+      return;
+    }
+
+    setActiveFollowRequestId(requestId);
+
+    try {
+      await acceptFollowRequest(requestId);
+    } catch (error) {
+      console.error(
+        'Failed to accept follow request:',
+        error
+      );
+
+      Alert.alert(
+        'Unable to accept request',
+        'Please try again.'
+      );
+    } finally {
+      setActiveFollowRequestId(null);
+    }
+  }
+
+  async function handleDeclineFollowRequest(
+    requestId: string
+  ) {
+    if (activeFollowRequestId) {
+      return;
+    }
+
+    setActiveFollowRequestId(requestId);
+
+    try {
+      await declineFollowRequest(requestId);
+    } catch (error) {
+      console.error(
+        'Failed to decline request:',
+        error
+      );
+
+      Alert.alert(
+        'Unable to decline request',
+        'Please try again.'
+      );
+    } finally {
+      setActiveFollowRequestId(null);
+    }
+  }
+
   async function handleMarkAllRead() {
     if (
       unreadCount === 0 ||
@@ -190,45 +267,17 @@ export default function NotificationsScreen() {
       <PageHeader
         title="Notifications"
         subtitle={
-          unreadCount === 0
-            ? 'You’re all caught up.'
-            : unreadCount === 1
-              ? 'You have 1 unread notification.'
-              : `You have ${unreadCount} unread notifications.`
+          pendingFollowRequestCount > 0
+            ? pendingFollowRequestCount === 1
+              ? 'You have 1 follow request.'
+              : `You have ${pendingFollowRequestCount} follow requests.`
+            : unreadCount === 0
+              ? 'You’re all caught up.'
+              : unreadCount === 1
+                ? 'You have 1 unread notification.'
+                : `You have ${unreadCount} unread notifications.`
         }
       />
-
-      {notifications.length > 0 ? (
-        <View style={styles.actions}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Mark all notifications as read"
-            disabled={
-              unreadCount === 0 ||
-              isMarkingAllRead
-            }
-            hitSlop={8}
-            onPress={handleMarkAllRead}
-            style={({ pressed }) => [
-              styles.markAllButton,
-              pressed &&
-                unreadCount > 0 &&
-                !isMarkingAllRead &&
-                styles.pressed,
-            ]}>
-            <Text
-              style={[
-                styles.markAllButtonText,
-                unreadCount === 0 &&
-                  styles.markAllButtonTextDisabled,
-              ]}>
-              {isMarkingAllRead
-                ? 'Marking as read...'
-                : 'Mark all as read'}
-            </Text>
-          </Pressable>
-        </View>
-      ) : null}
 
       <ScrollView
         style={styles.scrollView}
@@ -241,7 +290,8 @@ export default function NotificationsScreen() {
           />
         }>
         {isLoading &&
-        notifications.length === 0 ? (
+        notifications.length === 0 &&
+        pendingFollowRequests.length === 0 ? (
           <View style={styles.messageContainer}>
             <ActivityIndicator size="large" />
 
@@ -249,120 +299,304 @@ export default function NotificationsScreen() {
               Loading notifications...
             </Text>
           </View>
-        ) : notifications.length === 0 ? (
+        ) : notifications.length === 0 &&
+          pendingFollowRequests.length === 0 ? (
           <View style={styles.messageContainer}>
             <Text style={styles.messageTitle}>
               No notifications yet
             </Text>
 
             <Text style={styles.messageText}>
-              Likes, comments, and new followers
-              will appear here.
+              Likes, comments, follow requests, and
+              new followers will appear here.
             </Text>
           </View>
         ) : (
-          notifications.map((notification) => {
-            const actorName =
-              notification.actor?.displayName ||
-              notification.actor?.username ||
-              'Someone';
+          <>
+            {pendingFollowRequests.length > 0 ? (
+              <View style={styles.followRequestsSection}>
+                <Text style={styles.sectionTitle}>
+                  Follow Requests
+                </Text>
 
-            const actorInitial = actorName
-              .charAt(0)
-              .toUpperCase();
+                {pendingFollowRequests.map(
+                  (request) => {
+                    const requesterName =
+                      request.requester?.displayName ||
+                      request.requester?.username ||
+                      'Someone';
 
-            return (
-              <Pressable
-                key={notification.id}
-                accessibilityRole="button"
-                accessibilityLabel={`${actorName} ${getNotificationMessage(
-                  notification
-                )}`}
-                onPress={() =>
-                  handleNotificationPress(
-                    notification
-                  )
-                }
-                style={({ pressed }) => [
-                  styles.notificationRow,
-                  !notification.isRead &&
-                    styles.unreadRow,
-                  pressed && styles.pressed,
-                ]}>
-                <View style={styles.avatar}>
-                  {notification.actor?.avatarUrl ? (
-                    <Image
-                      source={{
-                        uri: notification.actor
-                          .avatarUrl,
-                      }}
-                      style={styles.avatarImage}
-                      resizeMode="cover"
+                    const requesterInitial =
+                      requesterName
+                        .charAt(0)
+                        .toUpperCase();
+
+                    const isRequestActive =
+                      activeFollowRequestId ===
+                      request.id;
+
+                    const actionsDisabled =
+                      activeFollowRequestId !== null;
+
+                    return (
+                      <View
+                        key={request.id}
+                        style={styles.followRequestRow}>
+                        <Pressable
+                          style={({ pressed }) => [
+                            styles.requesterProfile,
+                            pressed && styles.pressed,
+                          ]}
+                          onPress={() =>
+                            openRequesterProfile(
+                              request
+                            )
+                          }
+                          accessibilityRole="button"
+                          accessibilityLabel={`Open ${requesterName}'s profile`}>
+                          <View style={styles.avatar}>
+                            {request.requester?.avatarUrl ? (
+                              <Image
+                                source={{
+                                  uri: request.requester
+                                    .avatarUrl,
+                                }}
+                                style={styles.avatarImage}
+                                resizeMode="cover"
+                              />
+                            ) : (
+                              <Text
+                                style={
+                                  styles.avatarInitial
+                                }>
+                                {requesterInitial}
+                              </Text>
+                            )}
+                          </View>
+
+                          <View
+                            style={
+                              styles.followRequestBody
+                            }>
+                            <Text
+                              style={
+                                styles.followRequestMessage
+                              }>
+                              <Text
+                                style={
+                                  styles.followRequestName
+                                }>
+                                {requesterName}
+                              </Text>{' '}
+                              requested to follow you.
+                            </Text>
+
+                            <Text
+                              style={
+                                styles.notificationTime
+                              }>
+                              {formatNotificationTime(
+                                request.createdAt
+                              )}
+                            </Text>
+                          </View>
+                        </Pressable>
+
+                        <View
+                          style={
+                            styles.followRequestActions
+                          }>
+                          <Pressable
+                            style={({ pressed }) => [
+                              styles.acceptButton,
+                              pressed &&
+                                !actionsDisabled &&
+                                styles.pressed,
+                              actionsDisabled &&
+                                styles.disabledButton,
+                            ]}
+                            onPress={() =>
+                              void handleAcceptFollowRequest(
+                                request.id
+                              )
+                            }
+                            disabled={actionsDisabled}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Accept ${requesterName}'s follow request`}>
+                            {isRequestActive ? (
+                              <ActivityIndicator
+                                size="small"
+                                color="#FFFFFF"
+                              />
+                            ) : (
+                              <Text
+                                style={
+                                  styles.acceptButtonText
+                                }>
+                                Accept
+                              </Text>
+                            )}
+                          </Pressable>
+
+                          <Pressable
+                            style={({ pressed }) => [
+                              styles.declineIconButton,
+                              pressed &&
+                                !actionsDisabled &&
+                                styles.pressed,
+                              actionsDisabled &&
+                                styles.disabledButton,
+                            ]}
+                            onPress={() =>
+                              void handleDeclineFollowRequest(
+                                request.id
+                              )
+                            }
+                            disabled={actionsDisabled}
+                            hitSlop={10}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Decline ${requesterName}'s follow request`}>
+                            <Ionicons
+                              name="close-outline"
+                              size={20}
+                              color="#777777"
+                            />
+                          </Pressable>
+                        </View>
+                      </View>
+                    );
+                  }
+                )}
+              </View>
+            ) : null}
+
+            {notifications.length > 0 ? (
+              <View style={styles.activitySection}>
+                <SectionHeader
+                  title="Recent Activity"
+                  action={
+                    <SecondaryActionPill
+                      icon="eye-outline"
+                      label={
+                        isMarkingAllRead
+                          ? 'Marking as read...'
+                          : 'Mark all as read'
+                      }
+                      onPress={handleMarkAllRead}
+                      disabled={
+                        unreadCount === 0 ||
+                        isMarkingAllRead
+                      }
                     />
-                  ) : (
-                    <Text
-                      style={styles.avatarInitial}>
-                      {actorInitial}
-                    </Text>
-                  )}
-                </View>
+                  }
+                />
 
-                <View style={styles.notificationBody}>
-                  <Text style={styles.notificationText}>
-                    <Text style={styles.actorName}>
-                      {actorName}
-                    </Text>{' '}
-                    {notification.type === 'like' ? (
-                      <>
-                        liked your{' '}
-                        <Text
-                          style={
-                            styles.collectionTitle
-                          }>
-                          {notification.collection
-                            ?.title ??
-                            'collection'}
-                        </Text>
-                        .
-                      </>
-                    ) : notification.type ===
-                      'comment' ? (
-                      <>
-                        commented on your{' '}
-                        <Text
-                          style={
-                            styles.collectionTitle
-                          }>
-                          {notification.collection
-                            ?.title ??
-                            'collection'}
-                        </Text>
-                        .
-                      </>
-                    ) : notification.type ===
-                      'follow' ? (
-                      'started following you.'
-                    ) : (
-                      'interacted with your profile.'
-                    )}
-                  </Text>
+                {notifications.map((notification) => {
+                  const actorName =
+                    notification.actor?.displayName ||
+                    notification.actor?.username ||
+                    'Someone';
 
-                  <Text style={styles.notificationTime}>
-                    {formatNotificationTime(
-                      notification.createdAt
-                    )}
-                  </Text>
-                </View>
+                  const actorInitial = actorName
+                    .charAt(0)
+                    .toUpperCase();
 
-                {!notification.isRead ? (
-                  <View
-                    style={styles.unreadIndicator}
-                    accessibilityLabel="Unread"
-                  />
-                ) : null}
-              </Pressable>
-            );
-          })
+                  return (
+                    <Card
+                      key={notification.id}
+                      style={styles.notificationRow}>
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={`${actorName} ${getNotificationMessage(
+                          notification
+                        )}`}
+                        onPress={() =>
+                          handleNotificationPress(
+                            notification
+                          )
+                        }
+                        style={({ pressed }) => [
+                          styles.notificationPressable,
+                          pressed && styles.pressed,
+                        ]}>
+                        <View style={styles.avatar}>
+                          {notification.actor?.avatarUrl ? (
+                            <Image
+                              source={{
+                                uri: notification.actor
+                                  .avatarUrl,
+                              }}
+                              style={styles.avatarImage}
+                              resizeMode="cover"
+                            />
+                          ) : (
+                            <Text
+                              style={styles.avatarInitial}>
+                              {actorInitial}
+                            </Text>
+                          )}
+                        </View>
+
+                        <View style={styles.notificationBody}>
+                          <Text style={styles.notificationText}>
+                            <Text style={styles.actorName}>
+                              {actorName}
+                            </Text>{' '}
+                            {notification.type === 'like' ? (
+                              <>
+                                liked your{' '}
+                                <Text
+                                  style={
+                                    styles.collectionTitle
+                                  }>
+                                  {notification.collection
+                                    ?.title ??
+                                    'collection'}
+                                </Text>
+                                .
+                              </>
+                            ) : notification.type ===
+                              'comment' ? (
+                              <>
+                                commented on your{' '}
+                                <Text
+                                  style={
+                                    styles.collectionTitle
+                                  }>
+                                  {notification.collection
+                                    ?.title ??
+                                    'collection'}
+                                </Text>
+                                .
+                              </>
+                            ) : notification.type ===
+                              'follow' ? (
+                              'started following you.'
+                            ) : (
+                              'interacted with your profile.'
+                            )}
+                          </Text>
+
+                          <Text style={styles.notificationTime}>
+                            {formatNotificationTime(
+                              notification.createdAt
+                            )}
+                          </Text>
+                        </View>
+
+                        {!notification.isRead ? (
+                          <View
+                            style={styles.unreadIndicator}
+                            accessibilityLabel="Unread"
+                          />
+                        ) : null}
+                      </Pressable>
+                    </Card>
+                  );
+                })}
+              </View>
+            ) : null}
+          </>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -373,28 +607,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
-  },
-
-  actions: {
-    alignItems: 'flex-end',
-    paddingHorizontal: 20,
-    paddingBottom: 12,
-  },
-
-  markAllButton: {
-    minHeight: 30,
-    justifyContent: 'center',
-  },
-
-  markAllButtonText: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: '600',
-    color: '#1573DD',
-  },
-
-  markAllButtonTextDisabled: {
-    color: COLORS.tertiaryText,
   },
 
   scrollView: {
@@ -427,10 +639,25 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  notificationRow: {
-    minHeight: 84,
+  followRequestsSection: {
+    paddingBottom: 20,
+  },
+
+  activitySection: {
+    paddingTop: 0,
+  },
+
+  sectionTitle: {
+    fontSize: 20,
+    lineHeight: 26,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+
+  followRequestRow: {
+    minHeight: 118,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     paddingHorizontal: 20,
     paddingVertical: 14,
     borderBottomWidth:
@@ -439,8 +666,76 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
 
-  unreadRow: {
-    backgroundColor: '#F2F7FD',
+  requesterProfile: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+
+  followRequestBody: {
+    flex: 1,
+    minWidth: 0,
+    marginLeft: 12,
+    paddingTop: 1,
+  },
+
+  followRequestName: {
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+
+  followRequestMessage: {
+    fontSize: 15,
+    lineHeight: 21,
+    color: COLORS.secondaryText,
+  },
+
+  followRequestActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 12,
+    gap: 12,
+  },
+
+  acceptButton: {
+    width: 92,
+    minHeight: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: COLORS.text,
+  },
+
+  acceptButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+
+  declineIconButton: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  disabledButton: {
+    opacity: 0.55,
+  },
+
+  notificationRow: {
+    marginHorizontal: 20,
+    marginBottom: 12,
+  },
+
+  notificationPressable: {
+    minHeight: 84,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
 
   avatar: {
@@ -497,7 +792,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#1573DD',
+    backgroundColor: '#5928ed',
   },
 
   pressed: {

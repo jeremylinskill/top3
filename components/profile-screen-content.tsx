@@ -1,5 +1,4 @@
 import FollowButton from '@/components/follow-button';
-import PrimaryButton from '@/components/primary-button';
 import TasteMatchBadge from '@/components/taste-match-badge';
 import Top3Card from '@/components/top3-card';
 import { AVATAR } from '@/constants/avatar';
@@ -34,11 +33,12 @@ type ProfileScreenContentProps = {
 
   isLoadingPosts?: boolean;
 
+  canViewPosts?: boolean;
+
   isFollowing?: boolean;
+  isFollowRequested?: boolean;
   isLoadingFollowState?: boolean;
 
-  onEditProfile?: () => void;
-  onSignOut?: () => void;
   onToggleFollow?: () => void;
   onFollowersPress?: () => void;
   onFollowingPress?: () => void;
@@ -64,11 +64,12 @@ export default function ProfileScreenContent({
 
   isLoadingPosts = false,
 
+  canViewPosts = true,
+
   isFollowing = false,
+  isFollowRequested = false,
   isLoadingFollowState = false,
 
-  onEditProfile,
-  onSignOut,
   onToggleFollow,
   onFollowersPress,
   onFollowingPress,
@@ -143,7 +144,7 @@ export default function ProfileScreenContent({
       <View style={styles.statsRow}>
         <View style={styles.stat}>
           <Text style={styles.statValue}>
-            {publishedPosts.length}
+            {canViewPosts ? publishedPosts.length : 0}
           </Text>
 
           <Text style={styles.statLabel}>
@@ -212,48 +213,35 @@ export default function ProfileScreenContent({
         </Pressable>
       </View>
 
-      {isCurrentUser ? (
-        <View style={styles.profileActions}>
-          {onEditProfile ? (
-            <PrimaryButton
-              title="Edit Profile"
-              onPress={onEditProfile}
-            />
-          ) : null}
-
-          {onSignOut ? (
-            <Pressable
-              style={({ pressed }) => [
-                styles.signOutButton,
-                pressed &&
-                  styles.signOutButtonPressed,
-              ]}
-              onPress={onSignOut}
-              accessibilityRole="button"
-              accessibilityLabel="Sign out">
-              <Text style={styles.signOutButtonText}>
-                Sign Out
-              </Text>
-            </Pressable>
-          ) : null}
-        </View>
-      ) : (
+      {!isCurrentUser ? (
         <View style={styles.profileActions}>
           <FollowButton
             userId={user.id}
             size="large"
             isFollowing={isFollowing}
+            isRequested={isFollowRequested}
+            isPrivate={user.visibility === 'private'}
             isLoading={isLoadingFollowState}
             onPress={onToggleFollow}
           />
         </View>
-      )}
+      ) : null}
 
       <View style={styles.section}>
         {isLoadingPosts ? (
           <View style={styles.loadingState}>
             <Text style={styles.loadingText}>
               Loading Top 3s…
+            </Text>
+          </View>
+        ) : !canViewPosts ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateTitle}>
+              This account is private
+            </Text>
+
+            <Text style={styles.emptyStateText}>
+              This person's collections are only visible to approved followers.
             </Text>
           </View>
         ) : publishedPosts.length === 0 ? (
@@ -403,29 +391,8 @@ const styles = StyleSheet.create({
   },
 
   profileActions: {
-    marginTop: 14,
+  marginTop: SPACING.sm,
     gap: SPACING.sm,
-  },
-
-  signOutButton: {
-    minHeight: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: RADIUS.xl,
-    paddingHorizontal: SPACING.lg,
-  },
-
-  signOutButtonPressed: {
-    opacity: 0.55,
-  },
-
-  signOutButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.text,
   },
 
   section: {

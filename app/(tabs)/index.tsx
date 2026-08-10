@@ -18,6 +18,7 @@ import {
   useState,
 } from 'react';
 import {
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -86,6 +87,9 @@ export default function FeedScreen() {
 
   const [isLoadingFeed, setIsLoadingFeed] =
     useState(true);
+
+  const [isRefreshing, setIsRefreshing] =
+    useState(false);
 
   const [
     selectedCommentsPost,
@@ -295,6 +299,54 @@ export default function FeedScreen() {
     toggleFollow(authorId);
   }
 
+  async function refreshFeed() {
+    if (!isAuthenticated || isRefreshing) {
+      return;
+    }
+
+    setIsRefreshing(true);
+
+    try {
+      const nextPosts =
+        await getPublishedPosts();
+
+      const authorIds = Array.from(
+        new Set(
+          nextPosts
+            .map((post) => post.authorId)
+            .filter(
+              (authorId) =>
+                authorId !== profile.id
+            )
+        )
+      );
+
+      const authors =
+        await getPublicProfilesByIds(
+          authorIds
+        );
+
+      const nextFeedAuthors =
+        authors.reduce<
+          Record<string, UserProfile>
+        >((authorMap, author) => {
+          authorMap[author.id] = author;
+
+          return authorMap;
+        }, {});
+
+      setFeedPosts(nextPosts);
+      setFeedAuthors(nextFeedAuthors);
+    } catch (error) {
+      console.error(
+        'Failed to refresh feed posts:',
+        error
+      );
+    } finally {
+      setIsRefreshing(false);
+    }
+  }
+
   return (
     <SafeAreaView
       style={styles.container}
@@ -311,6 +363,12 @@ export default function FeedScreen() {
         }
         showsVerticalScrollIndicator={
           false
+        }
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={refreshFeed}
+          />
         }>
         {isLoadingFeed ? (
           <View

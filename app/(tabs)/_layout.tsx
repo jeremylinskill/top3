@@ -3,6 +3,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
 
+const TAB_ICON_SIZE = 29;
+
 export default function TabLayout() {
   const { unreadCount } = useNotifications();
 
@@ -18,9 +20,10 @@ export default function TabLayout() {
       initialRouteName="index"
       screenOptions={{
         headerShown: false,
+        tabBarShowLabel: false,
 
         tabBarActiveTintColor: '#222222',
-        tabBarInactiveTintColor: '#999999',
+        tabBarInactiveTintColor: '#8E8E93',
 
         tabBarStyle: {
           backgroundColor: '#FAFAFA',
@@ -33,19 +36,15 @@ export default function TabLayout() {
             width: 0,
             height: 0,
           },
-          height: 80,
+          height: 72,
         },
 
         tabBarItemStyle: {
-          paddingTop: 8,
-          paddingBottom: 6,
-        },
-
-        tabBarLabelStyle: {
-          fontSize: 12,
-          marginTop: 2,
-          marginBottom: 2,
-        },
+  flex: 1,
+  alignItems: 'center',
+  justifyContent: 'center',
+  paddingTop: 6,
+},
       }}>
       <Tabs.Screen
         name="index"
@@ -53,7 +52,6 @@ export default function TabLayout() {
           title: 'Feed',
           tabBarIcon: ({
             color,
-            size,
             focused,
           }) => (
             <Ionicons
@@ -62,7 +60,7 @@ export default function TabLayout() {
                   ? 'home'
                   : 'home-outline'
               }
-              size={size}
+              size={TAB_ICON_SIZE}
               color={color}
             />
           ),
@@ -75,7 +73,6 @@ export default function TabLayout() {
           title: 'Discover',
           tabBarIcon: ({
             color,
-            size,
             focused,
           }) => (
             <Ionicons
@@ -84,7 +81,7 @@ export default function TabLayout() {
                   ? 'compass'
                   : 'compass-outline'
               }
-              size={size}
+              size={TAB_ICON_SIZE}
               color={color}
             />
           ),
@@ -97,7 +94,6 @@ export default function TabLayout() {
           title: 'Create',
           tabBarIcon: ({
             color,
-            size,
             focused,
           }) => (
             <Ionicons
@@ -106,7 +102,7 @@ export default function TabLayout() {
                   ? 'add-circle'
                   : 'add-circle-outline'
               }
-              size={size}
+              size={TAB_ICON_SIZE}
               color={color}
             />
           ),
@@ -126,7 +122,6 @@ export default function TabLayout() {
           },
           tabBarIcon: ({
             color,
-            size,
             focused,
           }) => (
             <Ionicons
@@ -135,7 +130,7 @@ export default function TabLayout() {
                   ? 'notifications'
                   : 'notifications-outline'
               }
-              size={size}
+              size={TAB_ICON_SIZE}
               color={color}
             />
           ),
@@ -148,7 +143,6 @@ export default function TabLayout() {
           title: 'Profile',
           tabBarIcon: ({
             color,
-            size,
             focused,
           }) => (
             <Ionicons
@@ -157,7 +151,7 @@ export default function TabLayout() {
                   ? 'person'
                   : 'person-outline'
               }
-              size={size}
+              size={TAB_ICON_SIZE}
               color={color}
             />
           ),

@@ -1,15 +1,14 @@
 import Chip from '@/components/chip';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
+import SearchInput from '@/components/search-input';
 import SearchResultSkeleton from '@/components/search-result-skeleton';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { useTop3 } from '@/context/top3-context';
-import { searchBooks } from '@/providers/google-books';
-import { searchGames } from '@/providers/rawg';
 import {
-  searchMovies,
-  searchTvShows,
-} from '@/providers/tmdb';
+  getPopularSuggestionsByCategory,
+  getSearchProvider,
+} from '@/providers/search';
 import { getPublishedPosts } from '@/services/post-service';
 import { Top3Item } from '@/types/top3-item';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,113 +21,111 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-type SearchProvider = (
-  query: string,
-  topic?: string
-) => Promise<Top3Item[]>;
-
-const SEARCH_PROVIDERS: Record<string, SearchProvider> = {
-  movies: searchMovies,
-  books: searchBooks,
-  tv: searchTvShows,
-  games: searchGames,
-};
 
 const MINIMUM_SEARCH_LENGTH = 3;
 const MINIMUM_COLLECTIONS_FOR_POPULARITY = 50;
 
 const SEARCH_CACHE = new Map<string, Top3Item[]>();
 
-const CATEGORY_SUGGESTIONS: Record<string, string[]> = {
+const CATEGORY_SUGGESTIONS: Record<
+  string,
+  Top3Item[]
+> = {
   movies: [
-    'The Godfather',
-    'Parasite',
-    'Spirited Away',
-    'The Dark Knight',
-    'Everything Everywhere All at Once',
+    {
+      id: 'fallback-movies-the-godfather',
+      title: 'The Godfather',
+    },
+    {
+      id: 'fallback-movies-parasite',
+      title: 'Parasite',
+    },
+    {
+      id: 'fallback-movies-spirited-away',
+      title: 'Spirited Away',
+    },
+    {
+      id: 'fallback-movies-the-dark-knight',
+      title: 'The Dark Knight',
+    },
+    {
+      id: 'fallback-movies-everything-everywhere-all-at-once',
+      title: 'Everything Everywhere All at Once',
+    },
   ],
   tv: [
-    'Breaking Bad',
-    'The Bear',
-    'Succession',
-    'Severance',
-    'The Last of Us',
+    {
+      id: 'fallback-tv-breaking-bad',
+      title: 'Breaking Bad',
+    },
+    {
+      id: 'fallback-tv-the-bear',
+      title: 'The Bear',
+    },
+    {
+      id: 'fallback-tv-succession',
+      title: 'Succession',
+    },
+    {
+      id: 'fallback-tv-severance',
+      title: 'Severance',
+    },
+    {
+      id: 'fallback-tv-the-last-of-us',
+      title: 'The Last of Us',
+    },
   ],
   books: [
-    'The Hobbit',
-    'Dune',
-    'The Handmaid’s Tale',
-    'Project Hail Mary',
-    'The Great Gatsby',
+    {
+      id: 'fallback-books-the-hobbit',
+      title: 'The Hobbit',
+    },
+    {
+      id: 'fallback-books-dune',
+      title: 'Dune',
+    },
+    {
+      id: 'fallback-books-the-handmaids-tale',
+      title: 'The Handmaid’s Tale',
+    },
+    {
+      id: 'fallback-books-project-hail-mary',
+      title: 'Project Hail Mary',
+    },
+    {
+      id: 'fallback-books-the-great-gatsby',
+      title: 'The Great Gatsby',
+    },
   ],
   games: [
-    'The Legend of Zelda',
-    'Baldur’s Gate 3',
-    'Red Dead Redemption 2',
-    'Hades',
-    'The Last of Us',
-  ],
-};
-
-const TOPIC_SUGGESTIONS: Record<string, string[]> = {
-  comedy: [
-    'The Office',
-    'Parks and Recreation',
-    'Schitt’s Creek',
-    'Ted Lasso',
-    'Brooklyn Nine-Nine',
-  ],
-  drama: [
-    'The Sopranos',
-    'Mad Men',
-    'Succession',
-    'The Wire',
-    'Better Call Saul',
-  ],
-  documentary: [
-    'Planet Earth',
-    'The Last Dance',
-    'Free Solo',
-    '13th',
-    'Won’t You Be My Neighbor?',
-  ],
-  horror: [
-    'The Shining',
-    'Get Out',
-    'Hereditary',
-    'The Haunting of Hill House',
-    'Resident Evil',
-  ],
-  sciencefiction: [
-    'Dune',
-    'Blade Runner 2049',
-    'The Expanse',
-    'Mass Effect',
-    'Foundation',
-  ],
-  fantasy: [
-    'The Lord of the Rings',
-    'Game of Thrones',
-    'The Witcher',
-    'Baldur’s Gate 3',
-    'The Name of the Wind',
+    {
+      id: 'fallback-games-the-legend-of-zelda',
+      title: 'The Legend of Zelda',
+    },
+    {
+      id: 'fallback-games-baldurs-gate-3',
+      title: 'Baldur’s Gate 3',
+    },
+    {
+      id: 'fallback-games-red-dead-redemption-2',
+      title: 'Red Dead Redemption 2',
+    },
+    {
+      id: 'fallback-games-hades',
+      title: 'Hades',
+    },
+    {
+      id: 'fallback-games-the-last-of-us',
+      title: 'The Last of Us',
+    },
   ],
 };
 
 function normalizeValue(value?: string) {
   return value?.trim().toLowerCase() ?? '';
-}
-
-function normalizeSuggestionKey(value?: string) {
-  return value
-    ?.trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '') ?? '';
 }
 
 export default function SearchScreen() {
@@ -139,12 +136,37 @@ export default function SearchScreen() {
   const [searchResults, setSearchResults] = useState<Top3Item[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [searchError, setSearchError] =
+    useState<string | null>(null);
+  const [
+    suggestionPool,
+    setSuggestionPool,
+  ] = useState<Top3Item[]>([]);
+
   const [
     popularSuggestions,
     setPopularSuggestions,
+  ] = useState<Top3Item[]>([]);
+
+  const [
+    isLoadingSuggestions,
+    setIsLoadingSuggestions,
+  ] = useState(true);
+
+  const [
+    seenSuggestionIds,
+    setSeenSuggestionIds,
   ] = useState<string[]>([]);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const suggestionsOpacity =
+    useRef(new Animated.Value(1)).current;
+  const suggestionsTranslateY =
+    useRef(new Animated.Value(0)).current;
+  const shuffleRotation =
+    useRef(new Animated.Value(0)).current;
+  const isShuffling = useRef(false);
+  const latestSearchId = useRef(0);
 
   const selectedCategory = TOP3_CATEGORIES.find(
     (category) => category.id === currentList?.category
@@ -175,19 +197,17 @@ export default function SearchScreen() {
 
   const isGeneralTopic = selectedTopic?.id === 'general';
 
-  const suggestionKey = normalizeSuggestionKey(
-    selectedTopic?.id ?? selectedTopic?.name
-  );
-
   const fallbackSuggestions =
-    TOPIC_SUGGESTIONS[suggestionKey] ??
-    CATEGORY_SUGGESTIONS[currentList?.category ?? ''] ??
-    [];
+    CATEGORY_SUGGESTIONS[
+      currentList?.category ?? ''
+    ] ?? [];
 
   const suggestions =
-    popularSuggestions.length > 0
-      ? popularSuggestions
-      : fallbackSuggestions;
+    isLoadingSuggestions
+      ? []
+      : popularSuggestions.length > 0
+        ? popularSuggestions
+        : fallbackSuggestions;
 
   const trimmedQuery = searchQuery.trim();
   const canSearch =
@@ -196,17 +216,80 @@ export default function SearchScreen() {
   useEffect(() => {
     let isMounted = true;
 
+    setIsLoadingSuggestions(true);
+    setSuggestionPool([]);
+    setPopularSuggestions([]);
+    setSeenSuggestionIds([]);
+
     async function loadPopularSuggestions() {
       const categoryId = currentList?.category;
       const topic = currentList?.topic;
 
       if (!categoryId) {
+        setSuggestionPool([]);
         setPopularSuggestions([]);
+        setSeenSuggestionIds([]);
+        setIsLoadingSuggestions(false);
         return;
       }
 
+      async function loadProviderSuggestions(
+        resolvedCategoryId: string
+      ) {
+        try {
+          const providerResults =
+            await getPopularSuggestionsByCategory(
+              resolvedCategoryId,
+              topic,
+              20
+            );
+
+          if (!isMounted) {
+            return;
+          }
+
+          if (providerResults.length > 0) {
+            const initialSuggestions =
+              providerResults.slice(0, 5);
+
+            setSuggestionPool(
+              providerResults
+            );
+            setPopularSuggestions(
+              initialSuggestions
+            );
+            setSeenSuggestionIds(
+              initialSuggestions.map(
+                (item) => item.id
+              )
+            );
+            setIsLoadingSuggestions(false);
+
+            return;
+          }
+
+          setSuggestionPool([]);
+          setPopularSuggestions([]);
+          setSeenSuggestionIds([]);
+          setIsLoadingSuggestions(false);
+        } catch (error) {
+          console.warn(
+            'Failed to load provider suggestions:',
+            error
+          );
+
+          if (isMounted) {
+            setSuggestionPool([]);
+            setPopularSuggestions([]);
+            setSeenSuggestionIds([]);
+            setIsLoadingSuggestions(false);
+          }
+        }
+      }
+
       try {
-        const publishedPosts = await getPublishedPosts();
+        const publishedPosts =
+          await getPublishedPosts();
 
         const normalizedCategory =
           normalizeValue(categoryId);
@@ -214,44 +297,39 @@ export default function SearchScreen() {
         const normalizedTopic =
           normalizeValue(topic) || 'general';
 
-        const matchingPosts = publishedPosts.filter(
-          (post) => {
-            const postCategory = normalizeValue(
-              post.collection.category
-            );
+        const matchingPosts =
+          publishedPosts.filter((post) => {
+            const postCategory =
+              normalizeValue(
+                post.collection.category
+              );
 
             const postTopic =
-              normalizeValue(post.collection.topic) ||
-              'general';
+              normalizeValue(
+                post.collection.topic
+              ) || 'general';
 
             return (
-              postCategory === normalizedCategory &&
+              postCategory ===
+                normalizedCategory &&
               postTopic === normalizedTopic
             );
-          }
-        );
+          });
 
         if (
-          matchingPosts.length <
+          matchingPosts.length >=
           MINIMUM_COLLECTIONS_FOR_POPULARITY
         ) {
-          if (isMounted) {
-            setPopularSuggestions([]);
-          }
+          const scores = new Map<
+            string,
+            {
+              item: Top3Item;
+              score: number;
+              appearances: number;
+            }
+          >();
 
-          return;
-        }
-
-        const scores = new Map<
-          string,
-          {
-            title: string;
-            score: number;
-            appearances: number;
-          }
-        >();
-
-        matchingPosts.forEach((post) => {
+          matchingPosts.forEach((post) => {
             post.collection.items.forEach(
               (item, index) => {
                 if (!item) {
@@ -267,53 +345,78 @@ export default function SearchScreen() {
                 }
 
                 const rankScore = 3 - index;
-                const existing = scores.get(itemKey);
+                const existing =
+                  scores.get(itemKey);
 
                 scores.set(itemKey, {
-                  title: item.title,
+                  item,
                   score:
                     (existing?.score ?? 0) +
                     rankScore,
                   appearances:
-                    (existing?.appearances ?? 0) + 1,
+                    (existing?.appearances ??
+                      0) + 1,
                 });
               }
             );
           });
 
-        const nextSuggestions = Array.from(
-          scores.values()
-        )
-          .sort((a, b) => {
-            if (b.score !== a.score) {
-              return b.score - a.score;
-            }
+          const communitySuggestions =
+            Array.from(scores.values())
+              .sort((a, b) => {
+                if (b.score !== a.score) {
+                  return b.score - a.score;
+                }
 
-            if (b.appearances !== a.appearances) {
-              return b.appearances - a.appearances;
-            }
+                if (
+                  b.appearances !==
+                  a.appearances
+                ) {
+                  return (
+                    b.appearances -
+                    a.appearances
+                  );
+                }
 
-            return a.title.localeCompare(b.title);
-          })
-          .slice(0, 5)
-          .map((entry) => entry.title);
+                return a.item.title.localeCompare(
+                  b.item.title
+                );
+              })
+              .slice(0, 5)
+              .map((entry) => entry.item);
 
-        if (isMounted) {
-          setPopularSuggestions(nextSuggestions);
+          if (
+            isMounted &&
+            communitySuggestions.length > 0
+          ) {
+            setSuggestionPool(
+              communitySuggestions
+            );
+            setPopularSuggestions(
+              communitySuggestions
+            );
+            setSeenSuggestionIds(
+              communitySuggestions.map(
+                (item) => item.id
+              )
+            );
+            setIsLoadingSuggestions(false);
+            return;
+          }
         }
+
+        await loadProviderSuggestions(categoryId);
       } catch (error) {
-        console.error(
-          'Failed to load popular search suggestions:',
+        console.warn(
+          'Failed to load community suggestions. Falling back to provider suggestions.',
           error
         );
 
-        if (isMounted) {
-          setPopularSuggestions([]);
-        }
+        await loadProviderSuggestions(categoryId);
       }
     }
 
-    loadPopularSuggestions();
+    void loadPopularSuggestions();
 
     return () => {
       isMounted = false;
@@ -324,10 +427,14 @@ export default function SearchScreen() {
   ]);
 
   useEffect(() => {
+    const effectSearchId =
+      ++latestSearchId.current;
+
     async function loadResults() {
       if (!canSearch) {
         setSearchResults([]);
         setHasSearched(false);
+        setSearchError(null);
         setIsLoading(false);
         return;
       }
@@ -337,6 +444,9 @@ export default function SearchScreen() {
       if (!categoryId) {
         setSearchResults([]);
         setHasSearched(true);
+        setSearchError(
+          'Search is temporarily unavailable. Please try again.'
+        );
         setIsLoading(false);
         return;
       }
@@ -353,25 +463,34 @@ export default function SearchScreen() {
       if (cachedResults) {
         setSearchResults(cachedResults);
         setHasSearched(true);
+        setSearchError(null);
         setIsLoading(false);
         return;
       }
 
       const searchProvider =
-        SEARCH_PROVIDERS[categoryId];
+        getSearchProvider(categoryId);
 
       if (!searchProvider) {
-        console.error(
-          `No search provider exists for: ${categoryId}`
-        );
+        if (__DEV__) {
+          console.warn(
+            `No search provider exists for: ${categoryId}`
+          );
+        }
 
         setSearchResults([]);
         setHasSearched(true);
+        setSearchError(
+          `${categoryName} search is temporarily unavailable.`
+        );
         setIsLoading(false);
         return;
       }
 
+      setSearchError(null);
       setIsLoading(true);
+
+      const searchId = effectSearchId;
 
       try {
         const results = await searchProvider(
@@ -379,19 +498,44 @@ export default function SearchScreen() {
           currentList?.topic
         );
 
+        if (
+          searchId !== latestSearchId.current
+        ) {
+          return;
+        }
+
         SEARCH_CACHE.set(cacheKey, results);
         setSearchResults(results);
         setHasSearched(true);
+        setSearchError(null);
       } catch (error) {
-        console.error(
-          `${categoryName} search failed:`,
-          error
-        );
+        if (
+          searchId !== latestSearchId.current
+        ) {
+          return;
+        }
+
+        if (__DEV__) {
+          console.warn(
+            `${categoryName} search failed:`,
+            error
+          );
+        }
+
+        const unavailableMessage =
+          categoryId === 'games'
+            ? 'Video game search is temporarily unavailable. Please try again in a few minutes.'
+            : `${categoryName} search is temporarily unavailable. Please try again.`;
 
         setSearchResults([]);
         setHasSearched(true);
+        setSearchError(unavailableMessage);
       } finally {
-        setIsLoading(false);
+        if (
+          searchId === latestSearchId.current
+        ) {
+          setIsLoading(false);
+        }
       }
     }
 
@@ -419,9 +563,163 @@ export default function SearchScreen() {
     }).start();
   }, [fadeAnim, isLoading, searchResults]);
 
-  function chooseSuggestion(suggestion: string) {
-    setSearchQuery(suggestion);
+  function refreshSuggestions() {
+    if (
+      suggestionPool.length <= 5 ||
+      isShuffling.current
+    ) {
+      return;
+    }
+
+    const unseenSuggestions =
+      suggestionPool.filter(
+        (suggestion) =>
+          !seenSuggestionIds.includes(
+            suggestion.id
+          )
+      );
+
+    const shouldResetSeen =
+      unseenSuggestions.length < 5;
+
+    const refreshedSeenSuggestionIds =
+      shouldResetSeen
+        ? popularSuggestions.map(
+            (suggestion) => suggestion.id
+          )
+        : seenSuggestionIds;
+
+    const refreshedUnseenSuggestions =
+      suggestionPool.filter(
+        (suggestion) =>
+          !refreshedSeenSuggestionIds.includes(
+            suggestion.id
+          )
+      );
+
+    const currentSuggestionIds =
+      new Set(
+        popularSuggestions.map(
+          (suggestion) => suggestion.id
+        )
+      );
+
+    const source =
+      refreshedUnseenSuggestions.length >= 5
+        ? refreshedUnseenSuggestions
+        : suggestionPool.filter(
+            (suggestion) =>
+              !currentSuggestionIds.has(
+                suggestion.id
+              )
+          );
+
+    const shuffled = [...source];
+
+    for (
+      let index = shuffled.length - 1;
+      index > 0;
+      index -= 1
+    ) {
+      const randomIndex = Math.floor(
+        Math.random() * (index + 1)
+      );
+
+      [
+        shuffled[index],
+        shuffled[randomIndex],
+      ] = [
+        shuffled[randomIndex],
+        shuffled[index],
+      ];
+    }
+
+    isShuffling.current = true;
+    shuffleRotation.setValue(0);
+
+    Animated.timing(shuffleRotation, {
+      toValue: 1,
+      duration: 290,
+      useNativeDriver: true,
+    }).start();
+
+    Animated.parallel([
+      Animated.timing(
+        suggestionsOpacity,
+        {
+          toValue: 0,
+          duration: 120,
+          useNativeDriver: true,
+        }
+      ),
+      Animated.timing(
+        suggestionsTranslateY,
+        {
+          toValue: -6,
+          duration: 120,
+          useNativeDriver: true,
+        }
+      ),
+    ]).start(() => {
+      const nextSuggestions =
+        shuffled.slice(0, 5);
+
+      setPopularSuggestions(
+        nextSuggestions
+      );
+
+      setSeenSuggestionIds((current) => {
+        const baseSeenIds =
+          shouldResetSeen
+            ? popularSuggestions.map(
+                (suggestion) =>
+                  suggestion.id
+              )
+            : current;
+
+        return [
+          ...new Set([
+            ...baseSeenIds,
+            ...nextSuggestions.map(
+              (suggestion) =>
+                suggestion.id
+            ),
+          ]),
+        ];
+      });
+
+      suggestionsTranslateY.setValue(6);
+
+      Animated.parallel([
+        Animated.timing(
+          suggestionsOpacity,
+          {
+            toValue: 1,
+            duration: 170,
+            useNativeDriver: true,
+          }
+        ),
+        Animated.timing(
+          suggestionsTranslateY,
+          {
+            toValue: 0,
+            duration: 170,
+            useNativeDriver: true,
+          }
+        ),
+      ]).start(() => {
+        isShuffling.current = false;
+      });
+    });
   }
+
+function chooseSuggestion(
+  suggestion: Top3Item
+) {
+  setSearchQuery(
+    suggestion.title
+  );
+}
 
   function selectItem(item: Top3Item) {
     const selectedRank = Number(rank);
@@ -445,6 +743,12 @@ export default function SearchScreen() {
     ? 'Search Results'
     : `${topicName} Results`;
 
+  const shuffleRotationDegrees =
+    shuffleRotation.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['0deg', '180deg'],
+    });
+
   return (
     <SafeAreaView style={styles.container}>
       <ScreenHeader showBackButton />
@@ -452,14 +756,20 @@ export default function SearchScreen() {
       <PageHeader title={searchTitle} />
 
       <View style={styles.content}>
-        <TextInput
-            style={styles.searchInput}
+        <View style={styles.searchInputWrapper}>
+          <SearchInput
             placeholder={searchPlaceholder}
             value={searchQuery}
             onChangeText={setSearchQuery}
-            autoCorrect={false}
             autoCapitalize="words"
+            accessibilityLabel={searchPlaceholder}
+            onClear={() => {
+              setSearchResults([]);
+              setHasSearched(false);
+              setSearchError(null);
+            }}
           />
+        </View>
 
         {!canSearch ? (
           <Text style={styles.searchHelper}>
@@ -470,19 +780,71 @@ export default function SearchScreen() {
 
         {!hasSearched && !canSearch && suggestions.length > 0 ? (
           <View style={styles.suggestionsSection}>
-            <Text style={styles.suggestionsTitle}>
-              Suggestions
-            </Text>
+            <View style={styles.suggestionsHeader}>
+  <Text style={styles.suggestionsTitle}>
+    Suggestions
+  </Text>
 
-            <View style={styles.suggestionList}>
-              {suggestions.map((suggestion) => (
-                <Chip
-                  key={suggestion}
-                  label={suggestion}
-                  onPress={() => chooseSuggestion(suggestion)}
-                />
-              ))}
-            </View>
+  {suggestionPool.length > 5 ? (
+    <Pressable
+      style={({ pressed }) => [
+        styles.shuffleButton,
+        pressed && styles.shuffleButtonPressed,
+      ]}
+      onPress={refreshSuggestions}
+      hitSlop={8}
+      accessibilityRole="button"
+      accessibilityLabel="Shuffle suggestions">
+      <Animated.View
+        style={{
+          transform: [
+            {
+              rotate:
+                shuffleRotationDegrees,
+            },
+          ],
+        }}>
+        <Ionicons
+          name="shuffle"
+          size={16}
+          color="#5928ed"
+        />
+      </Animated.View>
+
+      <Text style={styles.shuffleText}>
+        Shuffle
+      </Text>
+    </Pressable>
+  ) : null}
+</View>
+
+            <Animated.View
+              style={{
+                opacity:
+                  suggestionsOpacity,
+                transform: [
+                  {
+                    translateY:
+                      suggestionsTranslateY,
+                  },
+                ],
+              }}>
+              <View style={styles.suggestionList}>
+                {suggestions.map(
+                  (suggestion) => (
+                    <Chip
+                      key={suggestion.id}
+                      label={suggestion.title}
+                      onPress={() =>
+                        chooseSuggestion(
+                          suggestion
+                        )
+                      }
+                    />
+                  )
+                )}
+              </View>
+            </Animated.View>
           </View>
         ) : null}
 
@@ -508,6 +870,23 @@ export default function SearchScreen() {
             </>
           ) : !hasSearched ? (
             <View style={styles.emptySpace} />
+          ) : searchError ? (
+            <View style={styles.messageContainer}>
+              <Ionicons
+                name="cloud-offline-outline"
+                size={42}
+                color="#777777"
+                style={styles.messageErrorIcon}
+              />
+
+              <Text style={styles.messageTitle}>
+                Search unavailable
+              </Text>
+
+              <Text style={styles.messageText}>
+                {searchError}
+              </Text>
+            </View>
           ) : searchResults.length === 0 ? (
             <View style={styles.messageContainer}>
               <Text style={styles.messageIcon}>
@@ -608,14 +987,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F8F8',
   },
 
-  searchInput: {
-    borderWidth: 1,
-    borderColor: '#CCCCCC',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 18,
+  searchInputWrapper: {
     marginBottom: 24,
-    backgroundColor: '#FFFFFF',
   },
 
   searchHelper: {
@@ -630,11 +1003,10 @@ const styles = StyleSheet.create({
   },
 
   suggestionsTitle: {
-    marginBottom: 12,
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#222222',
-  },
+  fontSize: 18,
+  fontWeight: '600',
+  color: '#222222',
+},
 
   suggestionList: {
     flexDirection: 'row',
@@ -666,6 +1038,10 @@ const styles = StyleSheet.create({
 
   messageIcon: {
     fontSize: 42,
+    marginBottom: 12,
+  },
+
+  messageErrorIcon: {
     marginBottom: 12,
   },
 
@@ -728,4 +1104,32 @@ const styles = StyleSheet.create({
     marginTop: 6,
     lineHeight: 22,
   },
+
+  shuffleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: '#F1F1F1',
+  },
+
+  shuffleButtonPressed: {
+    opacity: 0.65,
+  },
+
+  shuffleText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#5928ed',
+  },
+
+  suggestionsHeader: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  marginBottom: 12,
+},
+
 });

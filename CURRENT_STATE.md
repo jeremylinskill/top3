@@ -1,12 +1,12 @@
 CURRENT_STATE.md
 
-Project: Top3Version: 1.6Status: Active DevelopmentLast Updated: August 2, 2026Current Branch: main
+Project: Top3Version: 1.9Status: Active DevelopmentLast Updated: August 7, 2026Current Branch: main
 
 Last Verified Commit
 
-b2dad2c
+a3c2225
 
-Add in-app notifications for likes comments and follows
+Add Supabase Realtime subscriptions
 
 Dashboard
 
@@ -16,11 +16,11 @@ Project Status
 
 Current Feature
 
-Notifications milestone complete.
+IGDB migration and shared search architecture complete.
 
 Current Priority
 
-Review the current product state and roadmap, update project documentation, and determine the next architectural milestone before implementation begins.
+Monitor startup authentication stability, continue search-quality refinement, and continue improving discovery, recommendations, and overall product quality.
 
 Architecture should always be discussed before implementation begins.
 
@@ -74,6 +74,8 @@ Supabase Postgres
 
 Supabase Storage
 
+Supabase Edge Functions
+
 Row Level Security
 
 State Management
@@ -85,6 +87,20 @@ Local Storage
 AsyncStorage
 
 AsyncStorage is used only for temporary or local application state that does not yet require shared server persistence.
+
+External Search Integrations
+
+TMDB — Movies and TV Shows
+
+Google Books — Books
+
+Open Library — Book fallback provider
+
+IGDB — Video Games
+
+Twitch OAuth — Server-side IGDB authentication
+
+Video game search is proxied through the authenticated Supabase Edge Function igdb-search. The Twitch Client Secret is stored only in Supabase Edge Function secrets and is never exposed to the mobile client.
 
 Navigation
 
@@ -150,6 +166,22 @@ Application Providers
 
 AuthProvider↓ProfileProvider↓NotificationProvider↓FollowProvider↓LikeProvider↓CommentProvider↓Top3Provider
 
+Search Architecture
+
+providers/search.ts defines the shared SearchProvider contract and maps application categories to provider implementations.
+
+Movies → providers/tmdb.ts
+
+TV Shows → providers/tmdb.ts
+
+Books → providers/google-books.ts with Open Library fallback
+
+Video Games → providers/games.ts → lib/supabase/igdb.ts → authenticated Supabase Edge Function igdb-search → IGDB
+
+Provider-specific retry, fallback, filtering, ranking, and API behavior remains inside each provider rather than being forced into the shared registry.
+
+The search screen uses a reusable 300 ms debounce hook and maintains an in-memory result cache.
+
 Presentation Layer
 
 Layout
@@ -200,6 +232,8 @@ Authentication is implemented through a shared service layer and Supabase Auth.
 
 The existing AuthProvider restores persisted sessions and responds to authentication state changes for email, Apple, and Google accounts.
 
+During startup, the authentication service restores the persisted Supabase session and refreshes it before AuthGate releases the rest of the application. This is intended to reduce intermittent startup failures caused by stale or timing-sensitive JWTs.
+
 Authentication Screen Flow
 
 Welcome↓Create Account├─ Continue with Apple├─ Continue with Google└─ Continue with Email↓Email Sign Up
@@ -227,6 +261,8 @@ Email verification flow
 Persistent Supabase sessions
 
 Automatic session restoration
+
+Startup session refresh before protected application queries
 
 Dedicated email form screens
 
@@ -454,6 +490,18 @@ AsyncStorage
 
 Currently used for:
 
+Realtime
+
+✅ Notifications
+
+✅ Likes
+
+✅ Comments
+
+✅ Following
+
+Shared subscription helper: lib/supabase/realtime.ts
+
 Draft collections
 
 Recent searches
@@ -476,6 +524,12 @@ Standardized spacing, typography, and page hierarchy
 
 Curated search suggestions remain until a category/topic reaches 50 published collections, then become community-driven
 
+Shared search provider registry routes Movies, TV, Books, and Video Games through one application-level search contract
+
+Reusable useDebouncedValue hook provides a 300 ms search debounce across all search categories
+
+Video game search uses IGDB through a Supabase Edge Function, including prefix fallback and relevance scoring for partial-title searches
+
 Current Source of Truth
 
 Real
@@ -496,21 +550,19 @@ Real
 
 ✅ Notifications
 
-Hybrid
+Real
 
-⚠ Feed
+✅ Feed
 
-⚠ Discover
+✅ Discover
 
-⚠ Community
+✅ Community
 
-⚠ Taste Match
-
-Community experiences currently combine real authenticated users with mock community data.
+✅ Taste Match
 
 Recent Milestones
 
-August 2, 2026
+August 4, 2026
 
 Notifications
 
@@ -678,7 +730,7 @@ Known Technical Debt
 
 High Priority
 
-Replace remaining mock community users with real users
+Monitor the intermittent Supabase JWT issued at future startup error after adding an explicit session refresh during authentication initialization
 
 Medium Priority
 
@@ -686,7 +738,7 @@ Scope AsyncStorage keys by authenticated user where appropriate
 
 Improve optimistic rollback behaviour where needed
 
-Add Supabase Realtime for Likes, Comments, Following, and Notifications
+✅ Supabase Realtime implemented for Likes, Comments, Following, and Notifications
 
 Review whether the Google nonce compatibility setting should be hardened in a future authentication pass
 
@@ -718,6 +770,10 @@ Prefer complete file replacements.
 
 Run npm run typecheck.
 
+For Supabase Edge Functions, run the function-specific Deno validation command, for example:
+
+deno check --config supabase/functions/igdb-search/deno.json supabase/functions/igdb-search/index.ts
+
 Run npm run lint.
 
 Test thoroughly.
@@ -748,6 +804,10 @@ Do not automatically choose the next major feature without reviewing the roadmap
 
 Remember that Authentication, Profiles, Profile Avatars, Collections, Likes, Comments, Following, and Notifications are fully persisted through Supabase.
 
+Remember that RAWG has been removed from the active application. Video game search now uses IGDB through an authenticated Supabase Edge Function.
+
+Remember that search routing is centralized in providers/search.ts, and app/search.tsx uses a reusable 300 ms debounce hook.
+
 Do not recommend migrating Following again—it has already been completed.
 
 Document Purpose
@@ -757,3 +817,99 @@ CURRENT_STATE.md provides an accurate snapshot of the application's current arch
 Strategic direction belongs in ROADMAP.md.
 
 Historical milestones belong in CHANGELOG.md.
+
+August 6, 2026
+
+Stabilization
+
+Fixed authentication initialization race conditions.
+
+Added authentication guards before profile and collection queries.
+
+Prevented anonymous Supabase requests during sign out.
+
+Improved sign-out flow.
+
+Replaced technical sign-in errors with friendly user-facing authentication messages.
+
+Settings & Profile
+
+Moved Edit Profile into Settings.
+
+Moved Privacy into Settings.
+
+Removed the Edit Profile button from the Profile screen.
+
+Redesigned Sign Out as a standalone action.
+
+Refined Settings, Profile and Privacy layouts.
+
+Follow Requests
+
+Updated follow request copy to 'requested to follow you'.
+
+Removed usernames from request cards.
+
+Replaced the decline button with a compact close icon.
+
+August 7, 2026
+
+Video Game Search
+
+Replaced RAWG with IGDB after RAWG repeatedly returned Cloudflare HTTP 522 origin failures.
+
+Created the authenticated Supabase Edge Function igdb-search.
+
+Stored Twitch Client ID and Client Secret as Supabase Edge Function secrets.
+
+Added server-side Twitch OAuth token acquisition and in-memory token caching.
+
+Added IGDB search filtering to exclude secondary content such as DLC, expansions, bundles, and mods where possible.
+
+Added title relevance scoring so exact matches rank above loosely related results.
+
+Added prefix fallback search so partial queries such as Valo can return Valorant.
+
+Added IGDB cover art, release year, and normalized five-star ratings.
+
+Removed the RAWG provider from the active application.
+
+Removed the RAWG API key from .env.
+
+Removed RAWG-specific genre IDs from constants/top3-categories.ts.
+
+Search Architecture
+
+Added providers/search.ts as the shared category-to-provider registry.
+
+Moved app/search.tsx to the shared provider registry.
+
+Moved services/post-service.ts hydration to searchByCategory().
+
+Added reusable hooks/use-debounced-value.ts.
+
+Standardized search debounce at 300 ms across Movies, TV, Books, and Video Games.
+
+Preserved provider-specific behavior inside TMDB, Google Books, Open Library, and IGDB integrations.
+
+Tooling
+
+Initialized Supabase CLI support in the project.
+
+Added Supabase Edge Function development configuration.
+
+Installed and configured Deno for Edge Function validation in VS Code.
+
+Separated Expo TypeScript validation from Deno Edge Function validation.
+
+Authentication Stabilization
+
+Added an explicit Supabase session refresh during startup authentication initialization.
+
+The intermittent JWT issued at future startup error is being monitored to confirm whether the refresh fully resolves it.
+
+Current Investigation
+
+Monitor intermittent startup authentication failures reporting JWT issued at future.
+
+No blocking issue is currently confirmed; the application continues to typecheck successfully.

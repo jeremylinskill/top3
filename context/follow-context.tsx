@@ -1,8 +1,17 @@
 import { useAuth } from '@/hooks/use-auth';
 import {
+  acceptFollowRequest as acceptFollowRequestInDatabase,
+  cancelFollowRequest as cancelFollowRequestInDatabase,
+  createFollowRequest,
+  declineFollowRequest as declineFollowRequestInDatabase,
+  FollowRequest,
+  getFollowRequestSnapshot,
+} from '@/lib/supabase/follow-requests';
+import {
   createFollow,
   deleteFollow,
   getFollowSnapshot,
+  removeFollower,
 } from '@/lib/supabase/follows';
 import { subscribeToTableChanges } from '@/lib/supabase/realtime';
 import {
@@ -18,14 +27,23 @@ import {
 type FollowContextValue = {
   followedUserIds: string[];
   followerUserIds: string[];
+  sentFollowRequests: FollowRequest[];
+  receivedFollowRequests: FollowRequest[];
   isLoading: boolean;
 
   isFollowing: (userId: string) => boolean;
   isFollower: (userId: string) => boolean;
+  isFollowRequested: (userId: string) => boolean;
 
   followUser: (userId: string) => void;
   unfollowUser: (userId: string) => void;
   toggleFollow: (userId: string) => void;
+
+  requestFollow: (userId: string) => void;
+  cancelFollowRequest: (userId: string) => void;
+  acceptFollowRequest: (requestId: string) => void;
+  declineFollowRequest: (requestId: string) => void;
+  removeFollower: (userId: string) => void;
 
   getFollowingCount: () => number;
   getFollowerCount: () => number;
@@ -69,6 +87,16 @@ export function FollowProvider({
 
   const [followerUserIds, setFollowerUserIds] =
     useState<string[]>([]);
+
+  const [
+    sentFollowRequests,
+    setSentFollowRequests,
+  ] = useState<FollowRequest[]>([]);
+
+  const [
+    receivedFollowRequests,
+    setReceivedFollowRequests,
+  ] = useState<FollowRequest[]>([]);
 
   const [isLoading, setIsLoading] =
     useState(true);
@@ -128,12 +156,54 @@ export function FollowProvider({
     [userId]
   );
 
+  const refreshFollowRequests = useCallback(
+    async ({
+      clearExisting = false,
+    }: {
+      clearExisting?: boolean;
+    } = {}) => {
+      if (clearExisting) {
+        setSentFollowRequests([]);
+        setReceivedFollowRequests([]);
+      }
+
+      if (!userId) {
+        setSentFollowRequests([]);
+        setReceivedFollowRequests([]);
+        return;
+      }
+
+      try {
+        const snapshot =
+          await getFollowRequestSnapshot(
+            userId
+          );
+
+        setSentFollowRequests(
+          snapshot.sentRequests
+        );
+
+        setReceivedFollowRequests(
+          snapshot.receivedRequests
+        );
+      } catch (error) {
+        console.error(
+          'Failed to load follow requests:',
+          error
+        );
+      }
+    },
+    [userId]
+  );
+
   useEffect(() => {
     let isCancelled = false;
 
-    async function loadFollows() {
+    async function loadFollowState() {
       setFollowedUserIds([]);
       setFollowerUserIds([]);
+      setSentFollowRequests([]);
+      setReceivedFollowRequests([]);
       setIsLoading(true);
 
       if (!userId) {
@@ -145,8 +215,13 @@ export function FollowProvider({
       }
 
       try {
-        const snapshot =
-          await getFollowSnapshot(userId);
+        const [
+          followSnapshot,
+          followRequestSnapshot,
+        ] = await Promise.all([
+          getFollowSnapshot(userId),
+          getFollowRequestSnapshot(userId),
+        ]);
 
         if (isCancelled) {
           return;
@@ -154,18 +229,26 @@ export function FollowProvider({
 
         setFollowedUserIds(
           getUniqueUserIds(
-            snapshot.followedUserIds
+            followSnapshot.followedUserIds
           )
         );
 
         setFollowerUserIds(
           getUniqueUserIds(
-            snapshot.followerUserIds
+            followSnapshot.followerUserIds
           )
+        );
+
+        setSentFollowRequests(
+          followRequestSnapshot.sentRequests
+        );
+
+        setReceivedFollowRequests(
+          followRequestSnapshot.receivedRequests
         );
       } catch (error) {
         console.error(
-          'Failed to load follows:',
+          'Failed to load follow state:',
           error
         );
       } finally {
@@ -175,7 +258,7 @@ export function FollowProvider({
       }
     }
 
-    void loadFollows();
+    void loadFollowState();
 
     return () => {
       isCancelled = true;
@@ -187,7 +270,7 @@ export function FollowProvider({
       return;
     }
 
-    const unsubscribe =
+    const unsubscribeFromFollows =
       subscribeToTableChanges({
         channelName: `follows-${userId}`,
         table: 'follows',
@@ -197,10 +280,22 @@ export function FollowProvider({
           }),
       });
 
-    return unsubscribe;
+    const unsubscribeFromFollowRequests =
+      subscribeToTableChanges({
+        channelName: `follow-requests-${userId}`,
+        table: 'follow_requests',
+        onChange: () =>
+          refreshFollowRequests(),
+      });
+
+    return () => {
+      unsubscribeFromFollows();
+      unsubscribeFromFollowRequests();
+    };
   }, [
     userId,
     refreshFollows,
+    refreshFollowRequests,
   ]);
 
   const isFollowing = useCallback(
@@ -233,6 +328,24 @@ export function FollowProvider({
       );
     },
     [followerUserIds]
+  );
+
+  const isFollowRequested = useCallback(
+    (targetUserId: string) => {
+      const normalizedUserId =
+        normalizeUserId(targetUserId);
+
+      if (!normalizedUserId) {
+        return false;
+      }
+
+      return sentFollowRequests.some(
+        (request) =>
+          request.recipientUserId ===
+          normalizedUserId
+      );
+    },
+    [sentFollowRequests]
   );
 
   const followUser = useCallback(
@@ -372,6 +485,279 @@ export function FollowProvider({
     ]
   );
 
+  const requestFollow = useCallback(
+    (targetUserId: string) => {
+      const normalizedUserId =
+        normalizeUserId(targetUserId);
+
+      if (
+        !userId ||
+        !normalizedUserId ||
+        normalizedUserId === userId ||
+        followedUserIds.includes(
+          normalizedUserId
+        ) ||
+        sentFollowRequests.some(
+          (request) =>
+            request.recipientUserId ===
+            normalizedUserId
+        )
+      ) {
+        return;
+      }
+
+      const currentUserId = userId;
+
+      async function saveFollowRequest() {
+        try {
+          const request =
+            await createFollowRequest(
+              currentUserId,
+              normalizedUserId
+            );
+
+          setSentFollowRequests(
+            (currentRequests) => [
+              request,
+              ...currentRequests,
+            ]
+          );
+        } catch (error) {
+          console.error(
+            'Failed to create follow request:',
+            error
+          );
+        }
+      }
+
+      void saveFollowRequest();
+    },
+    [
+      userId,
+      followedUserIds,
+      sentFollowRequests,
+    ]
+  );
+
+  const cancelFollowRequest = useCallback(
+    (targetUserId: string) => {
+      const normalizedUserId =
+        normalizeUserId(targetUserId);
+
+      const request =
+        sentFollowRequests.find(
+          (item) =>
+            item.recipientUserId ===
+            normalizedUserId
+        );
+
+      if (!request) {
+        return;
+      }
+
+      const followRequest = request;
+
+      setSentFollowRequests(
+        (currentRequests) =>
+          currentRequests.filter(
+            (item) =>
+              item.id !== followRequest.id
+          )
+      );
+
+      async function removeFollowRequest() {
+        try {
+          await cancelFollowRequestInDatabase(
+            followRequest.id
+          );
+        } catch (error) {
+          console.error(
+            'Failed to cancel follow request:',
+            error
+          );
+
+          setSentFollowRequests(
+            (currentRequests) => {
+              if (
+                currentRequests.some(
+                  (item) =>
+                    item.id === followRequest.id
+                )
+              ) {
+                return currentRequests;
+              }
+
+              return [
+                followRequest,
+                ...currentRequests,
+              ];
+            }
+          );
+        }
+      }
+
+      void removeFollowRequest();
+    },
+    [sentFollowRequests]
+  );
+
+  const acceptFollowRequest = useCallback(
+    (requestId: string) => {
+      const request =
+        receivedFollowRequests.find(
+          (item) =>
+            item.id === requestId
+        );
+
+      if (!request) {
+        return;
+      }
+
+      const followRequest = request;
+
+      setReceivedFollowRequests(
+        (currentRequests) =>
+          currentRequests.filter(
+            (item) =>
+              item.id !== followRequest.id
+          )
+      );
+
+      async function approveFollowRequest() {
+        try {
+          await acceptFollowRequestInDatabase(
+            followRequest.id
+          );
+
+          await Promise.all([
+            refreshFollows(),
+            refreshFollowRequests(),
+          ]);
+        } catch (error) {
+          console.error(
+            'Failed to accept follow request:',
+            error
+          );
+
+          await refreshFollowRequests();
+        }
+      }
+
+      void approveFollowRequest();
+    },
+    [
+      receivedFollowRequests,
+      refreshFollows,
+      refreshFollowRequests,
+    ]
+  );
+
+  const declineFollowRequest = useCallback(
+    (requestId: string) => {
+      const request =
+        receivedFollowRequests.find(
+          (item) =>
+            item.id === requestId
+        );
+
+      if (!request) {
+        return;
+      }
+
+      const followRequest = request;
+
+      setReceivedFollowRequests(
+        (currentRequests) =>
+          currentRequests.filter(
+            (item) =>
+              item.id !== followRequest.id
+          )
+      );
+
+      async function rejectFollowRequest() {
+        try {
+          await declineFollowRequestInDatabase(
+            followRequest.id
+          );
+        } catch (error) {
+          console.error(
+            'Failed to decline follow request:',
+            error
+          );
+
+          await refreshFollowRequests();
+        }
+      }
+
+      void rejectFollowRequest();
+    },
+    [
+      receivedFollowRequests,
+      refreshFollowRequests,
+    ]
+  );
+
+
+  const removeFollowerByUserId = useCallback(
+    (targetUserId: string) => {
+      const normalizedUserId =
+        normalizeUserId(targetUserId);
+
+      if (
+        !userId ||
+        !normalizedUserId ||
+        !followerUserIds.includes(
+          normalizedUserId
+        )
+      ) {
+        return;
+      }
+
+      const currentUserId = userId;
+
+      setFollowerUserIds((currentIds) =>
+        currentIds.filter(
+          (currentId) =>
+            currentId !== normalizedUserId
+        )
+      );
+
+      async function deleteFollower() {
+        try {
+          await removeFollower(
+            normalizedUserId,
+            currentUserId
+          );
+        } catch (error) {
+          console.error(
+            'Failed to remove follower:',
+            error
+          );
+
+          setFollowerUserIds(
+            (currentIds) => {
+              if (
+                currentIds.includes(
+                  normalizedUserId
+                )
+              ) {
+                return currentIds;
+              }
+
+              return [
+                ...currentIds,
+                normalizedUserId,
+              ];
+            }
+          );
+        }
+      }
+
+      void deleteFollower();
+    },
+    [userId, followerUserIds]
+  );
+
   const getFollowingCount =
     useCallback(
       () => followedUserIds.length,
@@ -400,14 +786,24 @@ export function FollowProvider({
     () => ({
       followedUserIds,
       followerUserIds,
+      sentFollowRequests,
+      receivedFollowRequests,
       isLoading,
 
       isFollowing,
       isFollower,
+      isFollowRequested,
 
       followUser,
       unfollowUser,
       toggleFollow,
+
+      requestFollow,
+      cancelFollowRequest,
+      acceptFollowRequest,
+      declineFollowRequest,
+      removeFollower:
+        removeFollowerByUserId,
 
       getFollowingCount,
       getFollowerCount,
@@ -418,12 +814,20 @@ export function FollowProvider({
     [
       followedUserIds,
       followerUserIds,
+      sentFollowRequests,
+      receivedFollowRequests,
       isLoading,
       isFollowing,
       isFollower,
+      isFollowRequested,
       followUser,
       unfollowUser,
       toggleFollow,
+      requestFollow,
+      cancelFollowRequest,
+      acceptFollowRequest,
+      declineFollowRequest,
+      removeFollowerByUserId,
       getFollowingCount,
       getFollowerCount,
       getFollowingUserIds,

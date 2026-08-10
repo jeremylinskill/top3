@@ -7,7 +7,7 @@ import { useTop3 } from '@/context/top3-context';
 import { useAuth } from '@/hooks/use-auth';
 import type { FollowCounts } from '@/lib/supabase/follows';
 import { getFollowCounts } from '@/lib/supabase/follows';
-import { getPublicProfileById } from '@/lib/supabase/profiles';
+import { getProfileById } from '@/lib/supabase/profiles';
 import { getPublishedPostsByUser } from '@/services/post-service';
 import { getTasteRecommendationForUser } from '@/services/taste-recommendation-service';
 import { Post } from '@/types/post';
@@ -20,7 +20,6 @@ import {
 } from 'react';
 import {
     ActivityIndicator,
-    Alert,
     ScrollView,
     StyleSheet,
     Text,
@@ -74,14 +73,17 @@ export default function ProfileScreen({
   userId,
   showBackButton = false,
 }: ProfileScreenProps) {
-  const { signOut } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { profile } = useProfile();
 
   const { selectList } = useTop3();
 
   const {
     isFollowing,
+    isFollowRequested,
     toggleFollow,
+    requestFollow,
+    cancelFollowRequest,
     getFollowingCount,
     getFollowerCount,
     isLoading: isLoadingFollowState,
@@ -93,9 +95,6 @@ export default function ProfileScreen({
 
   const [isLoadingPosts, setIsLoadingPosts] =
     useState(true);
-
-  const [isSigningOut, setIsSigningOut] =
-    useState(false);
 
   const [
     viewedUserFollowCounts,
@@ -137,15 +136,15 @@ export default function ProfileScreen({
       setIsLoadingProfile(true);
 
       try {
-        const publicProfile =
-          await getPublicProfileById(userId);
+        const requestedProfile =
+          await getProfileById(userId);
 
         if (isMounted) {
-          setViewedUser(publicProfile);
+          setViewedUser(requestedProfile);
         }
       } catch (error) {
         console.error(
-          'Failed to load public profile:',
+          'Failed to load profile:',
           error
         );
 
@@ -159,7 +158,7 @@ export default function ProfileScreen({
       }
     }
 
-    loadViewedUser();
+    void loadViewedUser();
 
     return () => {
       isMounted = false;
@@ -175,6 +174,16 @@ export default function ProfileScreen({
     viewedUserId && !isCurrentUser
       ? isFollowing(viewedUserId)
       : false;
+
+  const userHasRequested =
+    viewedUserId && !isCurrentUser
+      ? isFollowRequested(viewedUserId)
+      : false;
+
+  const canViewPosts =
+    viewedUser?.visibility === 'public' ||
+    isCurrentUser ||
+    userIsFollowed;
 
   const currentUserFollowingCount =
     getFollowingCount();
@@ -221,7 +230,7 @@ export default function ProfileScreen({
       }
     }
 
-    loadViewedUserFollowCounts();
+    void loadViewedUserFollowCounts();
 
     return () => {
       isMounted = false;
@@ -232,7 +241,11 @@ export default function ProfileScreen({
     let isMounted = true;
 
     async function loadPosts() {
-      if (!viewedUserId) {
+      if (
+        !isAuthenticated ||
+        !profile.id ||
+        !viewedUserId
+      ) {
         if (isMounted) {
           setAllPosts([]);
           setIsLoadingPosts(false);
@@ -244,13 +257,12 @@ export default function ProfileScreen({
       setIsLoadingPosts(true);
 
       try {
-        const currentUserPostsPromise =
-          getPublishedPostsByUser(profile.id);
+        const currentUserPosts =
+          await getPublishedPostsByUser(
+            profile.id
+          );
 
         if (viewedUserId === profile.id) {
-          const currentUserPosts =
-            await currentUserPostsPromise;
-
           if (isMounted) {
             setAllPosts(currentUserPosts);
           }
@@ -258,13 +270,18 @@ export default function ProfileScreen({
           return;
         }
 
-        const [
-          currentUserPosts,
-          viewedUserPosts,
-        ] = await Promise.all([
-          currentUserPostsPromise,
-          getPublishedPostsByUser(viewedUserId),
-        ]);
+        if (!canViewPosts) {
+          if (isMounted) {
+            setAllPosts(currentUserPosts);
+          }
+
+          return;
+        }
+
+        const viewedUserPosts =
+          await getPublishedPostsByUser(
+            viewedUserId
+          );
 
         if (isMounted) {
           setAllPosts(
@@ -290,12 +307,17 @@ export default function ProfileScreen({
       }
     }
 
-    loadPosts();
+    void loadPosts();
 
     return () => {
       isMounted = false;
     };
-  }, [profile.id, viewedUserId]);
+  }, [
+    canViewPosts,
+    isAuthenticated,
+    profile.id,
+    viewedUserId,
+  ]);
 
   const publishedPosts = useMemo(() => {
     if (!viewedUserId) {
@@ -322,21 +344,23 @@ export default function ProfileScreen({
     if (
       !viewedUserId ||
       isCurrentUser ||
+      !canViewPosts ||
       isLoadingPosts
     ) {
       return null;
     }
 
-   return getTasteRecommendationForUser({
-  posts: allPosts,
-  profilesByUserId: {
-    [viewedUser.id]: viewedUser,
-  },
-  currentUserId: profile.id,
-  otherUserId: viewedUserId,
-});
+    return getTasteRecommendationForUser({
+      posts: allPosts,
+      profilesByUserId: {
+        [viewedUser.id]: viewedUser,
+      },
+      currentUserId: profile.id,
+      otherUserId: viewedUserId,
+    });
   }, [
     allPosts,
+    canViewPosts,
     isCurrentUser,
     isLoadingPosts,
     profile.id,
@@ -422,37 +446,12 @@ export default function ProfileScreen({
     router.push('/collection');
   }
 
-  function editProfile() {
+  function openSettings() {
     if (!isCurrentUser) {
       return;
     }
 
-    router.push('/edit-profile');
-  }
-
-  async function handleSignOut() {
-    if (!isCurrentUser || isSigningOut) {
-      return;
-    }
-
-    setIsSigningOut(true);
-
-    try {
-      await signOut();
-      router.replace('/sign-in');
-    } catch (error) {
-      console.error(
-        'Failed to sign out:',
-        error
-      );
-
-      Alert.alert(
-        'Unable to Sign Out',
-        'Something went wrong while signing you out. Please try again.'
-      );
-    } finally {
-      setIsSigningOut(false);
-    }
+    router.push('/settings');
   }
 
   function openFollowing() {
@@ -495,14 +494,36 @@ export default function ProfileScreen({
       return;
     }
 
+    if (userIsFollowed) {
+      setViewedUserFollowCounts(
+        (currentCounts) => ({
+          ...currentCounts,
+          followerCount: Math.max(
+            0,
+            currentCounts.followerCount - 1
+          ),
+        })
+      );
+
+      toggleFollow(viewedUserId);
+      return;
+    }
+
+    if (userHasRequested) {
+      cancelFollowRequest(viewedUserId);
+      return;
+    }
+
+    if (viewedUser.visibility === 'private') {
+      requestFollow(viewedUserId);
+      return;
+    }
+
     setViewedUserFollowCounts(
       (currentCounts) => ({
         ...currentCounts,
-        followerCount: Math.max(
-          0,
-          currentCounts.followerCount +
-            (userIsFollowed ? -1 : 1)
-        ),
+        followerCount:
+          currentCounts.followerCount + 1,
       })
     );
 
@@ -567,6 +588,17 @@ export default function ProfileScreen({
       edges={['top', 'left', 'right']}>
       <ScreenHeader
         showBackButton={showBackButton}
+        rightIconName={
+  isCurrentUser
+    ? 'settings-outline'
+    : undefined
+}
+        onRightPress={
+          isCurrentUser
+            ? openSettings
+            : undefined
+        }
+        rightAccessibilityLabel="Open settings"
       />
 
       <ScrollView
@@ -611,19 +643,13 @@ export default function ProfileScreen({
               : undefined
           }
           isLoadingPosts={isLoadingPosts}
+          canViewPosts={canViewPosts}
           isFollowing={userIsFollowed}
+          isFollowRequested={
+            userHasRequested
+          }
           isLoadingFollowState={
             isLoadingFollowState
-          }
-          onEditProfile={
-            isCurrentUser
-              ? editProfile
-              : undefined
-          }
-          onSignOut={
-            isCurrentUser
-              ? handleSignOut
-              : undefined
           }
           onToggleFollow={
             isCurrentUser

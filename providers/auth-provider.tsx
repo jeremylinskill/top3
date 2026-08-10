@@ -42,7 +42,8 @@ export function AuthProvider({
 
     async function initializeAuth() {
       try {
-        const currentSession = await getSession();
+        const currentSession =
+          await getSession();
 
         if (isMounted) {
           setSession(currentSession);
@@ -54,6 +55,9 @@ export function AuthProvider({
         );
       } finally {
         if (isMounted) {
+          // AuthGate should not render the rest of
+          // the application until the initial
+          // session restore has completed.
           setIsLoading(false);
         }
       }
@@ -63,12 +67,18 @@ export function AuthProvider({
 
     const {
       data: { subscription },
-    } = onAuthStateChange((_event, nextSession) => {
-      if (isMounted) {
-        setSession(nextSession);
-        setIsLoading(false);
+    } = onAuthStateChange(
+      (_event, nextSession) => {
+        if (isMounted) {
+          // Keep the current session in sync, but
+          // do not finish initialization here.
+          // During startup this callback can fire
+          // before getSession() has restored the
+          // persisted session.
+          setSession(nextSession);
+        }
       }
-    });
+    );
 
     return () => {
       isMounted = false;
@@ -82,21 +92,23 @@ export function AuthProvider({
 
   const user = getCurrentUser(session);
 
-  const value = useMemo<AuthContextValue>(
-    () => ({
-      user,
-      session,
-      isLoading,
-      isAuthenticated: Boolean(session),
-      signOut,
-    }),
-    [
-      user,
-      session,
-      isLoading,
-      signOut,
-    ]
-  );
+  const value =
+    useMemo<AuthContextValue>(
+      () => ({
+        user,
+        session,
+        isLoading,
+        isAuthenticated:
+          Boolean(session),
+        signOut,
+      }),
+      [
+        user,
+        session,
+        isLoading,
+        signOut,
+      ]
+    );
 
   return (
     <AuthContext.Provider value={value}>

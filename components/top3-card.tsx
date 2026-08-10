@@ -8,6 +8,7 @@ import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
 import { formatRelativeTime } from '@/utils/format-relative-time';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import {
   Image,
   Pressable,
@@ -164,17 +165,27 @@ export default function Top3Card({
     toggleLike(likeCollectionId);
   }
 
+  function openRecommendationTasteMatch() {
+    router.push({
+      pathname: '/taste-match',
+      params: {
+        userId: post.authorId,
+      },
+    });
+  }
+
   return (
     <View style={styles.card}>
       {recommendationTitle ? (
-        <View style={styles.recommendationBlock}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.recommendationBlock,
+            pressed && styles.pressed,
+          ]}
+          onPress={openRecommendationTasteMatch}
+          accessibilityRole="button"
+          accessibilityLabel="Open Taste Match details">
           <View style={styles.recommendationTitleRow}>
-            <Ionicons
-              name="sparkles-outline"
-              size={16}
-              color={COLORS.secondaryText}
-            />
-
             <Text style={styles.recommendationTitle}>
               {recommendationTitle}
             </Text>
@@ -187,7 +198,7 @@ export default function Top3Card({
               {recommendationReason}
             </Text>
           ) : null}
-        </View>
+        </Pressable>
       ) : null}
 
       {showAuthor && author ? (
@@ -595,19 +606,19 @@ const styles = StyleSheet.create({
   },
 
   recommendationTitle: {
-    marginLeft: 6,
+    marginLeft: 0,
     fontSize: 14,
     lineHeight: 19,
     fontWeight: '700',
-    color: COLORS.secondaryText,
+    color: '#5928ed',
   },
 
   recommendationReason: {
-    marginTop: 3,
-    marginLeft: 22,
+    marginTop: 1,
+    marginLeft: 0,
     fontSize: 13,
     lineHeight: 18,
-    color: COLORS.tertiaryText,
+    color: '#5928ed',
   },
 
 
@@ -735,7 +746,7 @@ const styles = StyleSheet.create({
   highlightedRankRow: {
     marginHorizontal: -10,
     paddingHorizontal: 10,
-    backgroundColor: COLORS.sharedTaste,
+    backgroundColor: COLORS.tasteMatchBackground,
     borderRadius: 12,
   },
 

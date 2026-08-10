@@ -83,6 +83,7 @@ function getAvailableTopics(
             .toLowerCase() ?? '';
 
         return (
+          Boolean(list.publishedAt) &&
           list.category
             .trim()
             .toLowerCase() ===

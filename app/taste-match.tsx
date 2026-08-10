@@ -8,28 +8,29 @@ import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
 import { getPublicProfilesByIds } from '@/lib/supabase/profiles';
 import {
-    getPublishedPosts,
-    getPublishedPostsByUser,
+  getPublishedPosts,
+  getPublishedPostsByUser,
 } from '@/services/post-service';
 import { getTasteRecommendationForUser } from '@/services/taste-recommendation-service';
 import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
 import {
-    SharedRankComparison,
+  SharedRankComparison,
 } from '@/utils/calculate-taste-match';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import {
-    useEffect,
-    useMemo,
-    useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from 'react';
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -236,6 +237,12 @@ export default function TasteMatchScreen() {
   const [viewedUser, setViewedUser] =
   useState<UserProfile | null>(null);
 
+  const [animatedScore, setAnimatedScore] =
+    useState(0);
+
+  const scoreAnimationFrame =
+    useRef<number | null>(null);
+
   useEffect(() => {
   let isMounted = true;
 
@@ -341,6 +348,74 @@ return getTasteRecommendationForUser({
     profile.id,
     viewedUser,
   ]);
+
+  useEffect(() => {
+    if (!tasteMatch) {
+      setAnimatedScore(0);
+      return;
+    }
+
+    const targetScore = Math.round(
+      tasteMatch.score
+    );
+    const duration = 1700;
+    const startTime = Date.now();
+
+    if (scoreAnimationFrame.current !== null) {
+      cancelAnimationFrame(
+        scoreAnimationFrame.current
+      );
+    }
+
+    setAnimatedScore(0);
+
+    function animateScore() {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(
+        elapsed / duration,
+        1
+      );
+
+      // Continuous ease-out curve that begins
+      // slowing in the final third without
+      // switching into a separate animation phase.
+      const easedProgress =
+        1 -
+        Math.pow(
+          1 - progress,
+          2.4
+        );
+
+      setAnimatedScore(
+        Math.round(
+          targetScore * easedProgress
+        )
+      );
+
+      if (progress < 1) {
+        scoreAnimationFrame.current =
+          requestAnimationFrame(
+            animateScore
+          );
+      } else {
+        scoreAnimationFrame.current = null;
+      }
+    }
+
+    scoreAnimationFrame.current =
+      requestAnimationFrame(animateScore);
+
+    return () => {
+      if (
+        scoreAnimationFrame.current !== null
+      ) {
+        cancelAnimationFrame(
+          scoreAnimationFrame.current
+        );
+        scoreAnimationFrame.current = null;
+      }
+    };
+  }, [tasteMatch]);
 
   const sharedPickCount = tasteMatch
     ? getSharedPickCount(
@@ -489,7 +564,7 @@ return getTasteRecommendationForUser({
 </Text>
 
 <Text style={styles.score}>
-  {Math.round(tasteMatch.score)}%
+  {animatedScore}%
 </Text>
 
               <Text style={styles.summary}>
@@ -709,9 +784,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 28,
     paddingHorizontal: 22,
-    backgroundColor: COLORS.sharedTaste,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: COLORS.sharedTasteBorder,
+    borderColor: COLORS.border,
     borderRadius: 20,
   },
 
@@ -723,12 +798,13 @@ const styles = StyleSheet.create({
   scoreLabel: {
     ...TYPOGRAPHY.headline,
     marginTop: SPACING.xl,
-    color: COLORS.secondaryText,
+    color: '#5928ed',
   },
 
   score: {
     ...TYPOGRAPHY.display,
     marginTop: 2,
+    color: '#5928ed',
   },
 
   summary: {
@@ -808,11 +884,11 @@ const styles = StyleSheet.create({
   },
 
   sharedRankItem: {
-    backgroundColor: COLORS.sharedTaste,
+    backgroundColor: COLORS.tasteMatchBackground,
   },
 
   rankNumber: {
-    width: 28,
+    width: 22,
     fontSize: 22,
     fontWeight: '700',
     color: COLORS.text,
@@ -822,7 +898,7 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.caption,
     flex: 1,
     minWidth: 0,
-    marginLeft: 7,
+    marginLeft: 0,
     marginRight: 5,
     color: COLORS.secondaryText,
   },

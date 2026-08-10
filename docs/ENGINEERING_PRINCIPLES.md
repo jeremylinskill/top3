@@ -1,35 +1,48 @@
-# Engineering Principles
+Engineering Principles
 
-**Project:** Top3  
-**Version:** 1.1 (Draft)  
-**Status:** Active  
-**Owner:** Jeremy Linskill
+Project: Top3Version: 1.2Status: ActiveOwner: Jeremy Linskill
 
----
+Purpose
 
-# Purpose
+This document defines the engineering principles that guide theimplementation of Top3.
 
-This document defines the engineering principles that guide the implementation of Top3.
+The AI Development Charter defines how we work.
 
-The AI Development Charter defines *how we work.*
+This document defines how we build software.
 
-This document defines *how we build software.*
+Engineering Philosophy
 
----
-
-# Engineering Philosophy
-
-Our goal is to build software that remains understandable years after it is written.
+Our goal is to build software that remains understandable years after itis written.
 
 Every engineering decision should reduce cognitive load.
 
 Code should communicate intent more clearly than comments ever could.
 
----
+Verify Before Building
 
-# Foundational Principle
+When implementing infrastructure or integrating external platforms,verify the current documentation before writing production code.
 
-> **Optimize for clarity over cleverness.**
+This includes:
+
+External APIs
+
+Supabase
+
+Expo SDK
+
+React Native platform features
+
+Authentication
+
+Third-party libraries
+
+Do not rely on memory when authoritative documentation is available.
+
+Verified implementations reduce debugging time and improve long-termmaintainability.
+
+Foundational Principle
+
+Optimize for clarity over cleverness.
 
 Simple code is easier to understand.
 
@@ -39,220 +52,173 @@ Maintainable code is easier to improve.
 
 This principle should guide every architectural decision.
 
----
-
-# Simplicity First
+Simplicity First
 
 Prefer the simplest solution that correctly solves the problem.
 
 Every abstraction introduces maintenance cost.
 
-Only create abstractions when they make the codebase easier to understand.
+Only create abstractions when they make the codebase easier tounderstand.
 
----
-
-# Clear Responsibilities
+Clear Responsibilities
 
 Every file should have one primary responsibility.
 
-### Screens
+Screens
 
-Responsible for:
-
-- Layout
-- Navigation
-- Composing UI
+Responsible for: - Layout - Navigation - Composing UI
 
 Should contain very little business logic.
 
----
+Components
 
-### Components
-
-Responsible for:
-
-- User interface
-- User interaction
-- Local state
+Responsible for: - User interface - User interaction - Local state
 
 Components should remain reusable and focused.
 
----
+Services
 
-### Services
-
-Responsible for:
-
-- Business logic
-- Authentication
-- Persistence
-- API communication
-- External integrations
+Responsible for: - Business logic - Authentication - Persistence - APIcommunication - External integrations
 
 Services should never know how the UI is presented.
 
----
+Providers
 
-### Providers
-
-Responsible for:
-
-- Shared application state
-- Cross-screen context
+Responsible for: - Shared application state - Cross-screen context
 
 Providers should remain lightweight.
 
----
+Hooks
 
-### Hooks
+Responsible for: - Encapsulating reusable React behavior - Improvingreadability - Reducing duplication
 
-Responsible for:
+Hooks should simplify components---not hide complexity.
 
-- Encapsulating reusable React behavior
-- Improving readability
-- Reducing duplication
+Business Logic Belongs Outside the UI
 
-Hooks should simplify components—not hide complexity.
+Components should describe what happens.
 
----
+Services should decide how it happens.
 
-# Business Logic Belongs Outside the UI
+This separation makes testing easier and components easier tounderstand.
 
-Components should describe **what** happens.
-
-Services should decide **how** it happens.
-
-This separation makes testing easier and components easier to understand.
-
----
-
-# Prefer Composition
+Prefer Composition
 
 Build small pieces.
 
 Compose them into larger features.
 
-Small, understandable components scale better than large multifunction components.
+Small, understandable components scale better than large multifunctioncomponents.
 
----
-
-# Minimize State
+Minimize State
 
 Only store information that cannot be derived.
 
-Prefer:
-
-- Local state
-- Context only when necessary
-- Persistent storage only when required
+Prefer: - Local state - Context only when necessary - Persistent storageonly when required
 
 Every additional state variable increases complexity.
 
----
-
-# Consistency Over Cleverness
+Consistency Over Cleverness
 
 Consistency makes software predictable.
 
-If two features solve similar problems, they should be implemented similarly.
+If two features solve similar problems, they should be implementedsimilarly.
 
-Future contributors should recognize patterns instead of learning exceptions.
+Future contributors should recognize patterns instead of learningexceptions.
 
----
-
-# Naming Matters
+Naming Matters
 
 Names should communicate intent.
 
 Good:
 
-```
 EmailSignInForm
 CollectionService
 MovieCard
 AuthProvider
-```
 
 Avoid:
 
-```
 Helper
 Manager
 Util
 Thing
 Misc
 Data
-```
 
 The best documentation is well-named code.
 
----
-
-# Folder Structure
+Folder Structure
 
 Folders represent responsibility.
 
-```
 app/
 components/
 constants/
+context/
 hooks/
+lib/
 providers/
 services/
+supabase/
 types/
 utils/
-```
 
 Avoid unnecessary nesting.
 
-Developers should know where something belongs without thinking about it.
+Developers should know where something belongs without thinking aboutit.
 
----
-
-# Dependency Direction
+Dependency Direction
 
 Dependencies should always flow downward.
 
-```
 Screen
-
 ↓
-
 Component
-
 ↓
-
 Hook
-
 ↓
-
 Service
-
 ↓
-
 External API
-```
 
 Lower layers should never depend on higher layers.
 
----
+Integration Boundaries
 
-# Error Handling
+External services should never be coupled directly to the applicationUI.
+
+UI
+↓
+Service
+↓
+Application API
+↓
+External Provider
+
+Depend on stable internal interfaces rather than third-partyimplementations.
+
+Error Handling
 
 Handle errors close to where they occur.
 
-Errors should:
+Errors should: - Explain what happened. - Fail gracefully. - Helpdebugging. - Preserve application consistency.
 
-- Explain what happened.
-- Fail gracefully.
-- Help debugging.
-- Preserve application consistency.
+Log detailed errors for developers.
 
-Unexpected failures should always be visible during development.
+Display clear, actionable messages to users.
 
----
+Never expose sensitive implementation details.
 
-# Performance
+Security
+
+Secrets should never exist in client applications.
+
+All privileged credentials should remain on trusted infrastructure.
+
+Prefer server-side integration over exposing third-party credentials.
+
+Performance
 
 Correctness comes before optimization.
 
@@ -260,55 +226,78 @@ Optimize only after measuring.
 
 Readable code usually outlives clever optimizations.
 
----
+Refactoring
 
-# Refactoring
+Refactor when: - Patterns become obvious. - Responsibilities becomeunclear. - Duplication increases maintenance cost. - Naming becomesconfusing.
 
-Refactor when:
+Do not refactor simply because something could be more elegant.
 
-- Patterns become obvious.
-- Responsibilities become unclear.
-- Duplication increases maintenance cost.
-- Naming becomes confusing.
-
-Do not refactor simply because something could be "more elegant."
-
----
-
-# External Dependencies
+External Dependencies
 
 Every dependency becomes a long-term commitment.
 
-Before adding one, ask:
-
-- Does React Native already solve this?
-- Does Expo already solve this?
-- Is it actively maintained?
-- Does the value outweigh the maintenance cost?
+Before adding one, ask: - Does React Native already solve this? - DoesExpo already solve this? - Is it actively maintained? - Does the valueoutweigh the maintenance cost?
 
 Prefer fewer dependencies.
 
----
+Environment Validation
 
-# Production Quality
+Validate code using the tooling for the environment in which it runs.
+
+Examples:
+
+React Native
+npm run typecheck
+
+Supabase Edge Functions
+deno check
+
+Observability
+
+Systems should provide enough information to diagnose problems withoutmodifying production code.
+
+Log meaningful events.
+
+Log failures.
+
+Avoid excessive logging.
+
+Remove temporary debugging code once its purpose has been served.
+
+Production Quality
 
 Production-ready code should be:
 
-- Typed
-- Predictable
-- Readable
-- Testable
-- Resilient
-- Consistent
+Typed
 
-Quality should be visible throughout the codebase.
+Tested
 
----
+Predictable
 
-# Long-Term Vision
+Readable
+
+Maintainable
+
+Resilient
+
+Observable
+
+Consistent
+
+Architecture Evolution
+
+Architecture should emerge from experience.
+
+Do not introduce complexity in anticipation of future requirements.
+
+Refactor when patterns become stable.
+
+Grow the architecture as the product grows.
+
+Long-Term Vision
 
 Top3 should become a codebase that feels obvious.
 
-A new contributor should be able to understand its architecture, navigate its folders, and confidently implement a feature with minimal explanation.
+A new contributor should be able to understand its architecture,navigate its folders, and confidently implement a feature with minimalexplanation.
 
-When faced with two valid solutions, choose the one that makes the next developer's job easier.
+When faced with two valid solutions, choose the one that makes the nextdeveloper's job easier.

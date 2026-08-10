@@ -2,6 +2,7 @@ import { COLORS } from '@/constants/colors';
 import { SPACING } from '@/constants/spacing';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import type { ComponentProps } from 'react';
 import {
   Pressable,
   StyleSheet,
@@ -9,23 +10,39 @@ import {
   View,
 } from 'react-native';
 
+type IoniconName =
+  ComponentProps<typeof Ionicons>['name'];
+
 type ScreenHeaderProps = {
   title?: string;
   subtitle?: string | null;
   showBackButton?: boolean;
+  rightIconName?: IoniconName;
+  onRightPress?: () => void;
+  rightAccessibilityLabel?: string;
 };
 
 export default function ScreenHeader({
   title,
   subtitle,
   showBackButton = false,
+  rightIconName,
+  onRightPress,
+  rightAccessibilityLabel = 'Open menu',
 }: ScreenHeaderProps) {
+  const showRightAction =
+    Boolean(rightIconName) &&
+    Boolean(onRightPress);
+
   return (
     <View style={styles.header}>
       <View style={styles.topBar}>
         {showBackButton ? (
           <Pressable
-            style={styles.sideSlot}
+            style={({ pressed }) => [
+              styles.sideSlot,
+              pressed && styles.pressed,
+            ]}
             onPress={() => router.back()}
             hitSlop={10}
             accessibilityRole="button"
@@ -42,7 +59,27 @@ export default function ScreenHeader({
 
         <Text style={styles.brand}>Top 3</Text>
 
-        <View style={styles.sideSlot} />
+        {showRightAction ? (
+          <Pressable
+            style={({ pressed }) => [
+              styles.sideSlot,
+              pressed && styles.pressed,
+            ]}
+            onPress={onRightPress}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={
+              rightAccessibilityLabel
+            }>
+            <Ionicons
+              name={rightIconName}
+              size={26}
+              color={COLORS.text}
+            />
+          </Pressable>
+        ) : (
+          <View style={styles.sideSlot} />
+        )}
       </View>
 
       {title ? (
@@ -63,7 +100,8 @@ export default function ScreenHeader({
 const styles = StyleSheet.create({
   header: {
     backgroundColor: COLORS.background,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth:
+      StyleSheet.hairlineWidth,
     borderBottomColor: COLORS.border,
   },
 
@@ -107,5 +145,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.tertiaryText,
     lineHeight: 18,
+  },
+
+  pressed: {
+    opacity: 0.55,
   },
 });

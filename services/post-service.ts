@@ -2,12 +2,7 @@ import {
   getPublishedPostsByUser as getPublishedPostsByUserFromSupabase,
   getPublishedPosts as getPublishedPostsFromSupabase,
 } from '@/lib/supabase/collections';
-import { searchBooks } from '@/providers/google-books';
-import { searchGames } from '@/providers/rawg';
-import {
-  searchMovies,
-  searchTvShows,
-} from '@/providers/tmdb';
+import { searchByCategory } from '@/providers/search';
 import { Post } from '@/types/post';
 import { Top3Item } from '@/types/top3-item';
 import { Top3List } from '@/types/top3-list';
@@ -63,25 +58,11 @@ async function hydrateItem(
   }
 
   try {
-    let results: Top3Item[] = [];
-
-    switch (category) {
-      case 'movies':
-        results = await searchMovies(item.title);
-        break;
-
-      case 'tv':
-        results = await searchTvShows(item.title);
-        break;
-
-      case 'books':
-        results = await searchBooks(item.title);
-        break;
-
-      case 'games':
-        results = await searchGames(item.title);
-        break;
-    }
+    const results =
+      await searchByCategory(
+        category,
+        item.title
+      );
 
     const matchingItem = findBestMatch(
       item,
@@ -170,9 +151,15 @@ export async function getPublishedPosts(): Promise<
 export async function getPublishedPostsByUser(
   userId: string
 ): Promise<Post[]> {
+  const normalizedUserId = userId.trim();
+
+  if (!normalizedUserId) {
+    return [];
+  }
+
   const publishedPosts =
     await getPublishedPostsByUserFromSupabase(
-      userId
+      normalizedUserId
     );
 
   const hydratedPosts = await Promise.all(

@@ -4,12 +4,21 @@ import {
     getCollectionsByIds,
 } from '@/lib/supabase/collections';
 import {
+    acceptFollowRequest as acceptFollowRequestInDatabase,
+    declineFollowRequest as declineFollowRequestInDatabase,
+    FollowRequest,
+    getFollowRequestSnapshot,
+} from '@/lib/supabase/follow-requests';
+import {
     getNotifications,
     markAllNotificationsRead as markAllReadInDatabase,
     markNotificationRead as markReadInDatabase,
     Notification,
 } from '@/lib/supabase/notifications';
-import { getPublicProfilesByIds } from '@/lib/supabase/profiles';
+import {
+    getProfileById,
+    getProfilesByIds,
+} from '@/lib/supabase/profiles';
 import { subscribeToTableChanges } from '@/lib/supabase/realtime';
 import { UserProfile } from '@/types/user-profile';
 import {
@@ -28,15 +37,28 @@ export type EnrichedNotification =
     collection: CollectionSummary | null;
   };
 
+export type EnrichedFollowRequest =
+  FollowRequest & {
+    requester: UserProfile | null;
+  };
+
 type NotificationContextValue = {
   notifications: EnrichedNotification[];
+  pendingFollowRequests: EnrichedFollowRequest[];
   unreadCount: number;
+  pendingFollowRequestCount: number;
   isLoading: boolean;
   refreshNotifications: () => Promise<void>;
   markNotificationRead: (
     notificationId: string
   ) => Promise<void>;
   markAllNotificationsRead: () => Promise<void>;
+  acceptFollowRequest: (
+    requestId: string
+  ) => Promise<void>;
+  declineFollowRequest: (
+    requestId: string
+  ) => Promise<void>;
 };
 
 type NotificationProviderProps = {
@@ -72,7 +94,7 @@ async function enrichNotifications(
     actorProfiles,
     collectionSummaries,
   ] = await Promise.all([
-    getPublicProfilesByIds(
+    getProfilesByIds(
       actorUserIds
     ),
     getCollectionsByIds(
@@ -113,6 +135,61 @@ async function enrichNotifications(
   );
 }
 
+async function enrichFollowRequests(
+  requests: FollowRequest[]
+): Promise<EnrichedFollowRequest[]> {
+  const uniqueRequesterUserIds = Array.from(
+    new Set(
+      requests.map(
+        (request) =>
+          request.requesterUserId
+      )
+    )
+  );
+
+  const requesterProfiles =
+    await Promise.all(
+      uniqueRequesterUserIds.map(
+        async (requesterUserId) => {
+          try {
+            return await getProfileById(
+              requesterUserId
+            );
+          } catch (error) {
+            console.error(
+              'Failed to load follow request profile:',
+              error
+            );
+
+            return null;
+          }
+        }
+      )
+    );
+
+  const profilesByUserId = new Map(
+    requesterProfiles
+      .filter(
+        (
+          profile
+        ): profile is UserProfile =>
+          profile !== null
+      )
+      .map((profile) => [
+        profile.id,
+        profile,
+      ])
+  );
+
+  return requests.map((request) => ({
+    ...request,
+    requester:
+      profilesByUserId.get(
+        request.requesterUserId
+      ) ?? null,
+  }));
+}
+
 export function NotificationProvider({
   children,
 }: NotificationProviderProps) {
@@ -120,6 +197,11 @@ export function NotificationProvider({
 
   const [notifications, setNotifications] =
     useState<EnrichedNotification[]>([]);
+
+  const [
+    pendingFollowRequests,
+    setPendingFollowRequests,
+  ] = useState<EnrichedFollowRequest[]>([]);
 
   const [isLoading, setIsLoading] =
     useState(false);
@@ -130,6 +212,7 @@ export function NotificationProvider({
     useCallback(async () => {
       if (!userId) {
         setNotifications([]);
+        setPendingFollowRequests([]);
         setIsLoading(false);
         return;
       }
@@ -137,16 +220,32 @@ export function NotificationProvider({
       setIsLoading(true);
 
       try {
-        const loadedNotifications =
-          await getNotifications(userId);
+        const [
+          loadedNotifications,
+          followRequestSnapshot,
+        ] = await Promise.all([
+          getNotifications(userId),
+          getFollowRequestSnapshot(userId),
+        ]);
 
-        const enrichedNotifications =
-          await enrichNotifications(
+        const [
+          enrichedNotifications,
+          enrichedFollowRequests,
+        ] = await Promise.all([
+          enrichNotifications(
             loadedNotifications
-          );
+          ),
+          enrichFollowRequests(
+            followRequestSnapshot.receivedRequests
+          ),
+        ]);
 
         setNotifications(
           enrichedNotifications
+        );
+
+        setPendingFollowRequests(
+          enrichedFollowRequests
         );
       } catch (error) {
         console.error(
@@ -167,7 +266,7 @@ export function NotificationProvider({
       return;
     }
 
-    const unsubscribe =
+    const unsubscribeFromNotifications =
       subscribeToTableChanges({
         channelName:
           `notifications-${userId}`,
@@ -177,7 +276,20 @@ export function NotificationProvider({
         onChange: refreshNotifications,
       });
 
-    return unsubscribe;
+    const unsubscribeFromFollowRequests =
+      subscribeToTableChanges({
+        channelName:
+          `notification-follow-requests-${userId}`,
+        table: 'follow_requests',
+        filter:
+          `recipient_user_id=eq.${userId}`,
+        onChange: refreshNotifications,
+      });
+
+    return () => {
+      unsubscribeFromNotifications();
+      unsubscribeFromFollowRequests();
+    };
   }, [
     userId,
     refreshNotifications,
@@ -191,6 +303,9 @@ export function NotificationProvider({
       ).length,
     [notifications]
   );
+
+  const pendingFollowRequestCount =
+    pendingFollowRequests.length;
 
   const markNotificationRead =
     useCallback(
@@ -294,23 +409,117 @@ export function NotificationProvider({
       userId,
     ]);
 
+  const acceptFollowRequest =
+    useCallback(
+      async (requestId: string) => {
+        const request =
+          pendingFollowRequests.find(
+            (item) =>
+              item.id === requestId
+          );
+
+        if (!request) {
+          return;
+        }
+
+        setPendingFollowRequests(
+          (currentRequests) =>
+            currentRequests.filter(
+              (item) =>
+                item.id !== request.id
+            )
+        );
+
+        try {
+          await acceptFollowRequestInDatabase(
+            request.id
+          );
+
+          await refreshNotifications();
+        } catch (error) {
+          console.error(
+            'Failed to accept follow request:',
+            error
+          );
+
+          await refreshNotifications();
+          throw error;
+        }
+      },
+      [
+        pendingFollowRequests,
+        refreshNotifications,
+      ]
+    );
+
+  const declineFollowRequest =
+    useCallback(
+      async (requestId: string) => {
+        const request =
+          pendingFollowRequests.find(
+            (item) =>
+              item.id === requestId
+          );
+
+        if (!request) {
+          return;
+        }
+
+        setPendingFollowRequests(
+          (currentRequests) =>
+            currentRequests.filter(
+              (item) =>
+                item.id !== request.id
+            )
+        );
+
+        try {
+          await declineFollowRequestInDatabase(
+            request.id
+          );
+
+          await refreshNotifications();
+        } catch (error) {
+          console.error(
+            'Failed to decline follow request:',
+            error
+          );
+
+          await refreshNotifications();
+          throw error;
+        }
+      },
+      [
+        pendingFollowRequests,
+        refreshNotifications,
+      ]
+    );
+
   const contextValue =
     useMemo<NotificationContextValue>(
       () => ({
         notifications,
+        pendingFollowRequests,
         unreadCount,
+        pendingFollowRequestCount,
         isLoading,
         refreshNotifications,
         markNotificationRead,
         markAllNotificationsRead,
+        acceptFollowRequest,
+        declineFollowRequest,
       }),
       [
         notifications,
+        pendingFollowRequests,
         unreadCount,
+        pendingFollowRequestCount,
         isLoading,
         refreshNotifications,
         markNotificationRead,
         markAllNotificationsRead,
+        acceptFollowRequest,
+        declineFollowRequest,
       ]
     );
 

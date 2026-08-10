@@ -133,3 +133,48 @@ export async function deleteFollow(
     );
   }
 }
+
+export async function removeFollower(
+  followerId: string,
+  currentUserId: string
+): Promise<void> {
+  const normalizedFollowerId =
+    followerId.trim();
+
+  const normalizedCurrentUserId =
+    currentUserId.trim();
+
+  if (
+    !normalizedFollowerId ||
+    !normalizedCurrentUserId
+  ) {
+    return;
+  }
+
+  if (
+    normalizedFollowerId ===
+    normalizedCurrentUserId
+  ) {
+    throw new Error(
+      'A user cannot remove themselves as a follower.'
+    );
+  }
+
+  const { error } = await supabase
+    .from('follows')
+    .delete()
+    .eq(
+      'follower_id',
+      normalizedFollowerId
+    )
+    .eq(
+      'following_id',
+      normalizedCurrentUserId
+    );
+
+  if (error) {
+    throw new Error(
+      `Failed to remove follower: ${error.message}`
+    );
+  }
+}

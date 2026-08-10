@@ -118,6 +118,15 @@ export default function CollectionScreen() {
       item,
     }));
 
+  const hasSelections = currentList.items.some(
+  (item) => item !== null
+);
+
+const subtitle = (() => {
+  if (!hasSelections && !currentList.publishedAt) {
+    return 'Choose your three favorites.';
+  }
+
   const relativeTime = formatRelativeTime(
     currentList.publishedAt ??
       currentList.updatedAt
@@ -128,11 +137,14 @@ export default function CollectionScreen() {
     ''
   );
 
-  const subtitle = timeText
-    ? currentList.publishedAt
-      ? `Published ${timeText}`
-      : `Updated ${timeText}`
-    : null;
+  if (!timeText) {
+    return undefined;
+  }
+
+  return currentList.publishedAt
+    ? `Published ${timeText}`
+    : `Updated ${timeText}`;
+})();
 
   async function beginDrag(
     index: number,

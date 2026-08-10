@@ -1,12 +1,20 @@
 import DiscoverListCard from '@/components/discover-list-card';
 import ScreenHeader from '@/components/screen-header';
+import SearchInput from '@/components/search-input';
 import SegmentedControl from '@/components/segmented-control';
 import TasteMatchBadge from '@/components/taste-match-badge';
+import {
+  FEATURED_DISCOVER_CATEGORY_IDS,
+  FEATURED_DISCOVER_TOPICS,
+  MIN_TRENDING_CATEGORIES,
+  MIN_TRENDING_TOPICS,
+} from '@/constants/discover-featured';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
 import {
+  getNewestPublicProfiles,
   getPublicProfilesByIds,
   searchPublicProfiles,
 } from '@/lib/supabase/profiles';
@@ -38,7 +46,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -126,7 +133,7 @@ function formatResultCaption(
 
 export default function DiscoverScreen() {
   const { profile } = useProfile();
-  useTop3();
+  const { createList } = useTop3();
 
   const {
     followedUserIds,
@@ -151,6 +158,9 @@ export default function DiscoverScreen() {
     useState('');
 
   const [profileSearchResults, setProfileSearchResults] =
+    useState<UserProfile[]>([]);
+
+  const [newestProfiles, setNewestProfiles] =
     useState<UserProfile[]>([]);
 
   const [recentSearches, setRecentSearches] =
@@ -238,6 +248,39 @@ export default function DiscoverScreen() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadNewestProfiles() {
+      try {
+        const profiles =
+          await getNewestPublicProfiles(
+            profile.id,
+            5
+          );
+
+        if (isMounted) {
+          setNewestProfiles(profiles);
+        }
+      } catch (error) {
+        console.error(
+          'Failed to load newest public profiles:',
+          error
+        );
+
+        if (isMounted) {
+          setNewestProfiles([]);
+        }
+      }
+    }
+
+    void loadNewestProfiles();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [profile.id]);
 
   const publishedCountByCategory = useMemo(
     () => {
@@ -494,6 +537,90 @@ export default function DiscoverScreen() {
       .slice(0, MAX_TRENDING_TOPICS);
   }, [trendingPosts]);
 
+  const featuredTopics = useMemo<
+    DiscoverTopic[]
+  >(() => {
+    return FEATURED_DISCOVER_TOPICS.flatMap(
+      (featuredTopic) => {
+        const category =
+          DISCOVER_CATEGORIES.find(
+            (item) =>
+              normalizeValue(item.id) ===
+              normalizeValue(
+                featuredTopic.categoryId
+              )
+          );
+
+        if (!category) {
+          return [];
+        }
+
+        const existingTopic = allTopics.find(
+          (topic) =>
+            normalizeValue(topic.categoryId) ===
+              normalizeValue(
+                featuredTopic.categoryId
+              ) &&
+            normalizeValue(topic.topic) ===
+              normalizeValue(
+                featuredTopic.topic
+              )
+        );
+
+        return [
+          {
+            id: `featured:${category.id}:${normalizeValue(
+              featuredTopic.topic
+            )}`,
+            categoryId: category.id,
+            categoryName: category.name,
+            categoryIcon: category.icon,
+            topic: formatTopicLabel(
+              featuredTopic.topic
+            ),
+            listCount:
+              existingTopic?.listCount ?? 0,
+          },
+        ];
+      }
+    );
+  }, [allTopics]);
+
+  const featuredCategories = useMemo(
+    () =>
+      FEATURED_DISCOVER_CATEGORY_IDS.flatMap(
+        (categoryId) => {
+          const category =
+            DISCOVER_CATEGORIES.find(
+              (item) =>
+                normalizeValue(item.id) ===
+                normalizeValue(categoryId)
+            );
+
+          return category ? [category] : [];
+        }
+      ),
+    []
+  );
+
+  const showTrendingTopics =
+    trendingTopics.length >=
+    MIN_TRENDING_TOPICS;
+
+  const showTrendingCategories =
+    trendingCategories.length >=
+    MIN_TRENDING_CATEGORIES;
+
+  const displayedTopics =
+    showTrendingTopics
+      ? trendingTopics
+      : featuredTopics;
+
+  const displayedCategories =
+    showTrendingCategories
+      ? trendingCategories
+      : featuredCategories;
+
   const tasteRecommendations = useMemo(() => {
     const publishedPostCountByUserId =
       new Map<string, number>();
@@ -565,6 +692,64 @@ export default function DiscoverScreen() {
     allPosts,
     profilesByUserId,
     followedUserIds,
+    profile.id,
+  ]);
+
+  const activeCollectors = useMemo(() => {
+    const publishedCountByUserId =
+      new Map<string, number>();
+
+    allPosts.forEach((post) => {
+      publishedCountByUserId.set(
+        post.authorId,
+        (publishedCountByUserId.get(
+          post.authorId
+        ) ?? 0) + 1
+      );
+    });
+
+    return Array.from(
+      publishedCountByUserId.entries()
+    )
+      .map(([userId, collectionCount]) => {
+        const user = profilesByUserId[userId];
+
+        if (!user || user.id === profile.id) {
+          return null;
+        }
+
+        return {
+          user,
+          collectionCount,
+        };
+      })
+      .filter(
+        (
+          collector
+        ): collector is {
+          user: UserProfile;
+          collectionCount: number;
+        } => collector !== null
+      )
+      .sort((first, second) => {
+        if (
+          second.collectionCount !==
+          first.collectionCount
+        ) {
+          return (
+            second.collectionCount -
+            first.collectionCount
+          );
+        }
+
+        return first.user.displayName.localeCompare(
+          second.user.displayName
+        );
+      })
+      .slice(0, 3);
+  }, [
+    allPosts,
+    profilesByUserId,
     profile.id,
   ]);
 
@@ -937,6 +1122,98 @@ export default function DiscoverScreen() {
     });
   }
 
+  function openCreateForCategory(
+    categoryId: string
+  ) {
+    const category = TOP3_CATEGORIES.find(
+      (item) =>
+        normalizeValue(item.id) ===
+        normalizeValue(categoryId)
+    );
+
+    if (!category) {
+      return;
+    }
+
+    Keyboard.dismiss();
+
+    createList({
+      category: category.id,
+      title: `Top 3 ${category.name}`,
+    });
+
+    router.push('/collection');
+  }
+
+  function openCreateForTopic(
+    topic: DiscoverTopic
+  ) {
+    const category = TOP3_CATEGORIES.find(
+      (item) =>
+        normalizeValue(item.id) ===
+        normalizeValue(topic.categoryId)
+    );
+
+    const topicDefinition =
+      category?.topics.find(
+        (item) =>
+          normalizeValue(item.name) ===
+          normalizeValue(topic.topic)
+      );
+
+    if (!category || !topicDefinition) {
+      return;
+    }
+
+    const topicName =
+      topicDefinition.id === 'general'
+        ? undefined
+        : topicDefinition.name;
+
+    const title =
+      topicDefinition.id === 'general'
+        ? `Top 3 ${category.name}`
+        : `Top 3 ${topicDefinition.name} ${category.name}`;
+
+    Keyboard.dismiss();
+
+    createList({
+      category: category.id,
+      topic: topicName,
+      title,
+    });
+
+    router.push('/collection');
+  }
+
+  function openDisplayedTopic(
+    topic: DiscoverTopic
+  ) {
+    if (
+      !showTrendingTopics &&
+      topic.listCount === 0
+    ) {
+      openCreateForTopic(topic);
+      return;
+    }
+
+    openTopicFeed(topic);
+  }
+
+  function openDisplayedCategory(
+    categoryId: string
+  ) {
+    if (
+      !showTrendingCategories &&
+      getPublishedCount(categoryId) === 0
+    ) {
+      openCreateForCategory(categoryId);
+      return;
+    }
+
+    openCategoryFeed(categoryId);
+  }
+
   function openMatchingCollection(
     collection: MatchingCollection
   ) {
@@ -1006,51 +1283,16 @@ export default function DiscoverScreen() {
         }
         onScrollBeginDrag={dismissSearchKeyboard}>
         <View style={styles.headingSection}>
-          <View style={styles.searchContainer}>
-            <Ionicons
-              name="search-outline"
-              size={19}
-              color="#777777"
-            />
-
-            <TextInput
-              style={styles.searchInput}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholder="Search Top 3s and People"
-              placeholderTextColor="#999999"
-              autoCapitalize="none"
-              autoCorrect={false}
-              returnKeyType="search"
-              clearButtonMode="never"
-              onFocus={() =>
-                setIsSearchFocused(true)
-              }
-              onBlur={() =>
-                setIsSearchFocused(false)
-              }
-              onSubmitEditing={submitSearch}
-              accessibilityLabel="Search Top 3s and People"
-            />
-
-            {searchQuery.length > 0 ? (
-              <Pressable
-                style={({ pressed }) => [
-                  styles.clearButton,
-                  pressed && styles.pressed,
-                ]}
-                onPress={clearSearch}
-                hitSlop={10}
-                accessibilityRole="button"
-                accessibilityLabel="Clear search">
-                <Ionicons
-                  name="close-circle"
-                  size={20}
-                  color="#999999"
-                />
-              </Pressable>
-            ) : null}
-          </View>
+          <SearchInput
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Search People and Collections"
+            onFocus={() => setIsSearchFocused(true)}
+            onBlur={() => setIsSearchFocused(false)}
+            onSubmitEditing={submitSearch}
+            accessibilityLabel="Search People and Collections"
+            onClear={clearSearch}
+          />
 
           {!showRecentSearches && !isSearching ? (
             <View style={styles.segmentedSection}>
@@ -1065,7 +1307,7 @@ export default function DiscoverScreen() {
                   },
                   {
                     value: 'trending',
-                    label: 'Trending',
+                    label: 'Collections',
                     accessibilityLabel:
                       'Show trending categories and topics',
                   },
@@ -1622,88 +1864,142 @@ export default function DiscoverScreen() {
               </View>
             ) : null}
 
-              {tasteRecommendations.length === 0
-                ? (
-            <View style={styles.emptyTopics}>
-              <Text style={styles.emptyTopicsTitle}>
-                No new taste matches
-              </Text>
+            {tasteRecommendations.length === 0 ? (
+              newestProfiles.length > 0 ? (
+                <View style={styles.tasteSection}>
+                  <Text style={styles.sectionTitle}>
+                    New Members
+                  </Text>
 
-              <Text style={styles.emptyTopicsText}>
-                You may already follow everyone we
-                currently recommend. Publish more Top
-                3s or check back as more people join.
-              </Text>
-            </View>
-                  )
-                : null}
+                  <View style={styles.tasteList}>
+                    {newestProfiles.map((user) => {
+                      const userIsFollowed =
+                        isFollowing(user.id);
+
+                      return (
+                        <View
+                          key={user.id}
+                          style={styles.tasteCard}>
+                          <Pressable
+                            style={({ pressed }) => [
+                              styles.tasteProfileAction,
+                              styles.newMemberProfileAction,
+                              pressed && styles.pressed,
+                            ]}
+                            onPress={() =>
+                              openPersonProfile(user)
+                            }
+                            accessibilityRole="button"
+                            accessibilityLabel={`Open ${user.displayName}'s profile`}>
+                            <View
+                              style={styles.personAvatar}>
+                              {user.avatarUrl ? (
+                                <Image
+                                  source={{
+                                    uri: user.avatarUrl,
+                                  }}
+                                  style={
+                                    styles.personAvatarImage
+                                  }
+                                  resizeMode="cover"
+                                />
+                              ) : (
+                                <Text
+                                  style={
+                                    styles.personAvatarText
+                                  }>
+                                  {user.displayName
+                                    .charAt(0)
+                                    .toUpperCase()}
+                                </Text>
+                              )}
+                            </View>
+
+                            <View
+                              style={styles.tasteDetails}>
+                              <Text
+                                style={styles.personName}
+                                numberOfLines={1}>
+                                {user.displayName}
+                              </Text>
+
+                              <Text
+                                style={
+                                  styles.personUsername
+                                }
+                                numberOfLines={1}>
+                                @{user.username}
+                              </Text>
+                            </View>
+                          </Pressable>
+
+                          <Pressable
+                            style={({ pressed }) => [
+                              styles.tasteFollowButton,
+                              userIsFollowed &&
+                                styles
+                                  .tasteFollowingButton,
+                              pressed && styles.pressed,
+                              isLoadingFollowState &&
+                                styles.disabled,
+                            ]}
+                            onPress={() =>
+                              toggleRecommendedPersonFollow(
+                                user.id
+                              )
+                            }
+                            disabled={isLoadingFollowState}
+                            accessibilityRole="button"
+                            accessibilityState={{
+                              selected: userIsFollowed,
+                              disabled:
+                                isLoadingFollowState,
+                            }}
+                            accessibilityLabel={
+                              userIsFollowed
+                                ? `Unfollow ${user.displayName}`
+                                : `Follow ${user.displayName}`
+                            }>
+                            <Text
+                              style={[
+                                styles.tasteFollowText,
+                                userIsFollowed &&
+                                  styles
+                                    .tasteFollowingText,
+                              ]}>
+                              {userIsFollowed
+                                ? 'Following'
+                                : 'Follow'}
+                            </Text>
+                          </Pressable>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.emptyTopics}>
+                  <Text
+                    style={styles.emptyTopicsTitle}>
+                    No people to suggest yet
+                  </Text>
+
+                  <Text
+                    style={styles.emptyTopicsText}>
+                    Check back as more people join
+                    the Top3 community.
+                  </Text>
+                </View>
+              )
+            ) : null}
             </>
           ) : (
             <>
             <View>
               <Text style={styles.sectionTitle}>
-                Trending Topics
-              </Text>
-
-              {isLoading ? (
-                <View
-                  style={styles.topicsLoading}>
-                  <ActivityIndicator
-                    size="small"
-                    color="#777777"
-                  />
-
-                  <Text
-                    style={
-                      styles.topicsLoadingText
-                    }>
-                    Loading trending topics…
-                  </Text>
-                </View>
-              ) : trendingTopics.length === 0 ? (
-                <View
-                  style={styles.emptyTopics}>
-                  <Text
-                    style={
-                      styles.emptyTopicsTitle
-                    }>
-                    No trending topics yet
-                  </Text>
-
-                  <Text
-                    style={
-                      styles.emptyTopicsText
-                    }>
-                    Topic-specific Top 3s will
-                    appear here as people publish
-                    them.
-                  </Text>
-                </View>
-              ) : (
-                <View style={styles.topicList}>
-                  {trendingTopics.map(
-                    (topic) => (
-                      <DiscoverListCard
-                        key={topic.id}
-                        icon={topic.categoryIcon}
-                        title={`${topic.categoryName} • ${topic.topic}`}
-                        metadata={
-                          topic.listCount === 1
-                            ? '1 recently published Top 3'
-                            : `${topic.listCount} recently published Top 3s`
-                        }
-                        onPress={() => openTopicFeed(topic)}
-                        accessibilityLabel={`Browse trending ${topic.categoryName} ${topic.topic} Top 3 lists`}
-                      />
-                    )
-                  )}
-                </View>
-              )}
-            </View>
-
-            <View style={styles.topicsSection}>
-              <Text style={styles.sectionTitle}>
-                Trending Categories
+                {showTrendingTopics
+                  ? 'Trending Topics'
+                  : 'Featured Topics'}
               </Text>
 
               {isLoading ? (
@@ -1715,102 +2011,114 @@ export default function DiscoverScreen() {
 
                   <Text
                     style={styles.topicsLoadingText}>
-                    Loading trending categories…
-                  </Text>
-                </View>
-              ) : trendingCategories.length === 0 ? (
-                <View style={styles.emptyTopics}>
-                  <Text style={styles.emptyTopicsTitle}>
-                    No trending categories yet
-                  </Text>
-
-                  <Text style={styles.emptyTopicsText}>
-                    Categories will appear here as
-                    people publish new Top 3s.
+                    Loading topics…
                   </Text>
                 </View>
               ) : (
-                <View style={styles.categoryList}>
-                  {trendingCategories.map(
-                    (category) => (
-                      <DiscoverListCard
-                        key={category.id}
-                        icon={category.icon}
-                        title={category.name}
-                        metadata={
-                          category.trendingCount === 1
+                <View style={styles.topicList}>
+                  {displayedTopics.map((topic) => (
+                    <DiscoverListCard
+                      key={topic.id}
+                      icon={topic.categoryIcon}
+                      title={`${topic.categoryName} • ${topic.topic}`}
+                      metadata={
+                        showTrendingTopics
+                          ? topic.listCount === 1
                             ? '1 recently published Top 3'
-                            : `${category.trendingCount} recently published Top 3s`
-                        }
-                        onPress={() =>
-                          openCategoryFeed(category.id)
-                        }
-                        accessibilityLabel={`Browse trending ${category.name} Top 3 lists`}
-                      />
-                    )
-                  )}
+                            : `${topic.listCount} recently published Top 3s`
+                          : topic.listCount === 0
+  ? 'No published Top 3s yet'
+  : getTopicCountLabel(
+      topic.listCount
+    )
+                      }
+                      onPress={() =>
+                        openDisplayedTopic(topic)
+                      }
+                      accessibilityLabel={
+                        !showTrendingTopics &&
+                        topic.listCount === 0
+                          ? `Create the first ${topic.categoryName} ${topic.topic} Top 3`
+                          : `Browse ${
+                              showTrendingTopics
+                                ? 'trending'
+                                : 'featured'
+                            } ${topic.categoryName} ${
+                              topic.topic
+                            } Top 3 lists`
+                      }
+                    />
+                  ))}
                 </View>
               )}
             </View>
 
-            {trendingCategories.length === 0 &&
-            trendingTopics.length === 0 ? (
-              <View style={styles.allCategoriesSection}>
-                <Text style={styles.sectionTitle}>
-                  All Categories
-                </Text>
+            <View style={styles.topicsSection}>
+              <Text style={styles.sectionTitle}>
+                {showTrendingCategories
+                  ? 'Trending Categories'
+                  : 'Featured Categories'}
+              </Text>
 
+              {isLoading ? (
+                <View style={styles.topicsLoading}>
+                  <ActivityIndicator
+                    size="small"
+                    color="#777777"
+                  />
+
+                  <Text
+                    style={styles.topicsLoadingText}>
+                    Loading categories…
+                  </Text>
+                </View>
+              ) : (
                 <View style={styles.categoryList}>
-                  {DISCOVER_CATEGORIES.map(
-                    (category) => (
-                      <Pressable
-                        key={category.id}
-                        style={({ pressed }) => [
-                          styles.categoryCard,
-                          pressed && styles.pressed,
-                        ]}
-                        onPress={() =>
-                          openCategoryFeed(
-                            category.id
-                          )
-                        }
-                        accessibilityRole="button"
-                        accessibilityLabel={`Browse ${category.name} Top 3 lists`}>
-                        <View
-                          style={styles.iconContainer}>
-                          <Text style={styles.icon}>
-                            {category.icon}
-                          </Text>
-                        </View>
+                  {displayedCategories.map(
+                    (category) => {
+                      const trendingCount =
+                        'trendingCount' in category
+                          ? category.trendingCount
+                          : 0;
 
-                        <View
-                          style={
-                            styles.categoryDetails
-                          }>
-                          <Text
-                            style={
-                              styles.categoryName
-                            }>
-                            {category.name}
-                          </Text>
-
-                          <Text
-                            style={styles.categoryMeta}>
-                            {getPublishedCountLabel(
+                      return (
+                        <DiscoverListCard
+                          key={category.id}
+                          icon={category.icon}
+                          title={category.name}
+                          metadata={
+                            showTrendingCategories
+                              ? trendingCount === 1
+                                ? '1 recently published Top 3'
+                                : `${trendingCount} recently published Top 3s`
+                              : getPublishedCountLabel(
+                                  category.id
+                                )
+                          }
+                          onPress={() =>
+                            openDisplayedCategory(
                               category.id
-                            )}
-                          </Text>
-                        </View>
-
-                        <Text style={styles.arrow}>
-                          ›
-                        </Text>
-                      </Pressable>
-                    )
+                            )
+                          }
+                          accessibilityLabel={
+                            !showTrendingCategories &&
+                            getPublishedCount(
+                              category.id
+                            ) === 0
+                              ? `Create the first ${category.name} Top 3`
+                              : `Browse ${
+                                  showTrendingCategories
+                                    ? 'trending'
+                                    : 'featured'
+                                } ${category.name} Top 3 lists`
+                          }
+                        />
+                      );
+                    }
                   )}
                 </View>
-              </View>
-            ) : null}
+              )}
+            </View>
             </>
           )
         )}
@@ -1844,35 +2152,8 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
   },
 
-  searchContainer: {
-    minHeight: 50,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 0,
-    paddingLeft: 15,
-    paddingRight: 9,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#EAEAEA',
-    borderRadius: 16,
-  },
 
-  searchInput: {
-    flex: 1,
-    minHeight: 48,
-    marginLeft: 10,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: '#222222',
-  },
 
-  clearButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
 
   recentSection: {
     flex: 1,
@@ -2023,9 +2304,6 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
 
-  allCategoriesSection: {
-    marginTop: 30,
-  },
 
   tasteSection: {
     marginTop: 0,
@@ -2055,6 +2333,11 @@ const styles = StyleSheet.create({
   tasteProfileAction: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+
+  newMemberProfileAction: {
+    flex: 1,
+    minWidth: 0,
   },
 
   tasteBadgeRow: {
