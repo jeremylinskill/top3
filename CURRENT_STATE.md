@@ -4,9 +4,9 @@ Project: Top3Version: 2.0Status: Active DevelopmentLast Updated: August 10, 2026
 
 Last Verified Commit
 
-f833160
+0fb9fb6
 
-Polish discovery, recommendations, and social experience
+Add Apple Music song collections
 
 Dashboard
 
@@ -98,9 +98,13 @@ Open Library — Book fallback provider
 
 IGDB — Video Games
 
+Apple Music — Music / Songs
+
 Twitch OAuth — Server-side IGDB authentication
 
 Video game search is proxied through the authenticated Supabase Edge Function igdb-search. The Twitch Client Secret is stored only in Supabase Edge Function secrets and is never exposed to the mobile client.
+
+Song search is proxied through the authenticated Supabase Edge Function apple-music-search. Apple Music developer-token credentials, including the private key, Key ID, and Team ID, are stored only as Supabase Edge Function secrets and are never exposed to the mobile client.
 
 Navigation
 
@@ -177,6 +181,8 @@ TV Shows → providers/tmdb.ts
 Books → providers/google-books.ts with Open Library fallback
 
 Video Games → providers/games.ts → lib/supabase/igdb.ts → authenticated Supabase Edge Function igdb-search → IGDB
+
+Music / Songs → providers/music.ts → lib/supabase/apple-music.ts → authenticated Supabase Edge Function apple-music-search → Apple Music
 
 Provider-specific retry, fallback, filtering, ranking, and API behavior remains inside each provider rather than being forced into the shared registry.
 
@@ -534,7 +540,15 @@ Standardized spacing, typography, and page hierarchy
 
 Curated search suggestions remain until a category/topic reaches 50 published collections, then become community-driven
 
-Shared search provider registry routes Movies, TV, Books, and Video Games through one application-level search contract
+Shared search provider registry routes Movies, TV, Books, Video Games, and Music through one application-level search contract
+
+Music is available as an application category with Songs as its initial topic
+
+Music / Songs search uses Apple Music through a Supabase Edge Function with server-side developer-token authentication
+
+Apple Music search results are normalized into the shared Top3Item shape and variant grouping reduces duplicate recordings while preserving meaningful variants
+
+Collection title generation is centralized in utils/build-collection-title.ts and uses the shared Top 3 Category • Topic format for topic-specific collections
 
 Reusable useDebouncedValue hook provides a 300 ms search debounce across all search categories
 
@@ -794,6 +808,32 @@ Verified npm run typecheck passes.
 
 Committed and pushed checkpoint f833160 — Polish discovery, recommendations, and social experience.
 
+Music / Songs
+
+Added Music as an application category with Songs as the initial topic.
+
+Added providers/music.ts and lib/supabase/apple-music.ts.
+
+Added the authenticated Supabase Edge Function apple-music-search.
+
+Added server-side Apple Music developer-token generation using Supabase Edge Function secrets.
+
+Added Apple Music song search, artwork, artist metadata, and normalized Top3Item results.
+
+Added variant grouping to reduce duplicate song recordings while preserving meaningful versions and covers.
+
+Integrated Music into the shared providers/search.ts registry and Search screen.
+
+Centralized collection-title generation in utils/build-collection-title.ts.
+
+Standardized topic-specific titles as Top 3 Category • Topic.
+
+Verified the Music → Songs create, search, select, and publish flow in the app.
+
+Verified npm run typecheck passes.
+
+Committed and pushed checkpoint 0fb9fb6 — Add Apple Music song collections.
+
 Known Technical Debt
 
 High Priority
@@ -873,6 +913,10 @@ Do not automatically choose the next major feature without reviewing the roadmap
 Remember that Authentication, Profiles, Profile Avatars, Collections, Likes, Comments, Following, and Notifications are fully persisted through Supabase.
 
 Remember that RAWG has been removed from the active application. Video game search now uses IGDB through an authenticated Supabase Edge Function.
+
+Remember that Music is an active application category. Songs use Apple Music through the authenticated apple-music-search Supabase Edge Function, with Apple Music credentials stored only server-side.
+
+Remember that collection titles are generated centrally by utils/build-collection-title.ts and topic-specific titles use Top 3 Category • Topic.
 
 Remember that search routing is centralized in providers/search.ts, and app/search.tsx uses a reusable 300 ms debounce hook.
 
