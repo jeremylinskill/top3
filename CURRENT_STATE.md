@@ -4,9 +4,9 @@ Project: Top3Version: 2.0Status: Active DevelopmentLast Updated: August 10, 2026
 
 Last Verified Commit
 
-0fb9fb6
+a492204
 
-Add Apple Music song collections
+Add Apple Music search and song previews
 
 Dashboard
 
@@ -16,11 +16,11 @@ Project Status
 
 Current Feature
 
-Discovery, recommendations, search quality, and social experience polish complete.
+Apple Music song search, genre coverage, shared artwork rules, and song preview playback complete.
 
 Current Priority
 
-Monitor startup authentication stability and continue improving discovery, feed relevance, recommendations, and overall product quality.
+Monitor startup authentication stability and continue improving discovery, feed relevance, recommendations, music experience, and overall product quality.
 
 Architecture should always be discussed before implementation begins.
 
@@ -65,6 +65,8 @@ React Native SVG Transformer
 Expo FileSystem
 
 Expo Image Picker
+
+Expo Audio
 
 Backend
 
@@ -168,7 +170,7 @@ Architecture
 
 Application Providers
 
-AuthProvider↓ProfileProvider↓NotificationProvider↓FollowProvider↓LikeProvider↓CommentProvider↓Top3Provider
+AuthProvider↓ProfileProvider↓NotificationProvider↓FollowProvider↓LikeProvider↓CommentProvider↓Top3Provider↓AudioPreviewProvider
 
 Search Architecture
 
@@ -184,9 +186,49 @@ Video Games → providers/games.ts → lib/supabase/igdb.ts → authenticated Su
 
 Music / Songs → providers/music.ts → lib/supabase/apple-music.ts → authenticated Supabase Edge Function apple-music-search → Apple Music
 
+Song results include Apple Music artwork, artist metadata, and preview URLs where available.
+
 Provider-specific retry, fallback, filtering, ranking, and API behavior remains inside each provider rather than being forced into the shared registry.
 
 The search screen uses a reusable 300 ms debounce hook and maintains an in-memory result cache.
+
+Audio Preview Architecture
+
+Song preview playback is centralized through context/audio-preview-context.tsx and AudioPreviewProvider.
+
+The shared audio preview controller uses Expo Audio and allows only one preview to play at a time across the application.
+
+Audio is configured with playsInSilentMode enabled so previews can play through the iPhone speaker while the device is in silent mode.
+
+Preview controls are currently integrated into:
+
+Search results
+
+RankedItemCard
+
+Top3Card
+
+Preview controls are shown only when the Top3Item contains a previewUrl.
+
+Existing song collections created before previewUrl support do not automatically gain preview controls; newly selected and published songs persist previewUrl with the collection item.
+
+Category Artwork Architecture
+
+constants/category-artwork-rules.ts is the shared source of truth for collection-item artwork dimensions.
+
+Current rules:
+
+Movies — 64 × 96
+
+Books — 64 × 96
+
+TV Shows — 64 × 96
+
+Video Games — 64 × 96
+
+Music — 64 × 64
+
+Search, RankedItemCard, and Top3Card use the shared artwork rules so Music artwork remains square while the other current categories retain portrait artwork.
 
 Presentation Layer
 
@@ -548,6 +590,20 @@ Music / Songs search uses Apple Music through a Supabase Edge Function with serv
 
 Apple Music search results are normalized into the shared Top3Item shape and variant grouping reduces duplicate recordings while preserving meaningful variants
 
+Expanded Song topic coverage with Blues, Classical, Folk, Latin, Metal, and Reggae, while keeping Soundtrack out of Songs.
+
+Added Apple Music genre aliases to improve matching between Top3 Song topics and Apple Music genre naming.
+
+Top3Item supports previewUrl so Apple Music song previews can travel with selected and persisted collection items.
+
+Added shared song preview playback through AudioPreviewProvider and Expo Audio.
+
+Song previews support play/pause controls in Search, RankedItemCard, and Top3Card, with one active preview at a time across the app.
+
+Configured song previews to play in iOS silent mode.
+
+Added shared category artwork rules and standardized Music artwork as 64 × 64 while preserving a 64 px artwork width across current categories.
+
 Collection title generation is centralized in utils/build-collection-title.ts and uses the shared Top 3 Category • Topic format for topic-specific collections
 
 Reusable useDebouncedValue hook provides a 300 ms search debounce across all search categories
@@ -834,6 +890,36 @@ Verified npm run typecheck passes.
 
 Committed and pushed checkpoint 0fb9fb6 — Add Apple Music song collections.
 
+Apple Music Search & Song Previews
+
+Expanded Song topic coverage with Blues, Classical, Folk, Latin, Metal, and Reggae.
+
+Kept Soundtrack out of the Songs topic set.
+
+Added genre aliases to improve Apple Music search behavior across the supported Song topics.
+
+Added previewUrl to Top3Item and preserved preview URLs through collection selection and persistence.
+
+Added Expo Audio and a shared AudioPreviewProvider.
+
+Configured preview playback to work while iOS is in silent mode.
+
+Added shared play/pause preview controls to Search results, RankedItemCard, and Top3Card.
+
+Enforced one active song preview at a time across the application.
+
+Added constants/category-artwork-rules.ts as the shared artwork sizing source of truth.
+
+Standardized Music artwork as square 64 × 64 across Search, RankedItemCard, and Top3Card while preserving 64 × 96 portrait artwork for Movies, Books, TV Shows, and Video Games.
+
+Verified newly created and published Songs collections retain preview URLs and display working preview controls.
+
+Confirmed older development collections created before previewUrl support do not display preview controls because that field was not persisted in their historical item data.
+
+Verified npm run typecheck passes.
+
+Committed and pushed checkpoint a492204 — Add Apple Music search and song previews.
+
 Known Technical Debt
 
 High Priority
@@ -915,6 +1001,12 @@ Remember that Authentication, Profiles, Profile Avatars, Collections, Likes, Com
 Remember that RAWG has been removed from the active application. Video game search now uses IGDB through an authenticated Supabase Edge Function.
 
 Remember that Music is an active application category. Songs use Apple Music through the authenticated apple-music-search Supabase Edge Function, with Apple Music credentials stored only server-side.
+
+Remember that Top3Item supports previewUrl for Songs and shared preview playback is owned by AudioPreviewProvider / context/audio-preview-context.tsx.
+
+Remember that Search, RankedItemCard, and Top3Card use the shared preview controller; do not implement separate Expo Audio players in those components.
+
+Remember that category artwork sizing is centralized in constants/category-artwork-rules.ts. Music uses 64 × 64 square artwork; Movies, Books, TV Shows, and Video Games currently use 64 × 96 portrait artwork.
 
 Remember that collection titles are generated centrally by utils/build-collection-title.ts and topic-specific titles use Top 3 Category • Topic.
 
