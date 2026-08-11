@@ -20,6 +20,7 @@ import {
 
 type CreateListInput = {
   category: string;
+  type?: string;
   topic?: string;
   title: string;
 };
@@ -172,6 +173,10 @@ export function Top3Provider({
     const normalizedCategory =
       input.category.trim().toLowerCase();
 
+    const normalizedType =
+      input.type?.trim().toLowerCase() ??
+      'general';
+
     const normalizedTopic =
       input.topic?.trim().toLowerCase() ??
       'general';
@@ -180,6 +185,10 @@ export function Top3Provider({
       const existingCategory =
         list.category.trim().toLowerCase();
 
+      const existingType =
+        list.type?.trim().toLowerCase() ??
+        'general';
+
       const existingTopic =
         list.topic?.trim().toLowerCase() ??
         'general';
@@ -187,6 +196,7 @@ export function Top3Provider({
       return (
         existingCategory ===
           normalizedCategory &&
+        existingType === normalizedType &&
         existingTopic === normalizedTopic
       );
     });
@@ -255,11 +265,13 @@ export function Top3Provider({
 
     const temporaryId =
       `pending-${normalizedCategory}-` +
+      `${normalizedType}-` +
       `${normalizedTopic}-${Date.now()}`;
 
     const pendingList: Top3List = {
       id: temporaryId,
       category: input.category,
+      type: input.type,
       topic: input.topic,
       title: input.title,
       items: [null, null, null],
@@ -279,6 +291,7 @@ export function Top3Provider({
         const savedList = await createCollection({
           userId,
           category: input.category,
+          type: input.type,
           topic: input.topic,
           title: input.title,
           items: [null, null, null],

@@ -329,7 +329,7 @@ const subtitle = (() => {
       <ScreenHeader showBackButton />
 
       <PageHeader
-        title={currentList.title}
+  title={currentList.title.replace(/^Top 3\s+/i, '')}
         subtitle={subtitle ?? undefined}
       />
 

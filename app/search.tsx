@@ -3,7 +3,9 @@ import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
 import SearchInput from '@/components/search-input';
 import SearchResultSkeleton from '@/components/search-result-skeleton';
+import { getCategoryArtworkRule } from '@/constants/category-artwork-rules';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
+import { useAudioPreview } from '@/context/audio-preview-context';
 import { useTop3 } from '@/context/top3-context';
 import {
   getPopularSuggestionsByCategory,
@@ -158,6 +160,13 @@ export default function SearchScreen() {
     setSeenSuggestionIds,
   ] = useState<string[]>([]);
 
+  const {
+    activePreviewItemId,
+    isPreviewPlaying,
+    togglePreview,
+    stopPreview,
+  } = useAudioPreview();
+
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const suggestionsOpacity =
     useRef(new Animated.Value(1)).current;
@@ -172,30 +181,58 @@ export default function SearchScreen() {
     (category) => category.id === currentList?.category
   );
 
+  const selectedType =
+    selectedCategory?.types?.find(
+      (type) =>
+        type.name.toLowerCase() ===
+        currentList?.type?.toLowerCase()
+    );
+
+  const availableTopics =
+    selectedType?.topics ??
+    selectedCategory?.topics ??
+    [];
+
   const selectedTopic =
-    selectedCategory?.topics.find(
+    availableTopics.find(
       (topic) =>
         topic.name.toLowerCase() ===
         currentList?.topic?.toLowerCase()
     ) ??
-    selectedCategory?.topics.find(
+    availableTopics.find(
       (topic) => topic.id === 'general'
     );
 
   const categoryName = selectedCategory?.name ?? 'Items';
-  const topicName = selectedTopic?.name;
+
+  const artworkRule =
+    getCategoryArtworkRule(
+      currentList?.category ?? ''
+    );
+
+  const topicName =
+    selectedTopic?.id === 'general' &&
+    selectedType
+      ? selectedType.name
+      : selectedTopic?.name;
+
   const searchItemName =
-    selectedTopic?.searchItemName ?? 'item';
+    selectedTopic?.searchItemName ??
+    selectedType?.searchItemName ??
+    'item';
 
   const searchIcon =
     selectedTopic?.icon ??
+    selectedType?.icon ??
     selectedCategory?.icon ??
     '⭐';
 
   const placeholderIcon =
     selectedCategory?.placeholderIcon ?? 'image-outline';
 
-  const isGeneralTopic = selectedTopic?.id === 'general';
+  const isGeneralTopic =
+    selectedTopic?.id === 'general' &&
+    !selectedType;
 
   const fallbackSuggestions =
     CATEGORY_SUGGESTIONS[
@@ -563,6 +600,7 @@ export default function SearchScreen() {
     }).start();
   }, [fadeAnim, isLoading, searchResults]);
 
+
   function refreshSuggestions() {
     if (
       suggestionPool.length <= 5 ||
@@ -728,13 +766,18 @@ function chooseSuggestion(
       return;
     }
 
+    stopPreview();
     setItemAtRank(selectedRank, item);
     router.back();
   }
 
-const searchTitle = isGeneralTopic
-  ? `Search ${categoryName}`
-  : `Search ${topicName}`;
+const searchTitle = selectedType
+  ? currentList?.topic
+    ? `Search ${selectedType.name} • ${topicName}`
+    : `Search ${selectedType.name}`
+  : isGeneralTopic
+    ? `Search ${categoryName}`
+    : `Search ${topicName}`;
 
   const searchPlaceholder =
     `Search for a ${searchItemName}...`;
@@ -934,22 +977,75 @@ const searchTitle = isGeneralTopic
                       key={item.id}
                       style={styles.resultRow}
                       onPress={() => selectItem(item)}>
-                      {item.imageUrl ? (
-                        <Image
-                          source={{ uri: item.imageUrl }}
-                          style={styles.image}
-                          resizeMode="cover"
-                        />
-                      ) : (
-                        <View
-                          style={styles.imagePlaceholder}>
-                          <Ionicons
-                            name={placeholderIcon}
-                            size={28}
-                            color="#999999"
+                      <View
+                        style={[
+                          styles.imageContainer,
+                          {
+                            width: artworkRule.width,
+                            height: artworkRule.height,
+                          },
+                        ]}>
+                        {item.imageUrl ? (
+                          <Image
+                            source={{ uri: item.imageUrl }}
+                            style={[
+                              styles.image,
+                              {
+                                width: artworkRule.width,
+                                height: artworkRule.height,
+                              },
+                            ]}
+                            resizeMode="cover"
                           />
-                        </View>
-                      )}
+                        ) : (
+                          <View
+                            style={[
+                              styles.imagePlaceholder,
+                              {
+                                width: artworkRule.width,
+                                height: artworkRule.height,
+                              },
+                            ]}>
+                            <Ionicons
+                              name={placeholderIcon}
+                              size={28}
+                              color="#999999"
+                            />
+                          </View>
+                        )}
+
+                        {item.previewUrl ? (
+                          <Pressable
+                            style={({ pressed }) => [
+                              styles.previewButton,
+                              pressed &&
+                                styles.previewButtonPressed,
+                            ]}
+                            onPress={(event) => {
+                              event.stopPropagation();
+                              void togglePreview(item);
+                            }}
+                            hitSlop={6}
+                            accessibilityRole="button"
+                            accessibilityLabel={
+                              activePreviewItemId === item.id &&
+                              isPreviewPlaying
+                                ? `Pause preview of ${item.title}`
+                                : `Play preview of ${item.title}`
+                            }>
+                            <Ionicons
+                              name={
+                                activePreviewItemId === item.id &&
+                                isPreviewPlaying
+                                  ? 'pause'
+                                  : 'play'
+                              }
+                              size={18}
+                              color="#FFFFFF"
+                            />
+                          </Pressable>
+                        ) : null}
+                      </View>
 
                       <View style={styles.resultDetails}>
                         <Text style={styles.resultTitle}>
@@ -1072,11 +1168,35 @@ const styles = StyleSheet.create({
     borderBottomColor: '#EEEEEE',
   },
 
+  imageContainer: {
+    position: 'relative',
+    width: 64,
+    height: 96,
+  },
+
   image: {
     width: 64,
     height: 96,
     borderRadius: 8,
     backgroundColor: '#EEEEEE',
+  },
+
+  previewButton: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    width: 36,
+    height: 36,
+    marginTop: -18,
+    marginLeft: -18,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.68)',
+  },
+
+  previewButtonPressed: {
+    opacity: 0.75,
   },
 
   imagePlaceholder: {

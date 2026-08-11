@@ -4,6 +4,7 @@ import CollectionForm, {
 } from '@/components/collection-form';
 import PageHeader from '@/components/page-header';
 import PrimaryButton from '@/components/primary-button';
+import ScreenHeader from '@/components/screen-header';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { useTop3 } from '@/context/top3-context';
 import { Top3List } from '@/types/top3-list';
@@ -81,6 +82,7 @@ function getInitialValuesForCategory(
       if (!alreadyExists) {
         return {
           categoryId: category.id,
+          typeId: '',
           topicId: requestedTopic.id,
           title: buildCollectionTitle(
             category.id,
@@ -121,6 +123,7 @@ function getInitialValuesForCategory(
   if (!firstTopic) {
     return {
       categoryId: category.id,
+      typeId: '',
       topicId: '',
       title: '',
     };
@@ -128,6 +131,7 @@ function getInitialValuesForCategory(
 
   return {
     categoryId: category.id,
+    typeId: '',
     topicId: firstTopic.id,
     title: buildCollectionTitle(
       category.id,
@@ -162,9 +166,24 @@ export default function CreateCollectionScreen() {
       )
     );
 
+  const selectedCategory =
+    TOP3_CATEGORIES.find(
+      (item) =>
+        item.id === formValues.categoryId
+    );
+
+  const requiresType =
+    Boolean(
+      selectedCategory?.types?.length
+    );
+
   const canCreate =
     Boolean(formValues.categoryId) &&
-    Boolean(formValues.title);
+    Boolean(formValues.title) &&
+    (
+      !requiresType ||
+      Boolean(formValues.typeId)
+    );
 
   function createCollection() {
     if (!canCreate) {
@@ -179,14 +198,25 @@ export default function CreateCollectionScreen() {
       return;
     }
 
+    const type = formValues.typeId
+      ? category.types?.find(
+          (item) => item.id === formValues.typeId
+        )
+      : undefined;
+
+    const topics =
+      type?.topics ??
+      category.topics;
+
     const topic = formValues.topicId
-      ? category.topics.find(
+      ? topics.find(
           (item) => item.id === formValues.topicId
         )?.name
       : undefined;
 
     createList({
       category: formValues.categoryId,
+      type: type?.name,
       topic:
         formValues.topicId === 'general'
           ? undefined
@@ -201,6 +231,8 @@ export default function CreateCollectionScreen() {
     <SafeAreaView
       style={styles.container}
       edges={['top', 'left', 'right']}>
+      <ScreenHeader />
+
       <PageHeader
         title="Share your favorites"
         subtitle="What would you like to rank today?"

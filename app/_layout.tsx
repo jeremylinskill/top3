@@ -1,4 +1,5 @@
 import { AuthGate } from '@/components/auth-gate';
+import { AudioPreviewProvider } from '@/context/audio-preview-context';
 import { CommentProvider } from '@/context/comment-context';
 import { FollowProvider } from '@/context/follow-context';
 import { LikeProvider } from '@/context/like-context';
@@ -36,50 +37,52 @@ export default function RootLayout() {
                   <LikeProvider>
                     <CommentProvider>
                       <Top3Provider>
-                        <ThemeProvider
-                          value={
-                            colorScheme === 'dark'
-                              ? DarkTheme
-                              : DefaultTheme
-                          }>
-                          <Stack
-                            screenOptions={{
-                              headerShown: false,
-                            }}>
-                            <Stack.Screen name="index" />
+                        <AudioPreviewProvider>
+                          <ThemeProvider
+                            value={
+                              colorScheme === 'dark'
+                                ? DarkTheme
+                                : DefaultTheme
+                            }>
+                            <Stack
+                              screenOptions={{
+                                headerShown: false,
+                              }}>
+                              <Stack.Screen name="index" />
 
-                            <Stack.Screen name="welcome" />
+                              <Stack.Screen name="welcome" />
 
-                            <Stack.Screen name="(tabs)" />
+                              <Stack.Screen name="(tabs)" />
 
-                            <Stack.Screen name="collections" />
+                              <Stack.Screen name="collections" />
 
-                            <Stack.Screen name="collection" />
+                              <Stack.Screen name="collection" />
 
-                            <Stack.Screen name="search" />
+                              <Stack.Screen name="search" />
 
-                            <Stack.Screen name="edit-profile" />
+                              <Stack.Screen name="edit-profile" />
 
-                            <Stack.Screen name="notifications" />
+                              <Stack.Screen name="notifications" />
 
-                            <Stack.Screen name="public-profile" />
+                              <Stack.Screen name="public-profile" />
 
-                            <Stack.Screen name="published-top3" />
+                              <Stack.Screen name="published-top3" />
 
-                            <Stack.Screen name="community-top3" />
+                              <Stack.Screen name="community-top3" />
 
-                            <Stack.Screen name="overall-top3-topics" />
+                              <Stack.Screen name="overall-top3-topics" />
 
-                            <Stack.Screen
-                              name="modal"
-                              options={{
-                                presentation: 'modal',
-                              }}
-                            />
-                          </Stack>
+                              <Stack.Screen
+                                name="modal"
+                                options={{
+                                  presentation: 'modal',
+                                }}
+                              />
+                            </Stack>
 
-                          <StatusBar style="auto" />
-                        </ThemeProvider>
+                            <StatusBar style="auto" />
+                          </ThemeProvider>
+                        </AudioPreviewProvider>
                       </Top3Provider>
                     </CommentProvider>
                   </LikeProvider>

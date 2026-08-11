@@ -6,8 +6,11 @@ import { Top3Item } from '@/types/top3-item';
 
 export async function searchMusic(
   query: string,
-  _topic?: string,
+  topic?: string,
   _signal?: AbortSignal
 ): Promise<Top3Item[]> {
-  return searchAppleMusicSongs(query);
+  return searchAppleMusicSongs(
+    query,
+    topic
+  );
 }

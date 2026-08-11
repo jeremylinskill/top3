@@ -11,6 +11,7 @@ import {
 
 export type CollectionFormValues = {
   categoryId: string;
+  typeId: string;
   topicId: string;
   title: string;
 };
@@ -31,6 +32,7 @@ const SORTED_CATEGORIES = [
 
 function getAvailableTopics(
   categoryId: string,
+  typeId: string,
   existingLists: Top3List[]
 ) {
   const category = SORTED_CATEGORIES.find(
@@ -41,7 +43,16 @@ function getAvailableTopics(
     return [];
   }
 
-  return category.topics
+  const type =
+    category.types?.find(
+      (item) => item.id === typeId
+    );
+
+  const topics =
+    type?.topics ??
+    category.topics;
+
+  return topics
     .filter((topic) => {
       if (topic.id === 'general') {
         return false;
@@ -82,6 +93,7 @@ export function getInitialCollectionFormValues(
   if (!firstCategory) {
     return {
       categoryId: '',
+      typeId: '',
       topicId: '',
       title: '',
     };
@@ -89,6 +101,7 @@ export function getInitialCollectionFormValues(
 
   return {
     categoryId: firstCategory.id,
+    typeId: '',
     topicId: '',
     title: buildCollectionTitle(
       firstCategory.id,
@@ -102,15 +115,29 @@ export default function CollectionForm({
   values,
   onChange,
 }: CollectionFormProps) {
+  const selectedCategory =
+    SORTED_CATEGORIES.find(
+      (category) =>
+        category.id === values.categoryId
+    );
+
+  const availableTypes =
+    selectedCategory?.types ?? [];
+
+  const hasTypes =
+    availableTypes.length > 0;
+
   const availableTopics = useMemo(
     () =>
       getAvailableTopics(
         values.categoryId,
+        values.typeId,
         existingLists
       ),
     [
       existingLists,
       values.categoryId,
+      values.typeId,
     ]
   );
 
@@ -119,10 +146,33 @@ export default function CollectionForm({
   ) {
     onChange({
       categoryId: nextCategoryId,
+      typeId: '',
       topicId: '',
       title: buildCollectionTitle(
         nextCategoryId,
         ''
+      ),
+    });
+  }
+
+  function chooseType(
+    nextTypeId: string
+  ) {
+    const shouldClearType =
+      values.typeId === nextTypeId;
+
+    const updatedTypeId =
+      shouldClearType
+        ? ''
+        : nextTypeId;
+
+    onChange({
+      categoryId: values.categoryId,
+      typeId: updatedTypeId,
+      topicId: '',
+      title: buildCollectionTitle(
+        values.categoryId,
+        updatedTypeId
       ),
     });
   }
@@ -140,11 +190,18 @@ export default function CollectionForm({
 
     onChange({
       categoryId: values.categoryId,
+      typeId: values.typeId,
       topicId: updatedTopicId,
-      title: buildCollectionTitle(
-        values.categoryId,
-        updatedTopicId
-      ),
+      title: hasTypes
+        ? buildCollectionTitle(
+            values.categoryId,
+            values.typeId,
+            updatedTopicId
+          )
+        : buildCollectionTitle(
+            values.categoryId,
+            updatedTopicId
+          ),
     });
   }
 
@@ -176,49 +233,80 @@ export default function CollectionForm({
         )}
       </View>
 
-      <View style={styles.topicSection}>
-        <Text style={styles.sectionTitle}>
-          Topic{' '}
-          <Text style={styles.optionalLabel}>
-            (optional)
+      {hasTypes ? (
+        <View style={styles.typeSection}>
+          <Text style={styles.sectionTitle}>
+            Type
           </Text>
-        </Text>
 
-        <Text style={styles.topicHelper}>
-          Want to get more specific? Choose a
-          topic.
-        </Text>
-
-        {availableTopics.length > 0 ? (
           <View style={styles.optionGroup}>
-            {availableTopics.map(
-              (topic) => {
+            {availableTypes.map(
+              (type) => {
                 const isSelected =
-                  topic.id ===
-                  values.topicId;
+                  type.id === values.typeId;
 
                 return (
                   <Chip
-                    key={topic.id}
-                    label={topic.name}
+                    key={type.id}
+                    icon={type.icon}
+                    label={type.name}
                     selected={isSelected}
                     onPress={() =>
-                      chooseTopic(topic.id)
+                      chooseType(type.id)
                     }
                   />
                 );
               }
             )}
           </View>
-        ) : (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyMessage}>
-              You’ve created all available topic
-              collections in this category.
+        </View>
+      ) : null}
+
+      {(!hasTypes || values.typeId) ? (
+        <View style={styles.topicSection}>
+          <Text style={styles.sectionTitle}>
+            Topic{' '}
+            <Text style={styles.optionalLabel}>
+              (optional)
             </Text>
-          </View>
-        )}
-      </View>
+          </Text>
+
+          <Text style={styles.topicHelper}>
+            Want to get more specific? Choose a
+            topic.
+          </Text>
+
+          {availableTopics.length > 0 ? (
+            <View style={styles.optionGroup}>
+              {availableTopics.map(
+                (topic) => {
+                  const isSelected =
+                    topic.id ===
+                    values.topicId;
+
+                  return (
+                    <Chip
+                      key={topic.id}
+                      label={topic.name}
+                      selected={isSelected}
+                      onPress={() =>
+                        chooseTopic(topic.id)
+                      }
+                    />
+                  );
+                }
+              )}
+            </View>
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyMessage}>
+                You’ve created all available topic
+                collections in this category.
+              </Text>
+            </View>
+          )}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -235,6 +323,10 @@ const styles = StyleSheet.create({
   optionalLabel: {
     fontWeight: '400',
     color: '#777777',
+  },
+
+  typeSection: {
+    marginTop: 30,
   },
 
   topicSection: {

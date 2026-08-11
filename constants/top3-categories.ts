@@ -1,12 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 
 
+
 export type CategoryId =
   | 'movies'
   | 'books'
   | 'tv'
   | 'games'
   | 'music';
+
 
 
 export type Top3Topic = {
@@ -18,13 +20,26 @@ export type Top3Topic = {
 };
 
 
+
+export type Top3Type = {
+  id: string;
+  name: string;
+  icon: string;
+  searchItemName: string;
+  topics: Top3Topic[];
+};
+
+
+
 export type Top3Category = {
   id: CategoryId;
   name: string;
   icon: string;
   placeholderIcon: keyof typeof Ionicons.glyphMap;
   topics: Top3Topic[];
+  types?: Top3Type[];
 };
+
 
 
 export const TOP3_CATEGORIES: Top3Category[] = [
@@ -328,12 +343,105 @@ export const TOP3_CATEGORIES: Top3Category[] = [
     name: 'Music',
     icon: '🎵',
     placeholderIcon: 'musical-note-outline',
-    topics: [
+    topics: [],
+    types: [
       {
         id: 'songs',
         name: 'Songs',
         icon: '🎵',
         searchItemName: 'song',
+        topics: [
+          {
+            id: 'alternative',
+            name: 'Alternative',
+            icon: '🎸',
+            searchItemName: 'alternative song',
+          },
+          {
+            id: 'blues',
+            name: 'Blues',
+            icon: '🎸',
+            searchItemName: 'blues song',
+          },
+          {
+            id: 'classical',
+            name: 'Classical',
+            icon: '🎻',
+            searchItemName: 'classical song',
+          },
+          {
+            id: 'country',
+            name: 'Country',
+            icon: '🤠',
+            searchItemName: 'country song',
+          },
+          {
+            id: 'dance',
+            name: 'Dance',
+            icon: '💃',
+            searchItemName: 'dance song',
+          },
+          {
+            id: 'electronic',
+            name: 'Electronic',
+            icon: '🎛️',
+            searchItemName: 'electronic song',
+          },
+          {
+            id: 'folk',
+            name: 'Folk',
+            icon: '🪕',
+            searchItemName: 'folk song',
+          },
+          {
+            id: 'hip-hop',
+            name: 'Hip-Hop',
+            icon: '🎤',
+            searchItemName: 'hip-hop song',
+          },
+          {
+            id: 'jazz',
+            name: 'Jazz',
+            icon: '🎷',
+            searchItemName: 'jazz song',
+          },
+          {
+            id: 'latin',
+            name: 'Latin',
+            icon: '🌎',
+            searchItemName: 'latin song',
+          },
+          {
+            id: 'metal',
+            name: 'Metal',
+            icon: '🤘',
+            searchItemName: 'metal song',
+          },
+          {
+            id: 'pop',
+            name: 'Pop',
+            icon: '🎶',
+            searchItemName: 'pop song',
+          },
+          {
+            id: 'r-and-b',
+            name: 'R&B',
+            icon: '🎙️',
+            searchItemName: 'R&B song',
+          },
+          {
+            id: 'reggae',
+            name: 'Reggae',
+            icon: '🌴',
+            searchItemName: 'reggae song',
+          },
+          {
+            id: 'rock',
+            name: 'Rock',
+            icon: '🤘',
+            searchItemName: 'rock song',
+          },
+        ],
       },
     ],
   },

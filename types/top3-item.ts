@@ -4,4 +4,5 @@ export type Top3Item = {
   subtitle?: string;
   imageUrl?: string;
   rating?: number;
+  previewUrl?: string;
 };

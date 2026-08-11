@@ -61,7 +61,8 @@ async function invokeAppleMusic(
 }
 
 export async function searchAppleMusicSongs(
-  query: string
+  query: string,
+  topic?: string
 ): Promise<Top3Item[]> {
   const trimmedQuery =
     query.trim();
@@ -70,7 +71,12 @@ export async function searchAppleMusicSongs(
     return [];
   }
 
+  const trimmedTopic =
+    topic?.trim();
+
   return invokeAppleMusic({
     query: trimmedQuery,
+    topic:
+      trimmedTopic || undefined,
   });
 }

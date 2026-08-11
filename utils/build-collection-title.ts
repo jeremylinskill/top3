@@ -4,6 +4,7 @@ import {
 
 export function buildCollectionTitle(
   categoryId: string,
+  typeOrTopicId?: string,
   topicId?: string
 ): string {
   const category =
@@ -16,22 +17,52 @@ export function buildCollectionTitle(
     return '';
   }
 
-  if (!topicId) {
-    return `Top 3 ${category.name}`;
+  const baseTitle =
+    `Top 3 ${category.name}`;
+
+  if (!typeOrTopicId) {
+    return baseTitle;
+  }
+
+  const type =
+    category.types?.find(
+      (item) =>
+        item.id === typeOrTopicId
+    );
+
+  if (type) {
+    if (!topicId) {
+      return `${baseTitle} • ${type.name}`;
+    }
+
+    const topic =
+      type.topics.find(
+        (item) =>
+          item.id === topicId
+      );
+
+    if (
+      !topic ||
+      topic.id === 'general'
+    ) {
+      return `${baseTitle} • ${type.name}`;
+    }
+
+    return `${baseTitle} • ${type.name} • ${topic.name}`;
   }
 
   const topic =
     category.topics.find(
       (item) =>
-        item.id === topicId
+        item.id === typeOrTopicId
     );
 
   if (
     !topic ||
     topic.id === 'general'
   ) {
-    return `Top 3 ${category.name}`;
+    return baseTitle;
   }
 
-  return `Top 3 ${category.name} • ${topic.name}`;
+  return `${baseTitle} • ${topic.name}`;
 }

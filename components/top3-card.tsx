@@ -1,7 +1,11 @@
 import FollowButton from '@/components/follow-button';
 import TasteMatchBadge from '@/components/taste-match-badge';
+import {
+  getCategoryArtworkRule,
+} from '@/constants/category-artwork-rules';
 import { COLORS } from '@/constants/colors';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
+import { useAudioPreview } from '@/context/audio-preview-context';
 import { useComments } from '@/context/comment-context';
 import { useLike } from '@/context/like-context';
 import { Post } from '@/types/post';
@@ -82,6 +86,12 @@ export default function Top3Card({
     isLoading: isLoadingComments,
   } = useComments();
 
+  const {
+    activePreviewItemId,
+    isPreviewPlaying,
+    togglePreview,
+  } = useAudioPreview();
+
   const category = TOP3_CATEGORIES.find(
     (item) =>
       item.id === post.collection.category
@@ -91,19 +101,36 @@ export default function Top3Card({
     category?.name ??
     formatLabel(post.collection.category);
 
+  const artworkRule =
+    getCategoryArtworkRule(
+      post.collection.category
+    );
+
+  const rawType =
+    post.collection.type?.trim();
+
   const rawTopic =
     post.collection.topic?.trim();
 
   const normalizedTopic =
     rawTopic?.toLowerCase();
 
-  const displayTitle =
+  const displayTitleParts = [
+    categoryName,
+    rawType
+      ? formatLabel(rawType)
+      : undefined,
     rawTopic &&
     normalizedTopic !== 'general'
-      ? `${categoryName} • ${formatLabel(
-          rawTopic
-        )}`
-      : categoryName;
+      ? formatLabel(rawTopic)
+      : undefined,
+  ].filter(
+    (value): value is string =>
+      Boolean(value)
+  );
+
+  const displayTitle =
+    displayTitleParts.join(' • ');
 
   const publishedText = formatRelativeTime(
     post.publishedAt
@@ -380,26 +407,77 @@ export default function Top3Card({
                     {index + 1}
                   </Text>
 
-                  {item?.imageUrl ? (
-                    <Image
-                      source={{
-                        uri: item.imageUrl,
-                      }}
-                      style={styles.itemImage}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View
-                      style={
-                        styles.imagePlaceholder
-                      }>
-                      <Ionicons
-                        name="image-outline"
-                        size={24}
-                        color="#999999"
+                  <View
+                    style={[
+                      styles.artworkContainer,
+                      {
+                        width: artworkRule.width,
+                        height: artworkRule.height,
+                      },
+                    ]}>
+                    {item?.imageUrl ? (
+                      <Image
+                        source={{
+                          uri: item.imageUrl,
+                        }}
+                        style={[
+                          styles.itemImage,
+                          {
+                            width: artworkRule.width,
+                            height: artworkRule.height,
+                          },
+                        ]}
+                        resizeMode="cover"
                       />
-                    </View>
-                  )}
+                    ) : (
+                      <View
+                        style={[
+                          styles.imagePlaceholder,
+                          {
+                            width: artworkRule.width,
+                            height: artworkRule.height,
+                          },
+                        ]}>
+                        <Ionicons
+                          name="image-outline"
+                          size={24}
+                          color="#999999"
+                        />
+                      </View>
+                    )}
+
+                    {item?.previewUrl ? (
+                      <Pressable
+                        style={({ pressed }) => [
+                          styles.previewButton,
+                          pressed &&
+                            styles.previewButtonPressed,
+                        ]}
+                        onPress={(event) => {
+                          event.stopPropagation();
+                          void togglePreview(item);
+                        }}
+                        hitSlop={6}
+                        accessibilityRole="button"
+                        accessibilityLabel={
+                          activePreviewItemId === item.id &&
+                          isPreviewPlaying
+                            ? `Pause preview of ${item.title}`
+                            : `Play preview of ${item.title}`
+                        }>
+                        <Ionicons
+                          name={
+                            activePreviewItemId === item.id &&
+                            isPreviewPlaying
+                              ? 'pause'
+                              : 'play'
+                          }
+                          size={18}
+                          color="#FFFFFF"
+                        />
+                      </Pressable>
+                    ) : null}
+                  </View>
 
                   <View
                     style={styles.itemDetails}>
@@ -758,22 +836,39 @@ const styles = StyleSheet.create({
     color: '#222222',
   },
 
-  itemImage: {
-    width: 64,
-    height: 96,
-    borderRadius: 9,
-    backgroundColor: '#EEEEEE',
+  artworkContainer: {
+    position: 'relative',
     marginRight: 13,
   },
 
+  itemImage: {
+    borderRadius: 9,
+    backgroundColor: '#EEEEEE',
+  },
+
   imagePlaceholder: {
-    width: 64,
-    height: 96,
     borderRadius: 9,
     backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 13,
+  },
+
+  previewButton: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    width: 36,
+    height: 36,
+    marginTop: -18,
+    marginLeft: -18,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.68)',
+  },
+
+  previewButtonPressed: {
+    opacity: 0.75,
   },
 
   itemDetails: {

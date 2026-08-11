@@ -9,6 +9,7 @@ type CollectionRow = {
   id: string;
   user_id: string;
   category: string;
+  type: string | null;
   topic: string | null;
   title: string;
   status: CollectionStatus;
@@ -21,6 +22,7 @@ type CollectionRow = {
 type CreateCollectionInput = {
   userId: string;
   category: string;
+  type?: string;
   topic?: string;
   title: string;
   items?: Top3List['items'];
@@ -28,6 +30,7 @@ type CreateCollectionInput = {
 
 type UpdateCollectionInput = {
   category?: string;
+  type?: string;
   topic?: string;
   title?: string;
   items?: Top3List['items'];
@@ -75,6 +78,7 @@ function mapCollectionRow(
   return {
     id: row.id,
     category: row.category,
+    type: row.type ?? undefined,
     topic: row.topic ?? undefined,
     title: row.title,
     items: normalizeItems(row.items),
@@ -217,6 +221,7 @@ export async function createCollection(
     .insert({
       user_id: input.userId,
       category: input.category,
+      type: input.type ?? null,
       topic: input.topic ?? null,
       title: input.title,
       status: 'draft',
@@ -244,6 +249,7 @@ export async function updateCollection(
 ): Promise<Top3List> {
   const updates: {
     category?: string;
+    type?: string | null;
     topic?: string | null;
     title?: string;
     items?: Top3List['items'];
@@ -254,6 +260,10 @@ export async function updateCollection(
 
   if (input.category !== undefined) {
     updates.category = input.category;
+  }
+
+  if (input.type !== undefined) {
+    updates.type = input.type || null;
   }
 
   if (input.topic !== undefined) {
