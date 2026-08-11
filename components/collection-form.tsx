@@ -32,8 +32,7 @@ const SORTED_CATEGORIES = [
 
 function getAvailableTopics(
   categoryId: string,
-  typeId: string,
-  existingLists: Top3List[]
+  typeId: string
 ) {
   const category = SORTED_CATEGORIES.find(
     (item) => item.id === categoryId
@@ -53,32 +52,10 @@ function getAvailableTopics(
     category.topics;
 
   return topics
-    .filter((topic) => {
-      if (topic.id === 'general') {
-        return false;
-      }
-
-      const normalizedTopic =
-        topic.name.trim().toLowerCase();
-
-      return !existingLists.some((list) => {
-        const existingTopic =
-          list.topic
-            ?.trim()
-            .toLowerCase() ?? '';
-
-        return (
-          Boolean(list.publishedAt) &&
-          list.category
-            .trim()
-            .toLowerCase() ===
-            category.id
-              .trim()
-              .toLowerCase() &&
-          existingTopic === normalizedTopic
-        );
-      });
-    })
+    .filter(
+      (topic) =>
+        topic.id !== 'general'
+    )
     .sort((first, second) =>
       first.name.localeCompare(second.name)
     );
@@ -131,11 +108,9 @@ export default function CollectionForm({
     () =>
       getAvailableTopics(
         values.categoryId,
-        values.typeId,
-        existingLists
+        values.typeId
       ),
     [
-      existingLists,
       values.categoryId,
       values.typeId,
     ]
@@ -248,7 +223,6 @@ export default function CollectionForm({
                 return (
                   <Chip
                     key={type.id}
-                    icon={type.icon}
                     label={type.name}
                     selected={isSelected}
                     onPress={() =>
@@ -300,8 +274,7 @@ export default function CollectionForm({
           ) : (
             <View style={styles.emptyState}>
               <Text style={styles.emptyMessage}>
-                You’ve created all available topic
-                collections in this category.
+                No topics are available in this category.
               </Text>
             </View>
           )}

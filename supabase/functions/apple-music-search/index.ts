@@ -7,8 +7,10 @@ import {
 } from "npm:jose@6.2.3";
 
 type SearchRequestBody = {
+  mode?: unknown;
   query?: unknown;
   topic?: unknown;
+  limit?: unknown;
 };
 
 type AppleMusicArtwork = {
@@ -115,6 +117,7 @@ const DEFAULT_STOREFRONT = "ca";
 const APPLE_SEARCH_LIMIT = 25;
 const RESULT_LIMIT = 10;
 const MAX_QUERY_LENGTH = 100;
+const MAX_POPULAR_RESULT_LIMIT = 50;
 
 const APPLE_CHART_LIMIT = 200;
 const CHART_CACHE_TTL_MS =
@@ -183,6 +186,7 @@ const cachedSongCharts =
     string,
     {
       songIds: string[];
+      songs: AppleMusicSong[];
       expiresAt: number;
     }
   >();
@@ -543,8 +547,11 @@ async function getSongChartIds(
       ?.songs
       ?.[0];
 
+  const chartSongs =
+    chart?.data ?? [];
+
   const songIds =
-    (chart?.data ?? [])
+    chartSongs
       .map((song) =>
         song.id?.trim()
       )
@@ -557,6 +564,7 @@ async function getSongChartIds(
     cacheKey,
     {
       songIds,
+      songs: chartSongs,
       expiresAt:
         now + CHART_CACHE_TTL_MS,
     }
@@ -1019,6 +1027,113 @@ function rankAndDeduplicateSongs(
   return results;
 }
 
+
+function getPopularResultLimit(
+  value: unknown
+): number {
+  if (
+    typeof value !== "number" ||
+    !Number.isFinite(value)
+  ) {
+    return 20;
+  }
+
+  return Math.min(
+    MAX_POPULAR_RESULT_LIMIT,
+    Math.max(
+      1,
+      Math.floor(value)
+    )
+  );
+}
+
+async function getPopularAppleMusicSongs(
+  topic: string | undefined,
+  limit: number
+): Promise<SongSearchResult[]> {
+  const developerToken =
+    await getDeveloperToken();
+
+  await getSongChartIds(
+    developerToken,
+    topic
+  );
+
+  const normalizedTopic =
+    normalizeText(topic ?? "") ||
+    "general";
+
+  const cacheKey = [
+    DEFAULT_STOREFRONT,
+    normalizedTopic,
+  ].join("|");
+
+  const chartSongs =
+    cachedSongCharts.get(
+      cacheKey
+    )?.songs ?? [];
+
+  const mappedSongs =
+    chartSongs
+      .map(
+        (
+          song,
+          originalIndex
+        ) =>
+          mapSong(
+            song,
+            originalIndex
+          )
+      )
+      .filter(
+        (
+          song
+        ): song is RankedSong =>
+          song !== null
+      );
+
+  const seenKeys =
+    new Set<string>();
+
+  const results:
+    SongSearchResult[] = [];
+
+  for (
+    const song of mappedSongs
+  ) {
+    const deduplicationKey =
+      getDeduplicationKey(song);
+
+    if (
+      seenKeys.has(
+        deduplicationKey
+      )
+    ) {
+      continue;
+    }
+
+    seenKeys.add(
+      deduplicationKey
+    );
+
+    results.push({
+      id: song.id,
+      title: song.title,
+      subtitle: song.subtitle,
+      imageUrl: song.imageUrl,
+      previewUrl: song.previewUrl,
+    });
+
+    if (
+      results.length >= limit
+    ) {
+      break;
+    }
+  }
+
+  return results;
+}
+
 function buildSearchUrl(
   query: string
 ): string {
@@ -1206,6 +1321,61 @@ export default {
         );
       }
 
+      const mode =
+        typeof body.mode === "string"
+          ? body.mode.trim().toLowerCase()
+          : "search";
+
+      const topic =
+        typeof body.topic === "string"
+          ? body.topic.trim()
+          : undefined;
+
+      if (mode === "popular") {
+        try {
+          const results =
+            await getPopularAppleMusicSongs(
+              topic,
+              getPopularResultLimit(
+                body.limit
+              )
+            );
+
+          return jsonResponse({
+            results,
+          });
+        } catch (error) {
+          console.error(
+            "Apple Music popular suggestions failed:",
+            error
+          );
+
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Apple Music suggestions are temporarily unavailable.";
+
+          return jsonResponse(
+            {
+              error: message,
+            },
+            502
+          );
+        }
+      }
+
+      if (
+        mode !== "search"
+      ) {
+        return jsonResponse(
+          {
+            error:
+              "Unsupported Apple Music request mode.",
+          },
+          400
+        );
+      }
+
       if (
         typeof body.query !==
         "string"
@@ -1221,11 +1391,6 @@ export default {
 
       const query =
         body.query.trim();
-
-      const topic =
-        typeof body.topic === "string"
-          ? body.topic.trim()
-          : undefined;
 
       if (!query) {
         return jsonResponse(

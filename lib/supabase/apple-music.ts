@@ -80,3 +80,18 @@ export async function searchAppleMusicSongs(
       trimmedTopic || undefined,
   });
 }
+
+export async function getPopularAppleMusicSongs(
+  topic?: string,
+  limit = 20
+): Promise<Top3Item[]> {
+  const trimmedTopic =
+    topic?.trim();
+
+  return invokeAppleMusic({
+    mode: 'popular',
+    topic:
+      trimmedTopic || undefined,
+    limit,
+  });
+}

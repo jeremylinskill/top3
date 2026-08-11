@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
   bottomBar: {
     paddingHorizontal: 20,
     paddingTop: 12,
-    paddingBottom: 8,
+    paddingBottom: 20,
     backgroundColor: '#F8F8F8',
     borderTopWidth:
       StyleSheet.hairlineWidth,

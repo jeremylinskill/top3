@@ -1,5 +1,9 @@
 import CommentsSheet from '@/components/comments-sheet';
 import ScreenHeader from '@/components/screen-header';
+import {
+  getCategoryArtworkRule,
+} from '@/constants/category-artwork-rules';
+import { useAudioPreview } from '@/context/audio-preview-context';
 import { useComments } from '@/context/comment-context';
 import { useLike } from '@/context/like-context';
 import { useTop3 } from '@/context/top3-context';
@@ -18,7 +22,6 @@ import {
 } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Pressable,
   ScrollView,
@@ -62,6 +65,12 @@ export default function CommunityTop3Screen() {
     isLoading: isLoadingComments,
   } = useComments();
 
+  const {
+    activePreviewItemId,
+    isPreviewPlaying,
+    togglePreview,
+  } = useAudioPreview();
+
   const [allPosts, setAllPosts] = useState<
     Post[]
   >([]);
@@ -83,21 +92,6 @@ export default function CommunityTop3Screen() {
       try {
 const publishedPosts =
   await getPublishedPosts();
-
-Alert.alert(
-  'Community published posts',
-  JSON.stringify(
-    publishedPosts.map((post) => ({
-      id: post.id,
-      authorId: post.authorId,
-      category: post.collection.category,
-      topic: post.collection.topic,
-      title: post.collection.title,
-    })),
-    null,
-    2
-  )
-);
 
 if (isMounted) {
   setAllPosts(publishedPosts);
@@ -276,6 +270,11 @@ if (isMounted) {
     );
   }
 
+  const artworkRule =
+    getCategoryArtworkRule(
+      result.category
+    );
+
   const pageTitle =
     result.topic === 'general'
       ? `Overall Top 3 ${result.category}`
@@ -291,14 +290,10 @@ if (isMounted) {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}>
         <View style={styles.headingSection}>
-  <Text style={styles.title}>
-    TEST {pageTitle}
-  </Text>
-
-  <Text>
-    Supabase returned {allPosts.length} published posts
-  </Text>
-</View>
+          <Text style={styles.title}>
+            {pageTitle}
+          </Text>
+        </View>
 
         {result.items.length === 0 ? (
           <View style={styles.emptyState}>
@@ -330,29 +325,84 @@ if (isMounted) {
                       {index + 1}
                     </Text>
 
-                    {entry.item.imageUrl ? (
-                      <Image
-                        source={{
-                          uri: entry.item.imageUrl,
-                        }}
-                        style={styles.itemImage}
-                        resizeMode="cover"
-                      />
-                    ) : (
-                      <View
-                        style={
-                          styles.imagePlaceholder
-                        }>
-                        <Text
-                          style={
-                            styles.placeholderText
+                    <View
+                      style={[
+                        styles.artworkContainer,
+                        {
+                          width: artworkRule.width,
+                          height: artworkRule.height,
+                        },
+                      ]}>
+                      {entry.item.imageUrl ? (
+                        <Image
+                          source={{
+                            uri: entry.item.imageUrl,
+                          }}
+                          style={[
+                            styles.itemImage,
+                            {
+                              width: artworkRule.width,
+                              height: artworkRule.height,
+                            },
+                          ]}
+                          resizeMode="cover"
+                        />
+                      ) : (
+                        <View
+                          style={[
+                            styles.imagePlaceholder,
+                            {
+                              width: artworkRule.width,
+                              height: artworkRule.height,
+                            },
+                          ]}>
+                          <Text
+                            style={
+                              styles.placeholderText
+                            }>
+                            {entry.item.title
+                              .charAt(0)
+                              .toUpperCase()}
+                          </Text>
+                        </View>
+                      )}
+
+                      {entry.item.previewUrl ? (
+                        <Pressable
+                          style={({ pressed }) => [
+                            styles.previewButton,
+                            pressed &&
+                              styles.previewButtonPressed,
+                          ]}
+                          onPress={(event) => {
+                            event.stopPropagation();
+                            void togglePreview(
+                              entry.item
+                            );
+                          }}
+                          hitSlop={6}
+                          accessibilityRole="button"
+                          accessibilityLabel={
+                            activePreviewItemId ===
+                              entry.item.id &&
+                            isPreviewPlaying
+                              ? `Pause preview of ${entry.item.title}`
+                              : `Play preview of ${entry.item.title}`
                           }>
-                          {entry.item.title
-                            .charAt(0)
-                            .toUpperCase()}
-                        </Text>
-                      </View>
-                    )}
+                          <Ionicons
+                            name={
+                              activePreviewItemId ===
+                                entry.item.id &&
+                              isPreviewPlaying
+                                ? 'pause'
+                                : 'play'
+                            }
+                            size={18}
+                            color="#FFFFFF"
+                          />
+                        </Pressable>
+                      ) : null}
+                    </View>
 
                     <View
                       style={styles.itemDetails}>
@@ -585,22 +635,39 @@ const styles = StyleSheet.create({
     color: '#222222',
   },
 
-  itemImage: {
-    width: 70,
-    height: 105,
-    borderRadius: 10,
-    backgroundColor: '#EEEEEE',
+  artworkContainer: {
+    position: 'relative',
     marginRight: 14,
   },
 
-  imagePlaceholder: {
-    width: 70,
-    height: 105,
+  itemImage: {
     borderRadius: 10,
     backgroundColor: '#EEEEEE',
-    marginRight: 14,
+  },
+
+  imagePlaceholder: {
+    borderRadius: 10,
+    backgroundColor: '#EEEEEE',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  previewButton: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    width: 36,
+    height: 36,
+    marginTop: -18,
+    marginLeft: -18,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.68)',
+  },
+
+  previewButtonPressed: {
+    opacity: 0.75,
   },
 
   placeholderText: {

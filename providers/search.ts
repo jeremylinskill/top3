@@ -9,6 +9,7 @@ import {
   searchBooks,
 } from './google-books';
 import {
+  getPopularMusic,
   searchMusic,
 } from './music';
 import {
@@ -51,6 +52,7 @@ const POPULAR_SUGGESTIONS_PROVIDERS: Partial<
   books: getPopularBooks,
   tv: getPopularTvShows,
   games: getPopularGames,
+  music: getPopularMusic,
 };
 
 export function getSearchProvider(
