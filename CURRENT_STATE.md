@@ -4,9 +4,9 @@ Project: Top3Version: 2.0Status: Active DevelopmentLast Updated: August 10, 2026
 
 Last Verified Commit
 
-a492204
+6e59f6d
 
-Add Apple Music search and song previews
+Improve music suggestions and overall rankings
 
 Dashboard
 
@@ -16,7 +16,7 @@ Project Status
 
 Current Feature
 
-Apple Music song search, genre coverage, shared artwork rules, and song preview playback complete.
+Apple Music song search, genre coverage, popular song suggestions, shared artwork rules, and song preview playback across collection and Overall ranking surfaces complete.
 
 Current Priority
 
@@ -208,6 +208,10 @@ RankedItemCard
 
 Top3Card
 
+Overall ranking rows in Category Feed
+
+Community / Overall Top3 ranking rows
+
 Preview controls are shown only when the Top3Item contains a previewUrl.
 
 Existing song collections created before previewUrl support do not automatically gain preview controls; newly selected and published songs persist previewUrl with the collection item.
@@ -228,7 +232,7 @@ Video Games — 64 × 96
 
 Music — 64 × 64
 
-Search, RankedItemCard, and Top3Card use the shared artwork rules so Music artwork remains square while the other current categories retain portrait artwork.
+Search, RankedItemCard, Top3Card, Overall ranking rows in Category Feed, and Community / Overall Top3 ranking rows use the shared artwork rules so Music artwork remains square while the other current categories retain portrait artwork.
 
 Presentation Layer
 
@@ -588,6 +592,14 @@ Music is available as an application category with Songs as its initial topic
 
 Music / Songs search uses Apple Music through a Supabase Edge Function with server-side developer-token authentication
 
+Music popular suggestions use Apple Music genre-specific chart data when a Song topic is selected.
+
+The Music suggestion provider builds a larger popular-song pool for the existing five-at-a-time suggestion / Shuffle experience.
+
+Genre-specific popular suggestions trust the selected Apple Music genre chart rather than applying a second genreNames metadata filter that could incorrectly remove valid chart songs.
+
+Create Collection keeps all supported topics visible even when the user has already published a collection for that topic.
+
 Apple Music search results are normalized into the shared Top3Item shape and variant grouping reduces duplicate recordings while preserving meaningful variants
 
 Expanded Song topic coverage with Blues, Classical, Folk, Latin, Metal, and Reggae, while keeping Soundtrack out of Songs.
@@ -598,11 +610,11 @@ Top3Item supports previewUrl so Apple Music song previews can travel with select
 
 Added shared song preview playback through AudioPreviewProvider and Expo Audio.
 
-Song previews support play/pause controls in Search, RankedItemCard, and Top3Card, with one active preview at a time across the app.
+Song previews support play/pause controls in Search, RankedItemCard, Top3Card, Overall ranking rows in Category Feed, and Community / Overall Top3 ranking rows, with one active preview at a time across the app.
 
 Configured song previews to play in iOS silent mode.
 
-Added shared category artwork rules and standardized Music artwork as 64 × 64 while preserving a 64 px artwork width across current categories.
+Added shared category artwork rules and standardized Music artwork as 64 × 64 while preserving a 64 px artwork width across current categories, including Overall ranking presentations.
 
 Collection title generation is centralized in utils/build-collection-title.ts and uses the shared Top 3 Category • Topic format for topic-specific collections
 
@@ -920,6 +932,30 @@ Verified npm run typecheck passes.
 
 Committed and pushed checkpoint a492204 — Add Apple Music search and song previews.
 
+Music Suggestions & Overall Rankings
+
+Added Apple Music popular song suggestions to the shared popular-suggestions provider registry.
+
+Added genre-aware Apple Music chart suggestions for Song topics.
+
+Popular song suggestions use a larger result pool that feeds the existing five-at-a-time suggestion and Shuffle experience.
+
+Removed the secondary genreNames filter from genre-chart suggestions so valid songs from Apple Music's selected genre chart are not incorrectly discarded.
+
+Updated Create Collection so all supported topics remain visible regardless of whether the user has already published a collection for that topic.
+
+Extended shared category artwork rules to Overall ranking rows in Category Feed and Community / Overall Top3.
+
+Extended shared AudioPreviewProvider playback controls to those Overall ranking rows.
+
+Removed temporary Community Top3 debugging output while preserving its ranking functionality and shared artwork / audio integrations.
+
+Verified the updated Apple Music Edge Function with Deno validation and deployed apple-music-search to Supabase.
+
+Verified npm run typecheck passes.
+
+Committed and pushed checkpoint 6e59f6d — Improve music suggestions and overall rankings.
+
 Known Technical Debt
 
 High Priority
@@ -1004,9 +1040,13 @@ Remember that Music is an active application category. Songs use Apple Music thr
 
 Remember that Top3Item supports previewUrl for Songs and shared preview playback is owned by AudioPreviewProvider / context/audio-preview-context.tsx.
 
-Remember that Search, RankedItemCard, and Top3Card use the shared preview controller; do not implement separate Expo Audio players in those components.
+Remember that Search, RankedItemCard, Top3Card, Overall ranking rows in Category Feed, and Community / Overall Top3 ranking rows use the shared preview controller; do not implement separate Expo Audio players in those surfaces.
 
-Remember that category artwork sizing is centralized in constants/category-artwork-rules.ts. Music uses 64 × 64 square artwork; Movies, Books, TV Shows, and Video Games currently use 64 × 96 portrait artwork.
+Remember that category artwork sizing is centralized in constants/category-artwork-rules.ts. Music uses 64 × 64 square artwork; Movies, Books, TV Shows, and Video Games currently use 64 × 96 portrait artwork. The shared rules are used by Search, RankedItemCard, Top3Card, and the Overall ranking presentations.
+
+Remember that Apple Music popular suggestions use genre-specific chart data for Song topics and trust the selected chart without applying a second genreNames metadata filter.
+
+Remember that Create Collection intentionally keeps all supported topics visible even when a matching topic collection has already been published.
 
 Remember that collection titles are generated centrally by utils/build-collection-title.ts and topic-specific titles use Top 3 Category • Topic.
 
