@@ -1018,37 +1018,6 @@ const searchTitle = selectedType
                           </View>
                         )}
 
-                        {item.previewUrl ? (
-                          <Pressable
-                            style={({ pressed }) => [
-                              styles.previewButton,
-                              pressed &&
-                                styles.previewButtonPressed,
-                            ]}
-                            onPress={(event) => {
-                              event.stopPropagation();
-                              void togglePreview(item);
-                            }}
-                            hitSlop={6}
-                            accessibilityRole="button"
-                            accessibilityLabel={
-                              activePreviewItemId === item.id &&
-                              isPreviewPlaying
-                                ? `Pause preview of ${item.title}`
-                                : `Play preview of ${item.title}`
-                            }>
-                            <Ionicons
-                              name={
-                                activePreviewItemId === item.id &&
-                                isPreviewPlaying
-                                  ? 'pause'
-                                  : 'play'
-                              }
-                              size={18}
-                              color="#FFFFFF"
-                            />
-                          </Pressable>
-                        ) : null}
                       </View>
 
                       <View style={styles.resultDetails}>
@@ -1064,6 +1033,44 @@ const searchTitle = selectedType
                             : ''}
                         </Text>
                       </View>
+
+                      {item.previewUrl ? (
+                        <Pressable
+                          style={({ pressed }) => [
+                            styles.previewButton,
+                            pressed &&
+                              styles.previewButtonPressed,
+                          ]}
+                          onPress={(event) => {
+                            event.stopPropagation();
+                            void togglePreview(item);
+                          }}
+                          hitSlop={6}
+                          accessibilityRole="button"
+                          accessibilityLabel={
+                            activePreviewItemId === item.id &&
+                            isPreviewPlaying
+                              ? `Pause preview of ${item.title}`
+                              : `Play preview of ${item.title}`
+                          }>
+                          <Ionicons
+                            name={
+                              activePreviewItemId === item.id &&
+                              isPreviewPlaying
+                                ? 'pause'
+                                : 'play'
+                            }
+                            size={17}
+                            color="#555555"
+                            style={
+                              activePreviewItemId === item.id &&
+                              isPreviewPlaying
+                                ? undefined
+                                : styles.previewPlayIcon
+                            }
+                          />
+                        </Pressable>
+                      ) : null}
                     </Pressable>
                   ))}
                 </ScrollView>
@@ -1186,17 +1193,18 @@ const styles = StyleSheet.create({
   },
 
   previewButton: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
+    flexShrink: 0,
     width: 36,
     height: 36,
-    marginTop: -18,
-    marginLeft: -18,
+    marginLeft: 12,
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.68)',
+    backgroundColor: '#F1F1F1',
+  },
+
+  previewPlayIcon: {
+    transform: [{ translateX: 1 }],
   },
 
   previewButtonPressed: {
