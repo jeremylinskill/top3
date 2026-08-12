@@ -446,37 +446,6 @@ export default function Top3Card({
                       </View>
                     )}
 
-                    {item?.previewUrl ? (
-                      <Pressable
-                        style={({ pressed }) => [
-                          styles.previewButton,
-                          pressed &&
-                            styles.previewButtonPressed,
-                        ]}
-                        onPress={(event) => {
-                          event.stopPropagation();
-                          void togglePreview(item);
-                        }}
-                        hitSlop={6}
-                        accessibilityRole="button"
-                        accessibilityLabel={
-                          activePreviewItemId === item.id &&
-                          isPreviewPlaying
-                            ? `Pause preview of ${item.title}`
-                            : `Play preview of ${item.title}`
-                        }>
-                        <Ionicons
-                          name={
-                            activePreviewItemId === item.id &&
-                            isPreviewPlaying
-                              ? 'pause'
-                              : 'play'
-                          }
-                          size={18}
-                          color="#FFFFFF"
-                        />
-                      </Pressable>
-                    ) : null}
                   </View>
 
                   <View
@@ -525,6 +494,44 @@ export default function Top3Card({
                       </View>
                     ) : null}
                   </View>
+
+                  {item?.previewUrl ? (
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.previewButton,
+                        pressed &&
+                          styles.previewButtonPressed,
+                      ]}
+                      onPress={(event) => {
+                        event.stopPropagation();
+                        void togglePreview(item);
+                      }}
+                      hitSlop={6}
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        activePreviewItemId === item.id &&
+                        isPreviewPlaying
+                          ? `Pause preview of ${item.title}`
+                          : `Play preview of ${item.title}`
+                      }>
+                      <Ionicons
+                        name={
+                          activePreviewItemId === item.id &&
+                          isPreviewPlaying
+                            ? 'pause'
+                            : 'play'
+                        }
+                        size={17}
+                        color="#555555"
+                        style={
+                          activePreviewItemId === item.id &&
+                          isPreviewPlaying
+                            ? undefined
+                            : styles.previewPlayIcon
+                        }
+                      />
+                    </Pressable>
+                  ) : null}
 
                   {isTasteMatch ? (
                     <Ionicons
@@ -831,7 +838,7 @@ const styles = StyleSheet.create({
 
   rankNumber: {
     width: 28,
-    fontSize: 22,
+    fontSize: 17,
     fontWeight: '700',
     color: '#222222',
   },
@@ -854,17 +861,18 @@ const styles = StyleSheet.create({
   },
 
   previewButton: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
+    flexShrink: 0,
     width: 36,
     height: 36,
-    marginTop: -18,
-    marginLeft: -18,
+    marginLeft: 10,
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.68)',
+    backgroundColor: '#FFFFFF',
+  },
+
+  previewPlayIcon: {
+    transform: [{ translateX: 1 }],
   },
 
   previewButtonPressed: {

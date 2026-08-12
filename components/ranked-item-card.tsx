@@ -104,41 +104,14 @@ export default function RankedItemCard({
           </View>
         )}
 
-        {item?.previewUrl ? (
-          <Pressable
-            style={({ pressed }) => [
-              styles.previewButton,
-              pressed &&
-                styles.previewButtonPressed,
-            ]}
-            onPress={(event) => {
-              event.stopPropagation();
-              void togglePreview(item);
-            }}
-            hitSlop={6}
-            accessibilityRole="button"
-            accessibilityLabel={
-              isCurrentPreviewPlaying
-                ? `Pause preview of ${item.title}`
-                : `Play preview of ${item.title}`
-            }>
-            <Ionicons
-              name={
-                isCurrentPreviewPlaying
-                  ? 'pause'
-                  : 'play'
-              }
-              size={18}
-              color="#FFFFFF"
-            />
-          </Pressable>
-        ) : null}
       </View>
 
       <View
         style={[
           styles.details,
-          item && styles.detailsWithDragHandle,
+          item &&
+            !item.previewUrl &&
+            styles.detailsWithDragHandle,
         ]}>
         <Text
           style={styles.title}
@@ -161,6 +134,41 @@ export default function RankedItemCard({
           </Text>
         )}
       </View>
+
+      {item?.previewUrl ? (
+        <Pressable
+          style={({ pressed }) => [
+            styles.previewButton,
+            pressed &&
+              styles.previewButtonPressed,
+          ]}
+          onPress={(event) => {
+            event.stopPropagation();
+            void togglePreview(item);
+          }}
+          hitSlop={6}
+          accessibilityRole="button"
+          accessibilityLabel={
+            isCurrentPreviewPlaying
+              ? `Pause preview of ${item.title}`
+              : `Play preview of ${item.title}`
+          }>
+          <Ionicons
+            name={
+              isCurrentPreviewPlaying
+                ? 'pause'
+                : 'play'
+            }
+            size={17}
+            color="#555555"
+            style={
+              isCurrentPreviewPlaying
+                ? undefined
+                : styles.previewPlayIcon
+            }
+          />
+        </Pressable>
+      ) : null}
     </Pressable>
   );
 }
@@ -171,50 +179,56 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 16,
-    marginVertical: 8,
+    paddingVertical: 15,
+    paddingHorizontal: 10,
+    marginVertical: 4,
     borderWidth: 1,
     borderColor: '#EEEEEE',
   },
 
   rankContainer: {
-    width: 32,
-    alignItems: 'center',
+    width: 28,
+      alignItems: 'center',
+        transform: [{ translateX: -5 }],
   },
 
   rank: {
-    fontSize: 24,
+    fontSize: 17,
     fontWeight: '700',
+    color: '#222222',
   },
 
   artworkContainer: {
     position: 'relative',
-    marginLeft: 12,
+    marginRight: 13,
   },
 
   poster: {
-    borderRadius: 8,
+    borderRadius: 9,
+    backgroundColor: '#EEEEEE',
   },
 
   posterPlaceholder: {
-    borderRadius: 8,
-    backgroundColor: '#EFEFEF',
+    borderRadius: 9,
+    backgroundColor: '#F0F0F0',
     justifyContent: 'center',
     alignItems: 'center',
   },
 
   previewButton: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
+    flexShrink: 0,
     width: 36,
     height: 36,
-    marginTop: -18,
-    marginLeft: -18,
+    marginLeft: 10,
+    marginRight: DRAG_HANDLE_WIDTH + 8,
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.68)',
+    backgroundColor: '#F5F5F5',
+  },
+
+  previewPlayIcon: {
+    transform: [{ translateX: 1 }],
   },
 
   previewButtonPressed: {
@@ -228,7 +242,7 @@ const styles = StyleSheet.create({
 
   details: {
     flex: 1,
-    marginLeft: 16,
+    minWidth: 0,
   },
 
   detailsWithDragHandle: {
@@ -236,19 +250,23 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 18,
+    fontSize: 17,
+    lineHeight: 23,
     fontWeight: '600',
+    color: '#222222',
   },
 
   metadata: {
-    marginTop: 6,
-    fontSize: 15,
-    color: '#777777',
+    marginTop: 4,
+    fontSize: 14,
+    lineHeight: 19,
+    color: '#888888',
   },
 
   placeholderText: {
-    marginTop: 6,
-    fontSize: 15,
+    marginTop: 4,
+    fontSize: 14,
+    lineHeight: 19,
     color: '#999999',
   },
 });

@@ -1,6 +1,6 @@
 CURRENT_STATE.md
 
-Project: Top3Version: 2.0Status: Active DevelopmentLast Updated: August 10, 2026Current Branch: main
+Project: Top3Version: 2.1Status: Active DevelopmentLast Updated: August 11, 2026Current Branch: main
 
 Last Verified Commit
 
@@ -16,11 +16,11 @@ Project Status
 
 Current Feature
 
-Apple Music song search, genre coverage, popular song suggestions, shared artwork rules, and song preview playback across collection and Overall ranking surfaces complete.
+Apple Music Songs, Albums, and Artists search and suggestions are implemented, including evergreen suggestion ranking, representative preview playback, canonical Artist enrichment, and shared square Music artwork.
 
 Current Priority
 
-Monitor startup authentication stability and continue improving discovery, feed relevance, recommendations, music experience, and overall product quality.
+Continue improving discovery, feed relevance, recommendations, music experience, and overall product quality while monitoring startup authentication stability.
 
 Architecture should always be discussed before implementation begins.
 
@@ -100,13 +100,13 @@ Open Library — Book fallback provider
 
 IGDB — Video Games
 
-Apple Music — Music / Songs
+Apple Music — Music / Songs, Albums, and Artists
 
 Twitch OAuth — Server-side IGDB authentication
 
 Video game search is proxied through the authenticated Supabase Edge Function igdb-search. The Twitch Client Secret is stored only in Supabase Edge Function secrets and is never exposed to the mobile client.
 
-Song search is proxied through the authenticated Supabase Edge Function apple-music-search. Apple Music developer-token credentials, including the private key, Key ID, and Team ID, are stored only as Supabase Edge Function secrets and are never exposed to the mobile client.
+Music search for Songs, Albums, and Artists is proxied through the authenticated Supabase Edge Function apple-music-search. Apple Music developer-token credentials, including the private key, Key ID, and Team ID, are stored only as Supabase Edge Function secrets and are never exposed to the mobile client.
 
 Navigation
 
@@ -184,9 +184,9 @@ Books → providers/google-books.ts with Open Library fallback
 
 Video Games → providers/games.ts → lib/supabase/igdb.ts → authenticated Supabase Edge Function igdb-search → IGDB
 
-Music / Songs → providers/music.ts → lib/supabase/apple-music.ts → authenticated Supabase Edge Function apple-music-search → Apple Music
+Music / Songs, Albums, and Artists → providers/music.ts → lib/supabase/apple-music.ts → authenticated Supabase Edge Function apple-music-search → Apple Music
 
-Song results include Apple Music artwork, artist metadata, and preview URLs where available.
+Music results include Apple Music artwork and metadata. Songs include track preview URLs; Albums and Artists are enriched with representative track preview URLs where available.
 
 Provider-specific retry, fallback, filtering, ranking, and API behavior remains inside each provider rather than being forced into the shared registry.
 
@@ -232,7 +232,7 @@ Video Games — 64 × 96
 
 Music — 64 × 64
 
-Search, RankedItemCard, Top3Card, Overall ranking rows in Category Feed, and Community / Overall Top3 ranking rows use the shared artwork rules so Music artwork remains square while the other current categories retain portrait artwork.
+Search, SearchResultSkeleton, RankedItemCard, Top3Card, Overall ranking rows in Category Feed, and Community / Overall Top3 ranking rows use the shared artwork rules so Music artwork remains square while the other current categories retain portrait artwork.
 
 Presentation Layer
 
@@ -588,11 +588,11 @@ Curated search suggestions remain until a category/topic reaches 50 published co
 
 Shared search provider registry routes Movies, TV, Books, Video Games, and Music through one application-level search contract
 
-Music is available as an application category with Songs as its initial topic
+Music is available as an application category with Songs, Albums, and Artists search experiences
 
-Music / Songs search uses Apple Music through a Supabase Edge Function with server-side developer-token authentication
+Music search for Songs, Albums, and Artists uses Apple Music through a Supabase Edge Function with server-side developer-token authentication
 
-Music popular suggestions use Apple Music genre-specific chart data when a Song topic is selected.
+Song suggestions use Apple Music genre-specific chart data when a Song topic is selected, with evergreen ranking improvements that reduce over-reliance on what is currently popular.
 
 The Music suggestion provider builds a larger popular-song pool for the existing five-at-a-time suggestion / Shuffle experience.
 
@@ -601,6 +601,20 @@ Genre-specific popular suggestions trust the selected Apple Music genre chart ra
 Create Collection keeps all supported topics visible even when the user has already published a collection for that topic.
 
 Apple Music search results are normalized into the shared Top3Item shape and variant grouping reduces duplicate recordings while preserving meaningful variants
+
+Album suggestions were refined toward long-term / evergreen records rather than primarily current popularity.
+
+Artist suggestions were refined toward long-term / canonical artists rather than primarily current popularity.
+
+Album search results are enriched with a representative track preview URL where Apple Music provides a usable preview.
+
+Artist search results are enriched with a representative popular-song preview URL where Apple Music provides a usable preview.
+
+Artist canonical-result enrichment uses Apple Music topResults suggestions to recover authoritative artist artwork and genre metadata when generic search returns a weaker same-name result.
+
+Artist ranking and deduplication prioritize the canonical exact-match Apple Music artist result and remove weaker duplicate exact-name entries.
+
+Music-related SearchResultSkeleton artwork uses the same square presentation as Music search-result artwork.
 
 Expanded Song topic coverage with Blues, Classical, Folk, Latin, Metal, and Reggae, while keeping Soundtrack out of Songs.
 
@@ -956,6 +970,32 @@ Verified npm run typecheck passes.
 
 Committed and pushed checkpoint 6e59f6d — Improve music suggestions and overall rankings.
 
+August 11, 2026
+
+Music / Albums & Artists
+
+Expanded the Apple Music integration beyond Songs to support Album and Artist search and suggestion experiences.
+
+Refined Album and Artist suggestions to favor evergreen / canonical choices rather than over-weighting current popularity.
+
+Updated Song suggestion logic to use the same more evergreen discovery philosophy.
+
+Added representative track preview enrichment to Album results.
+
+Added representative popular-song preview enrichment to Artist results.
+
+Added Apple Music topResults canonical Artist enrichment so authoritative artist artwork and genre metadata can replace weaker generic-search exact-name matches.
+
+Added Artist ranking and deduplication so canonical exact matches rank first and duplicate same-name results are removed.
+
+Verified the canonical Nirvana Artist result now resolves correctly with Apple Music artwork, Alternative genre metadata, and preview playback.
+
+Updated music-related SearchResultSkeleton artwork to square dimensions while preserving portrait skeleton artwork for non-Music categories.
+
+Validated the Apple Music Edge Function repeatedly with Deno and deployed the updated apple-music-search function to Supabase.
+
+Verified npm run typecheck passes.
+
 Known Technical Debt
 
 High Priority
@@ -1036,15 +1076,15 @@ Remember that Authentication, Profiles, Profile Avatars, Collections, Likes, Com
 
 Remember that RAWG has been removed from the active application. Video game search now uses IGDB through an authenticated Supabase Edge Function.
 
-Remember that Music is an active application category. Songs use Apple Music through the authenticated apple-music-search Supabase Edge Function, with Apple Music credentials stored only server-side.
+Remember that Music is an active application category. Songs, Albums, and Artists use Apple Music through the authenticated apple-music-search Supabase Edge Function, with Apple Music credentials stored only server-side.
 
-Remember that Top3Item supports previewUrl for Songs and shared preview playback is owned by AudioPreviewProvider / context/audio-preview-context.tsx.
+Remember that Top3Item supports previewUrl for Music items. Songs use their track previews; Albums and Artists can be enriched with representative track previews. Shared preview playback is owned by AudioPreviewProvider / context/audio-preview-context.tsx.
 
 Remember that Search, RankedItemCard, Top3Card, Overall ranking rows in Category Feed, and Community / Overall Top3 ranking rows use the shared preview controller; do not implement separate Expo Audio players in those surfaces.
 
 Remember that category artwork sizing is centralized in constants/category-artwork-rules.ts. Music uses 64 × 64 square artwork; Movies, Books, TV Shows, and Video Games currently use 64 × 96 portrait artwork. The shared rules are used by Search, RankedItemCard, Top3Card, and the Overall ranking presentations.
 
-Remember that Apple Music popular suggestions use genre-specific chart data for Song topics and trust the selected chart without applying a second genreNames metadata filter.
+Remember that Apple Music Song suggestions use genre-specific chart data for Song topics and trust the selected chart without applying a second genreNames metadata filter. Songs, Albums, and Artists have also been tuned toward more evergreen discovery rather than simply mirroring current popularity.
 
 Remember that Create Collection intentionally keeps all supported topics visible even when a matching topic collection has already been published.
 

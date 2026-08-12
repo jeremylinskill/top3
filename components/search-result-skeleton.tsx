@@ -1,9 +1,28 @@
-import { StyleSheet, View } from 'react-native';
+import {
+  StyleSheet,
+  View,
+} from 'react-native';
 
-export default function SearchResultSkeleton() {
+type SearchResultSkeletonProps = {
+  artworkWidth?: number;
+  artworkHeight?: number;
+};
+
+export default function SearchResultSkeleton({
+  artworkWidth = 64,
+  artworkHeight = 96,
+}: SearchResultSkeletonProps) {
   return (
     <View style={styles.row}>
-      <View style={styles.image} />
+      <View
+        style={[
+          styles.image,
+          {
+            width: artworkWidth,
+            height: artworkHeight,
+          },
+        ]}
+      />
 
       <View style={styles.details}>
         <View style={styles.titleLine} />
@@ -21,22 +40,26 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#EEEEEE',
   },
+
   image: {
     width: 64,
     height: 96,
     borderRadius: 8,
     backgroundColor: '#E8E8E8',
   },
+
   details: {
     flex: 1,
     marginLeft: 16,
   },
+
   titleLine: {
     width: '72%',
     height: 18,
     borderRadius: 6,
     backgroundColor: '#E8E8E8',
   },
+
   subtitleLine: {
     width: '48%',
     height: 14,

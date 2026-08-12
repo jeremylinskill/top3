@@ -4,6 +4,110 @@ This document records significant milestones in the evolution of Top3.
 
 Unlike CURRENT_STATE.md, which describes the application's current implementation, this document captures the major architectural and product milestones that shaped the application over time.
 
+v2.0 — Apple Music Expansion & Music Discovery Refinement
+
+Released: August 11, 2026
+
+This release expands Top3's Music experience beyond Songs to support Albums and Artists, improves Apple Music suggestions toward more evergreen and canonical results, and extends preview playback so Albums and Artists can surface representative music directly in search results.
+
+Added
+
+Music Topics
+
+Added Albums as a supported Music topic.
+
+Added Artists as a supported Music topic.
+
+Added Apple Music Album search and Artist search through the existing authenticated apple-music-search Supabase Edge Function.
+
+Album Previews
+
+Added representative track preview URLs to Album search results.
+
+Album preview enrichment selects a representative track from the album so users can preview music directly from an Album result.
+
+Artist Previews
+
+Added representative song preview URLs to Artist search results.
+
+Artist preview enrichment allows users to preview music directly from an Artist result.
+
+Artist Canonical Enrichment
+
+Added Apple Music top-results enrichment for Artist searches.
+
+Canonical Apple Music artist data can provide artist artwork and genre metadata when the standard search result is incomplete or points to a weaker duplicate.
+
+Improved
+
+Music Suggestions
+
+Refined Album suggestions to favour evergreen, long-term popular albums rather than relying primarily on what is currently popular.
+
+Refined Artist suggestions to favour evergreen, canonical artists rather than relying primarily on current popularity.
+
+Refined Song suggestions using the same evergreen-oriented approach.
+
+Preserved the existing five-at-a-time suggestion and Shuffle experience.
+
+Album Search
+
+Enriched Album search results with representative track previews where Apple Music provides preview audio.
+
+Preserved Album artwork and artist metadata while adding preview playback support.
+
+Artist Search
+
+Improved Artist search ranking and deduplication so canonical exact-name matches rank ahead of weaker or duplicate results.
+
+Improved exact artist searches such as Nirvana so the canonical Apple Music artist result is selected and enriched with the correct artwork and genre metadata.
+
+Preserved representative preview playback for enriched canonical Artist results.
+
+Music Search Presentation
+
+Updated music-related search loading artwork placeholders to use square proportions instead of the portrait proportions used by Movies, Books, TV Shows, and Video Games.
+
+Kept music artwork presentation aligned with the shared square Music artwork treatment.
+
+Changed
+
+Apple Music Search Enrichment
+
+Extended apple-music-search so Album and Artist results can be enriched after the initial Apple Music search response.
+
+Artist canonical-result enrichment now uses Apple Music top-results data to resolve stronger canonical matches.
+
+Artist ranking and deduplication now prefer the canonical enriched result when duplicate or competing exact-name results are returned.
+
+Verified
+
+Verified Album preview playback on device.
+
+Verified Artist preview playback on device.
+
+Verified canonical Nirvana Artist search result displays the correct artist artwork and Alternative genre metadata.
+
+Verified Artist ranking and deduplication on device.
+
+Verified square music search loading placeholders on device.
+
+Verified the updated apple-music-search Edge Function with Deno validation.
+
+Deployed the updated apple-music-search Supabase Edge Function after each validated server-side change.
+
+Verified npm run typecheck passes after the client-side music search presentation changes.
+
+Documentation
+
+Updated CURRENT_STATE.md to reflect Albums and Artists as active Music topics.
+
+Recorded evergreen Music suggestion improvements.
+
+Recorded Album and Artist preview enrichment.
+
+Recorded Artist canonical-result enrichment, ranking, and deduplication improvements.
+
 v1.9 — Discovery, Search & Recommendation Refinement
 
 Released: August 10, 2026

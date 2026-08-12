@@ -9,8 +9,12 @@ import {
   searchBooks,
 } from './google-books';
 import {
-  getPopularMusic,
-  searchMusic,
+  getPopularAlbums,
+  getPopularArtists,
+  getPopularSongs,
+  searchAlbums,
+  searchArtists,
+  searchSongs,
 } from './music';
 import {
   getPopularMovies,
@@ -35,11 +39,13 @@ const SEARCH_PROVIDERS: Record<
   string,
   SearchProvider
 > = {
-  movies: searchMovies,
+  albums: searchAlbums,
+  artists: searchArtists,
   books: searchBooks,
-  tv: searchTvShows,
   games: searchGames,
-  music: searchMusic,
+  movies: searchMovies,
+  songs: searchSongs,
+  tv: searchTvShows,
 };
 
 const POPULAR_SUGGESTIONS_PROVIDERS: Partial<
@@ -48,11 +54,13 @@ const POPULAR_SUGGESTIONS_PROVIDERS: Partial<
     PopularSuggestionsProvider
   >
 > = {
-  movies: getPopularMovies,
+  albums: getPopularAlbums,
+  artists: getPopularArtists,
   books: getPopularBooks,
-  tv: getPopularTvShows,
   games: getPopularGames,
-  music: getPopularMusic,
+  movies: getPopularMovies,
+  songs: getPopularSongs,
+  tv: getPopularTvShows,
 };
 
 export function getSearchProvider(

@@ -1,15 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 
-
-
 export type CategoryId =
-  | 'movies'
+  | 'albums'
+  | 'artists'
   | 'books'
-  | 'tv'
   | 'games'
-  | 'music';
-
-
+  | 'movies'
+  | 'songs'
+  | 'tv';
 
 export type Top3Topic = {
   id: string;
@@ -19,8 +17,6 @@ export type Top3Topic = {
   tmdbGenreId?: number;
 };
 
-
-
 export type Top3Type = {
   id: string;
   name: string;
@@ -28,8 +24,6 @@ export type Top3Type = {
   searchItemName: string;
   topics: Top3Topic[];
 };
-
-
 
 export type Top3Category = {
   id: CategoryId;
@@ -40,85 +34,116 @@ export type Top3Category = {
   types?: Top3Type[];
 };
 
+type MusicGenre = {
+  id: string;
+  name: string;
+  icon: string;
+};
 
+const MUSIC_GENRES: MusicGenre[] = [
+  {
+    id: 'alternative',
+    name: 'Alternative',
+    icon: '🎸',
+  },
+  {
+    id: 'blues',
+    name: 'Blues',
+    icon: '🎸',
+  },
+  {
+    id: 'classical',
+    name: 'Classical',
+    icon: '🎻',
+  },
+  {
+    id: 'country',
+    name: 'Country',
+    icon: '🤠',
+  },
+  {
+    id: 'dance',
+    name: 'Dance',
+    icon: '💃',
+  },
+  {
+    id: 'electronic',
+    name: 'Electronic',
+    icon: '🎛️',
+  },
+  {
+    id: 'folk',
+    name: 'Folk',
+    icon: '🪕',
+  },
+  {
+    id: 'hip-hop',
+    name: 'Hip-Hop',
+    icon: '🎤',
+  },
+  {
+    id: 'jazz',
+    name: 'Jazz',
+    icon: '🎷',
+  },
+  {
+    id: 'latin',
+    name: 'Latin',
+    icon: '🌎',
+  },
+  {
+    id: 'metal',
+    name: 'Metal',
+    icon: '🤘',
+  },
+  {
+    id: 'pop',
+    name: 'Pop',
+    icon: '🎶',
+  },
+  {
+    id: 'r-and-b',
+    name: 'R&B',
+    icon: '🎙️',
+  },
+  {
+    id: 'reggae',
+    name: 'Reggae',
+    icon: '🌴',
+  },
+  {
+    id: 'rock',
+    name: 'Rock',
+    icon: '🤘',
+  },
+];
+
+function createMusicTopics(
+  itemName: 'album' | 'artist' | 'song'
+): Top3Topic[] {
+  return MUSIC_GENRES.map((genre) => ({
+    id: genre.id,
+    name: genre.name,
+    icon: genre.icon,
+    searchItemName:
+      `${genre.name.toLowerCase()} ${itemName}`,
+  }));
+}
 
 export const TOP3_CATEGORIES: Top3Category[] = [
   {
-    id: 'movies',
-    name: 'Movies',
-    icon: '🎬',
-    placeholderIcon: 'film-outline',
-    topics: [
-      {
-        id: 'general',
-        name: 'General',
-        icon: '🎬',
-        searchItemName: 'movie',
-      },
-      {
-        id: 'action',
-        name: 'Action',
-        icon: '💥',
-        searchItemName: 'action movie',
-        tmdbGenreId: 28,
-      },
-      {
-        id: 'adventure',
-        name: 'Adventure',
-        icon: '🗺️',
-        searchItemName: 'adventure movie',
-        tmdbGenreId: 12,
-      },
-      {
-        id: 'comedy',
-        name: 'Comedy',
-        icon: '😂',
-        searchItemName: 'comedy movie',
-        tmdbGenreId: 35,
-      },
-      {
-        id: 'drama',
-        name: 'Drama',
-        icon: '🎭',
-        searchItemName: 'drama movie',
-        tmdbGenreId: 18,
-      },
-      {
-        id: 'fantasy',
-        name: 'Fantasy',
-        icon: '🐉',
-        searchItemName: 'fantasy movie',
-        tmdbGenreId: 14,
-      },
-      {
-        id: 'horror',
-        name: 'Horror',
-        icon: '👻',
-        searchItemName: 'horror movie',
-        tmdbGenreId: 27,
-      },
-      {
-        id: 'romance',
-        name: 'Romance',
-        icon: '❤️',
-        searchItemName: 'romance movie',
-        tmdbGenreId: 10749,
-      },
-      {
-        id: 'sci-fi',
-        name: 'Sci-Fi',
-        icon: '🚀',
-        searchItemName: 'science fiction movie',
-        tmdbGenreId: 878,
-      },
-      {
-        id: 'thriller',
-        name: 'Thriller',
-        icon: '😰',
-        searchItemName: 'thriller movie',
-        tmdbGenreId: 53,
-      },
-    ],
+    id: 'albums',
+    name: 'Albums',
+    icon: '💿',
+    placeholderIcon: 'albums-outline',
+    topics: createMusicTopics('album'),
+  },
+  {
+    id: 'artists',
+    name: 'Artists',
+    icon: '🎤',
+    placeholderIcon: 'person-outline',
+    topics: createMusicTopics('artist'),
   },
   {
     id: 'books',
@@ -199,6 +224,90 @@ export const TOP3_CATEGORIES: Top3Category[] = [
         searchItemName: 'self-help book',
       },
     ],
+  },
+  {
+    id: 'movies',
+    name: 'Movies',
+    icon: '🎬',
+    placeholderIcon: 'film-outline',
+    topics: [
+      {
+        id: 'general',
+        name: 'General',
+        icon: '🎬',
+        searchItemName: 'movie',
+      },
+      {
+        id: 'action',
+        name: 'Action',
+        icon: '💥',
+        searchItemName: 'action movie',
+        tmdbGenreId: 28,
+      },
+      {
+        id: 'adventure',
+        name: 'Adventure',
+        icon: '🗺️',
+        searchItemName: 'adventure movie',
+        tmdbGenreId: 12,
+      },
+      {
+        id: 'comedy',
+        name: 'Comedy',
+        icon: '😂',
+        searchItemName: 'comedy movie',
+        tmdbGenreId: 35,
+      },
+      {
+        id: 'drama',
+        name: 'Drama',
+        icon: '🎭',
+        searchItemName: 'drama movie',
+        tmdbGenreId: 18,
+      },
+      {
+        id: 'fantasy',
+        name: 'Fantasy',
+        icon: '🐉',
+        searchItemName: 'fantasy movie',
+        tmdbGenreId: 14,
+      },
+      {
+        id: 'horror',
+        name: 'Horror',
+        icon: '👻',
+        searchItemName: 'horror movie',
+        tmdbGenreId: 27,
+      },
+      {
+        id: 'romance',
+        name: 'Romance',
+        icon: '❤️',
+        searchItemName: 'romance movie',
+        tmdbGenreId: 10749,
+      },
+      {
+        id: 'sci-fi',
+        name: 'Sci-Fi',
+        icon: '🚀',
+        searchItemName: 'science fiction movie',
+        tmdbGenreId: 878,
+      },
+      {
+        id: 'thriller',
+        name: 'Thriller',
+        icon: '😰',
+        searchItemName: 'thriller movie',
+        tmdbGenreId: 53,
+      },
+    ],
+  },
+  {
+    id: 'songs',
+    name: 'Songs',
+    icon: '🎵',
+    placeholderIcon: 'musical-note-outline',
+    topics: createMusicTopics('song'),
   },
   {
     id: 'tv',
@@ -335,113 +444,6 @@ export const TOP3_CATEGORIES: Top3Category[] = [
         name: 'Puzzle',
         icon: '🧩',
         searchItemName: 'puzzle game',
-      },
-    ],
-  },
-  {
-    id: 'music',
-    name: 'Music',
-    icon: '🎵',
-    placeholderIcon: 'musical-note-outline',
-    topics: [],
-    types: [
-      {
-        id: 'songs',
-        name: 'Songs',
-        icon: '🎵',
-        searchItemName: 'song',
-        topics: [
-          {
-            id: 'alternative',
-            name: 'Alternative',
-            icon: '🎸',
-            searchItemName: 'alternative song',
-          },
-          {
-            id: 'blues',
-            name: 'Blues',
-            icon: '🎸',
-            searchItemName: 'blues song',
-          },
-          {
-            id: 'classical',
-            name: 'Classical',
-            icon: '🎻',
-            searchItemName: 'classical song',
-          },
-          {
-            id: 'country',
-            name: 'Country',
-            icon: '🤠',
-            searchItemName: 'country song',
-          },
-          {
-            id: 'dance',
-            name: 'Dance',
-            icon: '💃',
-            searchItemName: 'dance song',
-          },
-          {
-            id: 'electronic',
-            name: 'Electronic',
-            icon: '🎛️',
-            searchItemName: 'electronic song',
-          },
-          {
-            id: 'folk',
-            name: 'Folk',
-            icon: '🪕',
-            searchItemName: 'folk song',
-          },
-          {
-            id: 'hip-hop',
-            name: 'Hip-Hop',
-            icon: '🎤',
-            searchItemName: 'hip-hop song',
-          },
-          {
-            id: 'jazz',
-            name: 'Jazz',
-            icon: '🎷',
-            searchItemName: 'jazz song',
-          },
-          {
-            id: 'latin',
-            name: 'Latin',
-            icon: '🌎',
-            searchItemName: 'latin song',
-          },
-          {
-            id: 'metal',
-            name: 'Metal',
-            icon: '🤘',
-            searchItemName: 'metal song',
-          },
-          {
-            id: 'pop',
-            name: 'Pop',
-            icon: '🎶',
-            searchItemName: 'pop song',
-          },
-          {
-            id: 'r-and-b',
-            name: 'R&B',
-            icon: '🎙️',
-            searchItemName: 'R&B song',
-          },
-          {
-            id: 'reggae',
-            name: 'Reggae',
-            icon: '🌴',
-            searchItemName: 'reggae song',
-          },
-          {
-            id: 'rock',
-            name: 'Rock',
-            icon: '🤘',
-            searchItemName: 'rock song',
-          },
-        ],
       },
     ],
   },

@@ -775,16 +775,16 @@ const searchTitle = selectedType
   ? currentList?.topic
     ? `Search ${selectedType.name} • ${topicName}`
     : `Search ${selectedType.name}`
-  : isGeneralTopic
-    ? `Search ${categoryName}`
-    : `Search ${topicName}`;
+  : currentList?.topic
+    ? `Search ${categoryName} • ${topicName}`
+    : `Search ${categoryName}`;
 
   const searchPlaceholder =
     `Search for a ${searchItemName}...`;
 
-  const resultsTitle = isGeneralTopic
-    ? 'Search Results'
-    : `${topicName} Results`;
+  const resultsTitle = currentList?.topic
+    ? `${categoryName} • ${topicName} Results`
+    : `${categoryName} Results`;
 
   const shuffleRotationDegrees =
     shuffleRotation.interpolate({
@@ -906,7 +906,11 @@ const searchTitle = selectedType
                 {Array.from(
                   { length: 5 },
                   (_, index) => (
-                    <SearchResultSkeleton key={index} />
+                    <SearchResultSkeleton
+  key={index}
+  artworkWidth={artworkRule.width}
+  artworkHeight={artworkRule.height}
+/>
                   )
                 )}
               </ScrollView>

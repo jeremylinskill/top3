@@ -22,13 +22,16 @@ import DraggableFlatList, {
 } from 'react-native-draggable-flatlist';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+
 type DraggableRow = {
   key: string;
   item: Top3Item;
 };
 
+
 const DRAG_INSTRUCTION_KEY =
   'top3-drag-instruction-seen';
+
 
 export default function CollectionScreen() {
   const {
@@ -38,17 +41,21 @@ export default function CollectionScreen() {
     publishCurrentList,
   } = useTop3();
 
+
   const [activeIndex, setActiveIndex] =
     useState<number | null>(null);
+
 
   const selectedItems =
     currentList?.items.filter(
       (item): item is Top3Item => item !== null
     ) ?? [];
 
+
   const selectedItemCount = selectedItems.length;
   const emptySlotCount = 3 - selectedItemCount;
   const canPublish = selectedItemCount === 3;
+
 
   useEffect(() => {
     async function showDragInstruction() {
@@ -56,15 +63,18 @@ export default function CollectionScreen() {
         return;
       }
 
+
       try {
         const hasSeenInstruction =
           await AsyncStorage.getItem(
             DRAG_INSTRUCTION_KEY
           );
 
+
         if (hasSeenInstruction) {
           return;
         }
+
 
         Alert.alert(
           'Reorder your Top 3',
@@ -96,21 +106,26 @@ export default function CollectionScreen() {
       }
     }
 
+
     showDragInstruction();
   }, [selectedItemCount]);
+
 
   if (!currentList) {
     return (
       <SafeAreaView style={styles.container}>
         <ScreenHeader showBackButton />
 
+
         <PageHeader title="No Collection Selected" />
       </SafeAreaView>
     );
   }
 
+
   const category =
     currentList.category as CategoryId;
+
 
   const draggableRows: DraggableRow[] =
     selectedItems.map((item) => ({
@@ -118,33 +133,40 @@ export default function CollectionScreen() {
       item,
     }));
 
+
   const hasSelections = currentList.items.some(
   (item) => item !== null
 );
+
 
 const subtitle = (() => {
   if (!hasSelections && !currentList.publishedAt) {
     return 'Choose your three favorites.';
   }
 
+
   const relativeTime = formatRelativeTime(
     currentList.publishedAt ??
       currentList.updatedAt
   );
+
 
   const timeText = relativeTime?.replace(
     /^Updated\s+/i,
     ''
   );
 
+
   if (!timeText) {
     return undefined;
   }
+
 
   return currentList.publishedAt
     ? `Published ${timeText}`
     : `Updated ${timeText}`;
 })();
+
 
   async function beginDrag(
     index: number,
@@ -161,9 +183,11 @@ const subtitle = (() => {
       );
     }
 
+
     setActiveIndex(index);
     drag();
   }
+
 
   function openSearch(rank: number) {
     router.push({
@@ -173,6 +197,7 @@ const subtitle = (() => {
       },
     });
   }
+
 
   function openItemActions(
     rank: number,
@@ -200,14 +225,17 @@ const subtitle = (() => {
     );
   }
 
+
   function publishCollection() {
     if (!canPublish) {
       return;
     }
 
+
     publishCurrentList();
     router.replace('/(tabs)');
   }
+
 
   function renderItem({
     item: row,
@@ -218,9 +246,11 @@ const subtitle = (() => {
     const index = getIndex() ?? 0;
     const rank = index + 1;
 
+
     const shouldFade =
       activeIndex !== null &&
       activeIndex !== index;
+
 
     return (
       <View
@@ -246,6 +276,7 @@ const subtitle = (() => {
             }
           />
 
+
           <Pressable
             style={[
               styles.dragHandleContainer,
@@ -258,6 +289,7 @@ const subtitle = (() => {
             delayLongPress={150}
             hitSlop={8}>
             <View style={styles.dragDivider} />
+
 
             <Ionicons
               name="reorder-three-outline"
@@ -274,6 +306,7 @@ const subtitle = (() => {
     );
   }
 
+
   function renderEmptySlots() {
     return (
       <View>
@@ -282,6 +315,7 @@ const subtitle = (() => {
           (_, index) => {
             const rank =
               selectedItemCount + index + 1;
+
 
             return (
               <View
@@ -304,12 +338,14 @@ const subtitle = (() => {
     );
   }
 
+
   function saveReorderedItems(
     data: DraggableRow[]
   ) {
     const reorderedItems = data.map(
       (row) => row.item
     );
+
 
     const nextItems = [
       ...reorderedItems,
@@ -320,18 +356,22 @@ const subtitle = (() => {
       Top3Item | null,
     ];
 
+
     setItems(nextItems);
     setActiveIndex(null);
   }
+
 
   return (
     <SafeAreaView style={styles.container}>
       <ScreenHeader showBackButton />
 
+
       <PageHeader
   title={currentList.title.replace(/^Top 3\s+/i, '')}
         subtitle={subtitle ?? undefined}
       />
+
 
       <View style={styles.listArea}>
         {selectedItemCount > 0 ? (
@@ -365,6 +405,7 @@ const subtitle = (() => {
         )}
       </View>
 
+
       <View style={styles.bottomBar}>
         <PrimaryButton
           title="Publish Top 3"
@@ -376,22 +417,26 @@ const subtitle = (() => {
   );
 }
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F8F8',
   },
 
+
   listArea: {
     flex: 1,
     paddingHorizontal: 12,
   },
+
 
   listContent: {
     paddingHorizontal: 8,
     paddingTop: 0,
     paddingBottom: 24,
   },
+
 
   row: {
     position: 'relative',
@@ -400,14 +445,17 @@ const styles = StyleSheet.create({
     overflow: 'visible',
   },
 
+
   fadedRow: {
     opacity: 0.72,
   },
+
 
   cardWrapper: {
     position: 'relative',
     overflow: 'visible',
   },
+
 
   activeCard: {
     zIndex: 20,
@@ -422,6 +470,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
   },
 
+
   dragHandleContainer: {
     position: 'absolute',
     right: 0,
@@ -435,9 +484,11 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 16,
   },
 
+
   dragHandleContainerActive: {
     backgroundColor: '#F2F2F2',
   },
+
 
   dragDivider: {
     position: 'absolute',
@@ -447,6 +498,7 @@ const styles = StyleSheet.create({
     width: StyleSheet.hairlineWidth,
     backgroundColor: '#E5E5E5',
   },
+
 
   bottomBar: {
     paddingHorizontal: 20,

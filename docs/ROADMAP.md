@@ -1,6 +1,6 @@
 Top3 Product Roadmap
 
-Version: 1.8Status: Active DevelopmentOwner: Jeremy LinskillLast Updated: August 10, 2026Last Verified Commit: f833160 — Polish discovery, recommendations, and social experience
+Version: 1.9Status: Active DevelopmentOwner: Jeremy LinskillLast Updated: August 11, 2026Last Verified Commit: 6e59f6d — Improve music suggestions and overall rankings
 
 Purpose
 
@@ -42,11 +42,11 @@ The current milestone is to strengthen that discovery system before expanding in
 
 Foundation Completed
 
-• Email authentication• Sign in with Apple• Sign in with Google• Persistent Supabase sessions• Stable authentication initialization• User profiles• Profile avatars• Profile editing• Privacy settings• Public and private accounts• Follow requests• Following / Followers• Collection persistence• Shared Likes• Shared Comments• In-app notifications• Settings• About• Supabase Realtime for Notifications, Likes, Comments, and Following• Feed• Discover• Community Top3• Overall Top3• Taste Match• Personalized Feed recommendations• Taste Match recommendation explanations• Shared search-provider architecture• TMDb search for Movies and TV Shows• Google Books search with Open Library fallback• IGDB search for Video Games through a Supabase Edge Function• Feed pull-to-refresh
+• Email authentication• Sign in with Apple• Sign in with Google• Persistent Supabase sessions• Stable authentication initialization• User profiles• Profile avatars• Profile editing• Privacy settings• Public and private accounts• Follow requests• Following / Followers• Collection persistence• Shared Likes• Shared Comments• In-app notifications• Settings• About• Supabase Realtime for Notifications, Likes, Comments, and Following• Feed• Discover• Community Top3• Overall Top3• Taste Match• Personalized Feed recommendations• Taste Match recommendation explanations• Shared search-provider architecture• TMDb search for Movies and TV Shows• Google Books search with Open Library fallback• IGDB search for Video Games through a Supabase Edge Function• Apple Music search for Songs, Albums, and Artists through a Supabase Edge Function• Apple Music audio previews for Songs, Albums, and Artists• Genre-aware and evergreen Apple Music suggestions• Feed pull-to-refresh
 
 Current Priorities
 
-• Improve Feed relevance and ranking• Improve personalized recommendation quality• Expand Discover browsing and filtering• Improve profile discovery• Continue refining Taste Match as a discovery signal• Continue search-quality and provider-resiliency improvements• Expand conversation and engagement opportunities• Continue performance and stability optimization• Prepare architecture for push notifications
+• Improve Feed relevance and ranking• Improve personalized recommendation quality• Expand Discover browsing and filtering• Improve profile discovery• Continue refining Taste Match as a discovery signal• Continue search-quality and provider-resiliency improvements• Continue refining Apple Music search, suggestions, ranking, previews, and metadata quality• Expand conversation and engagement opportunities• Continue performance and stability optimization• Prepare architecture for push notifications
 
 Initiative 1 — Strengthen Discovery
 
@@ -56,7 +56,7 @@ Improve the discovery experiences that already exist so users consistently encou
 
 Completed Foundations
 
-• Personalized Feed recommendations• Taste Match recommendation explanations• Navigation from Feed recommendations into Taste Match• Community Top3• Overall Top3• Similar Taste discovery• Trending topics and categories• Shared search-provider architecture• Improved Google Books relevance and edition deduplication• Curated Books suggestions• IGDB Video Games integration• Improved partial-title and relevance-ranked game search• Feed pull-to-refresh
+• Personalized Feed recommendations• Taste Match recommendation explanations• Navigation from Feed recommendations into Taste Match• Community Top3• Overall Top3• Similar Taste discovery• Trending topics and categories• Shared search-provider architecture• Improved Google Books relevance and edition deduplication• Curated Books suggestions• IGDB Video Games integration• Apple Music integration for Songs, Albums, and Artists• Evergreen Apple Music suggestion pools• Artist canonical-result ranking and deduplication• Album and Artist representative-track previews• Improved partial-title and relevance-ranked game search• Feed pull-to-refresh
 
 Near-Term Priorities
 
@@ -156,7 +156,7 @@ Current Providers
 
 Current Direction
 
-• Keep application-level search behaviour consistent• Keep provider-specific ranking and fallback logic inside each provider• Continue improving relevance rather than maximizing raw result volume• Prefer useful, recognizable suggestions over generic provider results• Preserve distinct works while intelligently deduplicating editions or duplicate records• Gracefully handle provider outages and degraded responses• Avoid exposing provider secrets to the mobile client
+• Keep application-level search behaviour consistent• Keep provider-specific ranking and fallback logic inside each provider• Continue improving relevance rather than maximizing raw result volume• Prefer useful, recognizable suggestions over generic provider results• Prefer evergreen, long-term recognizable music suggestions over short-term chart popularity where appropriate• Use canonical provider results to improve exact artist matching, ranking, artwork, genre metadata, and deduplication• Enrich music results with representative preview audio where the provider supports it• Preserve distinct works while intelligently deduplicating editions or duplicate records• Gracefully handle provider outages and degraded responses• Avoid exposing provider secrets to the mobile client
 
 Product Principles
 
@@ -253,6 +253,14 @@ Top3 succeeds when users:
 The long-term goal is not to maximize content creation or passive engagement, but to create meaningful connections through shared taste.
 
 Revision History
+
+Version 1.9 — August 11, 2026
+
+Updated the roadmap to reflect the completed Apple Music expansion and refinement work.
+
+Key changes:
+
+• Recorded Apple Music as the active provider for Songs, Albums, and Artists.• Recorded representative preview playback for Album and Artist results in addition to Song previews.• Recorded evergreen suggestion logic for Songs, Albums, and Artists.• Recorded canonical Apple Music artist-result enrichment, ranking, and deduplication.• Added Apple Music search, suggestion, ranking, preview, and metadata quality as an ongoing discovery refinement priority.• Updated Search & Provider Strategy to prefer recognizable evergreen music discovery over short-term popularity where appropriate.• Preserved Discovery & Personalization as the active product milestone rather than creating a separate music milestone.
 
 Version 1.8 — August 10, 2026
 

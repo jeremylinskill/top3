@@ -6,6 +6,11 @@ type AppleMusicSearchResponse = {
   error?: string;
 };
 
+type AppleMusicResource =
+  | 'albums'
+  | 'artists'
+  | 'songs';
+
 async function invokeAppleMusic(
   body: Record<string, unknown>
 ): Promise<Top3Item[]> {
@@ -24,7 +29,7 @@ async function invokeAppleMusic(
     );
 
     throw new Error(
-      'Song search is temporarily unavailable.'
+      'Apple Music search is temporarily unavailable.'
     );
   }
 
@@ -53,14 +58,15 @@ async function invokeAppleMusic(
     );
 
     throw new Error(
-      'Song search returned an invalid response.'
+      'Apple Music search returned an invalid response.'
     );
   }
 
   return response.results;
 }
 
-export async function searchAppleMusicSongs(
+async function searchAppleMusic(
+  resource: AppleMusicResource,
   query: string,
   topic?: string
 ): Promise<Top3Item[]> {
@@ -75,13 +81,15 @@ export async function searchAppleMusicSongs(
     topic?.trim();
 
   return invokeAppleMusic({
+    resource,
     query: trimmedQuery,
     topic:
       trimmedTopic || undefined,
   });
 }
 
-export async function getPopularAppleMusicSongs(
+async function getPopularAppleMusic(
+  resource: AppleMusicResource,
   topic?: string,
   limit = 20
 ): Promise<Top3Item[]> {
@@ -90,8 +98,75 @@ export async function getPopularAppleMusicSongs(
 
   return invokeAppleMusic({
     mode: 'popular',
+    resource,
     topic:
       trimmedTopic || undefined,
     limit,
   });
+}
+
+export async function searchAppleMusicAlbums(
+  query: string,
+  topic?: string
+): Promise<Top3Item[]> {
+  return searchAppleMusic(
+    'albums',
+    query,
+    topic
+  );
+}
+
+export async function searchAppleMusicArtists(
+  query: string,
+  topic?: string
+): Promise<Top3Item[]> {
+  return searchAppleMusic(
+    'artists',
+    query,
+    topic
+  );
+}
+
+export async function searchAppleMusicSongs(
+  query: string,
+  topic?: string
+): Promise<Top3Item[]> {
+  return searchAppleMusic(
+    'songs',
+    query,
+    topic
+  );
+}
+
+export async function getPopularAppleMusicAlbums(
+  topic?: string,
+  limit = 20
+): Promise<Top3Item[]> {
+  return getPopularAppleMusic(
+    'albums',
+    topic,
+    limit
+  );
+}
+
+export async function getPopularAppleMusicArtists(
+  topic?: string,
+  limit = 20
+): Promise<Top3Item[]> {
+  return getPopularAppleMusic(
+    'artists',
+    topic,
+    limit
+  );
+}
+
+export async function getPopularAppleMusicSongs(
+  topic?: string,
+  limit = 20
+): Promise<Top3Item[]> {
+  return getPopularAppleMusic(
+    'songs',
+    topic,
+    limit
+  );
 }
