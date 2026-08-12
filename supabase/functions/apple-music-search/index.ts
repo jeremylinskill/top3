@@ -2847,10 +2847,83 @@ async function searchAppleMusicAlbums(
       "albums"
     );
 
-  const albums =
+  const searchAlbums =
     data.results
       ?.albums
       ?.data ?? [];
+
+  let topResultAlbumIds: string[] = [];
+
+  try {
+    topResultAlbumIds =
+      await getAlbumTopResultIds(
+        developerToken,
+        query
+      );
+  } catch (error) {
+    console.warn(
+      "Apple Music album top-results lookup failed; continuing without canonical-result enrichment:",
+      error
+    );
+  }
+
+  let canonicalAlbumsWithTracks =
+    new Map<
+      string,
+      AppleMusicAlbum
+    >();
+
+  try {
+    canonicalAlbumsWithTracks =
+      await fetchAlbumsWithTracks(
+        developerToken,
+        topResultAlbumIds
+      );
+  } catch (error) {
+    console.warn(
+      "Apple Music canonical album lookup failed; continuing with standard search results:",
+      error
+    );
+  }
+
+  const albumsById =
+    new Map<
+      string,
+      AppleMusicAlbum
+    >();
+
+  for (const album of searchAlbums) {
+    const albumId =
+      album.id?.trim();
+
+    if (albumId) {
+      albumsById.set(
+        albumId,
+        album
+      );
+    }
+  }
+
+  for (
+    const albumId of topResultAlbumIds
+  ) {
+    const canonicalAlbum =
+      canonicalAlbumsWithTracks.get(
+        albumId
+      );
+
+    if (canonicalAlbum) {
+      albumsById.set(
+        albumId,
+        canonicalAlbum
+      );
+    }
+  }
+
+  const albums =
+    Array.from(
+      albumsById.values()
+    );
 
   let chartSongIds: string[] = [];
 
@@ -2926,7 +2999,6 @@ async function searchAppleMusicAlbums(
     );
 
   let chartAlbumIds: string[] = [];
-  let topResultAlbumIds: string[] = [];
 
   try {
     chartAlbumIds =
@@ -2937,19 +3009,6 @@ async function searchAppleMusicAlbums(
   } catch (error) {
     console.warn(
       "Apple Music album chart lookup failed; continuing without popularity boost:",
-      error
-    );
-  }
-
-  try {
-    topResultAlbumIds =
-      await getAlbumTopResultIds(
-        developerToken,
-        query
-      );
-  } catch (error) {
-    console.warn(
-      "Apple Music album top-results lookup failed; continuing without canonical-result boost:",
       error
     );
   }

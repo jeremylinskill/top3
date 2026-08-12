@@ -27,6 +27,20 @@ type TMDBSearchResponse<T> = {
   results?: T[];
 };
 
+type TMDBVideo = {
+  id?: string;
+  key?: string;
+  name?: string;
+  site?: string;
+  type?: string;
+  official?: boolean;
+  published_at?: string;
+};
+
+type TMDBVideosResponse = {
+  results?: TMDBVideo[];
+};
+
 type DiscoverSort =
   | 'popularity.desc'
   | 'vote_count.desc';
@@ -364,6 +378,113 @@ function rankPopularTvShows(
           first.first_air_date
         )
       )
+  );
+}
+
+function getMovieTrailerPriority(
+  video: TMDBVideo
+) {
+  const site =
+    video.site?.trim().toLowerCase();
+
+  const type =
+    video.type?.trim().toLowerCase();
+
+  if (site !== 'youtube') {
+    return -1;
+  }
+
+  if (
+    type === 'trailer' &&
+    video.official
+  ) {
+    return 3;
+  }
+
+  if (type === 'trailer') {
+    return 2;
+  }
+
+  if (type === 'teaser') {
+    return 1;
+  }
+
+  return 0;
+}
+
+function getPublishedTimestamp(
+  video: TMDBVideo
+) {
+  const timestamp =
+    Date.parse(
+      video.published_at ?? ''
+    );
+
+  return Number.isFinite(timestamp)
+    ? timestamp
+    : 0;
+}
+
+export async function getMovieTrailerUrl(
+  movieId: number,
+  signal?: AbortSignal
+): Promise<string | undefined> {
+  const apiKey = getApiKey();
+
+  const response = await fetch(
+    `${API_BASE_URL}/movie/${movieId}/videos` +
+      `?api_key=${apiKey}` +
+      `&language=en-US`,
+    {
+      signal,
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `TMDB movie videos request failed: ${response.status}`
+    );
+  }
+
+  const data =
+    (await response.json()) as TMDBVideosResponse;
+
+  const selectedVideo =
+    [...(data.results ?? [])]
+      .filter(
+        (video) =>
+          Boolean(
+            video.key?.trim()
+          ) &&
+          getMovieTrailerPriority(video) >= 0
+      )
+      .sort(
+        (first, second) => {
+          const priorityDifference =
+            getMovieTrailerPriority(second) -
+            getMovieTrailerPriority(first);
+
+          if (priorityDifference !== 0) {
+            return priorityDifference;
+          }
+
+          return (
+            getPublishedTimestamp(second) -
+            getPublishedTimestamp(first)
+          );
+        }
+      )[0];
+
+  const videoKey =
+    selectedVideo?.key?.trim();
+
+  if (!videoKey) {
+    return undefined;
+  }
+
+  return (
+    'https://www.youtube.com/watch?v=' +
+    encodeURIComponent(videoKey)
   );
 }
 

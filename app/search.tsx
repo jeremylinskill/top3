@@ -11,6 +11,7 @@ import {
   getPopularSuggestionsByCategory,
   getSearchProvider,
 } from '@/providers/search';
+import { getMovieTrailerUrl } from '@/providers/tmdb';
 import { getPublishedPosts } from '@/services/post-service';
 import { Top3Item } from '@/types/top3-item';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,6 +20,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Image,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -26,6 +28,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { WebView } from 'react-native-webview';
 
 const MINIMUM_SEARCH_LENGTH = 3;
 const MINIMUM_COLLECTIONS_FOR_POPULARITY = 50;
@@ -130,6 +133,34 @@ function normalizeValue(value?: string) {
   return value?.trim().toLowerCase() ?? '';
 }
 
+function getYouTubeEmbedUrl(
+  trailerUrl: string
+): string | undefined {
+  const videoIdMatch =
+    /[?&]v=([^&]+)/.exec(trailerUrl);
+
+  const encodedVideoId =
+    videoIdMatch?.[1];
+
+  if (!encodedVideoId) {
+    return undefined;
+  }
+
+  let videoId = encodedVideoId;
+
+  try {
+    videoId =
+      decodeURIComponent(encodedVideoId);
+  } catch {
+    // Keep the encoded ID if decoding fails.
+  }
+
+  return (
+    `https://www.youtube.com/embed/${videoId}` +
+    '?autoplay=1&playsinline=1&rel=0'
+  );
+}
+
 export default function SearchScreen() {
   const { rank } = useLocalSearchParams();
   const { currentList, setItemAtRank } = useTop3();
@@ -140,6 +171,18 @@ export default function SearchScreen() {
   const [hasSearched, setHasSearched] = useState(false);
   const [searchError, setSearchError] =
     useState<string | null>(null);
+  const [
+    loadingTrailerItemId,
+    setLoadingTrailerItemId,
+  ] = useState<string | null>(null);
+  const [
+    activeTrailerUrl,
+    setActiveTrailerUrl,
+  ] = useState<string | null>(null);
+  const [
+    activeTrailerTitle,
+    setActiveTrailerTitle,
+  ] = useState<string | null>(null);
   const [
     suggestionPool,
     setSuggestionPool,
@@ -759,6 +802,57 @@ function chooseSuggestion(
   );
 }
 
+  async function playMovieTrailer(item: Top3Item) {
+    const movieIdMatch = /^movie-(\d+)$/.exec(item.id);
+
+    if (!movieIdMatch) {
+      return;
+    }
+
+    const movieId = Number(movieIdMatch[1]);
+
+    if (!Number.isFinite(movieId)) {
+      return;
+    }
+
+    setLoadingTrailerItemId(item.id);
+
+    try {
+      const trailerUrl = await getMovieTrailerUrl(movieId);
+
+      if (!trailerUrl) {
+        return;
+      }
+
+      const embedUrl =
+        getYouTubeEmbedUrl(trailerUrl);
+
+      if (!embedUrl) {
+        return;
+      }
+
+      stopPreview();
+      setActiveTrailerTitle(item.title);
+      setActiveTrailerUrl(embedUrl);
+    } catch (error) {
+      if (__DEV__) {
+        console.warn(
+          `Failed to open trailer for ${item.title}:`,
+          error
+        );
+      }
+    } finally {
+      setLoadingTrailerItemId((currentItemId) =>
+        currentItemId === item.id ? null : currentItemId
+      );
+    }
+  }
+
+  function closeTrailer() {
+    setActiveTrailerUrl(null);
+    setActiveTrailerTitle(null);
+  }
+
   function selectItem(item: Top3Item) {
     const selectedRank = Number(rank);
 
@@ -1034,6 +1128,39 @@ const searchTitle = selectedType
                         </Text>
                       </View>
 
+                      {currentList?.category === 'movies' &&
+                      /^movie-\d+$/.test(item.id) ? (
+                        <Pressable
+                          style={({ pressed }) => [
+                            styles.previewButton,
+                            pressed &&
+                              styles.previewButtonPressed,
+                          ]}
+                          onPress={(event) => {
+                            event.stopPropagation();
+                            void playMovieTrailer(item);
+                          }}
+                          disabled={loadingTrailerItemId === item.id}
+                          hitSlop={6}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Play trailer for ${item.title}`}>
+                          <Ionicons
+                            name={
+                              loadingTrailerItemId === item.id
+                                ? 'ellipsis-horizontal'
+                                : 'play'
+                            }
+                            size={17}
+                            color="#555555"
+                            style={
+                              loadingTrailerItemId === item.id
+                                ? undefined
+                                : styles.previewPlayIcon
+                            }
+                          />
+                        </Pressable>
+                      ) : null}
+
                       {item.previewUrl ? (
                         <Pressable
                           style={({ pressed }) => [
@@ -1078,6 +1205,53 @@ const searchTitle = selectedType
             </>
           )}
       </View>
+
+      <Modal
+        visible={Boolean(activeTrailerUrl)}
+        animationType="fade"
+        presentationStyle="fullScreen"
+        onRequestClose={closeTrailer}>
+        <SafeAreaView
+          style={styles.trailerModal}
+          edges={['top', 'right', 'bottom', 'left']}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.trailerCloseButton,
+              pressed &&
+                styles.trailerCloseButtonPressed,
+            ]}
+            onPress={closeTrailer}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={
+              activeTrailerTitle
+                ? `Close trailer for ${activeTrailerTitle}`
+                : 'Close trailer'
+            }>
+            <Ionicons
+              name="close"
+              size={30}
+              color="#FFFFFF"
+            />
+          </Pressable>
+
+          <View style={styles.trailerModalContent}>
+            {activeTrailerUrl ? (
+              <View style={styles.trailerPlayer}>
+                <WebView
+                  source={{ uri: activeTrailerUrl }}
+                  style={styles.trailerWebView}
+                  allowsInlineMediaPlayback
+                  mediaPlaybackRequiresUserAction={false}
+                  javaScriptEnabled
+                  domStorageEnabled
+                  allowsFullscreenVideo
+                />
+              </View>
+            ) : null}
+          </View>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -1092,6 +1266,44 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     backgroundColor: '#F8F8F8',
+  },
+
+  trailerModal: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+
+  trailerModalContent: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+
+  trailerPlayer: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    backgroundColor: '#000000',
+  },
+
+  trailerWebView: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+
+  trailerCloseButton: {
+    position: 'absolute',
+    top: 10,
+    right: 14,
+    zIndex: 2,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+  },
+
+  trailerCloseButtonPressed: {
+    opacity: 0.7,
   },
 
   searchInputWrapper: {
