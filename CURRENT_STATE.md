@@ -1,6 +1,6 @@
 CURRENT_STATE.md
 
-Project: Top3Version: 2.1Status: Active DevelopmentLast Updated: August 11, 2026Current Branch: main
+Project: Top3Version: 2.1Status: Active DevelopmentLast Updated: August 12, 2026Current Branch: main
 
 Last Verified Commit
 
@@ -16,11 +16,15 @@ Project Status
 
 Current Feature
 
-Apple Music Songs, Albums, and Artists search and suggestions are implemented, including evergreen suggestion ranking, representative preview playback, canonical Artist enrichment, and shared square Music artwork.
+Media preview playback is implemented across Music, Movies, and TV Shows.
+
+Music uses Apple Music preview audio for Songs, Albums, and Artists. Movies and TV Shows use TMDb trailer metadata with in-app YouTube playback.
+
+Trailer availability is checked and cached before Movie / TV play buttons are shown. If TMDb does not provide a usable trailer, the play button is hidden.
 
 Current Priority
 
-Continue improving discovery, feed relevance, recommendations, music experience, and overall product quality while monitoring startup authentication stability.
+Continue improving discovery, feed relevance, recommendations, media experience, and overall product quality while monitoring startup authentication stability.
 
 Architecture should always be discussed before implementation begins.
 
@@ -67,6 +71,8 @@ Expo FileSystem
 Expo Image Picker
 
 Expo Audio
+
+React Native WebView
 
 Backend
 
@@ -215,6 +221,44 @@ Community / Overall Top3 ranking rows
 Preview controls are shown only when the Top3Item contains a previewUrl.
 
 Existing song collections created before previewUrl support do not automatically gain preview controls; newly selected and published songs persist previewUrl with the collection item.
+
+Movie & TV Trailer Architecture
+
+Movie and TV trailer discovery is provided by providers/tmdb.ts.
+
+TMDb video results are ranked to prefer official YouTube trailers, then other YouTube trailers, then YouTube teasers.
+
+The selected YouTube trailer URL is cached in memory by category and TMDb item ID. A null cache entry records that TMDb returned no usable trailer.
+
+getCachedTrailerAvailability() exposes three states to the UI:
+
+true — a usable trailer is cached
+
+false — TMDb was checked and no usable trailer was found
+
+undefined — trailer availability has not yet been checked
+
+Movie / TV surfaces pre-check trailer availability before rendering the play button. Play buttons are hidden when TMDb has no usable trailer.
+
+Trailer controls are integrated into:
+
+Search results
+
+RankedItemCard
+
+Top3Card
+
+Overall ranking rows in Category Feed
+
+Community / Overall Top3 ranking rows
+
+Trailer playback uses react-native-webview and YouTube embed URLs so playback remains inside Top3 instead of opening the YouTube app.
+
+The trailer player uses a black full-screen modal with a vertically centered 16:9 player and a subtle circular close control positioned above the player. The close control appears after the trailer WebView finishes loading and fades in.
+
+Starting trailer playback stops any active Music audio preview.
+
+Known limitation: a trailer can still be blocked by YouTube for a specific country or region even when TMDb returns a usable trailer. Top3 does not currently maintain user country / location information, so regional YouTube validation is deferred.
 
 Category Artwork Architecture
 
@@ -422,6 +466,8 @@ Database automation includes:
 
 Persistence
 
+Profile Persistence
+
 Status: ✅ Complete
 
 Profile records are stored in the Supabase profiles table.
@@ -528,8 +574,6 @@ deleteAvatar()
 
 Avatar uploads use Expo FileSystem's File.arrayBuffer() API and Supabase Storage.
 
-Persistence
-
 Supabase
 
 ✅ Authentication
@@ -552,6 +596,14 @@ AsyncStorage
 
 Currently used for:
 
+Draft collections
+
+Recent searches
+
+Onboarding state
+
+UI preferences
+
 Realtime
 
 ✅ Notifications
@@ -563,14 +615,6 @@ Realtime
 ✅ Following
 
 Shared subscription helper: lib/supabase/realtime.ts
-
-Draft collections
-
-Recent searches
-
-Onboarding state
-
-UI preferences
 
 Collection Flow
 
@@ -600,7 +644,7 @@ Genre-specific popular suggestions trust the selected Apple Music genre chart ra
 
 Create Collection keeps all supported topics visible even when the user has already published a collection for that topic.
 
-Apple Music search results are normalized into the shared Top3Item shape and variant grouping reduces duplicate recordings while preserving meaningful variants
+Apple Music search results are normalized into the shared Top3Item shape and variant grouping reduces duplicate recordings while preserving meaningful variants.
 
 Album suggestions were refined toward long-term / evergreen records rather than primarily current popularity.
 
@@ -630,25 +674,33 @@ Configured song previews to play in iOS silent mode.
 
 Added shared category artwork rules and standardized Music artwork as 64 × 64 while preserving a 64 px artwork width across current categories, including Overall ranking presentations.
 
-Collection title generation is centralized in utils/build-collection-title.ts and uses the shared Top 3 Category • Topic format for topic-specific collections
+Added Movie and TV trailer playback through TMDb video metadata and in-app YouTube WebView playback.
 
-Reusable useDebouncedValue hook provides a 300 ms search debounce across all search categories
+Added Movie / TV trailer controls to Search, RankedItemCard, Top3Card, Overall ranking rows in Category Feed, and Community / Overall Top3 ranking rows.
 
-Video game search uses IGDB through a Supabase Edge Function, including prefix fallback and relevance scoring for partial-title searches
+Added trailer URL caching and availability-aware play buttons so controls are hidden when TMDb has no usable trailer.
 
-Book search includes improved edition deduplication and relevance handling so distinct titles are not incorrectly collapsed by partial title matches
+Starting a trailer stops any active Music audio preview.
 
-Books use curated popular suggestions where appropriate rather than relying only on generic provider search results
+Collection title generation is centralized in utils/build-collection-title.ts and uses the shared Top 3 Category • Topic format for topic-specific collections.
 
-Feed supports pull-to-refresh without returning to the full initial-loading state
+Reusable useDebouncedValue hook provides a 300 ms search debounce across all search categories.
 
-Personalized feed recommendations include Taste Match recommendation explanations derived from shared ranked picks
+Video game search uses IGDB through a Supabase Edge Function, including prefix fallback and relevance scoring for partial-title searches.
 
-Recommendation explanation blocks on Top3Card are tappable and navigate to the recommended user's Taste Match details
+Book search includes improved edition deduplication and relevance handling so distinct titles are not incorrectly collapsed by partial title matches.
 
-Taste Match details animate the match percentage on load with eased pacing near the final score
+Books use curated popular suggestions where appropriate rather than relying only on generic provider search results.
 
-Taste Match presentation uses the shared purple accent for match information and recommendation messaging
+Feed supports pull-to-refresh without returning to the full initial-loading state.
+
+Personalized feed recommendations include Taste Match recommendation explanations derived from shared ranked picks.
+
+Recommendation explanation blocks on Top3Card are tappable and navigate to the recommended user's Taste Match details.
+
+Taste Match details animate the match percentage on load with eased pacing near the final score.
+
+Taste Match presentation uses the shared purple accent for match information and recommendation messaging.
 
 Current Source of Truth
 
@@ -682,169 +734,71 @@ Real community experiences
 
 Recent Milestones
 
-August 4, 2026
+August 12, 2026
 
-Notifications
+Movie & TV Trailer Playback
 
-Added Supabase-backed notifications.
+Added TMDb Movie and TV trailer lookup.
 
-Added NotificationProvider.
+Added in-app YouTube playback through react-native-webview.
 
-Added Notifications tab.
+Added Movie and TV trailer controls to Search, RankedItemCard, Top3Card, Community / Overall Top3, and Category Feed Overall.
 
-Added unread badge.
+Preserved Apple Music preview controls across the same shared item surfaces.
 
-Added relative timestamps.
+Added a black full-screen trailer modal with a vertically centered 16:9 player.
 
-Added actor profile enrichment.
+Added the refined subtle circular close control positioned above the trailer player.
 
-Added collection enrichment.
+Delayed and faded in the close control after the trailer WebView finishes loading.
 
-Added "Mark all as read".
+Added Movie / TV trailer URL caching in providers/tmdb.ts.
 
-Added navigation from notifications.
+Added getCachedTrailerAvailability() for read-only trailer availability state.
 
-Added automatic database triggers for Likes, Comments, and Follows.
+Added availability pre-checks so Movie / TV play buttons are hidden when TMDb has no usable YouTube trailer.
 
-Verified end-to-end notification flow.
+Verified Search trailer availability behavior on device.
 
-Profile Avatars
+Verified RankedItemCard trailer availability behavior on device.
 
-Added avatar_url to the Supabase profiles table
+Verified Top3Card trailer availability behavior across Feed, Profile, Published Top 3, and Category Feed Lists.
 
-Created the public avatars Storage bucket
+Verified Community Top3 trailer availability behavior.
 
-Added scoped upload, update, delete, and authenticated select policies
+Verified Category Feed Overall trailer availability behavior and approved the refined Overall card layout.
 
-Removed broad public object-listing access
+Verified Movie, TV, and Music media controls continue to work across the supported surfaces.
 
-Added bucket-level file-size and MIME type restrictions
+Verified npm run typecheck passes after the completed rollout.
 
-Added lib/supabase/storage.ts
+Known limitation: some YouTube trailers may still be blocked by country / region even when TMDb identifies a trailer as available. Regional YouTube validation is deferred because Top3 does not currently maintain user country / location information.
 
-Added persistent avatar uploads using Expo FileSystem and Supabase Storage
+August 11, 2026
 
-Added avatar URL persistence through ProfileProvider
+Music / Albums & Artists
 
-Added avatar loading across sessions and devices
+Expanded the Apple Music integration beyond Songs to support Album and Artist search and suggestion experiences.
 
-Added cache-busting when replacing an avatar
+Refined Album and Artist suggestions to favor evergreen / canonical choices rather than over-weighting current popularity.
 
-Added rollback behaviour when avatar upload or profile persistence fails
+Updated Song suggestion logic to use the same more evergreen discovery philosophy.
 
-Added a saving state to Edit Profile
+Added representative track preview enrichment to Album results.
 
-Added client-side 5 MB validation
+Added representative popular-song preview enrichment to Artist results.
 
-Added “Tap photo to change”
+Added Apple Music topResults canonical Artist enrichment so authoritative artist artwork and genre metadata can replace weaker generic-search exact-name matches.
 
-Verified avatar persistence after app restart and sign out/sign in
+Added Artist ranking and deduplication so canonical exact matches rank first and duplicate same-name results are removed.
 
-Authentication Experience
+Verified the canonical Nirvana Artist result now resolves correctly with Apple Music artwork, Alternative genre metadata, and preview playback.
 
-Added a dedicated provider-choice Sign In screen
+Updated music-related SearchResultSkeleton artwork to square dimensions while preserving portrait skeleton artwork for non-Music categories.
 
-Standardized Apple, Google, and Email options across account creation and sign in
+Validated the Apple Music Edge Function repeatedly with Deno and deployed the updated apple-music-search function to Supabase.
 
-Added the official native Apple authentication button
-
-Added a Google-compliant branded authentication button
-
-Added a reusable Email authentication button
-
-Routed signed-out users to the provider-choice Sign In screen
-
-Preserved dedicated Email Sign In and Email Sign Up forms
-
-Standardized authentication screens with ScreenHeader and PageHeader
-
-Removed unnecessary back navigation from top-level provider-choice screens
-
-Retained back navigation on secondary email form screens
-
-Design System
-
-Expanded PageHeader to support left and centre alignment
-
-Applied PageHeader to authentication and Edit Profile screens
-
-Clarified the responsibilities of ScreenHeader and PageHeader
-
-Continued migration away from duplicated title and subtitle implementations
-
-Tooling
-
-Added the approved Google colour G SVG asset
-
-Added React Native SVG Transformer support
-
-Added metro.config.js
-
-Added SVG TypeScript declarations
-
-Added Expo FileSystem for avatar uploads
-
-July 31, 2026
-
-Authentication
-
-Completed native Sign in with Apple
-
-Completed native Sign in with Google
-
-Configured Apple Developer and Google Cloud authentication requirements
-
-Configured Apple and Google providers in Supabase
-
-Added persistent Supabase sessions for Apple and Google users
-
-Integrated both providers into the existing authentication service
-
-Preserved the existing email authentication and verification flow
-
-Added silent cancellation handling for Apple and Google sign-in
-
-Replaced technical authentication alerts with friendly user-facing messages
-
-Google Sign In
-
-Added @react-native-google-signin/google-signin
-
-Added Google Sign-In Expo config plugin
-
-Added the reversed iOS client ID URL scheme
-
-Added public iOS and Web Google Client IDs to the application environment
-
-Created separate Google Cloud iOS and Web OAuth clients
-
-Added both accepted Google OAuth audiences to Supabase
-
-Enabled Supabase nonce-check compatibility for the native iOS flow
-
-Built and installed a new EAS iOS development client
-
-Feed
-
-Added an authentication guard before loading published collections
-
-Eliminated the first-login authentication race condition
-
-Prevented anonymous collection queries during session initialization
-
-Preserved secure Row Level Security policies
-
-Design System
-
-Introduced reusable PageHeader
-
-Introduced reusable Chip
-
-Standardized Create, Search, and Collection layouts
-
-Unified category, topic, and search suggestion chips
-
-Continued migration away from duplicated UI components
+Verified npm run typecheck passes.
 
 August 10, 2026
 
@@ -970,61 +924,291 @@ Verified npm run typecheck passes.
 
 Committed and pushed checkpoint 6e59f6d — Improve music suggestions and overall rankings.
 
-August 11, 2026
+August 7, 2026
 
-Music / Albums & Artists
+Video Game Search
 
-Expanded the Apple Music integration beyond Songs to support Album and Artist search and suggestion experiences.
+Replaced RAWG with IGDB after RAWG repeatedly returned Cloudflare HTTP 522 origin failures.
 
-Refined Album and Artist suggestions to favor evergreen / canonical choices rather than over-weighting current popularity.
+Created the authenticated Supabase Edge Function igdb-search.
 
-Updated Song suggestion logic to use the same more evergreen discovery philosophy.
+Stored Twitch Client ID and Client Secret as Supabase Edge Function secrets.
 
-Added representative track preview enrichment to Album results.
+Added server-side Twitch OAuth token acquisition and in-memory token caching.
 
-Added representative popular-song preview enrichment to Artist results.
+Added IGDB search filtering to exclude secondary content such as DLC, expansions, bundles, and mods where possible.
 
-Added Apple Music topResults canonical Artist enrichment so authoritative artist artwork and genre metadata can replace weaker generic-search exact-name matches.
+Added title relevance scoring so exact matches rank above loosely related results.
 
-Added Artist ranking and deduplication so canonical exact matches rank first and duplicate same-name results are removed.
+Added prefix fallback search so partial queries such as Valo can return Valorant.
 
-Verified the canonical Nirvana Artist result now resolves correctly with Apple Music artwork, Alternative genre metadata, and preview playback.
+Added IGDB cover art, release year, and normalized five-star ratings.
 
-Updated music-related SearchResultSkeleton artwork to square dimensions while preserving portrait skeleton artwork for non-Music categories.
+Removed the RAWG provider from the active application.
 
-Validated the Apple Music Edge Function repeatedly with Deno and deployed the updated apple-music-search function to Supabase.
+Removed the RAWG API key from .env.
 
-Verified npm run typecheck passes.
+Removed RAWG-specific genre IDs from constants/top3-categories.ts.
+
+Search Architecture
+
+Added providers/search.ts as the shared category-to-provider registry.
+
+Moved app/search.tsx to the shared provider registry.
+
+Moved services/post-service.ts hydration to searchByCategory().
+
+Added reusable hooks/use-debounced-value.ts.
+
+Standardized search debounce at 300 ms across Movies, TV, Books, and Video Games.
+
+Preserved provider-specific behavior inside TMDB, Google Books, Open Library, and IGDB integrations.
+
+Tooling
+
+Initialized Supabase CLI support in the project.
+
+Added Supabase Edge Function development configuration.
+
+Installed and configured Deno for Edge Function validation in VS Code.
+
+Separated Expo TypeScript validation from Deno Edge Function validation.
+
+Authentication Stabilization
+
+Added an explicit Supabase session refresh during startup authentication initialization.
+
+The intermittent JWT issued at future startup error is being monitored to confirm whether the refresh fully resolves it.
+
+August 6, 2026
+
+Stabilization
+
+Fixed authentication initialization race conditions.
+
+Added authentication guards before profile and collection queries.
+
+Prevented anonymous Supabase requests during sign out.
+
+Improved sign-out flow.
+
+Replaced technical sign-in errors with friendly user-facing authentication messages.
+
+Settings & Profile
+
+Moved Edit Profile into Settings.
+
+Moved Privacy into Settings.
+
+Removed the Edit Profile button from the Profile screen.
+
+Redesigned Sign Out as a standalone action.
+
+Refined Settings, Profile and Privacy layouts.
+
+Follow Requests
+
+Updated follow request copy to “requested to follow you”.
+
+Removed usernames from request cards.
+
+Replaced the decline button with a compact close icon.
+
+August 4, 2026
+
+Notifications
+
+Added Supabase-backed notifications.
+
+Added NotificationProvider.
+
+Added Notifications tab.
+
+Added unread badge.
+
+Added relative timestamps.
+
+Added actor profile enrichment.
+
+Added collection enrichment.
+
+Added “Mark all as read”.
+
+Added navigation from notifications.
+
+Added automatic database triggers for Likes, Comments, and Follows.
+
+Verified end-to-end notification flow.
+
+Profile Avatars
+
+Added avatar_url to the Supabase profiles table.
+
+Created the public avatars Storage bucket.
+
+Added scoped upload, update, delete, and authenticated select policies.
+
+Removed broad public object-listing access.
+
+Added bucket-level file-size and MIME type restrictions.
+
+Added lib/supabase/storage.ts.
+
+Added persistent avatar uploads using Expo FileSystem and Supabase Storage.
+
+Added avatar URL persistence through ProfileProvider.
+
+Added avatar loading across sessions and devices.
+
+Added cache-busting when replacing an avatar.
+
+Added rollback behaviour when avatar upload or profile persistence fails.
+
+Added a saving state to Edit Profile.
+
+Added client-side 5 MB validation.
+
+Added “Tap photo to change”.
+
+Verified avatar persistence after app restart and sign out/sign in.
+
+Authentication Experience
+
+Added a dedicated provider-choice Sign In screen.
+
+Standardized Apple, Google, and Email options across account creation and sign in.
+
+Added the official native Apple authentication button.
+
+Added a Google-compliant branded authentication button.
+
+Added a reusable Email authentication button.
+
+Routed signed-out users to the provider-choice Sign In screen.
+
+Preserved dedicated Email Sign In and Email Sign Up forms.
+
+Standardized authentication screens with ScreenHeader and PageHeader.
+
+Removed unnecessary back navigation from top-level provider-choice screens.
+
+Retained back navigation on secondary email form screens.
+
+Design System
+
+Expanded PageHeader to support left and centre alignment.
+
+Applied PageHeader to authentication and Edit Profile screens.
+
+Clarified the responsibilities of ScreenHeader and PageHeader.
+
+Continued migration away from duplicated title and subtitle implementations.
+
+Tooling
+
+Added the approved Google colour G SVG asset.
+
+Added React Native SVG Transformer support.
+
+Added metro.config.js.
+
+Added SVG TypeScript declarations.
+
+Added Expo FileSystem for avatar uploads.
+
+July 31, 2026
+
+Authentication
+
+Completed native Sign in with Apple.
+
+Completed native Sign in with Google.
+
+Configured Apple Developer and Google Cloud authentication requirements.
+
+Configured Apple and Google providers in Supabase.
+
+Added persistent Supabase sessions for Apple and Google users.
+
+Integrated both providers into the existing authentication service.
+
+Preserved the existing email authentication and verification flow.
+
+Added silent cancellation handling for Apple and Google sign-in.
+
+Replaced technical authentication alerts with friendly user-facing messages.
+
+Google Sign In
+
+Added @react-native-google-signin/google-signin.
+
+Added Google Sign-In Expo config plugin.
+
+Added the reversed iOS client ID URL scheme.
+
+Added public iOS and Web Google Client IDs to the application environment.
+
+Created separate Google Cloud iOS and Web OAuth clients.
+
+Added both accepted Google OAuth audiences to Supabase.
+
+Enabled Supabase nonce-check compatibility for the native iOS flow.
+
+Built and installed a new EAS iOS development client.
+
+Feed
+
+Added an authentication guard before loading published collections.
+
+Eliminated the first-login authentication race condition.
+
+Prevented anonymous collection queries during session initialization.
+
+Preserved secure Row Level Security policies.
+
+Design System
+
+Introduced reusable PageHeader.
+
+Introduced reusable Chip.
+
+Standardized Create, Search, and Collection layouts.
+
+Unified category, topic, and search suggestion chips.
+
+Continued migration away from duplicated UI components.
 
 Known Technical Debt
 
 High Priority
 
-Monitor the intermittent Supabase JWT issued at future startup error after adding an explicit session refresh during authentication initialization
+Monitor the intermittent Supabase JWT issued at future startup error after adding an explicit session refresh during authentication initialization.
 
 Medium Priority
 
-Scope AsyncStorage keys by authenticated user where appropriate
+Scope AsyncStorage keys by authenticated user where appropriate.
 
-Improve optimistic rollback behaviour where needed
+Improve optimistic rollback behaviour where needed.
 
-✅ Supabase Realtime implemented for Likes, Comments, Following, and Notifications
+✅ Supabase Realtime implemented for Likes, Comments, Following, and Notifications.
 
-Review whether the Google nonce compatibility setting should be hardened in a future authentication pass
+Review whether the Google nonce compatibility setting should be hardened in a future authentication pass.
 
-Add avatar removal from the Edit Profile experience if required
+Add avatar removal from the Edit Profile experience if required.
 
-Consider image resizing or compression beyond Image Picker quality settings if avatar storage or bandwidth becomes significant
+Consider image resizing or compression beyond Image Picker quality settings if avatar storage or bandwidth becomes significant.
 
 Low Priority
 
-Review legacy Expo template files
+Review legacy Expo template files.
 
-Remove placeholder services and unused routes
+Remove placeholder services and unused routes.
 
-Remove packages that are no longer required after implementation review
+Remove packages that are no longer required after implementation review.
 
-Continue migrating hard-coded colours and spacing into shared design tokens
+Continue migrating hard-coded colours and spacing into shared design tokens.
+
+Consider regional YouTube trailer validation if Top3 later introduces a reliable user country / region source. Current trailer availability checks only confirm that TMDb returns a usable YouTube trailer and do not guarantee country-specific playback.
 
 Development Workflow
 
@@ -1082,6 +1266,14 @@ Remember that Top3Item supports previewUrl for Music items. Songs use their trac
 
 Remember that Search, RankedItemCard, Top3Card, Overall ranking rows in Category Feed, and Community / Overall Top3 ranking rows use the shared preview controller; do not implement separate Expo Audio players in those surfaces.
 
+Remember that Movie and TV trailer lookup is owned by providers/tmdb.ts. Trailer URLs and unavailable results are cached in memory, and the UI pre-checks availability before displaying Movie / TV play controls.
+
+Remember that Movie / TV trailer playback is embedded in Top3 through react-native-webview; do not revert trailer controls to Linking.openURL() or external YouTube-app playback.
+
+Remember that the refined trailer modal uses a centered 16:9 player on a black screen and a delayed subtle circular close control positioned above the player.
+
+Remember that regional YouTube restrictions are a known limitation. Top3 does not currently maintain user country / location information, so country-specific trailer validation is deferred.
+
 Remember that category artwork sizing is centralized in constants/category-artwork-rules.ts. Music uses 64 × 64 square artwork; Movies, Books, TV Shows, and Video Games currently use 64 × 96 portrait artwork. The shared rules are used by Search, RankedItemCard, Top3Card, and the Overall ranking presentations.
 
 Remember that Apple Music Song suggestions use genre-specific chart data for Song topics and trust the selected chart without applying a second genreNames metadata filter. Songs, Albums, and Artists have also been tuned toward more evergreen discovery rather than simply mirroring current popularity.
@@ -1101,99 +1293,3 @@ CURRENT_STATE.md provides an accurate snapshot of the application's current arch
 Strategic direction belongs in ROADMAP.md.
 
 Historical milestones belong in CHANGELOG.md.
-
-August 6, 2026
-
-Stabilization
-
-Fixed authentication initialization race conditions.
-
-Added authentication guards before profile and collection queries.
-
-Prevented anonymous Supabase requests during sign out.
-
-Improved sign-out flow.
-
-Replaced technical sign-in errors with friendly user-facing authentication messages.
-
-Settings & Profile
-
-Moved Edit Profile into Settings.
-
-Moved Privacy into Settings.
-
-Removed the Edit Profile button from the Profile screen.
-
-Redesigned Sign Out as a standalone action.
-
-Refined Settings, Profile and Privacy layouts.
-
-Follow Requests
-
-Updated follow request copy to 'requested to follow you'.
-
-Removed usernames from request cards.
-
-Replaced the decline button with a compact close icon.
-
-August 7, 2026
-
-Video Game Search
-
-Replaced RAWG with IGDB after RAWG repeatedly returned Cloudflare HTTP 522 origin failures.
-
-Created the authenticated Supabase Edge Function igdb-search.
-
-Stored Twitch Client ID and Client Secret as Supabase Edge Function secrets.
-
-Added server-side Twitch OAuth token acquisition and in-memory token caching.
-
-Added IGDB search filtering to exclude secondary content such as DLC, expansions, bundles, and mods where possible.
-
-Added title relevance scoring so exact matches rank above loosely related results.
-
-Added prefix fallback search so partial queries such as Valo can return Valorant.
-
-Added IGDB cover art, release year, and normalized five-star ratings.
-
-Removed the RAWG provider from the active application.
-
-Removed the RAWG API key from .env.
-
-Removed RAWG-specific genre IDs from constants/top3-categories.ts.
-
-Search Architecture
-
-Added providers/search.ts as the shared category-to-provider registry.
-
-Moved app/search.tsx to the shared provider registry.
-
-Moved services/post-service.ts hydration to searchByCategory().
-
-Added reusable hooks/use-debounced-value.ts.
-
-Standardized search debounce at 300 ms across Movies, TV, Books, and Video Games.
-
-Preserved provider-specific behavior inside TMDB, Google Books, Open Library, and IGDB integrations.
-
-Tooling
-
-Initialized Supabase CLI support in the project.
-
-Added Supabase Edge Function development configuration.
-
-Installed and configured Deno for Edge Function validation in VS Code.
-
-Separated Expo TypeScript validation from Deno Edge Function validation.
-
-Authentication Stabilization
-
-Added an explicit Supabase session refresh during startup authentication initialization.
-
-The intermittent JWT issued at future startup error is being monitored to confirm whether the refresh fully resolves it.
-
-Current Investigation
-
-Monitor intermittent startup authentication failures reporting JWT issued at future.
-
-No blocking issue is currently confirmed; the application continues to typecheck successfully.

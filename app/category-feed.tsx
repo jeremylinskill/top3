@@ -11,6 +11,11 @@ import { useComments } from '@/context/comment-context';
 import { useLike } from '@/context/like-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
+import {
+  getCachedTrailerAvailability,
+  getMovieTrailerUrl,
+  getTvShowTrailerUrl,
+} from '@/providers/tmdb';
 import { getPublicProfilesByIds } from '@/lib/supabase/profiles';
 import {
   getPublishedPosts
@@ -29,11 +34,14 @@ import {
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   Image,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -41,8 +49,82 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { WebView } from 'react-native-webview';
 
 type CategoryView = 'lists' | 'overall';
+
+
+function getYouTubeEmbedUrl(
+  trailerUrl: string
+): string | undefined {
+  const videoIdMatch =
+    /[?&]v=([^&]+)/.exec(trailerUrl);
+
+  const encodedVideoId =
+    videoIdMatch?.[1];
+
+  if (!encodedVideoId) {
+    return undefined;
+  }
+
+  let videoId = encodedVideoId;
+
+  try {
+    videoId =
+      decodeURIComponent(encodedVideoId);
+  } catch {
+    // Keep the encoded ID if decoding fails.
+  }
+
+  return (
+    `https://www.youtube.com/embed/${videoId}` +
+    '?autoplay=1&playsinline=1&rel=0'
+  );
+}
+
+
+function getYouTubeEmbedHtml(
+  embedUrl: string
+): string {
+  return `
+<!doctype html>
+<html>
+  <head>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #000000;
+      }
+
+      iframe {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        background: #000000;
+      }
+    </style>
+  </head>
+  <body>
+    <iframe
+      src="${embedUrl}"
+      title="Trailer"
+      allow="autoplay; encrypted-media; picture-in-picture"
+      allowfullscreen
+    ></iframe>
+  </body>
+</html>
+  `.trim();
+}
 
 function normalizeValue(value?: string) {
   return value?.trim().toLowerCase() ?? '';
@@ -114,7 +196,35 @@ export default function CategoryFeedScreen() {
     activePreviewItemId,
     isPreviewPlaying,
     togglePreview,
+    stopPreview,
   } = useAudioPreview();
+
+  const [
+    loadingTrailerItemId,
+    setLoadingTrailerItemId,
+  ] = useState<string | null>(null);
+  const [
+    trailerAvailability,
+    setTrailerAvailability,
+  ] = useState<Record<string, boolean | undefined>>({});
+
+  const [
+    activeTrailerUrl,
+    setActiveTrailerUrl,
+  ] = useState<string | null>(null);
+
+  const [
+    activeTrailerTitle,
+    setActiveTrailerTitle,
+  ] = useState<string | null>(null);
+
+  const [
+    isTrailerLoaded,
+    setIsTrailerLoaded,
+  ] = useState(false);
+
+  const trailerCloseOpacity =
+    useRef(new Animated.Value(0)).current;
 
   const [allPosts, setAllPosts] = useState<
     Post[]
@@ -450,6 +560,222 @@ if (isMounted) {
     );
   }
 
+
+  function getTrailerItemId(
+    itemId?: string
+  ): number | undefined {
+    if (!itemId || !category) {
+      return undefined;
+    }
+
+    const itemIdMatch =
+      category.id === 'movies'
+        ? /^movie-(\d+)$/.exec(itemId)
+        : category.id === 'tv'
+          ? /^tv-(\d+)$/.exec(itemId)
+          : null;
+
+    if (!itemIdMatch) {
+      return undefined;
+    }
+
+    const numericItemId =
+      Number(itemIdMatch[1]);
+
+    return Number.isFinite(numericItemId)
+      ? numericItemId
+      : undefined;
+  }
+
+
+
+  useEffect(() => {
+    if (
+      !category ||
+      !overallResult ||
+      (
+        category.id !== 'movies' &&
+        category.id !== 'tv'
+      )
+    ) {
+      return;
+    }
+
+    const trailerCategoryId:
+      'movies' | 'tv' = category.id;
+
+    const trailerOverallResult =
+      overallResult;
+
+    let isMounted = true;
+
+    async function loadTrailerAvailability() {
+      const updates: Record<
+        string,
+        boolean | undefined
+      > = {};
+
+      await Promise.all(
+        trailerOverallResult.items.map(
+          async (entry) => {
+            const item = entry.item;
+            const itemId =
+              getTrailerItemId(item.id);
+
+            if (itemId === undefined) {
+              updates[item.id] = false;
+              return;
+            }
+
+            const cachedAvailability =
+              getCachedTrailerAvailability(
+                trailerCategoryId,
+                itemId
+              );
+
+            if (
+              cachedAvailability !== undefined
+            ) {
+              updates[item.id] =
+                cachedAvailability;
+              return;
+            }
+
+            try {
+              const trailerUrl =
+                trailerCategoryId === 'movies'
+                  ? await getMovieTrailerUrl(
+                      itemId
+                    )
+                  : await getTvShowTrailerUrl(
+                      itemId
+                    );
+
+              updates[item.id] =
+                Boolean(trailerUrl);
+            } catch (error) {
+              if (__DEV__) {
+                console.warn(
+                  `Failed to check trailer availability for ${item.title}:`,
+                  error
+                );
+              }
+
+              updates[item.id] =
+                undefined;
+            }
+          }
+        )
+      );
+
+      if (isMounted) {
+        setTrailerAvailability(
+          (current) => ({
+            ...current,
+            ...updates,
+          })
+        );
+      }
+    }
+
+    void loadTrailerAvailability();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    category?.id,
+    overallResult,
+  ]);
+
+
+  async function playTrailer(
+    item: CommunityTop3Result['items'][number]['item']
+  ) {
+    if (!category) {
+      return;
+    }
+
+    const itemId =
+      getTrailerItemId(item.id);
+
+    if (itemId === undefined) {
+      return;
+    }
+
+    setLoadingTrailerItemId(item.id);
+
+    try {
+      const trailerUrl =
+        category.id === 'movies'
+          ? await getMovieTrailerUrl(itemId)
+          : await getTvShowTrailerUrl(itemId);
+
+      if (!trailerUrl) {
+        setTrailerAvailability(
+          (current) => ({
+            ...current,
+            [item.id]: false,
+          })
+        );
+        return;
+      }
+
+      setTrailerAvailability(
+        (current) => ({
+          ...current,
+          [item.id]: true,
+        })
+      );
+
+      const embedUrl =
+        getYouTubeEmbedUrl(trailerUrl);
+
+      if (!embedUrl) {
+        return;
+      }
+
+      stopPreview();
+      setIsTrailerLoaded(false);
+      trailerCloseOpacity.setValue(0);
+      setActiveTrailerTitle(item.title);
+      setActiveTrailerUrl(embedUrl);
+    } catch (error) {
+      if (__DEV__) {
+        console.warn(
+          `Failed to open trailer for ${item.title}:`,
+          error
+        );
+      }
+    } finally {
+      setLoadingTrailerItemId((currentItemId) =>
+        currentItemId === item.id ? null : currentItemId
+      );
+    }
+  }
+
+
+  function handleTrailerLoadEnd() {
+    setIsTrailerLoaded(true);
+
+    Animated.timing(
+      trailerCloseOpacity,
+      {
+        toValue: 1,
+        duration: 180,
+        useNativeDriver: true,
+      }
+    ).start();
+  }
+
+
+  function closeTrailer() {
+    setIsTrailerLoaded(false);
+    trailerCloseOpacity.setValue(0);
+    setActiveTrailerUrl(null);
+    setActiveTrailerTitle(null);
+  }
+
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -646,8 +972,7 @@ if (isMounted) {
                     style={[
                       styles.rankRow,
                       index <
-                        overallResult.items.length -
-                          1 &&
+                        overallResult.items.length - 1 &&
                         styles.rankDivider,
                     ]}>
                     <Text
@@ -696,49 +1021,14 @@ if (isMounted) {
                           </Text>
                         </View>
                       )}
-
-                      {entry.item.previewUrl ? (
-                        <Pressable
-                          style={({ pressed }) => [
-                            styles.previewButton,
-                            pressed &&
-                              styles.previewButtonPressed,
-                          ]}
-                          onPress={(event) => {
-                            event.stopPropagation();
-                            void togglePreview(
-                              entry.item
-                            );
-                          }}
-                          hitSlop={6}
-                          accessibilityRole="button"
-                          accessibilityLabel={
-                            activePreviewItemId ===
-                              entry.item.id &&
-                            isPreviewPlaying
-                              ? `Pause preview of ${entry.item.title}`
-                              : `Play preview of ${entry.item.title}`
-                          }>
-                          <Ionicons
-                            name={
-                              activePreviewItemId ===
-                                entry.item.id &&
-                              isPreviewPlaying
-                                ? 'pause'
-                                : 'play'
-                            }
-                            size={18}
-                            color="#FFFFFF"
-                          />
-                        </Pressable>
-                      ) : null}
                     </View>
 
                     <View
                       style={styles.itemDetails}>
                       <Text
                         style={styles.itemTitle}
-                        numberOfLines={2}>
+                        numberOfLines={2}
+                        ellipsizeMode="tail">
                         {entry.item.title}
                       </Text>
 
@@ -747,26 +1037,32 @@ if (isMounted) {
                           style={
                             styles.itemSubtitle
                           }
-                          numberOfLines={1}>
+                          numberOfLines={1}
+                          ellipsizeMode="tail">
                           {entry.item.subtitle}
                         </Text>
                       ) : null}
 
                       {typeof entry.item.rating ===
                       'number' ? (
-                        <Text
-                          style={
-                            styles.itemRating
-                          }>
-                          {entry.item.rating.toFixed(
-                            1
-                          )}{' '}
-                          ★
-                        </Text>
+                        <View
+                          style={styles.ratingRow}>
+                          <Text
+                            style={styles.ratingText}>
+                            {entry.item.rating.toFixed(1)}
+                          </Text>
+
+                          <Ionicons
+                            name="star"
+                            size={13}
+                            color="#555555"
+                          />
+                        </View>
                       ) : null}
 
                       <Text
-                        style={styles.scoreText}>
+                        style={styles.scoreText}
+                        numberOfLines={1}>
                         {entry.score}{' '}
                         {entry.score === 1
                           ? 'point'
@@ -777,6 +1073,90 @@ if (isMounted) {
                           : 'lists'}
                       </Text>
                     </View>
+
+                    {trailerAvailability[
+                      entry.item.id
+                    ] === true ? (
+                      <Pressable
+                        style={({ pressed }) => [
+                          styles.previewButton,
+                          pressed &&
+                            styles.previewButtonPressed,
+                        ]}
+                        onPress={(event) => {
+                          event.stopPropagation();
+                          void playTrailer(
+                            entry.item
+                          );
+                        }}
+                        disabled={
+                          loadingTrailerItemId ===
+                          entry.item.id
+                        }
+                        hitSlop={6}
+                        accessibilityRole="button"
+                        accessibilityLabel={
+                          `Play trailer for ${entry.item.title}`
+                        }>
+                        <Ionicons
+                          name={
+                            loadingTrailerItemId ===
+                            entry.item.id
+                              ? 'ellipsis-horizontal'
+                              : 'play'
+                          }
+                          size={17}
+                          color="#555555"
+                          style={
+                            loadingTrailerItemId ===
+                            entry.item.id
+                              ? undefined
+                              : styles.previewPlayIcon
+                          }
+                        />
+                      </Pressable>
+                    ) : entry.item.previewUrl ? (
+                      <Pressable
+                        style={({ pressed }) => [
+                          styles.previewButton,
+                          pressed &&
+                            styles.previewButtonPressed,
+                        ]}
+                        onPress={(event) => {
+                          event.stopPropagation();
+                          void togglePreview(
+                            entry.item
+                          );
+                        }}
+                        hitSlop={6}
+                        accessibilityRole="button"
+                        accessibilityLabel={
+                          activePreviewItemId ===
+                            entry.item.id &&
+                          isPreviewPlaying
+                            ? `Pause preview of ${entry.item.title}`
+                            : `Play preview of ${entry.item.title}`
+                        }>
+                        <Ionicons
+                          name={
+                            activePreviewItemId ===
+                              entry.item.id &&
+                            isPreviewPlaying
+                              ? 'pause'
+                              : 'play'
+                          }
+                          size={17}
+                          color="#555555"
+                          style={
+                            activePreviewItemId ===
+                              entry.item.id &&
+                            isPreviewPlaying
+                              ? undefined
+                              : styles.previewPlayIcon
+                          }
+                        />
+                      </Pressable>
+                    ) : null}
                   </View>
                 )
               )}
@@ -914,6 +1294,72 @@ if (isMounted) {
         post={selectedCommentsPost}
         onClose={closeComments}
       />
+
+      <Modal
+        visible={Boolean(activeTrailerUrl)}
+        animationType="fade"
+        presentationStyle="fullScreen"
+        onRequestClose={closeTrailer}>
+        <SafeAreaView
+          style={styles.trailerModal}
+          edges={['top', 'right', 'bottom', 'left']}>
+          <View style={styles.trailerModalContent}>
+            {activeTrailerUrl ? (
+              <View style={styles.trailerPlayer}>
+                {isTrailerLoaded ? (
+                  <Animated.View
+                    style={[
+                      styles.trailerCloseButtonWrapper,
+                      {
+                        opacity:
+                          trailerCloseOpacity,
+                      },
+                    ]}>
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.trailerCloseButton,
+                        pressed &&
+                          styles.trailerCloseButtonPressed,
+                      ]}
+                      onPress={closeTrailer}
+                      hitSlop={10}
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        activeTrailerTitle
+                          ? `Close trailer for ${activeTrailerTitle}`
+                          : 'Close trailer'
+                      }>
+                      <Ionicons
+                        name="close"
+                        size={20}
+                        color="rgba(255, 255, 255, 0.88)"
+                      />
+                    </Pressable>
+                  </Animated.View>
+                ) : null}
+
+                <WebView
+                  source={{
+                    html:
+                      getYouTubeEmbedHtml(
+                        activeTrailerUrl
+                      ),
+                    baseUrl:
+                      'https://com.jeremylinskillsteam.top3',
+                  }}
+                  style={styles.trailerWebView}
+                  allowsInlineMediaPlayback
+                  mediaPlaybackRequiresUserAction={false}
+                  javaScriptEnabled
+                  domStorageEnabled
+                  allowsFullscreenVideo
+                  onLoadEnd={handleTrailerLoadEnd}
+                />
+              </View>
+            ) : null}
+          </View>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -976,9 +1422,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingTop: 18,
     paddingBottom: 14,
-    borderBottomWidth:
-      StyleSheet.hairlineWidth,
-    borderBottomColor: '#EAEAEA',
   },
 
   overallCategoryIcon: {
@@ -996,56 +1439,60 @@ const styles = StyleSheet.create({
 
   rankingContent: {
     paddingHorizontal: 18,
+    paddingBottom: 14,
   },
 
   rankRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 18,
+    marginHorizontal: -10,
+    paddingHorizontal: 10,
+    paddingVertical: 15,
+    backgroundColor: '#F8F8F8',
+    borderRadius: 12,
   },
 
   rankDivider: {
-    borderBottomWidth:
-      StyleSheet.hairlineWidth,
-    borderBottomColor: '#EAEAEA',
+    marginBottom: 8,
   },
 
   rankNumber: {
-    width: 30,
-    fontSize: 24,
+    width: 28,
+    fontSize: 17,
     fontWeight: '700',
     color: '#222222',
   },
 
   artworkContainer: {
     position: 'relative',
-    marginRight: 14,
+    marginRight: 13,
   },
 
   itemImage: {
-    borderRadius: 10,
+    borderRadius: 9,
     backgroundColor: '#EEEEEE',
   },
 
   imagePlaceholder: {
-    borderRadius: 10,
-    backgroundColor: '#EEEEEE',
+    borderRadius: 9,
+    backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
   },
 
   previewButton: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
+    flexShrink: 0,
     width: 36,
     height: 36,
-    marginTop: -18,
-    marginLeft: -18,
+    marginLeft: 10,
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.68)',
+    backgroundColor: '#FFFFFF',
+  },
+
+  previewPlayIcon: {
+    transform: [{ translateX: 1 }],
   },
 
   previewButtonPressed: {
@@ -1060,12 +1507,13 @@ const styles = StyleSheet.create({
 
   itemDetails: {
     flex: 1,
+    minWidth: 0,
   },
 
   itemTitle: {
-    fontSize: 18,
-    lineHeight: 24,
-    fontWeight: '700',
+    fontSize: 17,
+    lineHeight: 23,
+    fontWeight: '600',
     color: '#222222',
   },
 
@@ -1073,19 +1521,26 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 14,
     lineHeight: 19,
-    color: '#777777',
+    color: '#888888',
   },
 
-  itemRating: {
-    marginTop: 5,
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+
+  ratingText: {
+    marginRight: 4,
     fontSize: 13,
     fontWeight: '600',
     color: '#555555',
   },
 
   scoreText: {
-    marginTop: 7,
+    marginTop: 4,
     fontSize: 13,
+    lineHeight: 18,
     color: '#999999',
   },
 
@@ -1197,6 +1652,47 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: '#777777',
     textAlign: 'center',
+  },
+
+  trailerModal: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+
+  trailerModalContent: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+
+  trailerPlayer: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    backgroundColor: '#000000',
+  },
+
+  trailerWebView: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+
+  trailerCloseButtonWrapper: {
+    position: 'absolute',
+    top: -52,
+    right: 18,
+    zIndex: 2,
+  },
+
+  trailerCloseButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+  },
+
+  trailerCloseButtonPressed: {
+    opacity: 0.7,
   },
 
   pressed: {

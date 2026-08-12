@@ -4,6 +4,122 @@ This document records significant milestones in the evolution of Top3.
 
 Unlike CURRENT_STATE.md, which describes the application's current implementation, this document captures the major architectural and product milestones that shaped the application over time.
 
+v2.1 — Movie & TV Trailer Playback
+
+Released: August 12, 2026
+
+This release adds in-app Movie and TV trailer playback throughout Top3, extends the existing media-control pattern beyond Apple Music previews, and adds availability-aware trailer controls so play buttons are hidden when TMDb does not provide a usable trailer.
+
+Added
+
+Movie & TV Trailer Discovery
+
+Added Movie trailer lookup through TMDb video metadata.
+
+Added TV Show trailer lookup through TMDb video metadata.
+
+Trailer selection prioritizes official YouTube trailers, then other YouTube trailers, then YouTube teasers.
+
+In-App Trailer Playback
+
+Added react-native-webview.
+
+Added YouTube embed playback inside Top3 rather than opening the external YouTube app.
+
+Added a black full-screen trailer presentation with a vertically centered 16:9 player.
+
+Added a subtle circular close control positioned above the trailer player.
+
+Delayed the close control until the trailer WebView finishes loading and fades it in for a more polished transition.
+
+Trailer Controls
+
+Added Movie and TV trailer controls to:
+
+Search results
+
+RankedItemCard
+
+Top3Card
+
+Community / Overall Top3 ranking rows
+
+Category Feed Overall ranking rows
+
+Because Feed, Profile, Published Top 3, and Category Feed Lists reuse Top3Card, trailer playback is available across those surfaces as well.
+
+Trailer Availability
+
+Added an in-memory trailer URL cache in providers/tmdb.ts.
+
+Cached both successful trailer URLs and null results when TMDb returns no usable trailer.
+
+Added getCachedTrailerAvailability() to expose confirmed available, confirmed unavailable, and not-yet-checked states.
+
+Added availability pre-checks before Movie / TV play buttons are rendered.
+
+Movie / TV play buttons are now hidden when TMDb has no usable trailer.
+
+Cached trailer URLs are reused when the user taps play.
+
+Improved
+
+Media Playback Coordination
+
+Starting a Movie or TV trailer stops any active Apple Music preview.
+
+Preserved the existing one-at-a-time shared Music preview behavior.
+
+Preserved Song, Album, and Artist preview controls across Search, RankedItemCard, Top3Card, Category Feed Overall, and Community / Overall Top3.
+
+Overall Ranking Presentation
+
+Refined Category Feed Overall ranking rows to better align with the existing Top3Card / RankedItemCard visual language.
+
+Kept the approved compact row treatment, shared artwork sizing, ranking hierarchy, and right-side media controls.
+
+Known Limitation
+
+Some YouTube trailers may still be unavailable in a specific country or region even when TMDb identifies a usable trailer.
+
+The current availability check confirms that TMDb returns a usable YouTube trailer but does not guarantee country-specific playback.
+
+Regional validation is deferred because Top3 does not currently maintain a reliable user country / location value.
+
+Future work could validate YouTube embeddability and regional restrictions if Top3 later introduces an appropriate country / region source.
+
+Verified
+
+Verified Movie trailer playback on device.
+
+Verified TV Show trailer playback on device.
+
+Verified in-app YouTube playback rather than external YouTube-app playback.
+
+Verified the refined delayed circular close control.
+
+Verified trailer availability behavior in Search.
+
+Verified trailer availability behavior in RankedItemCard.
+
+Verified trailer availability behavior across Top3Card surfaces, including Feed, Profile, Published Top 3, and Category Feed Lists.
+
+Verified trailer availability behavior in Community Top3.
+
+Verified trailer availability behavior in Category Feed Overall.
+
+Verified music previews remain functional across the supported surfaces.
+
+Verified Category Feed Overall presentation after the media-control layout refinement.
+
+Verified npm run typecheck passes after the completed rollout.
+
+Documentation
+
+Updated CURRENT_STATE.md with the completed Movie / TV trailer architecture, availability cache, supported surfaces, and regional playback limitation.
+
+Updated ROADMAP.md to record Movie / TV trailers as a completed discovery foundation and defer regional YouTube validation as a future provider-resiliency enhancement.
+
 v2.0 — Apple Music Expansion & Music Discovery Refinement
 
 Released: August 11, 2026
@@ -270,11 +386,11 @@ Recorded the completed discovery, search, recommendation, Taste Match, and Feed-
 
 Preserved startup authentication monitoring as active technical debt.
 
-v1.8 --- Private Accounts, Settings & Authentication Stability
+v1.8 — Private Accounts, Settings & Authentication Stability
 
 Released: August 6, 2026
 
-This release completes Top3's first implementation of private accountswhile refining the profile, settings, authentication, and notificationexperiences. It also focuses on stability improvements aroundauthentication lifecycle events and overall application polish.
+This release completes Top3's first implementation of private accounts while refining the profile, settings, authentication, and notification experiences. It also focuses on stability improvements around authentication lifecycle events and overall application polish.
 
 Added
 
@@ -300,17 +416,17 @@ Improved
 
 Authentication
 
-Improved AuthProvider initialization to eliminate session restorationrace conditions.
+Improved AuthProvider initialization to eliminate session restoration race conditions.
 
-Prevented authenticated screens from querying Supabase beforeauthentication state is fully established.
+Prevented authenticated screens from querying Supabase before authentication state is fully established.
 
 Improved sign-out experience by preventing post-logout data requests.
 
-Updated email sign-in to provide friendly authentication errors insteadof development error overlays for expected invalid credentials.
+Updated email sign-in to provide friendly authentication errors instead of development error overlays for expected invalid credentials.
 
 User Experience
 
-Removed Edit Profile action from the Profile screen in favour of thecentralized Settings experience.
+Removed Edit Profile action from the Profile screen in favour of the centralized Settings experience.
 
 Refined Settings layout and sign-out treatment.
 
@@ -346,11 +462,11 @@ Updated ROADMAP.md progress.
 
 Recorded authentication and private account refinements.
 
-v1.7 --- Supabase Realtime
+v1.7 — Supabase Realtime
 
 Released: August 4, 2026
 
-This release completes Top3's first phase of live multi-usersynchronization by introducing a shared Supabase Realtime architecture.Notifications, likes, comments, and follows now synchronizeautomatically across connected users without requiring manual refreshes.
+This release completes Top3's first phase of live multi-user synchronization by introducing a shared Supabase Realtime architecture. Notifications, likes, comments, and follows now synchronize automatically across connected users without requiring manual refreshes.
 
 Added
 
@@ -404,11 +520,11 @@ Updated ROADMAP.md to reflect completed realtime milestone.
 
 Recorded commit a3c2225 as the last verified milestone.
 
-v1.6 --- In-App Notifications
+v1.6 — In-App Notifications
 
 Released: August 2, 2026
 
-This release introduces Top3's in-app notification system, completingthe core social engagement loop. Notifications are now generatedautomatically for likes, comments, and follows through Supabase databasetriggers and surfaced through a dedicated Notifications experience.
+This release introduces Top3's in-app notification system, completing the core social engagement loop. Notifications are now generated automatically for likes, comments, and follows through Supabase database triggers and surfaced through a dedicated Notifications experience.
 
 Added
 
@@ -430,11 +546,11 @@ Added collection title enrichment.
 
 Added read / unread state.
 
-Added "Mark all as read".
+Added “Mark all as read”.
 
 Added pull-to-refresh support.
 
-Added navigation to published collections from like and commentnotifications.
+Added navigation to published collections from like and comment notifications.
 
 Added navigation to public profiles from follow notifications.
 
@@ -450,11 +566,11 @@ Improved
 
 Social Experience
 
-Completed the in-app notification experience for likes, comments, andfollows.
+Completed the in-app notification experience for likes, comments, and follows.
 
 Unified notification loading through a shared context provider.
 
-Improved notification readability with actor names, avatars, andcontextual collection titles.
+Improved notification readability with actor names, avatars, and contextual collection titles.
 
 Verified
 
@@ -476,11 +592,11 @@ Updated CURRENT_STATE.md to version 1.6.
 
 Recorded commit b2dad2c as the last verified milestone.
 
-v1.5 --- Persistent Profile Avatars & Authentication Experience
+v1.5 — Persistent Profile Avatars & Authentication Experience
 
 Released: August 2, 2026
 
-This release adds persistent profile avatars through Supabase Storageand completes a broader refinement of the authentication and profileexperience.
+This release adds persistent profile avatars through Supabase Storage and completes a broader refinement of the authentication and profile experience.
 
 Added
 
@@ -490,7 +606,7 @@ Added an avatar_url column to the Supabase profiles table.
 
 Added a public Supabase Storage bucket named avatars.
 
-Added user-specific avatar storage paths based on the authenticated userID.
+Added user-specific avatar storage paths based on the authenticated user ID.
 
 Added persistent avatar uploads through lib/supabase/storage.ts.
 
@@ -504,7 +620,7 @@ Added a local avatar preview before saving.
 
 Added a saving state while profile updates are in progress.
 
-Added a "Tap photo to change" affordance.
+Added a “Tap photo to change” affordance.
 
 Added client-side avatar file-size validation.
 
@@ -514,21 +630,21 @@ Added image MIME-type restrictions.
 
 Storage Security
 
-Added authenticated upload policies scoped to each user's own avatarfolder.
+Added authenticated upload policies scoped to each user's own avatar folder.
 
-Added authenticated update policies scoped to each user's own avatarfolder.
+Added authenticated update policies scoped to each user's own avatar folder.
 
-Added authenticated delete policies scoped to each user's own avatarfolder.
+Added authenticated delete policies scoped to each user's own avatar folder.
 
-Added authenticated select access scoped to each user's own avatarfolder to support Storage upsert.
+Added authenticated select access scoped to each user's own avatar folder to support Storage upsert.
 
-Removed broad public object-listing access while preserving publicavatar URLs.
+Removed broad public object-listing access while preserving public avatar URLs.
 
 Authentication Experience
 
 Added a dedicated provider-choice Sign In screen.
 
-Added Apple, Google, and Email options to both account creation and signin.
+Added Apple, Google, and Email options to both account creation and sign in.
 
 Added a reusable GoogleAuthButton.
 
@@ -552,9 +668,9 @@ Applied PageHeader to Edit Profile.
 
 Clarified the role of ScreenHeader as the top navigation bar.
 
-Clarified the role of PageHeader as the page title and optional subtitlebelow the navigation bar.
+Clarified the role of PageHeader as the page title and optional subtitle below the navigation bar.
 
-Standardized page-title placement across authentication, collection, andprofile screens.
+Standardized page-title placement across authentication, collection, and profile screens.
 
 Tooling
 
@@ -574,9 +690,9 @@ Profile Persistence
 
 Updated ProfileProvider to load and persist avatar_url.
 
-Updated profile mapping between Supabase rows and the applicationUserProfile type.
+Updated profile mapping between Supabase rows and the application UserProfile type.
 
-Updated profile saving to wait for avatar upload and databasepersistence before navigating away.
+Updated profile saving to wait for avatar upload and database persistence before navigating away.
 
 Added optimistic profile updates with rollback on failure.
 
@@ -584,17 +700,17 @@ Added cache-busting when replacing an avatar.
 
 Disabled profile editing while a save is in progress.
 
-Added friendly failure feedback when a profile update cannot becompleted.
+Added friendly failure feedback when a profile update cannot be completed.
 
 Authentication Navigation
 
-Standardized provider-selection flow for account creation andreturning-user sign in.
+Standardized provider-selection flow for account creation and returning-user sign in.
 
 Removed unnecessary back buttons from top-level provider-choice screens.
 
 Preserved back navigation on Email Sign In and Email Sign Up screens.
 
-Updated sign-out navigation so users return to the full Sign Inprovider-choice screen instead of the email-only form.
+Updated sign-out navigation so users return to the full Sign In provider-choice screen instead of the email-only form.
 
 User Interface
 
@@ -602,7 +718,7 @@ Standardized authentication-screen backgrounds and shared colour tokens.
 
 Standardized title and subtitle layouts with PageHeader.
 
-Improved the visual consistency of Apple, Google, and Emailauthentication buttons.
+Improved the visual consistency of Apple, Google, and Email authentication buttons.
 
 Improved Edit Profile avatar discoverability and pressed-state feedback.
 
@@ -612,11 +728,11 @@ Fixed avatar persistence after app restart.
 
 Fixed avatar persistence after sign out and sign in.
 
-Fixed replacement of an existing avatar by adding the scopedauthenticated select policy required by Storage upsert.
+Fixed replacement of an existing avatar by adding the scoped authenticated select policy required by Storage upsert.
 
 Fixed profile navigation occurring before avatar upload completed.
 
-Fixed inconsistent title placement across authentication and profilescreens.
+Fixed inconsistent title placement across authentication and profile screens.
 
 Fixed signed-out users being routed directly to the Email Sign In form.
 
@@ -642,19 +758,19 @@ Recorded commit 32b5478 as the last verified milestone.
 
 Recorded persistent profile avatars as complete.
 
-Updated authentication, navigation, design-system, and technical-debtdocumentation.
+Updated authentication, navigation, design-system, and technical-debt documentation.
 
-v1.4 --- Native Authentication Complete
+v1.4 — Native Authentication Complete
 
 Released: July 31, 2026
 
-This release completes Top3's native authentication experience. Userscan now authenticate using Email, Sign in with Apple, or Sign in withGoogle while sharing a common Supabase authentication architecture andpersistent session model.
+This release completes Top3's native authentication experience. Users can now authenticate using Email, Sign in with Apple, or Sign in with Google while sharing a common Supabase authentication architecture and persistent session model.
 
 Added
 
 Google Authentication
 
-Added native Google Sign-In using@react-native-google-signin/google-signin.
+Added native Google Sign-In using @react-native-google-signin/google-signin.
 
 Added Google identity-token exchange through Supabase Auth.
 
@@ -676,7 +792,7 @@ Added the Google Sign-In Expo config plugin.
 
 Added the reversed iOS URL scheme to app.json.
 
-Added Google client IDs to the application's public environmentconfiguration.
+Added Google client IDs to the application's public environment configuration.
 
 Created and installed a new EAS iOS development build.
 
@@ -684,11 +800,11 @@ Improved
 
 Authentication Flow
 
-Expanded the shared authentication service to support Email, Apple, andGoogle.
+Expanded the shared authentication service to support Email, Apple, and Google.
 
-Preserved the existing AuthProvider and session restorationarchitecture.
+Preserved the existing AuthProvider and session restoration architecture.
 
-Routed successful Google authentication through the existing applicationentry point.
+Routed successful Google authentication through the existing application entry point.
 
 Preserved existing email and Apple authentication behaviour.
 
@@ -696,9 +812,9 @@ User Experience
 
 Added silent handling of cancelled Google sign-in attempts.
 
-Replaced technical Google authentication alerts with friendlyuser-facing messages.
+Replaced technical Google authentication alerts with friendly user-facing messages.
 
-Aligned Google authentication behaviour with the existing Appleexperience.
+Aligned Google authentication behaviour with the existing Apple experience.
 
 Documentation
 
@@ -706,11 +822,11 @@ Updated CURRENT_STATE.md to version 1.4.
 
 Recorded native Google authentication as complete.
 
-v1.3 --- Native Apple Authentication
+v1.3 — Native Apple Authentication
 
 Released: July 31, 2026
 
-This release adds native Sign in with Apple and completes the firstproduction-ready social authentication provider for Top3.
+This release adds native Sign in with Apple and completes the first production-ready social authentication provider for Top3.
 
 Added
 
@@ -724,7 +840,7 @@ Added support for both new-user registration and returning-user sign-in.
 
 Added persistent Apple-authenticated Supabase sessions.
 
-Added Apple name metadata preservation when available during firstauthorization.
+Added Apple name metadata preservation when available during first authorization.
 
 Platform Configuration
 
@@ -748,11 +864,11 @@ Improved
 
 Authentication Flow
 
-Integrated Apple authentication into the existing authenticationservice.
+Integrated Apple authentication into the existing authentication service.
 
 Reused the existing AuthProvider and session flow.
 
-Routed successful Apple authentication through the existing applicationentry point.
+Routed successful Apple authentication through the existing application entry point.
 
 Preserved email authentication and verification behaviour.
 
@@ -762,7 +878,7 @@ Improved first-login session initialization.
 
 Improved session restoration.
 
-Prevented authenticated screens from querying Supabase before authinitialization completed.
+Prevented authenticated screens from querying Supabase before auth initialization completed.
 
 Fixed
 
@@ -776,11 +892,11 @@ Documentation
 
 Updated CURRENT_STATE.md to version 1.3.
 
-v1.2 --- Design System & Collection Flow Refinement
+v1.2 — Design System & Collection Flow Refinement
 
 Released: July 31, 2026
 
-This release focused on improving consistency, maintainability, and theoverall collection creation experience while establishing reusable UIcomponents.
+This release focused on improving consistency, maintainability, and the overall collection creation experience while establishing reusable UI components.
 
 Added
 
@@ -790,7 +906,7 @@ Reusable Chip component.
 
 Shared page layout architecture.
 
-Curated search suggestions that transition to community-drivensuggestions.
+Curated search suggestions that transition to community-driven suggestions.
 
 Improved
 
@@ -808,11 +924,11 @@ Eliminated inconsistent page-title layouts.
 
 Eliminated duplicated chip implementations.
 
-v1.1 --- Social Foundation Complete
+v1.1 — Social Foundation Complete
 
 Released: July 30, 2026
 
-This release completed the migration of comments and likes to Supabase,establishing the application's backend social foundation.
+This release completed the migration of comments and likes to Supabase, establishing the application's backend social foundation.
 
 Added
 
@@ -846,11 +962,11 @@ Persistence after restart.
 
 Collection ID mapping.
 
-v1.0 --- Platform Foundation
+v1.0 — Platform Foundation
 
 Released: July 2026
 
-This milestone established the core architecture of Top3 as a persistentsocial application.
+This milestone established the core architecture of Top3 as a persistent social application.
 
 Added
 

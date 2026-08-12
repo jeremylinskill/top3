@@ -11,7 +11,11 @@ import {
   getPopularSuggestionsByCategory,
   getSearchProvider,
 } from '@/providers/search';
-import { getMovieTrailerUrl } from '@/providers/tmdb';
+import {
+  getCachedTrailerAvailability,
+  getMovieTrailerUrl,
+  getTvShowTrailerUrl,
+} from '@/providers/tmdb';
 import { getPublishedPosts } from '@/services/post-service';
 import { Top3Item } from '@/types/top3-item';
 import { Ionicons } from '@expo/vector-icons';
@@ -161,6 +165,51 @@ function getYouTubeEmbedUrl(
   );
 }
 
+
+function getYouTubeEmbedHtml(
+  embedUrl: string
+): string {
+  return `
+<!doctype html>
+<html>
+  <head>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #000000;
+      }
+
+      iframe {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        background: #000000;
+      }
+    </style>
+  </head>
+  <body>
+    <iframe
+      src="${embedUrl}"
+      title="Movie trailer"
+      allow="autoplay; encrypted-media; picture-in-picture"
+      allowfullscreen
+    ></iframe>
+  </body>
+</html>
+  `.trim();
+}
+
+
 export default function SearchScreen() {
   const { rank } = useLocalSearchParams();
   const { currentList, setItemAtRank } = useTop3();
@@ -180,9 +229,17 @@ export default function SearchScreen() {
     setActiveTrailerUrl,
   ] = useState<string | null>(null);
   const [
+    trailerAvailability,
+    setTrailerAvailability,
+  ] = useState<Record<string, boolean | undefined>>({});
+  const [
     activeTrailerTitle,
     setActiveTrailerTitle,
   ] = useState<string | null>(null);
+  const [
+    isTrailerLoaded,
+    setIsTrailerLoaded,
+  ] = useState(false);
   const [
     suggestionPool,
     setSuggestionPool,
@@ -219,6 +276,8 @@ export default function SearchScreen() {
     useRef(new Animated.Value(0)).current;
   const isShuffling = useRef(false);
   const latestSearchId = useRef(0);
+  const trailerCloseOpacity =
+    useRef(new Animated.Value(0)).current;
 
   const selectedCategory = TOP3_CATEGORIES.find(
     (category) => category.id === currentList?.category
@@ -644,6 +703,98 @@ export default function SearchScreen() {
   }, [fadeAnim, isLoading, searchResults]);
 
 
+  useEffect(() => {
+    const categoryId = currentList?.category;
+
+    if (
+      categoryId !== 'movies' &&
+      categoryId !== 'tv'
+    ) {
+      return;
+    }
+
+    const trailerCategoryId:
+      'movies' | 'tv' = categoryId;
+
+    let isMounted = true;
+
+    async function loadTrailerAvailability() {
+      const updates: Record<
+        string,
+        boolean | undefined
+      > = {};
+
+      await Promise.all(
+        searchResults.map(async (item) => {
+          const idMatch =
+            trailerCategoryId === 'movies'
+              ? /^movie-(\d+)$/.exec(item.id)
+              : /^tv-(\d+)$/.exec(item.id);
+
+          if (!idMatch) {
+            updates[item.id] = false;
+            return;
+          }
+
+          const itemId = Number(idMatch[1]);
+
+          if (!Number.isFinite(itemId)) {
+            updates[item.id] = false;
+            return;
+          }
+
+          const cachedAvailability =
+            getCachedTrailerAvailability(
+              trailerCategoryId,
+              itemId
+            );
+
+          if (cachedAvailability !== undefined) {
+            updates[item.id] =
+              cachedAvailability;
+            return;
+          }
+
+          try {
+            const trailerUrl =
+              trailerCategoryId === 'movies'
+                ? await getMovieTrailerUrl(itemId)
+                : await getTvShowTrailerUrl(itemId);
+
+            updates[item.id] =
+              Boolean(trailerUrl);
+          } catch (error) {
+            if (__DEV__) {
+              console.warn(
+                `Failed to check trailer availability for ${item.title}:`,
+                error
+              );
+            }
+
+            updates[item.id] = undefined;
+          }
+        })
+      );
+
+      if (isMounted) {
+        setTrailerAvailability((current) => ({
+          ...current,
+          ...updates,
+        }));
+      }
+    }
+
+    void loadTrailerAvailability();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    currentList?.category,
+    searchResults,
+  ]);
+
+
   function refreshSuggestions() {
     if (
       suggestionPool.length <= 5 ||
@@ -802,27 +953,52 @@ function chooseSuggestion(
   );
 }
 
-  async function playMovieTrailer(item: Top3Item) {
-    const movieIdMatch = /^movie-(\d+)$/.exec(item.id);
+  async function playTrailer(item: Top3Item) {
+    const categoryId =
+      currentList?.category;
 
-    if (!movieIdMatch) {
+    if (
+      categoryId !== 'movies' &&
+      categoryId !== 'tv'
+    ) {
       return;
     }
 
-    const movieId = Number(movieIdMatch[1]);
+    const itemIdMatch =
+      categoryId === 'movies'
+        ? /^movie-(\d+)$/.exec(item.id)
+        : /^tv-(\d+)$/.exec(item.id);
 
-    if (!Number.isFinite(movieId)) {
+    if (!itemIdMatch) {
+      return;
+    }
+
+    const itemId = Number(itemIdMatch[1]);
+
+    if (!Number.isFinite(itemId)) {
       return;
     }
 
     setLoadingTrailerItemId(item.id);
 
     try {
-      const trailerUrl = await getMovieTrailerUrl(movieId);
+      const trailerUrl =
+        categoryId === 'movies'
+          ? await getMovieTrailerUrl(itemId)
+          : await getTvShowTrailerUrl(itemId);
 
       if (!trailerUrl) {
+        setTrailerAvailability((current) => ({
+          ...current,
+          [item.id]: false,
+        }));
         return;
       }
+
+      setTrailerAvailability((current) => ({
+        ...current,
+        [item.id]: true,
+      }));
 
       const embedUrl =
         getYouTubeEmbedUrl(trailerUrl);
@@ -832,6 +1008,8 @@ function chooseSuggestion(
       }
 
       stopPreview();
+      setIsTrailerLoaded(false);
+      trailerCloseOpacity.setValue(0);
       setActiveTrailerTitle(item.title);
       setActiveTrailerUrl(embedUrl);
     } catch (error) {
@@ -848,7 +1026,22 @@ function chooseSuggestion(
     }
   }
 
+  function handleTrailerLoadEnd() {
+    setIsTrailerLoaded(true);
+
+    Animated.timing(
+      trailerCloseOpacity,
+      {
+        toValue: 1,
+        duration: 180,
+        useNativeDriver: true,
+      }
+    ).start();
+  }
+
   function closeTrailer() {
+    setIsTrailerLoaded(false);
+    trailerCloseOpacity.setValue(0);
     setActiveTrailerUrl(null);
     setActiveTrailerTitle(null);
   }
@@ -1128,8 +1321,9 @@ const searchTitle = selectedType
                         </Text>
                       </View>
 
-                      {currentList?.category === 'movies' &&
-                      /^movie-\d+$/.test(item.id) ? (
+                      {(currentList?.category === 'movies' ||
+                        currentList?.category === 'tv') &&
+                      trailerAvailability[item.id] === true ? (
                         <Pressable
                           style={({ pressed }) => [
                             styles.previewButton,
@@ -1138,9 +1332,11 @@ const searchTitle = selectedType
                           ]}
                           onPress={(event) => {
                             event.stopPropagation();
-                            void playMovieTrailer(item);
+                            void playTrailer(item);
                           }}
-                          disabled={loadingTrailerItemId === item.id}
+                          disabled={
+                            loadingTrailerItemId === item.id
+                          }
                           hitSlop={6}
                           accessibilityRole="button"
                           accessibilityLabel={`Play trailer for ${item.title}`}>
@@ -1214,38 +1410,57 @@ const searchTitle = selectedType
         <SafeAreaView
           style={styles.trailerModal}
           edges={['top', 'right', 'bottom', 'left']}>
-          <Pressable
-            style={({ pressed }) => [
-              styles.trailerCloseButton,
-              pressed &&
-                styles.trailerCloseButtonPressed,
-            ]}
-            onPress={closeTrailer}
-            hitSlop={10}
-            accessibilityRole="button"
-            accessibilityLabel={
-              activeTrailerTitle
-                ? `Close trailer for ${activeTrailerTitle}`
-                : 'Close trailer'
-            }>
-            <Ionicons
-              name="close"
-              size={30}
-              color="#FFFFFF"
-            />
-          </Pressable>
-
           <View style={styles.trailerModalContent}>
             {activeTrailerUrl ? (
               <View style={styles.trailerPlayer}>
+                {isTrailerLoaded ? (
+                  <Animated.View
+                    style={[
+                      styles.trailerCloseButtonWrapper,
+                      {
+                        opacity:
+                          trailerCloseOpacity,
+                      },
+                    ]}>
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.trailerCloseButton,
+                        pressed &&
+                          styles.trailerCloseButtonPressed,
+                      ]}
+                      onPress={closeTrailer}
+                      hitSlop={10}
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        activeTrailerTitle
+                          ? `Close trailer for ${activeTrailerTitle}`
+                          : 'Close trailer'
+                      }>
+                      <Ionicons
+                        name="close"
+                        size={20}
+                        color="rgba(255, 255, 255, 0.88)"
+                      />
+                    </Pressable>
+                  </Animated.View>
+                ) : null}
+
                 <WebView
-                  source={{ uri: activeTrailerUrl }}
+                  source={{
+                    html:
+                      getYouTubeEmbedHtml(
+                        activeTrailerUrl
+                      ),
+                    baseUrl:
+                      'https://com.jeremylinskillsteam.top3',
+                  }}
                   style={styles.trailerWebView}
                   allowsInlineMediaPlayback
                   mediaPlaybackRequiresUserAction={false}
                   javaScriptEnabled
                   domStorageEnabled
                   allowsFullscreenVideo
+                  onLoadEnd={handleTrailerLoadEnd}
                 />
               </View>
             ) : null}
@@ -1289,17 +1504,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
   },
 
-  trailerCloseButton: {
+  trailerCloseButtonWrapper: {
     position: 'absolute',
-    top: 10,
-    right: 14,
+    top: -52,
+    right: 18,
     zIndex: 2,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  },
+
+  trailerCloseButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
   },
 
   trailerCloseButtonPressed: {

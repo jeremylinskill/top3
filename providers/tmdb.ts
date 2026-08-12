@@ -63,6 +63,36 @@ const DISCOVER_SORTS: DiscoverSort[] = [
 
 const MAX_LONGEVITY_YEARS = 30;
 
+const TRAILER_URL_CACHE =
+  new Map<string, string | null>();
+
+function getTrailerCacheKey(
+  categoryId: 'movies' | 'tv',
+  itemId: number
+) {
+  return `${categoryId}:${itemId}`;
+}
+
+
+export function getCachedTrailerAvailability(
+  categoryId: 'movies' | 'tv',
+  itemId: number
+): boolean | undefined {
+  const cacheKey =
+    getTrailerCacheKey(
+      categoryId,
+      itemId
+    );
+
+  if (!TRAILER_URL_CACHE.has(cacheKey)) {
+    return undefined;
+  }
+
+  return (
+    TRAILER_URL_CACHE.get(cacheKey) !== null
+  );
+}
+
 function getApiKey() {
   const apiKey =
     process.env.EXPO_PUBLIC_TMDB_API_KEY;
@@ -381,7 +411,7 @@ function rankPopularTvShows(
   );
 }
 
-function getMovieTrailerPriority(
+function getTrailerPriority(
   video: TMDBVideo
 ) {
   const site =
@@ -429,6 +459,16 @@ export async function getMovieTrailerUrl(
   movieId: number,
   signal?: AbortSignal
 ): Promise<string | undefined> {
+  const cacheKey =
+    getTrailerCacheKey('movies', movieId);
+
+  if (TRAILER_URL_CACHE.has(cacheKey)) {
+    return (
+      TRAILER_URL_CACHE.get(cacheKey) ??
+      undefined
+    );
+  }
+
   const apiKey = getApiKey();
 
   const response = await fetch(
@@ -456,13 +496,13 @@ export async function getMovieTrailerUrl(
           Boolean(
             video.key?.trim()
           ) &&
-          getMovieTrailerPriority(video) >= 0
+          getTrailerPriority(video) >= 0
       )
       .sort(
         (first, second) => {
           const priorityDifference =
-            getMovieTrailerPriority(second) -
-            getMovieTrailerPriority(first);
+            getTrailerPriority(second) -
+            getTrailerPriority(first);
 
           if (priorityDifference !== 0) {
             return priorityDifference;
@@ -479,13 +519,108 @@ export async function getMovieTrailerUrl(
     selectedVideo?.key?.trim();
 
   if (!videoKey) {
+    TRAILER_URL_CACHE.set(
+      cacheKey,
+      null
+    );
+
     return undefined;
   }
 
-  return (
+  const trailerUrl =
     'https://www.youtube.com/watch?v=' +
-    encodeURIComponent(videoKey)
+    encodeURIComponent(videoKey);
+
+  TRAILER_URL_CACHE.set(
+    cacheKey,
+    trailerUrl
   );
+
+  return trailerUrl;
+}
+
+export async function getTvShowTrailerUrl(
+  showId: number,
+  signal?: AbortSignal
+): Promise<string | undefined> {
+  const cacheKey =
+    getTrailerCacheKey('tv', showId);
+
+  if (TRAILER_URL_CACHE.has(cacheKey)) {
+    return (
+      TRAILER_URL_CACHE.get(cacheKey) ??
+      undefined
+    );
+  }
+
+  const apiKey = getApiKey();
+
+  const response = await fetch(
+    `${API_BASE_URL}/tv/${showId}/videos` +
+      `?api_key=${apiKey}` +
+      `&language=en-US`,
+    {
+      signal,
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `TMDB TV videos request failed: ${response.status}`
+    );
+  }
+
+  const data =
+    (await response.json()) as TMDBVideosResponse;
+
+  const selectedVideo =
+    [...(data.results ?? [])]
+      .filter(
+        (video) =>
+          Boolean(
+            video.key?.trim()
+          ) &&
+          getTrailerPriority(video) >= 0
+      )
+      .sort(
+        (first, second) => {
+          const priorityDifference =
+            getTrailerPriority(second) -
+            getTrailerPriority(first);
+
+          if (priorityDifference !== 0) {
+            return priorityDifference;
+          }
+
+          return (
+            getPublishedTimestamp(second) -
+            getPublishedTimestamp(first)
+          );
+        }
+      )[0];
+
+  const videoKey =
+    selectedVideo?.key?.trim();
+
+  if (!videoKey) {
+    TRAILER_URL_CACHE.set(
+      cacheKey,
+      null
+    );
+
+    return undefined;
+  }
+
+  const trailerUrl =
+    'https://www.youtube.com/watch?v=' +
+    encodeURIComponent(videoKey);
+
+  TRAILER_URL_CACHE.set(
+    cacheKey,
+    trailerUrl
+  );
+
+  return trailerUrl;
 }
 
 export async function searchMovies(

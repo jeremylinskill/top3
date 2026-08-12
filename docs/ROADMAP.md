@@ -1,6 +1,6 @@
 Top3 Product Roadmap
 
-Version: 1.9Status: Active DevelopmentOwner: Jeremy LinskillLast Updated: August 11, 2026Last Verified Commit: 6e59f6d — Improve music suggestions and overall rankings
+Version: 2.0Status: Active DevelopmentOwner: Jeremy LinskillLast Updated: August 12, 2026Last Verified Commit: 6e59f6d — Improve music suggestions and overall rankings
 
 Purpose
 
@@ -34,7 +34,7 @@ Status: Current Focus 🚧
 
 Top3's core community platform is now in place.
 
-Authentication, profiles, collection persistence, social interactions, private accounts, follow requests, notifications, realtime synchronization, Settings, search providers, Feed, Discover, and Taste Match provide a stable foundation for the next stage of the product.
+Authentication, profiles, collection persistence, social interactions, private accounts, follow requests, notifications, realtime synchronization, Settings, search providers, Feed, Discover, Taste Match, Apple Music previews, and Movie / TV trailer playback provide a stable foundation for the next stage of the product.
 
 Recent work has begun shifting Top3 from simply surfacing community content toward making discovery more relevant to each user. Personalized Feed recommendations can now use Taste Match and shared ranked picks to explain why another user's collection may be interesting.
 
@@ -42,11 +42,11 @@ The current milestone is to strengthen that discovery system before expanding in
 
 Foundation Completed
 
-• Email authentication• Sign in with Apple• Sign in with Google• Persistent Supabase sessions• Stable authentication initialization• User profiles• Profile avatars• Profile editing• Privacy settings• Public and private accounts• Follow requests• Following / Followers• Collection persistence• Shared Likes• Shared Comments• In-app notifications• Settings• About• Supabase Realtime for Notifications, Likes, Comments, and Following• Feed• Discover• Community Top3• Overall Top3• Taste Match• Personalized Feed recommendations• Taste Match recommendation explanations• Shared search-provider architecture• TMDb search for Movies and TV Shows• Google Books search with Open Library fallback• IGDB search for Video Games through a Supabase Edge Function• Apple Music search for Songs, Albums, and Artists through a Supabase Edge Function• Apple Music audio previews for Songs, Albums, and Artists• Genre-aware and evergreen Apple Music suggestions• Feed pull-to-refresh
+• Email authentication• Sign in with Apple• Sign in with Google• Persistent Supabase sessions• Stable authentication initialization• User profiles• Profile avatars• Profile editing• Privacy settings• Public and private accounts• Follow requests• Following / Followers• Collection persistence• Shared Likes• Shared Comments• In-app notifications• Settings• About• Supabase Realtime for Notifications, Likes, Comments, and Following• Feed• Discover• Community Top3• Overall Top3• Taste Match• Personalized Feed recommendations• Taste Match recommendation explanations• Shared search-provider architecture• TMDb search for Movies and TV Shows• TMDb Movie / TV trailer playback inside Top3• Availability-aware Movie / TV trailer controls• Google Books search with Open Library fallback• IGDB search for Video Games through a Supabase Edge Function• Apple Music search for Songs, Albums, and Artists through a Supabase Edge Function• Apple Music audio previews for Songs, Albums, and Artists• Genre-aware and evergreen Apple Music suggestions• Feed pull-to-refresh
 
 Current Priorities
 
-• Improve Feed relevance and ranking• Improve personalized recommendation quality• Expand Discover browsing and filtering• Improve profile discovery• Continue refining Taste Match as a discovery signal• Continue search-quality and provider-resiliency improvements• Continue refining Apple Music search, suggestions, ranking, previews, and metadata quality• Expand conversation and engagement opportunities• Continue performance and stability optimization• Prepare architecture for push notifications
+• Improve Feed relevance and ranking• Improve personalized recommendation quality• Expand Discover browsing and filtering• Improve profile discovery• Continue refining Taste Match as a discovery signal• Continue search-quality and provider-resiliency improvements• Continue refining Apple Music search, suggestions, ranking, previews, and metadata quality• Continue improving Movie / TV trailer resiliency where practical• Expand conversation and engagement opportunities• Continue performance and stability optimization• Prepare architecture for push notifications
 
 Initiative 1 — Strengthen Discovery
 
@@ -56,11 +56,11 @@ Improve the discovery experiences that already exist so users consistently encou
 
 Completed Foundations
 
-• Personalized Feed recommendations• Taste Match recommendation explanations• Navigation from Feed recommendations into Taste Match• Community Top3• Overall Top3• Similar Taste discovery• Trending topics and categories• Shared search-provider architecture• Improved Google Books relevance and edition deduplication• Curated Books suggestions• IGDB Video Games integration• Apple Music integration for Songs, Albums, and Artists• Evergreen Apple Music suggestion pools• Artist canonical-result ranking and deduplication• Album and Artist representative-track previews• Improved partial-title and relevance-ranked game search• Feed pull-to-refresh
+• Personalized Feed recommendations• Taste Match recommendation explanations• Navigation from Feed recommendations into Taste Match• Community Top3• Overall Top3• Similar Taste discovery• Trending topics and categories• Shared search-provider architecture• Improved Google Books relevance and edition deduplication• Curated Books suggestions• IGDB Video Games integration• Apple Music integration for Songs, Albums, and Artists• Evergreen Apple Music suggestion pools• Artist canonical-result ranking and deduplication• Album and Artist representative-track previews• TMDb Movie and TV trailer playback inside Top3• Availability-aware Movie / TV trailer controls• Improved partial-title and relevance-ranked game search• Feed pull-to-refresh
 
 Near-Term Priorities
 
-• Improve Feed relevance and ranking• Improve recommendation quality signals• Expand Discover browsing and filtering• Improve profile discovery• Refine recommendation explanations where useful• Continue improving search relevance across providers• Gracefully handle external API failures across TMDb, Google Books, Open Library, and IGDB• Expand conversation tools around discovered content• Continue performance optimization• Prepare architecture for push notifications
+• Improve Feed relevance and ranking• Improve recommendation quality signals• Expand Discover browsing and filtering• Improve profile discovery• Refine recommendation explanations where useful• Continue improving search relevance across providers• Gracefully handle external API failures across TMDb, Google Books, Open Library, IGDB, and Apple Music• Continue improving trailer resiliency without introducing unnecessary location permissions• Expand conversation tools around discovered content• Continue performance optimization• Prepare architecture for push notifications
 
 Success Looks Like
 
@@ -152,11 +152,27 @@ Search supports the collection-creation and discovery experience across multiple
 
 Current Providers
 
-• TMDb — Movies• TMDb — TV Shows• Google Books — Books• Open Library — Book fallback• IGDB — Video Games• Twitch OAuth — Server-side IGDB authentication
+• TMDb — Movies• TMDb — TV Shows• Google Books — Books• Open Library — Book fallback• IGDB — Video Games• Twitch OAuth — Server-side IGDB authentication• Apple Music — Songs, Albums, and Artists
 
 Current Direction
 
-• Keep application-level search behaviour consistent• Keep provider-specific ranking and fallback logic inside each provider• Continue improving relevance rather than maximizing raw result volume• Prefer useful, recognizable suggestions over generic provider results• Prefer evergreen, long-term recognizable music suggestions over short-term chart popularity where appropriate• Use canonical provider results to improve exact artist matching, ranking, artwork, genre metadata, and deduplication• Enrich music results with representative preview audio where the provider supports it• Preserve distinct works while intelligently deduplicating editions or duplicate records• Gracefully handle provider outages and degraded responses• Avoid exposing provider secrets to the mobile client
+• Keep application-level search behaviour consistent• Keep provider-specific ranking and fallback logic inside each provider• Continue improving relevance rather than maximizing raw result volume• Prefer useful, recognizable suggestions over generic provider results• Prefer evergreen, long-term recognizable music suggestions over short-term chart popularity where appropriate• Use canonical provider results to improve exact artist matching, ranking, artwork, genre metadata, and deduplication• Enrich music results with representative preview audio where the provider supports it• Preserve distinct works while intelligently deduplicating editions or duplicate records• Gracefully handle provider outages and degraded responses• Avoid exposing provider secrets to the mobile client• Keep Movie / TV trailer discovery inside the TMDb provider• Reuse cached trailer availability instead of repeatedly querying TMDb• Hide Movie / TV play buttons when TMDb has no usable trailer• Treat regional YouTube restrictions as a future resiliency enhancement unless Top3 gains a reliable country / region source
+
+Trailer Resiliency
+
+Status: Future Enhancement
+
+Top3 currently validates whether TMDb provides a usable YouTube trailer before showing a Movie / TV play button.
+
+This prevents most dead trailer controls caused by missing TMDb video data.
+
+A remaining limitation is that YouTube can still block a trailer for a specific country or region.
+
+Top3 does not currently request device location, store user country / region, or otherwise maintain a reliable location source.
+
+Do not add location permission solely for trailer playback.
+
+If Top3 later introduces an appropriate country / region source for broader product reasons, consider validating YouTube regional availability and embeddability before marking a trailer as available.
 
 Product Principles
 
@@ -253,6 +269,14 @@ Top3 succeeds when users:
 The long-term goal is not to maximize content creation or passive engagement, but to create meaningful connections through shared taste.
 
 Revision History
+
+Version 2.0 — August 12, 2026
+
+Updated the roadmap to reflect the completed Movie / TV trailer rollout.
+
+Key changes:
+
+• Recorded TMDb Movie and TV trailer playback inside Top3 as a completed discovery foundation.• Recorded availability-aware trailer controls and shared in-memory trailer caching.• Added trailer resiliency as an active provider-quality consideration.• Recorded country / region restrictions as a known limitation rather than an incomplete core feature.• Explicitly deferred location-aware YouTube validation because Top3 does not currently maintain a reliable country / region source.• Added Apple Music to the Current Providers list.• Preserved Discovery & Personalization as the active product milestone.
 
 Version 1.9 — August 11, 2026
 
