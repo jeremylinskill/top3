@@ -3,7 +3,7 @@ import { Top3Item } from '@/types/top3-item';
 import {
   getPopularGames,
   searchGames,
-} from './games';
+} from './video-games';
 import {
   getPopularBooks,
   searchBooks,

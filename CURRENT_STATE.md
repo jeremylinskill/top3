@@ -1,6 +1,6 @@
 CURRENT_STATE.md
 
-Project: Top3Version: 2.1Status: Active DevelopmentLast Updated: August 12, 2026Current Branch: main
+Project: Top3Version: 2.1Status: Active DevelopmentLast Updated: August 13, 2026Current Branch: main
 
 Last Verified Commit
 
@@ -110,7 +110,7 @@ Apple Music — Music / Songs, Albums, and Artists
 
 Twitch OAuth — Server-side IGDB authentication
 
-Video game search is proxied through the authenticated Supabase Edge Function igdb-search. The Twitch Client Secret is stored only in Supabase Edge Function secrets and is never exposed to the mobile client.
+Video game search is proxied through the Supabase Edge Function video-game-search. The function accepts the app's publishable key so Video Games search works during signed-out onboarding as well as for authenticated users. The Twitch Client Secret is stored only in Supabase Edge Function secrets and is never exposed to the mobile client.
 
 Music search for Songs, Albums, and Artists is proxied through the authenticated Supabase Edge Function apple-music-search. Apple Music developer-token credentials, including the private key, Key ID, and Team ID, are stored only as Supabase Edge Function secrets and are never exposed to the mobile client.
 
@@ -188,7 +188,7 @@ TV Shows → providers/tmdb.ts
 
 Books → providers/google-books.ts with Open Library fallback
 
-Video Games → providers/games.ts → lib/supabase/igdb.ts → authenticated Supabase Edge Function igdb-search → IGDB
+Video Games → providers/video-games.ts → lib/supabase/video-games.ts → Supabase Edge Function video-game-search → IGDB
 
 Music / Songs, Albums, and Artists → providers/music.ts → lib/supabase/apple-music.ts → authenticated Supabase Edge Function apple-music-search → Apple Music
 
@@ -734,6 +734,24 @@ Real community experiences
 
 Recent Milestones
 
+August 13, 2026
+
+Onboarding & Video Games Search
+
+Enabled Video Games search during signed-out onboarding by changing the Video Games Edge Function wrapper from user authentication to publishable-key authentication.
+
+Renamed application-facing Video Games integration paths from providers/games.ts and lib/supabase/igdb.ts to providers/video-games.ts and lib/supabase/video-games.ts.
+
+Renamed the Supabase Edge Function from igdb-search to video-game-search and updated supabase/config.toml and the client invocation accordingly.
+
+Kept IGDB-specific naming inside the Edge Function implementation where it accurately describes the external provider.
+
+Deployed video-game-search with JWT gateway verification disabled and verified Video Games search works on device while signed out during onboarding.
+
+Removed the old deployed igdb-search Edge Function after verifying the renamed endpoint.
+
+Verified npm run typecheck and the Video Games Edge Function Deno check pass.
+
 August 12, 2026
 
 Movie & TV Trailer Playback
@@ -1226,7 +1244,7 @@ Run npm run typecheck.
 
 For Supabase Edge Functions, run the function-specific Deno validation command, for example:
 
-deno check --config supabase/functions/igdb-search/deno.json supabase/functions/igdb-search/index.ts
+deno check --config supabase/functions/video-game-search/deno.json supabase/functions/video-game-search/index.ts
 
 Run npm run lint.
 
@@ -1258,7 +1276,7 @@ Do not automatically choose the next major feature without reviewing the roadmap
 
 Remember that Authentication, Profiles, Profile Avatars, Collections, Likes, Comments, Following, and Notifications are fully persisted through Supabase.
 
-Remember that RAWG has been removed from the active application. Video game search now uses IGDB through an authenticated Supabase Edge Function.
+Remember that RAWG has been removed from the active application. Video game search now uses IGDB internally through the video-game-search Supabase Edge Function. Application-facing Video Games code uses generic naming, while IGDB-specific terminology remains inside the provider integration. The Edge Function accepts the app's publishable key so signed-out onboarding search is supported.
 
 Remember that Music is an active application category. Songs, Albums, and Artists use Apple Music through the authenticated apple-music-search Supabase Edge Function, with Apple Music credentials stored only server-side.
 

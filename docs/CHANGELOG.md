@@ -4,6 +4,82 @@ This document records significant milestones in the evolution of Top3.
 
 Unlike CURRENT_STATE.md, which describes the application's current implementation, this document captures the major architectural and product milestones that shaped the application over time.
 
+v2.2 — Onboarding Authentication & Video Games Search Architecture
+
+Released: August 13, 2026
+
+This release refines the signed-out onboarding and returning-user authentication flow, enables Video Games search during onboarding, and completes the application-facing rename of the IGDB integration to generic Video Games terminology.
+
+Added
+
+Onboarding Authentication Intent
+
+Added persistent onboarding authentication intent so Top3 can distinguish between users creating a new account and existing users signing in from the onboarding publish flow.
+
+Added pending-publish state for onboarding collections.
+
+Improved
+
+Onboarding & Returning-User Flow
+
+Preserved access to the onboarding flow for new signed-out users.
+
+Returning signed-out users are routed to Sign In rather than Create Account after the welcome experience has already been seen.
+
+Existing users who choose Sign In while publishing an onboarding Top 3 are routed into their authenticated experience rather than continuing through new-user onboarding.
+
+Preserved the onboarding collection while authentication is in progress.
+
+Video Games Search
+
+Enabled Video Games search for signed-out users during onboarding.
+
+Updated the Video Games Edge Function so the mobile client can invoke it with the app's publishable key while Twitch OAuth and the IGDB client secret remain server-side.
+
+Preserved Video Games search for authenticated users.
+
+Changed
+
+Video Games Integration Naming
+
+Renamed providers/games.ts to providers/video-games.ts.
+
+Renamed lib/supabase/igdb.ts to lib/supabase/video-games.ts.
+
+Renamed the Supabase Edge Function from igdb-search to video-game-search.
+
+Updated supabase/config.toml for video-game-search.
+
+Updated the mobile client to invoke video-game-search.
+
+Kept IGDB-specific terminology inside the provider integration where it accurately describes the external service.
+
+Removed
+
+Removed the old deployed igdb-search Supabase Edge Function after verifying video-game-search.
+
+Verified
+
+Verified signed-out Video Games search during onboarding on device.
+
+Verified authenticated Video Games search continues to work.
+
+Verified the renamed video-game-search Supabase Edge Function after deployment.
+
+Verified the old igdb-search deployment was removed.
+
+Verified npm run typecheck passes after the client-side rename and onboarding changes.
+
+Verified the Video Games Edge Function passes Deno validation.
+
+Documentation
+
+Updated CURRENT_STATE.md to reflect the current Video Games integration architecture and signed-out onboarding support.
+
+Updated TECHNICAL_ROADMAP.md to use current Video Games naming and architecture.
+
+Preserved the historical v1.9 IGDB entries below because they accurately record the architecture and filenames that existed at that milestone.
+
 v2.1 — Movie & TV Trailer Playback
 
 Released: August 12, 2026

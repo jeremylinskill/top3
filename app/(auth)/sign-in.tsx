@@ -3,24 +3,54 @@ import GoogleAuthButton from '@/components/google-auth-button';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
 import { COLORS } from '@/constants/colors';
+import { useOnboardingCollection } from '@/context/onboarding-collection-context';
 import {
-    signInWithApple,
-    signInWithGoogle,
+  signInWithApple,
+  signInWithGoogle,
 } from '@/services/auth-service';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { router } from 'expo-router';
 import {
-    Alert,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  router,
+  useLocalSearchParams,
+} from 'expo-router';
+import {
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+
 export default function SignInScreen() {
+  const {
+    source,
+  } = useLocalSearchParams<{
+    source?: string;
+  }>();
+
+
+  const {
+    setAuthIntent,
+  } = useOnboardingCollection();
+
+
+  const isReturningFromOnboarding =
+    source === 'onboarding-publish';
+
+
+  function prepareSignInIntent() {
+    if (isReturningFromOnboarding) {
+      setAuthIntent('sign-in');
+    }
+  }
+
+
   async function handleAppleSignIn() {
     try {
+      prepareSignInIntent();
+
       await signInWithApple();
       router.replace('/');
     } catch (error) {
@@ -33,10 +63,12 @@ export default function SignInScreen() {
         return;
       }
 
+
       console.error(
         'Apple sign-in failed:',
         error
       );
+
 
       Alert.alert(
         'Unable to continue with Apple',
@@ -45,13 +77,18 @@ export default function SignInScreen() {
     }
   }
 
+
   async function handleGoogleSignIn() {
     try {
+      prepareSignInIntent();
+
       const result = await signInWithGoogle();
+
 
       if (!result) {
         return;
       }
+
 
       router.replace('/');
     } catch (error) {
@@ -66,10 +103,12 @@ export default function SignInScreen() {
         return;
       }
 
+
       console.error(
         'Google sign-in failed:',
         error
       );
+
 
       Alert.alert(
         'Unable to continue with Google',
@@ -78,13 +117,35 @@ export default function SignInScreen() {
     }
   }
 
+
   function handleEmailSignIn() {
+    prepareSignInIntent();
+
+    if (isReturningFromOnboarding) {
+      router.push({
+        pathname: '/sign-in-email',
+        params: {
+          source: 'onboarding-publish',
+        },
+      });
+      return;
+    }
+
+
     router.push('/sign-in-email');
   }
 
-  function handleCreateAccount() {
-    router.replace('/create-account');
+
+  function handleBottomAction() {
+    if (isReturningFromOnboarding) {
+      router.replace('/create-account');
+      return;
+    }
+
+
+    router.replace('/onboarding');
   }
+
 
   return (
     <SafeAreaView
@@ -92,11 +153,13 @@ export default function SignInScreen() {
       edges={['top', 'bottom']}>
       <ScreenHeader />
 
+
       <PageHeader
         title="Welcome back"
         subtitle="Sign in to continue discovering people who share your favorite things."
         align="center"
       />
+
 
       <View style={styles.content}>
         <View style={styles.options}>
@@ -114,41 +177,56 @@ export default function SignInScreen() {
             onPress={handleAppleSignIn}
           />
 
+
           <GoogleAuthButton
             onPress={handleGoogleSignIn}
           />
 
+
           <View style={styles.divider}>
             <View style={styles.dividerLine} />
+
 
             <Text style={styles.dividerText}>
               OR
             </Text>
 
+
             <View style={styles.dividerLine} />
           </View>
+
 
           <EmailAuthButton
             onPress={handleEmailSignIn}
           />
         </View>
 
+
         <View style={styles.signUpContainer}>
           <Text style={styles.signUpPrompt}>
-            Don&apos;t have an account?
+            {isReturningFromOnboarding
+              ? "Don't have an account?"
+              : 'New to Top 3?'}
           </Text>
+
 
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Create account"
+            accessibilityLabel={
+              isReturningFromOnboarding
+                ? 'Create account'
+                : 'Get started'
+            }
             hitSlop={8}
-            onPress={handleCreateAccount}
+            onPress={handleBottomAction}
             style={({ pressed }) => [
               styles.signUpButton,
               pressed && styles.pressed,
             ]}>
             <Text style={styles.signUpButtonText}>
-              Create one
+              {isReturningFromOnboarding
+                ? 'Create one'
+                : 'Get Started'}
             </Text>
           </Pressable>
         </View>
@@ -157,11 +235,13 @@ export default function SignInScreen() {
   );
 }
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
   },
+
 
   content: {
     flex: 1,
@@ -169,15 +249,18 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
 
+
   options: {
     marginTop: 28,
     gap: 14,
   },
 
+
   appleButton: {
     width: '100%',
     height: 54,
   },
+
 
   divider: {
     flexDirection: 'row',
@@ -185,11 +268,13 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
 
+
   dividerLine: {
     flex: 1,
     height: 1,
     backgroundColor: COLORS.border,
   },
+
 
   dividerText: {
     marginHorizontal: 14,
@@ -199,6 +284,7 @@ const styles = StyleSheet.create({
     color: COLORS.tertiaryText,
   },
 
+
   signUpContainer: {
     marginTop: 'auto',
     flexDirection: 'row',
@@ -206,15 +292,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
+
   signUpPrompt: {
     fontSize: 16,
     lineHeight: 22,
     color: COLORS.tertiaryText,
   },
 
+
   signUpButton: {
     marginLeft: 5,
   },
+
 
   signUpButtonText: {
     fontSize: 16,
@@ -222,6 +311,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1573DD',
   },
+
 
   pressed: {
     opacity: 0.6,

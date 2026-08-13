@@ -14,4 +14,10 @@ export type UserProfile = {
    * recommended and discovered by other users.
    */
   visibility: ProfileVisibility;
+
+  /**
+   * Tracks whether this authenticated user has
+   * completed or skipped the first-time onboarding flow.
+   */
+  hasCompletedOnboarding: boolean;
 };

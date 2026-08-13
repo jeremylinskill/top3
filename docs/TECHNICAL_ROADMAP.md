@@ -1,92 +1,101 @@
-Top3 Technical Roadmap
+# Top3 Technical Roadmap
 
-Purpose
+## Purpose
 
-Track engineering decisions,providers,architecture,and implementation milestones.
+Track engineering decisions, providers, architecture, and implementation milestones.
 
-Search Providers
+## Search Providers
 
-Movies
+### Movies
 
-Provider
+**Provider**
 
 TMDB
 
-Status
+**Status**
 
 Complete
 
-Books
+### Books
 
-Providers
+**Providers**
 
 Google Books
 
 Open Library (fallback)
 
-Status
+**Status**
 
 Complete
 
-Games
+### Video Games
 
-Provider
+**Provider**
 
 IGDB (via Supabase Edge Function)
 
-Status
+**Status**
 
 Complete
 
-Notes
+**Notes**
 
 Server-side Twitch OAuth authentication
 
-Supabase Edge Function (igdb-search)
+Supabase Edge Function (`video-game-search`)
+
+Application-facing integration uses generic Video Games naming:
+
+- `providers/video-games.ts`
+- `lib/supabase/video-games.ts`
+
+IGDB-specific naming remains inside the provider integration where it describes the external service.
+
+The Edge Function accepts the app's publishable key so Video Games search works for signed-out users during onboarding as well as authenticated users.
 
 Prefix matching and relevance scoring
 
 Cover art, release year, and normalized ratings
 
-Backend
+## Backend
 
-Authentication
-
-Complete
-
-Profiles
+### Authentication
 
 Complete
 
-Collections
+### Profiles
 
 Complete
 
-Likes
+### Collections
 
 Complete
 
-Comments
+### Likes
 
 Complete
 
-Following
+### Comments
 
 Complete
 
-Notifications
-
-Planned
-
-Storage
+### Following
 
 Complete
 
-Realtime Updates
+### Notifications
 
-Planned
+Complete
 
-Infrastructure Goals
+### Storage
+
+Complete
+
+### Realtime Updates
+
+Complete for Likes, Comments, Following, and Notifications
+
+## Infrastructure Goals
 
 Configuration-driven categories ✅
 
@@ -100,6 +109,6 @@ Reusable search debounce hook ✅
 
 Search result caching improvements
 
-Realtime synchronization
+Realtime synchronization ✅
 
 Continued discovery and recommendation improvements

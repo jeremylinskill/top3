@@ -1,17 +1,17 @@
 import { supabase } from '@/lib/supabase';
 import { Top3Item } from '@/types/top3-item';
 
-type IgdbSearchResponse = {
+type VideoGameSearchResponse = {
   results?: Top3Item[];
   error?: string;
 };
 
-async function invokeIgdb(
+async function invokeVideoGameSearch(
   body: Record<string, unknown>
 ): Promise<Top3Item[]> {
   const { data, error } =
     await supabase.functions.invoke(
-      'igdb-search',
+      'video-game-search',
       {
         body,
       }
@@ -19,7 +19,7 @@ async function invokeIgdb(
 
   if (error) {
     console.error(
-      'IGDB Edge Function invocation failed:',
+      'Video Game Edge Function invocation failed:',
       error
     );
 
@@ -29,11 +29,11 @@ async function invokeIgdb(
   }
 
   const response =
-    data as IgdbSearchResponse | null;
+    data as VideoGameSearchResponse | null;
 
   if (response?.error) {
     console.error(
-      'IGDB Edge Function returned an error:',
+      'Video Game Edge Function returned an error:',
       response.error
     );
 
@@ -48,7 +48,7 @@ async function invokeIgdb(
     )
   ) {
     console.error(
-      'IGDB Edge Function returned an invalid response:',
+      'Video Game Edge Function returned an invalid response:',
       data
     );
 
@@ -60,7 +60,7 @@ async function invokeIgdb(
   return response.results;
 }
 
-export async function searchIgdbGames(
+export async function searchVideoGames(
   query: string
 ): Promise<Top3Item[]> {
   const trimmedQuery =
@@ -70,13 +70,13 @@ export async function searchIgdbGames(
     return [];
   }
 
-  return invokeIgdb({
+  return invokeVideoGameSearch({
     mode: 'search',
     query: trimmedQuery,
   });
 }
 
-export async function getPopularIgdbGames(
+export async function getPopularVideoGames(
   topic?: string,
   limit = 5
 ): Promise<Top3Item[]> {
@@ -92,7 +92,7 @@ export async function getPopularIgdbGames(
       50
     );
 
-  return invokeIgdb({
+  return invokeVideoGameSearch({
     mode: 'popular',
     topic: normalizedTopic,
     limit: normalizedLimit,

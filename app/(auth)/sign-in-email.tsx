@@ -2,35 +2,68 @@ import EmailSignInForm from '@/components/email-sign-in-form';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
 import { COLORS } from '@/constants/colors';
+import { useOnboardingCollection } from '@/context/onboarding-collection-context';
 import { router } from 'expo-router';
 import {
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+
 export default function SignInEmailScreen() {
+  const {
+    collection: onboardingCollection,
+    isPendingPublish,
+    setAuthIntent,
+  } = useOnboardingCollection();
+
+
+  const isReturningFromOnboarding =
+    Boolean(
+      onboardingCollection &&
+      isPendingPublish
+    );
+
+
   function handleSuccess() {
+    if (isReturningFromOnboarding) {
+      setAuthIntent('sign-in');
+      router.replace('/');
+      return;
+    }
+
+
     router.replace('/(tabs)');
   }
 
+
   function handleCreateAccount() {
-    router.replace('/create-account');
+    if (isReturningFromOnboarding) {
+      router.replace('/create-account');
+      return;
+    }
+
+
+    router.replace('/onboarding');
   }
+
 
   return (
     <SafeAreaView
       style={styles.container}
       edges={['top', 'bottom']}>
-<ScreenHeader showBackButton />
+      <ScreenHeader showBackButton />
+
 
       <PageHeader
         title="Welcome back"
         subtitle="Sign in to continue discovering people who share your favorite things."
         align="center"
       />
+
 
       <View style={styles.content}>
         <View style={styles.form}>
@@ -39,14 +72,22 @@ export default function SignInEmailScreen() {
           />
         </View>
 
+
         <View style={styles.signUpContainer}>
           <Text style={styles.signUpPrompt}>
-            Don&apos;t have an account?
+            {isReturningFromOnboarding
+              ? "Don't have an account?"
+              : 'New to Top 3?'}
           </Text>
+
 
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Create account"
+            accessibilityLabel={
+              isReturningFromOnboarding
+                ? 'Create account'
+                : 'Get started'
+            }
             hitSlop={8}
             onPress={handleCreateAccount}
             style={({ pressed }) => [
@@ -54,7 +95,9 @@ export default function SignInEmailScreen() {
               pressed && styles.pressed,
             ]}>
             <Text style={styles.signUpButtonText}>
-              Create one
+              {isReturningFromOnboarding
+                ? 'Create one'
+                : 'Get Started'}
             </Text>
           </Pressable>
         </View>
@@ -63,11 +106,13 @@ export default function SignInEmailScreen() {
   );
 }
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
   },
+
 
   content: {
     flex: 1,
@@ -75,10 +120,12 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
 
+
   form: {
     flex: 1,
     marginTop: 28,
   },
+
 
   signUpContainer: {
     marginTop: 'auto',
@@ -87,15 +134,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
+
   signUpPrompt: {
     fontSize: 16,
     lineHeight: 22,
     color: COLORS.tertiaryText,
   },
 
+
   signUpButton: {
     marginLeft: 5,
   },
+
 
   signUpButtonText: {
     fontSize: 16,
@@ -103,6 +153,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1573DD',
   },
+
 
   pressed: {
     opacity: 0.6,

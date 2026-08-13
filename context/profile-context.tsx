@@ -11,16 +11,20 @@ import {
   useState,
 } from 'react';
 
+
 type ProfileContextValue = {
   profile: UserProfile;
+  isProfileLoading: boolean;
   updateProfile: (
     updates: Partial<UserProfile>
   ) => Promise<void>;
 };
 
+
 type ProfileProviderProps = {
   children: ReactNode;
 };
+
 
 type ProfileRow = {
   id: string;
@@ -29,7 +33,9 @@ type ProfileRow = {
   bio: string;
   avatar_url: string | null;
   is_public: boolean;
+  has_completed_onboarding: boolean;
 };
+
 
 const EMPTY_PROFILE: UserProfile = {
   id: '',
@@ -38,12 +44,15 @@ const EMPTY_PROFILE: UserProfile = {
   bio: '',
   avatarUrl: undefined,
   visibility: 'public',
+  hasCompletedOnboarding: false,
 };
+
 
 const ProfileContext =
   createContext<
     ProfileContextValue | undefined
   >(undefined);
+
 
 function formatDisplayName(
   emailUsername: string
@@ -51,14 +60,17 @@ function formatDisplayName(
   const withoutTrailingNumbers =
     emailUsername.replace(/\d+$/g, '');
 
+
   const words = withoutTrailingNumbers
     .split(/[._-]+/)
     .map((word) => word.trim())
     .filter(Boolean);
 
+
   if (words.length === 0) {
     return 'Top3 User';
   }
+
 
   return words
     .map(
@@ -69,6 +81,7 @@ function formatDisplayName(
     .join(' ');
 }
 
+
 function formatUsername(
   emailUsername: string
 ) {
@@ -77,8 +90,10 @@ function formatUsername(
     .replace(/[^a-z0-9._]/g, '')
     .replace(/^[._]+|[._]+$/g, '');
 
+
   return formattedUsername || 'top3user';
 }
+
 
 function createDefaultProfile(
   userId: string,
@@ -88,6 +103,7 @@ function createDefaultProfile(
     email?.split('@')[0]?.trim() ||
     'top3user';
 
+
   return {
     id: userId,
     displayName:
@@ -96,8 +112,10 @@ function createDefaultProfile(
     bio: '',
     avatarUrl: undefined,
     visibility: 'public',
+    hasCompletedOnboarding: false,
   };
 }
+
 
 function mapRowToProfile(
   row: ProfileRow
@@ -111,8 +129,11 @@ function mapRowToProfile(
     visibility: row.is_public
       ? 'public'
       : 'private',
+    hasCompletedOnboarding:
+      row.has_completed_onboarding,
   };
 }
+
 
 function createProfileInsert(
   profile: UserProfile
@@ -125,8 +146,11 @@ function createProfileInsert(
     avatar_url: profile.avatarUrl ?? null,
     is_public:
       profile.visibility === 'public',
+    has_completed_onboarding:
+      profile.hasCompletedOnboarding,
   };
 }
+
 
 function isLocalAvatarUri(
   avatarUrl?: string
@@ -134,6 +158,7 @@ function isLocalAvatarUri(
   if (!avatarUrl) {
     return false;
   }
+
 
   return (
     avatarUrl.startsWith('file://') ||
@@ -143,6 +168,7 @@ function isLocalAvatarUri(
   );
 }
 
+
 function addCacheVersion(
   publicUrl: string
 ) {
@@ -150,39 +176,54 @@ function addCacheVersion(
     ? '&'
     : '?';
 
+
   return `${publicUrl}${separator}v=${Date.now()}`;
 }
+
 
 export function ProfileProvider({
   children,
 }: ProfileProviderProps) {
   const { user } = useAuth();
 
+
   const [profile, setProfile] =
     useState<UserProfile>(EMPTY_PROFILE);
+
 
   const [loadedUserId, setLoadedUserId] =
     useState<string | null>(null);
 
+
   const userId = user?.id;
   const userEmail = user?.email;
 
+
+  const isProfileLoading =
+    Boolean(userId) &&
+    loadedUserId !== userId;
+
+
   useEffect(() => {
     let isCancelled = false;
+
 
     async function loadProfile() {
       setProfile(EMPTY_PROFILE);
       setLoadedUserId(null);
 
+
       if (!userId) {
         return;
       }
+
 
       const defaultProfile =
         createDefaultProfile(
           userId,
           userEmail
         );
+
 
       try {
         const {
@@ -197,28 +238,34 @@ export function ProfileProvider({
               display_name,
               bio,
               avatar_url,
-              is_public
+              is_public,
+              has_completed_onboarding
             `
           )
           .eq('id', userId)
           .maybeSingle<ProfileRow>();
 
+
         if (loadError) {
           throw loadError;
         }
 
+
         if (isCancelled) {
           return;
         }
+
 
         if (existingProfile) {
           setProfile(
             mapRowToProfile(existingProfile)
           );
 
+
           setLoadedUserId(userId);
           return;
         }
+
 
         const {
           data: createdProfile,
@@ -237,10 +284,12 @@ export function ProfileProvider({
               display_name,
               bio,
               avatar_url,
-              is_public
+              is_public,
+              has_completed_onboarding
             `
           )
           .single<ProfileRow>();
+
 
         if (
           createError?.code === '23505'
@@ -251,6 +300,7 @@ export function ProfileProvider({
               `${defaultProfile.username}-` +
               userId.slice(0, 6),
           };
+
 
           const {
             data: fallbackProfile,
@@ -269,18 +319,22 @@ export function ProfileProvider({
                 display_name,
                 bio,
                 avatar_url,
-                is_public
+                is_public,
+                has_completed_onboarding
               `
             )
             .single<ProfileRow>();
+
 
           if (fallbackError) {
             throw fallbackError;
           }
 
+
           if (isCancelled) {
             return;
           }
+
 
           setProfile(
             mapRowToProfile(
@@ -288,21 +342,26 @@ export function ProfileProvider({
             )
           );
 
+
           setLoadedUserId(userId);
           return;
         }
+
 
         if (createError) {
           throw createError;
         }
 
+
         if (isCancelled) {
           return;
         }
 
+
         setProfile(
           mapRowToProfile(createdProfile)
         );
+
 
         setLoadedUserId(userId);
       } catch (error) {
@@ -311,21 +370,26 @@ export function ProfileProvider({
           error
         );
 
+
         if (isCancelled) {
           return;
         }
+
 
         setProfile(defaultProfile);
         setLoadedUserId(userId);
       }
     }
 
+
     loadProfile();
+
 
     return () => {
       isCancelled = true;
     };
   }, [userId, userEmail]);
+
 
   async function updateProfile(
     updates: Partial<UserProfile>
@@ -337,7 +401,9 @@ export function ProfileProvider({
       return;
     }
 
+
     const previousProfile = profile;
+
 
     const optimisticProfile: UserProfile = {
       ...previousProfile,
@@ -345,11 +411,14 @@ export function ProfileProvider({
       id: userId,
     };
 
+
     setProfile(optimisticProfile);
+
 
     try {
       let persistedAvatarUrl =
         optimisticProfile.avatarUrl;
+
 
       if (
         updates.avatarUrl &&
@@ -361,16 +430,19 @@ export function ProfileProvider({
             localUri: updates.avatarUrl,
           });
 
+
         persistedAvatarUrl = addCacheVersion(
           uploadedAvatar.publicUrl
         );
       }
+
 
       const savedProfile: UserProfile = {
         ...optimisticProfile,
         avatarUrl:
           persistedAvatarUrl || undefined,
       };
+
 
       const { error } = await supabase
         .from('profiles')
@@ -384,14 +456,18 @@ export function ProfileProvider({
           is_public:
             savedProfile.visibility ===
             'public',
+          has_completed_onboarding:
+            savedProfile.hasCompletedOnboarding,
           updated_at:
             new Date().toISOString(),
         })
         .eq('id', userId);
 
+
       if (error) {
         throw error;
       }
+
 
       setProfile(savedProfile);
     } catch (error) {
@@ -400,19 +476,26 @@ export function ProfileProvider({
         error
       );
 
+
       setProfile(previousProfile);
       throw error;
     }
   }
 
+
   const contextValue =
     useMemo<ProfileContextValue>(
       () => ({
         profile,
+        isProfileLoading,
         updateProfile,
       }),
-      [profile]
+      [
+        profile,
+        isProfileLoading,
+      ]
     );
+
 
   return (
     <ProfileContext.Provider
@@ -422,16 +505,19 @@ export function ProfileProvider({
   );
 }
 
+
 export function useProfile() {
   const context = useContext(
     ProfileContext
   );
+
 
   if (!context) {
     throw new Error(
       'useProfile must be used inside a ProfileProvider'
     );
   }
+
 
   return context;
 }

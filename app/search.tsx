@@ -6,16 +6,13 @@ import SearchResultSkeleton from '@/components/search-result-skeleton';
 import { getCategoryArtworkRule } from '@/constants/category-artwork-rules';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { useAudioPreview } from '@/context/audio-preview-context';
+import { useOnboardingCollection } from '@/context/onboarding-collection-context';
 import { useTop3 } from '@/context/top3-context';
 import {
   getPopularSuggestionsByCategory,
   getSearchProvider,
 } from '@/providers/search';
-import {
-  getCachedTrailerAvailability,
-  getMovieTrailerUrl,
-  getTvShowTrailerUrl,
-} from '@/providers/tmdb';
+import { getMovieTrailerUrl } from '@/providers/tmdb';
 import { getPublishedPosts } from '@/services/post-service';
 import { Top3Item } from '@/types/top3-item';
 import { Ionicons } from '@expo/vector-icons';
@@ -212,7 +209,24 @@ function getYouTubeEmbedHtml(
 
 export default function SearchScreen() {
   const { rank } = useLocalSearchParams();
-  const { currentList, setItemAtRank } = useTop3();
+
+  const {
+    currentList,
+    setItemAtRank: setCurrentListItemAtRank,
+  } = useTop3();
+
+  const {
+    collection: onboardingCollection,
+    setItemAtRank: setOnboardingItemAtRank,
+  } = useOnboardingCollection();
+
+  const isOnboardingCollection =
+    onboardingCollection !== null;
+
+  const activeCollection =
+    isOnboardingCollection
+      ? onboardingCollection
+      : currentList;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Top3Item[]>([]);
@@ -229,17 +243,9 @@ export default function SearchScreen() {
     setActiveTrailerUrl,
   ] = useState<string | null>(null);
   const [
-    trailerAvailability,
-    setTrailerAvailability,
-  ] = useState<Record<string, boolean | undefined>>({});
-  const [
     activeTrailerTitle,
     setActiveTrailerTitle,
   ] = useState<string | null>(null);
-  const [
-    isTrailerLoaded,
-    setIsTrailerLoaded,
-  ] = useState(false);
   const [
     suggestionPool,
     setSuggestionPool,
@@ -276,18 +282,16 @@ export default function SearchScreen() {
     useRef(new Animated.Value(0)).current;
   const isShuffling = useRef(false);
   const latestSearchId = useRef(0);
-  const trailerCloseOpacity =
-    useRef(new Animated.Value(0)).current;
 
   const selectedCategory = TOP3_CATEGORIES.find(
-    (category) => category.id === currentList?.category
+    (category) => category.id === activeCollection?.category
   );
 
   const selectedType =
     selectedCategory?.types?.find(
       (type) =>
         type.name.toLowerCase() ===
-        currentList?.type?.toLowerCase()
+        activeCollection?.type?.toLowerCase()
     );
 
   const availableTopics =
@@ -299,7 +303,7 @@ export default function SearchScreen() {
     availableTopics.find(
       (topic) =>
         topic.name.toLowerCase() ===
-        currentList?.topic?.toLowerCase()
+        activeCollection?.topic?.toLowerCase()
     ) ??
     availableTopics.find(
       (topic) => topic.id === 'general'
@@ -309,7 +313,7 @@ export default function SearchScreen() {
 
   const artworkRule =
     getCategoryArtworkRule(
-      currentList?.category ?? ''
+      activeCollection?.category ?? ''
     );
 
   const topicName =
@@ -338,7 +342,7 @@ export default function SearchScreen() {
 
   const fallbackSuggestions =
     CATEGORY_SUGGESTIONS[
-      currentList?.category ?? ''
+      activeCollection?.category ?? ''
     ] ?? [];
 
   const suggestions =
@@ -361,8 +365,8 @@ export default function SearchScreen() {
     setSeenSuggestionIds([]);
 
     async function loadPopularSuggestions() {
-      const categoryId = currentList?.category;
-      const topic = currentList?.topic;
+      const categoryId = activeCollection?.category;
+      const topic = activeCollection?.topic;
 
       if (!categoryId) {
         setSuggestionPool([]);
@@ -561,8 +565,8 @@ export default function SearchScreen() {
       isMounted = false;
     };
   }, [
-    currentList?.category,
-    currentList?.topic,
+    activeCollection?.category,
+    activeCollection?.topic,
   ]);
 
   useEffect(() => {
@@ -578,7 +582,7 @@ export default function SearchScreen() {
         return;
       }
 
-      const categoryId = currentList?.category;
+      const categoryId = activeCollection?.category;
 
       if (!categoryId) {
         setSearchResults([]);
@@ -592,7 +596,7 @@ export default function SearchScreen() {
 
       const cacheKey = [
         categoryId,
-        currentList?.topic?.trim().toLowerCase() ??
+        activeCollection?.topic?.trim().toLowerCase() ??
           'general',
         trimmedQuery.toLowerCase(),
       ].join('|');
@@ -634,7 +638,7 @@ export default function SearchScreen() {
       try {
         const results = await searchProvider(
           trimmedQuery,
-          currentList?.topic
+          activeCollection?.topic
         );
 
         if (
@@ -684,8 +688,8 @@ export default function SearchScreen() {
   }, [
     canSearch,
     categoryName,
-    currentList?.category,
-    currentList?.topic,
+    activeCollection?.category,
+    activeCollection?.topic,
     trimmedQuery,
   ]);
 
@@ -701,98 +705,6 @@ export default function SearchScreen() {
       useNativeDriver: true,
     }).start();
   }, [fadeAnim, isLoading, searchResults]);
-
-
-  useEffect(() => {
-    const categoryId = currentList?.category;
-
-    if (
-      categoryId !== 'movies' &&
-      categoryId !== 'tv'
-    ) {
-      return;
-    }
-
-    const trailerCategoryId:
-      'movies' | 'tv' = categoryId;
-
-    let isMounted = true;
-
-    async function loadTrailerAvailability() {
-      const updates: Record<
-        string,
-        boolean | undefined
-      > = {};
-
-      await Promise.all(
-        searchResults.map(async (item) => {
-          const idMatch =
-            trailerCategoryId === 'movies'
-              ? /^movie-(\d+)$/.exec(item.id)
-              : /^tv-(\d+)$/.exec(item.id);
-
-          if (!idMatch) {
-            updates[item.id] = false;
-            return;
-          }
-
-          const itemId = Number(idMatch[1]);
-
-          if (!Number.isFinite(itemId)) {
-            updates[item.id] = false;
-            return;
-          }
-
-          const cachedAvailability =
-            getCachedTrailerAvailability(
-              trailerCategoryId,
-              itemId
-            );
-
-          if (cachedAvailability !== undefined) {
-            updates[item.id] =
-              cachedAvailability;
-            return;
-          }
-
-          try {
-            const trailerUrl =
-              trailerCategoryId === 'movies'
-                ? await getMovieTrailerUrl(itemId)
-                : await getTvShowTrailerUrl(itemId);
-
-            updates[item.id] =
-              Boolean(trailerUrl);
-          } catch (error) {
-            if (__DEV__) {
-              console.warn(
-                `Failed to check trailer availability for ${item.title}:`,
-                error
-              );
-            }
-
-            updates[item.id] = undefined;
-          }
-        })
-      );
-
-      if (isMounted) {
-        setTrailerAvailability((current) => ({
-          ...current,
-          ...updates,
-        }));
-      }
-    }
-
-    void loadTrailerAvailability();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [
-    currentList?.category,
-    searchResults,
-  ]);
 
 
   function refreshSuggestions() {
@@ -953,52 +865,27 @@ function chooseSuggestion(
   );
 }
 
-  async function playTrailer(item: Top3Item) {
-    const categoryId =
-      currentList?.category;
+  async function playMovieTrailer(item: Top3Item) {
+    const movieIdMatch = /^movie-(\d+)$/.exec(item.id);
 
-    if (
-      categoryId !== 'movies' &&
-      categoryId !== 'tv'
-    ) {
+    if (!movieIdMatch) {
       return;
     }
 
-    const itemIdMatch =
-      categoryId === 'movies'
-        ? /^movie-(\d+)$/.exec(item.id)
-        : /^tv-(\d+)$/.exec(item.id);
+    const movieId = Number(movieIdMatch[1]);
 
-    if (!itemIdMatch) {
-      return;
-    }
-
-    const itemId = Number(itemIdMatch[1]);
-
-    if (!Number.isFinite(itemId)) {
+    if (!Number.isFinite(movieId)) {
       return;
     }
 
     setLoadingTrailerItemId(item.id);
 
     try {
-      const trailerUrl =
-        categoryId === 'movies'
-          ? await getMovieTrailerUrl(itemId)
-          : await getTvShowTrailerUrl(itemId);
+      const trailerUrl = await getMovieTrailerUrl(movieId);
 
       if (!trailerUrl) {
-        setTrailerAvailability((current) => ({
-          ...current,
-          [item.id]: false,
-        }));
         return;
       }
-
-      setTrailerAvailability((current) => ({
-        ...current,
-        [item.id]: true,
-      }));
 
       const embedUrl =
         getYouTubeEmbedUrl(trailerUrl);
@@ -1008,8 +895,6 @@ function chooseSuggestion(
       }
 
       stopPreview();
-      setIsTrailerLoaded(false);
-      trailerCloseOpacity.setValue(0);
       setActiveTrailerTitle(item.title);
       setActiveTrailerUrl(embedUrl);
     } catch (error) {
@@ -1026,22 +911,7 @@ function chooseSuggestion(
     }
   }
 
-  function handleTrailerLoadEnd() {
-    setIsTrailerLoaded(true);
-
-    Animated.timing(
-      trailerCloseOpacity,
-      {
-        toValue: 1,
-        duration: 180,
-        useNativeDriver: true,
-      }
-    ).start();
-  }
-
   function closeTrailer() {
-    setIsTrailerLoaded(false);
-    trailerCloseOpacity.setValue(0);
     setActiveTrailerUrl(null);
     setActiveTrailerTitle(null);
   }
@@ -1054,22 +924,34 @@ function chooseSuggestion(
     }
 
     stopPreview();
-    setItemAtRank(selectedRank, item);
+
+    if (isOnboardingCollection) {
+      setOnboardingItemAtRank(
+        selectedRank,
+        item
+      );
+    } else {
+      setCurrentListItemAtRank(
+        selectedRank,
+        item
+      );
+    }
+
     router.back();
   }
 
 const searchTitle = selectedType
-  ? currentList?.topic
+  ? activeCollection?.topic
     ? `Search ${selectedType.name} • ${topicName}`
     : `Search ${selectedType.name}`
-  : currentList?.topic
+  : activeCollection?.topic
     ? `Search ${categoryName} • ${topicName}`
     : `Search ${categoryName}`;
 
   const searchPlaceholder =
     `Search for a ${searchItemName}...`;
 
-  const resultsTitle = currentList?.topic
+  const resultsTitle = activeCollection?.topic
     ? `${categoryName} • ${topicName} Results`
     : `${categoryName} Results`;
 
@@ -1321,9 +1203,8 @@ const searchTitle = selectedType
                         </Text>
                       </View>
 
-                      {(currentList?.category === 'movies' ||
-                        currentList?.category === 'tv') &&
-                      trailerAvailability[item.id] === true ? (
+                      {activeCollection?.category === 'movies' &&
+                      /^movie-\d+$/.test(item.id) ? (
                         <Pressable
                           style={({ pressed }) => [
                             styles.previewButton,
@@ -1332,11 +1213,9 @@ const searchTitle = selectedType
                           ]}
                           onPress={(event) => {
                             event.stopPropagation();
-                            void playTrailer(item);
+                            void playMovieTrailer(item);
                           }}
-                          disabled={
-                            loadingTrailerItemId === item.id
-                          }
+                          disabled={loadingTrailerItemId === item.id}
                           hitSlop={6}
                           accessibilityRole="button"
                           accessibilityLabel={`Play trailer for ${item.title}`}>
@@ -1410,41 +1289,30 @@ const searchTitle = selectedType
         <SafeAreaView
           style={styles.trailerModal}
           edges={['top', 'right', 'bottom', 'left']}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.trailerCloseButton,
+              pressed &&
+                styles.trailerCloseButtonPressed,
+            ]}
+            onPress={closeTrailer}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={
+              activeTrailerTitle
+                ? `Close trailer for ${activeTrailerTitle}`
+                : 'Close trailer'
+            }>
+            <Ionicons
+              name="close"
+              size={30}
+              color="#FFFFFF"
+            />
+          </Pressable>
+
           <View style={styles.trailerModalContent}>
             {activeTrailerUrl ? (
               <View style={styles.trailerPlayer}>
-                {isTrailerLoaded ? (
-                  <Animated.View
-                    style={[
-                      styles.trailerCloseButtonWrapper,
-                      {
-                        opacity:
-                          trailerCloseOpacity,
-                      },
-                    ]}>
-                    <Pressable
-                      style={({ pressed }) => [
-                        styles.trailerCloseButton,
-                        pressed &&
-                          styles.trailerCloseButtonPressed,
-                      ]}
-                      onPress={closeTrailer}
-                      hitSlop={10}
-                      accessibilityRole="button"
-                      accessibilityLabel={
-                        activeTrailerTitle
-                          ? `Close trailer for ${activeTrailerTitle}`
-                          : 'Close trailer'
-                      }>
-                      <Ionicons
-                        name="close"
-                        size={20}
-                        color="rgba(255, 255, 255, 0.88)"
-                      />
-                    </Pressable>
-                  </Animated.View>
-                ) : null}
-
                 <WebView
                   source={{
                     html:
@@ -1460,7 +1328,6 @@ const searchTitle = selectedType
                   javaScriptEnabled
                   domStorageEnabled
                   allowsFullscreenVideo
-                  onLoadEnd={handleTrailerLoadEnd}
                 />
               </View>
             ) : null}
@@ -1504,20 +1371,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
   },
 
-  trailerCloseButtonWrapper: {
-    position: 'absolute',
-    top: -52,
-    right: 18,
-    zIndex: 2,
-  },
-
   trailerCloseButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    position: 'absolute',
+    top: 30,
+    right: 14,
+    zIndex: 2,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
   },
 
   trailerCloseButtonPressed: {

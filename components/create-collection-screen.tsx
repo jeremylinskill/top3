@@ -21,9 +21,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+
 function normalizeValue(value?: string) {
   return value?.trim().toLowerCase() ?? '';
 }
+
 
 function collectionAlreadyExists(
   existingLists: Top3List[],
@@ -33,17 +35,22 @@ function collectionAlreadyExists(
   const normalizedCategoryId =
     normalizeValue(categoryId);
 
+
   const normalizedTopic =
     normalizeValue(topicName);
+
 
   return existingLists.some((list) => {
     return (
       Boolean(list.publishedAt) &&
-      normalizeValue(list.category) === normalizedCategoryId &&
-      normalizeValue(list.topic) === normalizedTopic
+      normalizeValue(list.category) ===
+        normalizedCategoryId &&
+      normalizeValue(list.topic) ===
+        normalizedTopic
     );
   });
 }
+
 
 function getInitialValuesForCategory(
   existingLists: Top3List[],
@@ -51,33 +58,41 @@ function getInitialValuesForCategory(
   requestedTopicId?: string
 ): CollectionFormValues {
   if (!requestedCategoryId) {
-    return getInitialCollectionFormValues(existingLists);
+    return getInitialCollectionFormValues(
+      existingLists
+    );
   }
+
 
   const category = TOP3_CATEGORIES.find(
-    (item) => item.id === requestedCategoryId
+    (item) =>
+      item.id === requestedCategoryId
   );
 
+
   if (!category) {
-    return getInitialCollectionFormValues(existingLists);
+    return getInitialCollectionFormValues(
+      existingLists
+    );
   }
 
+
   if (requestedTopicId) {
-    const requestedTopic = category.topics.find(
-      (topic) => topic.id === requestedTopicId
-    );
+    const requestedTopic =
+      category.topics.find(
+        (topic) =>
+          topic.id === requestedTopicId
+      );
+
 
     if (requestedTopic) {
-      const topicName =
-        requestedTopic.id === 'general'
-          ? undefined
-          : requestedTopic.name;
+      const alreadyExists =
+        collectionAlreadyExists(
+          existingLists,
+          category.id,
+          requestedTopic.name
+        );
 
-      const alreadyExists = collectionAlreadyExists(
-        existingLists,
-        category.id,
-        topicName
-      );
 
       if (!alreadyExists) {
         return {
@@ -93,52 +108,18 @@ function getInitialValuesForCategory(
     }
   }
 
-  const availableTopics = category.topics
-    .filter((topic) => {
-      const topicName =
-        topic.id === 'general'
-          ? undefined
-          : topic.name;
-
-      return !collectionAlreadyExists(
-        existingLists,
-        category.id,
-        topicName
-      );
-    })
-    .sort((first, second) => {
-      if (first.id === 'general') {
-        return -1;
-      }
-
-      if (second.id === 'general') {
-        return 1;
-      }
-
-      return first.name.localeCompare(second.name);
-    });
-
-  const firstTopic = availableTopics[0];
-
-  if (!firstTopic) {
-    return {
-      categoryId: category.id,
-      typeId: '',
-      topicId: '',
-      title: '',
-    };
-  }
 
   return {
     categoryId: category.id,
     typeId: '',
-    topicId: firstTopic.id,
+    topicId: '',
     title: buildCollectionTitle(
       category.id,
-      firstTopic.id
+      ''
     ),
   };
 }
+
 
 export default function CreateCollectionScreen() {
   const params =
@@ -147,15 +128,24 @@ export default function CreateCollectionScreen() {
       topicId?: string | string[];
     }>();
 
-  const categoryId = Array.isArray(params.categoryId)
+
+  const categoryId = Array.isArray(
+    params.categoryId
+  )
     ? params.categoryId[0]
     : params.categoryId;
 
-  const topicId = Array.isArray(params.topicId)
+
+  const topicId = Array.isArray(
+    params.topicId
+  )
     ? params.topicId[0]
     : params.topicId;
 
-  const { createList, lists } = useTop3();
+
+  const { createList, lists } =
+    useTop3();
+
 
   const [formValues, setFormValues] =
     useState(() =>
@@ -166,16 +156,20 @@ export default function CreateCollectionScreen() {
       )
     );
 
+
   const selectedCategory =
     TOP3_CATEGORIES.find(
       (item) =>
-        item.id === formValues.categoryId
+        item.id ===
+        formValues.categoryId
     );
+
 
   const requiresType =
     Boolean(
       selectedCategory?.types?.length
     );
+
 
   const canCreate =
     Boolean(formValues.categoryId) &&
@@ -185,63 +179,87 @@ export default function CreateCollectionScreen() {
       Boolean(formValues.typeId)
     );
 
+
   function createCollection() {
     if (!canCreate) {
       return;
     }
 
-    const category = TOP3_CATEGORIES.find(
-      (item) => item.id === formValues.categoryId
-    );
+
+    const category =
+      TOP3_CATEGORIES.find(
+        (item) =>
+          item.id ===
+          formValues.categoryId
+      );
+
 
     if (!category) {
       return;
     }
 
+
     const type = formValues.typeId
       ? category.types?.find(
-          (item) => item.id === formValues.typeId
+          (item) =>
+            item.id ===
+            formValues.typeId
         )
       : undefined;
+
 
     const topics =
       type?.topics ??
       category.topics;
 
+
     const topic = formValues.topicId
       ? topics.find(
-          (item) => item.id === formValues.topicId
+          (item) =>
+            item.id ===
+            formValues.topicId
         )?.name
       : undefined;
 
+
     createList({
-      category: formValues.categoryId,
+      category:
+        formValues.categoryId,
       type: type?.name,
-      topic:
-        formValues.topicId === 'general'
-          ? undefined
-          : topic,
+      topic,
       title: formValues.title,
     });
+
 
     router.push('/collection');
   }
 
+
   return (
     <SafeAreaView
       style={styles.container}
-      edges={['top', 'left', 'right']}>
+      edges={[
+        'top',
+        'left',
+        'right',
+      ]}>
       <ScreenHeader />
+
 
       <PageHeader
         title="Share your favorites"
         subtitle="What would you like to rank today?"
       />
 
+
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
+        contentContainerStyle={
+          styles.content
+        }
+        showsVerticalScrollIndicator={
+          false
+        }
         keyboardShouldPersistTaps="handled">
         <CollectionForm
           existingLists={lists}
@@ -249,6 +267,7 @@ export default function CreateCollectionScreen() {
           onChange={setFormValues}
         />
       </ScrollView>
+
 
       <View style={styles.bottomBar}>
         <PrimaryButton
@@ -261,21 +280,25 @@ export default function CreateCollectionScreen() {
   );
 }
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F8F8',
   },
 
+
   scrollView: {
     flex: 1,
     backgroundColor: '#F8F8F8',
   },
 
+
   content: {
     paddingHorizontal: 20,
     paddingBottom: 40,
   },
+
 
   bottomBar: {
     paddingHorizontal: 20,

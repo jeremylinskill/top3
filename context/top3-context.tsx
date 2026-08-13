@@ -29,6 +29,7 @@ type Top3ContextValue = {
   lists: Top3List[];
   posts: Post[];
   currentList: Top3List | null;
+  isCollectionsLoaded: boolean;
   createList: (input: CreateListInput) => string;
   selectList: (listId: string) => void;
   setItemAtRank: (
@@ -107,6 +108,10 @@ export function Top3Provider({
       ) ?? null,
     [lists, currentListId]
   );
+
+  const isCollectionsLoaded =
+    Boolean(user?.id) &&
+    loadedUserId === user?.id;
 
   useEffect(() => {
     let isCancelled = false;
@@ -603,6 +608,7 @@ export function Top3Provider({
         lists,
         posts,
         currentList,
+        isCollectionsLoaded,
         createList,
         selectList,
         setItemAtRank,

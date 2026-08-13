@@ -3,6 +3,7 @@ import GoogleAuthButton from '@/components/google-auth-button';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
 import { COLORS } from '@/constants/colors';
+import { useOnboardingCollection } from '@/context/onboarding-collection-context';
 import {
   signInWithApple,
   signInWithGoogle,
@@ -18,9 +19,33 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+
 export default function CreateAccountScreen() {
+  const {
+    collection: onboardingCollection,
+    isPendingPublish,
+    setAuthIntent,
+  } = useOnboardingCollection();
+
+
+  const isSavingOnboardingCollection =
+    Boolean(
+      onboardingCollection &&
+      isPendingPublish
+    );
+
+
+  function prepareSignUpIntent() {
+    if (isSavingOnboardingCollection) {
+      setAuthIntent('sign-up');
+    }
+  }
+
+
   async function handleAppleSignUp() {
     try {
+      prepareSignUpIntent();
+
       await signInWithApple();
       router.replace('/');
     } catch (error) {
@@ -33,10 +58,12 @@ export default function CreateAccountScreen() {
         return;
       }
 
+
       console.error(
         'Apple sign-in failed:',
         error
       );
+
 
       Alert.alert(
         'Unable to continue with Apple',
@@ -45,13 +72,18 @@ export default function CreateAccountScreen() {
     }
   }
 
+
   async function handleGoogleSignUp() {
     try {
+      prepareSignUpIntent();
+
       const result = await signInWithGoogle();
+
 
       if (!result) {
         return;
       }
+
 
       router.replace('/');
     } catch (error) {
@@ -66,10 +98,12 @@ export default function CreateAccountScreen() {
         return;
       }
 
+
       console.error(
         'Google sign-in failed:',
         error
       );
+
 
       Alert.alert(
         'Unable to continue with Google',
@@ -78,13 +112,28 @@ export default function CreateAccountScreen() {
     }
   }
 
+
   function handleEmailSignUp() {
+    prepareSignUpIntent();
     router.push('/sign-up-email');
   }
 
+
   function handleSignIn() {
+    if (isSavingOnboardingCollection) {
+      router.push({
+        pathname: '/sign-in',
+        params: {
+          source: 'onboarding-publish',
+        },
+      });
+      return;
+    }
+
+
     router.push('/sign-in');
   }
+
 
   return (
     <SafeAreaView
@@ -92,13 +141,15 @@ export default function CreateAccountScreen() {
       edges={['top', 'bottom']}>
       <ScreenHeader />
 
-    <PageHeader
-  title="Create your account"
-  subtitle={
-    'Start discovering people who share\nyour favorite things.'
-  }
-  align="center"
-/>
+
+      <PageHeader
+        title="Save your Top 3"
+        subtitle={
+          'Create your account to publish your collection\nand start building your taste profile.'
+        }
+        align="center"
+      />
+
 
       <View style={styles.content}>
         <View style={styles.options}>
@@ -116,29 +167,36 @@ export default function CreateAccountScreen() {
             onPress={handleAppleSignUp}
           />
 
+
           <GoogleAuthButton
             onPress={handleGoogleSignUp}
           />
 
+
           <View style={styles.divider}>
             <View style={styles.dividerLine} />
+
 
             <Text style={styles.dividerText}>
               OR
             </Text>
 
+
             <View style={styles.dividerLine} />
           </View>
+
 
           <EmailAuthButton
             onPress={handleEmailSignUp}
           />
         </View>
 
+
         <View style={styles.signInContainer}>
           <Text style={styles.signInPrompt}>
             Already have an account?
           </Text>
+
 
           <Pressable
             accessibilityRole="button"
@@ -159,11 +217,13 @@ export default function CreateAccountScreen() {
   );
 }
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
   },
+
 
   content: {
     flex: 1,
@@ -171,15 +231,18 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
 
+
   options: {
     marginTop: 28,
     gap: 14,
   },
 
+
   appleButton: {
     width: '100%',
     height: 54,
   },
+
 
   divider: {
     flexDirection: 'row',
@@ -187,11 +250,13 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
 
+
   dividerLine: {
     flex: 1,
     height: 1,
     backgroundColor: COLORS.border,
   },
+
 
   dividerText: {
     marginHorizontal: 14,
@@ -201,6 +266,7 @@ const styles = StyleSheet.create({
     color: COLORS.tertiaryText,
   },
 
+
   signInContainer: {
     marginTop: 'auto',
     flexDirection: 'row',
@@ -208,15 +274,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
+
   signInPrompt: {
     fontSize: 16,
     lineHeight: 22,
     color: COLORS.tertiaryText,
   },
 
+
   signInButton: {
     marginLeft: 5,
   },
+
 
   signInButtonText: {
     fontSize: 16,
@@ -224,6 +293,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1573DD',
   },
+
 
   pressed: {
     opacity: 0.6,

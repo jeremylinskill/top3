@@ -2,8 +2,14 @@ import PageHeader from '@/components/page-header';
 import PrimaryButton from '@/components/primary-button';
 import RankedItemCard from '@/components/ranked-item-card';
 import ScreenHeader from '@/components/screen-header';
-import { CategoryId } from '@/constants/top3-categories';
+import {
+  CategoryId,
+  TOP3_CATEGORIES,
+} from '@/constants/top3-categories';
+import { useOnboardingCollection } from '@/context/onboarding-collection-context';
+import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
+import { useAuth } from '@/hooks/use-auth';
 import { Top3Item } from '@/types/top3-item';
 import { formatRelativeTime } from '@/utils/format-relative-time';
 import { Ionicons } from '@expo/vector-icons';
@@ -36,10 +42,42 @@ const DRAG_INSTRUCTION_KEY =
 export default function CollectionScreen() {
   const {
     currentList,
-    setItems,
-    removeItemAtRank,
+    setItems: setCurrentListItems,
+    removeItemAtRank: removeCurrentListItemAtRank,
     publishCurrentList,
   } = useTop3();
+
+
+  const {
+    collection: onboardingCollection,
+    setItems: setOnboardingItems,
+    removeItemAtRank:
+      removeOnboardingItemAtRank,
+    markPendingPublish,
+    clearCollection:
+      clearOnboardingCollection,
+  } = useOnboardingCollection();
+
+
+  const {
+    profile,
+  } = useProfile();
+
+
+  const {
+    user,
+    isAuthenticated,
+  } = useAuth();
+
+
+  const isOnboardingCollection =
+    onboardingCollection !== null;
+
+
+  const activeCollection =
+    isOnboardingCollection
+      ? onboardingCollection
+      : currentList;
 
 
   const [activeIndex, setActiveIndex] =
@@ -47,7 +85,7 @@ export default function CollectionScreen() {
 
 
   const selectedItems =
-    currentList?.items.filter(
+    activeCollection?.items.filter(
       (item): item is Top3Item => item !== null
     ) ?? [];
 
@@ -111,7 +149,7 @@ export default function CollectionScreen() {
   }, [selectedItemCount]);
 
 
-  if (!currentList) {
+  if (!activeCollection) {
     return (
       <SafeAreaView style={styles.container}>
         <ScreenHeader showBackButton />
@@ -124,7 +162,14 @@ export default function CollectionScreen() {
 
 
   const category =
-    currentList.category as CategoryId;
+    activeCollection.category as CategoryId;
+
+
+  const categoryIcon =
+    TOP3_CATEGORIES.find(
+      (categoryItem) =>
+        categoryItem.id === category
+    )?.icon ?? '⭐';
 
 
   const draggableRows: DraggableRow[] =
@@ -134,38 +179,48 @@ export default function CollectionScreen() {
     }));
 
 
-  const hasSelections = currentList.items.some(
-  (item) => item !== null
-);
-
-
-const subtitle = (() => {
-  if (!hasSelections && !currentList.publishedAt) {
-    return 'Choose your three favorites.';
-  }
-
-
-  const relativeTime = formatRelativeTime(
-    currentList.publishedAt ??
-      currentList.updatedAt
+  const hasSelections = activeCollection.items.some(
+    (item) => item !== null
   );
 
 
-  const timeText = relativeTime?.replace(
-    /^Updated\s+/i,
-    ''
-  );
+  const subtitle = (() => {
+    if (isOnboardingCollection) {
+      return 'Choose your three favorites.';
+    }
 
 
-  if (!timeText) {
-    return undefined;
-  }
+    if (!currentList) {
+      return undefined;
+    }
 
 
-  return currentList.publishedAt
-    ? `Published ${timeText}`
-    : `Updated ${timeText}`;
-})();
+    if (!hasSelections && !currentList.publishedAt) {
+      return 'Choose your three favorites.';
+    }
+
+
+    const relativeTime = formatRelativeTime(
+      currentList.publishedAt ??
+        currentList.updatedAt
+    );
+
+
+    const timeText = relativeTime?.replace(
+      /^Updated\s+/i,
+      ''
+    );
+
+
+    if (!timeText) {
+      return undefined;
+    }
+
+
+    return currentList.publishedAt
+      ? `Published ${timeText}`
+      : `Updated ${timeText}`;
+  })();
 
 
   async function beginDrag(
@@ -214,8 +269,19 @@ const subtitle = (() => {
         {
           text: 'Remove',
           style: 'destructive',
-          onPress: () =>
-            removeItemAtRank(rank),
+          onPress: () => {
+            if (isOnboardingCollection) {
+              removeOnboardingItemAtRank(
+                rank
+              );
+              return;
+            }
+
+
+            removeCurrentListItemAtRank(
+              rank
+            );
+          },
         },
         {
           text: 'Cancel',
@@ -226,13 +292,35 @@ const subtitle = (() => {
   }
 
 
-  function publishCollection() {
+  async function publishCollection() {
     if (!canPublish) {
       return;
     }
 
 
+    if (isOnboardingCollection) {
+      markPendingPublish();
+
+      if (__DEV__ || !isAuthenticated) {
+        router.push('/create-account');
+      }
+
+      return;
+    }
+
+
     publishCurrentList();
+
+
+    if (
+      __DEV__ ||
+      !profile.hasCompletedOnboarding
+    ) {
+      router.replace('/onboarding-published');
+      return;
+    }
+
+
     router.replace('/(tabs)');
   }
 
@@ -357,7 +445,12 @@ const subtitle = (() => {
     ];
 
 
-    setItems(nextItems);
+    if (isOnboardingCollection) {
+      setOnboardingItems(nextItems);
+    } else {
+      setCurrentListItems(nextItems);
+    }
+
     setActiveIndex(null);
   }
 
@@ -368,7 +461,10 @@ const subtitle = (() => {
 
 
       <PageHeader
-  title={currentList.title.replace(/^Top 3\s+/i, '')}
+        title={`${categoryIcon} ${activeCollection.title.replace(
+          /^Top 3\s+/i,
+          ''
+        )}`}
         subtitle={subtitle ?? undefined}
       />
 

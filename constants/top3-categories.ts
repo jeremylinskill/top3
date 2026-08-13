@@ -98,7 +98,6 @@ export const TOP3_CATEGORIES: Top3Category[] = [
     icon: '📚',
     placeholderIcon: 'book-outline',
     topics: [
-      { id: 'general', name: 'General', icon: '📚', searchItemName: 'book' },
       { id: 'biography', name: 'Biography', icon: '👤', searchItemName: 'biography' },
       { id: 'business', name: 'Business', icon: '💼', searchItemName: 'business book' },
       { id: 'childrens', name: "Children's", icon: '🧸', searchItemName: "children's book" },
@@ -118,7 +117,6 @@ export const TOP3_CATEGORIES: Top3Category[] = [
     icon: '🎬',
     placeholderIcon: 'film-outline',
     topics: [
-      { id: 'general', name: 'General', icon: '🎬', searchItemName: 'movie' },
       { id: 'action', name: 'Action', icon: '💥', searchItemName: 'action movie', tmdbGenreId: 28 },
       { id: 'adventure', name: 'Adventure', icon: '🗺️', searchItemName: 'adventure movie', tmdbGenreId: 12 },
       { id: 'comedy', name: 'Comedy', icon: '😂', searchItemName: 'comedy movie', tmdbGenreId: 35 },
@@ -143,7 +141,6 @@ export const TOP3_CATEGORIES: Top3Category[] = [
     icon: '📺',
     placeholderIcon: 'tv-outline',
     topics: [
-      { id: 'general', name: 'General', icon: '📺', searchItemName: 'TV show' },
       { id: 'comedy', name: 'Comedy', icon: '😂', searchItemName: 'comedy TV show', tmdbGenreId: 35 },
       { id: 'crime', name: 'Crime', icon: '🕵️', searchItemName: 'crime TV show', tmdbGenreId: 80 },
       { id: 'documentary', name: 'Documentary', icon: '🎥', searchItemName: 'documentary TV show', tmdbGenreId: 99 },
@@ -160,7 +157,6 @@ export const TOP3_CATEGORIES: Top3Category[] = [
     icon: '🎮',
     placeholderIcon: 'game-controller-outline',
     topics: [
-      { id: 'general', name: 'General', icon: '🎮', searchItemName: 'video game' },
       { id: 'action', name: 'Action', icon: '⚔️', searchItemName: 'action game' },
       { id: 'adventure', name: 'Adventure', icon: '🗺️', searchItemName: 'adventure game' },
       { id: 'rpg', name: 'RPG', icon: '🧙', searchItemName: 'role-playing game' },

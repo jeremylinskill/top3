@@ -827,7 +827,7 @@ async function getPopularIgdbGames(
 export default {
   fetch: withSupabase(
     {
-      auth: 'user',
+      auth: 'publishable',
     },
     async (
       request: Request

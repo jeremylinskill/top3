@@ -4,6 +4,7 @@ import { CommentProvider } from '@/context/comment-context';
 import { FollowProvider } from '@/context/follow-context';
 import { LikeProvider } from '@/context/like-context';
 import { NotificationProvider } from '@/context/notification-context';
+import { OnboardingCollectionProvider } from '@/context/onboarding-collection-context';
 import { ProfileProvider } from '@/context/profile-context';
 import { Top3Provider } from '@/context/top3-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -19,76 +20,103 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import 'react-native-reanimated';
 
+
 export const unstable_settings = {
   anchor: '(tabs)',
 };
 
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <KeyboardProvider>
         <AuthProvider>
           <AuthGate>
-            <ProfileProvider>
-              <NotificationProvider>
-                <FollowProvider>
-                  <LikeProvider>
-                    <CommentProvider>
-                      <Top3Provider>
-                        <AudioPreviewProvider>
-                          <ThemeProvider
-                            value={
-                              colorScheme === 'dark'
-                                ? DarkTheme
-                                : DefaultTheme
-                            }>
-                            <Stack
-                              screenOptions={{
-                                headerShown: false,
-                              }}>
-                              <Stack.Screen name="index" />
+            <OnboardingCollectionProvider>
+              <ProfileProvider>
+                <NotificationProvider>
+                  <FollowProvider>
+                    <LikeProvider>
+                      <CommentProvider>
+                        <Top3Provider>
+                          <AudioPreviewProvider>
+                            <ThemeProvider
+                              value={
+                                colorScheme === 'dark'
+                                  ? DarkTheme
+                                  : DefaultTheme
+                              }>
+                              <Stack
+                                screenOptions={{
+                                  headerShown: false,
+                                }}>
+                                <Stack.Screen name="index" />
 
-                              <Stack.Screen name="welcome" />
 
-                              <Stack.Screen name="(tabs)" />
+                                <Stack.Screen name="welcome" />
 
-                              <Stack.Screen name="collections" />
 
-                              <Stack.Screen name="collection" />
+                                <Stack.Screen name="onboarding" />
 
-                              <Stack.Screen name="search" />
 
-                              <Stack.Screen name="edit-profile" />
+                                <Stack.Screen name="onboarding-published" />
 
-                              <Stack.Screen name="notifications" />
 
-                              <Stack.Screen name="public-profile" />
+                                <Stack.Screen name="onboarding-taste-match" />
 
-                              <Stack.Screen name="published-top3" />
 
-                              <Stack.Screen name="community-top3" />
+                                <Stack.Screen name="(tabs)" />
 
-                              <Stack.Screen name="overall-top3-topics" />
 
-                              <Stack.Screen
-                                name="modal"
-                                options={{
-                                  presentation: 'modal',
-                                }}
-                              />
-                            </Stack>
+                                <Stack.Screen name="collections" />
 
-                            <StatusBar style="auto" />
-                          </ThemeProvider>
-                        </AudioPreviewProvider>
-                      </Top3Provider>
-                    </CommentProvider>
-                  </LikeProvider>
-                </FollowProvider>
-              </NotificationProvider>
-            </ProfileProvider>
+
+                                <Stack.Screen name="collection" />
+
+
+                                <Stack.Screen name="search" />
+
+
+                                <Stack.Screen name="edit-profile" />
+
+
+                                <Stack.Screen name="notifications" />
+
+
+                                <Stack.Screen name="public-profile" />
+
+
+                                <Stack.Screen name="published-top3" />
+
+
+                                <Stack.Screen name="community-top3" />
+
+
+                                <Stack.Screen name="overall-top3-topics" />
+
+
+                                <Stack.Screen
+                                  name="modal"
+                                  options={{
+                                    presentation: 'modal',
+                                  }}
+                                />
+                              </Stack>
+
+
+                              <StatusBar style="auto" />
+                            </ThemeProvider>
+                          </AudioPreviewProvider>
+                        </Top3Provider>
+                      </CommentProvider>
+                    </LikeProvider>
+                  </FollowProvider>
+                </NotificationProvider>
+              </ProfileProvider>
+            </OnboardingCollectionProvider>
           </AuthGate>
         </AuthProvider>
       </KeyboardProvider>
