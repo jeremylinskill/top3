@@ -182,11 +182,11 @@ Search Architecture
 
 providers/search.ts defines the shared SearchProvider contract and maps application categories to provider implementations.
 
-Movies → providers/tmdb.ts
+Movies → providers/movies-and-tv.ts
 
-TV Shows → providers/tmdb.ts
+TV Shows → providers/movies-and-tv.ts
 
-Books → providers/google-books.ts with Open Library fallback
+Books → providers/books.ts → Google Books with Open Library fallback
 
 Video Games → providers/video-games.ts → lib/supabase/video-games.ts → Supabase Edge Function video-game-search → IGDB
 
@@ -224,7 +224,7 @@ Existing song collections created before previewUrl support do not automatically
 
 Movie & TV Trailer Architecture
 
-Movie and TV trailer discovery is provided by providers/tmdb.ts.
+Movie and TV trailer discovery is provided by providers/movies-and-tv.ts.
 
 TMDb video results are ranked to prefer official YouTube trailers, then other YouTube trailers, then YouTube teasers.
 
@@ -770,7 +770,7 @@ Added the refined subtle circular close control positioned above the trailer pla
 
 Delayed and faded in the close control after the trailer WebView finishes loading.
 
-Added Movie / TV trailer URL caching in providers/tmdb.ts.
+Added Movie / TV trailer URL caching in providers/movies-and-tv.ts.
 
 Added getCachedTrailerAvailability() for read-only trailer availability state.
 
@@ -1284,7 +1284,7 @@ Remember that Top3Item supports previewUrl for Music items. Songs use their trac
 
 Remember that Search, RankedItemCard, Top3Card, Overall ranking rows in Category Feed, and Community / Overall Top3 ranking rows use the shared preview controller; do not implement separate Expo Audio players in those surfaces.
 
-Remember that Movie and TV trailer lookup is owned by providers/tmdb.ts. Trailer URLs and unavailable results are cached in memory, and the UI pre-checks availability before displaying Movie / TV play controls.
+Remember that Movie and TV trailer lookup is owned by providers/movies-and-tv.ts. Trailer URLs and unavailable results are cached in memory, and the UI pre-checks availability before displaying Movie / TV play controls.
 
 Remember that Movie / TV trailer playback is embedded in Top3 through react-native-webview; do not revert trailer controls to Linking.openURL() or external YouTube-app playback.
 

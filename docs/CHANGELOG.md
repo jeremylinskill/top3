@@ -8,7 +8,7 @@ v2.2 — Onboarding Authentication & Video Games Search Architecture
 
 Released: August 13, 2026
 
-This release refines the signed-out onboarding and returning-user authentication flow, enables Video Games search during onboarding, and completes the application-facing rename of the IGDB integration to generic Video Games terminology.
+This release refines the signed-out onboarding and returning-user authentication flow, enables Video Games search during onboarding, and standardizes the application-facing search-provider layer around Top3 content domains rather than external API names.
 
 Added
 
@@ -54,9 +54,33 @@ Updated the mobile client to invoke video-game-search.
 
 Kept IGDB-specific terminology inside the provider integration where it accurately describes the external service.
 
+Provider Architecture Naming
+
+Renamed providers/google-books.ts to providers/books.ts.
+
+Renamed providers/tmdb.ts to providers/movies-and-tv.ts.
+
+Confirmed providers/music.ts already uses the correct application-facing domain name while Apple Music-specific communication remains in lib/supabase/apple-music.ts and the apple-music-search Edge Function.
+
+Standardized the application-facing provider layer around content domains:
+
+providers/books.ts
+
+providers/movies-and-tv.ts
+
+providers/music.ts
+
+providers/video-games.ts
+
+Kept Google Books, Open Library, TMDB, Apple Music, IGDB, and Twitch terminology inside the integration code where those names accurately describe the underlying external services.
+
+This keeps the application architecture independent of the specific metadata provider supplying each content domain.
+
 Removed
 
 Removed the old deployed igdb-search Supabase Edge Function after verifying video-game-search.
+
+Removed the unused providers/musicbrainz.ts implementation after confirming it had no active runtime imports or references.
 
 Verified
 
@@ -72,11 +96,15 @@ Verified npm run typecheck passes after the client-side rename and onboarding ch
 
 Verified the Video Games Edge Function passes Deno validation.
 
+Verified npm run typecheck passes after the Books and Movies / TV provider renames and removal of the unused MusicBrainz provider.
+
 Documentation
 
 Updated CURRENT_STATE.md to reflect the current Video Games integration architecture and signed-out onboarding support.
 
 Updated TECHNICAL_ROADMAP.md to use current Video Games naming and architecture.
+
+Updated ARCHITECTURE.md to document the domain-oriented provider abstraction and remove obsolete RAWG and MusicBrainz references from the current architecture.
 
 Preserved the historical v1.9 IGDB entries below because they accurately record the architecture and filenames that existed at that milestone.
 

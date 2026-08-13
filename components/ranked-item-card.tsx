@@ -10,7 +10,7 @@ import {
   getCachedTrailerAvailability,
   getMovieTrailerUrl,
   getTvShowTrailerUrl,
-} from '@/providers/tmdb';
+} from '@/providers/movies-and-tv';
 import { Top3Item } from '@/types/top3-item';
 import { Ionicons } from '@expo/vector-icons';
 import {

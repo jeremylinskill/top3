@@ -11,7 +11,7 @@ import {
   getCachedTrailerAvailability,
   getMovieTrailerUrl,
   getTvShowTrailerUrl,
-} from '@/providers/tmdb';
+} from '@/providers/movies-and-tv';
 import { getPublishedPosts } from '@/services/post-service';
 import { Post } from '@/types/post';
 import {

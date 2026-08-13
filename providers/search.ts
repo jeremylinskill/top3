@@ -7,7 +7,7 @@ import {
 import {
   getPopularBooks,
   searchBooks,
-} from './google-books';
+} from './books';
 import {
   getPopularAlbums,
   getPopularArtists,
@@ -21,7 +21,7 @@ import {
   getPopularTvShows,
   searchMovies,
   searchTvShows,
-} from './tmdb';
+} from './movies-and-tv';
 
 export type SearchProvider = (
   query: string,

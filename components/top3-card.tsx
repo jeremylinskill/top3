@@ -12,7 +12,7 @@ import {
   getCachedTrailerAvailability,
   getMovieTrailerUrl,
   getTvShowTrailerUrl,
-} from '@/providers/tmdb';
+} from '@/providers/movies-and-tv';
 import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
 import { formatRelativeTime } from '@/utils/format-relative-time';

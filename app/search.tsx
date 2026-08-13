@@ -12,7 +12,7 @@ import {
   getPopularSuggestionsByCategory,
   getSearchProvider,
 } from '@/providers/search';
-import { getMovieTrailerUrl } from '@/providers/tmdb';
+import { getMovieTrailerUrl } from '@/providers/movies-and-tv';
 import { getPublishedPosts } from '@/services/post-service';
 import { Top3Item } from '@/types/top3-item';
 import { Ionicons } from '@expo/vector-icons';

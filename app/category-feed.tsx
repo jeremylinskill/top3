@@ -15,7 +15,7 @@ import {
   getCachedTrailerAvailability,
   getMovieTrailerUrl,
   getTvShowTrailerUrl,
-} from '@/providers/tmdb';
+} from '@/providers/movies-and-tv';
 import { getPublicProfilesByIds } from '@/lib/supabase/profiles';
 import {
   getPublishedPosts
