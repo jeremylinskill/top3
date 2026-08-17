@@ -1,6 +1,7 @@
 import CommentsSheet from '@/components/comments-sheet';
 import ProfileScreenContent from '@/components/profile-screen-content';
 import ScreenHeader from '@/components/screen-header';
+import { useBlock } from '@/context/block-context';
 import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
 import { useAuth } from '@/hooks/use-auth';
@@ -13,16 +14,17 @@ import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
 import { router } from 'expo-router';
 import {
-    useEffect,
-    useMemo,
-    useState,
+  useEffect,
+  useMemo,
+  useState,
 } from 'react';
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -74,6 +76,12 @@ export default function ProfileScreen({
 }: ProfileScreenProps) {
   const { isAuthenticated } = useAuth();
   const { profile } = useProfile();
+
+  const {
+    isBlocked,
+    blockUser,
+    unblockUser,
+  } = useBlock();
 
   const {
     isFollowing,
@@ -455,6 +463,149 @@ export default function ProfileScreen({
     router.push('/settings');
   }
 
+  async function handleBlockUser() {
+    if (
+      !viewedUserId ||
+      isCurrentUser
+    ) {
+      return;
+    }
+
+    try {
+      await blockUser(viewedUserId);
+
+      Alert.alert(
+        'User blocked',
+        `${viewedUser.displayName} has been blocked.`
+      );
+    } catch (error) {
+      console.error(
+        'Failed to block user:',
+        error
+      );
+
+      Alert.alert(
+        'Unable to block user',
+        'Please try again.'
+      );
+    }
+  }
+
+  async function handleUnblockUser() {
+    if (
+      !viewedUserId ||
+      isCurrentUser
+    ) {
+      return;
+    }
+
+    try {
+      await unblockUser(viewedUserId);
+
+      Alert.alert(
+        'User unblocked',
+        `${viewedUser.displayName} has been unblocked.`
+      );
+    } catch (error) {
+      console.error(
+        'Failed to unblock user:',
+        error
+      );
+
+      Alert.alert(
+        'Unable to unblock user',
+        'Please try again.'
+      );
+    }
+  }
+
+  function confirmBlockUser() {
+    if (
+      !viewedUserId ||
+      isCurrentUser
+    ) {
+      return;
+    }
+
+    Alert.alert(
+      `Block ${viewedUser.displayName}?`,
+      'They will no longer be connected to you through following, and you can unblock them later.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Block',
+          style: 'destructive',
+          onPress: () => {
+            void handleBlockUser();
+          },
+        },
+      ]
+    );
+  }
+
+  function confirmUnblockUser() {
+    if (
+      !viewedUserId ||
+      isCurrentUser
+    ) {
+      return;
+    }
+
+    Alert.alert(
+      `Unblock ${viewedUser.displayName}?`,
+      'You can follow each other again after unblocking.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Unblock',
+          onPress: () => {
+            void handleUnblockUser();
+          },
+        },
+      ]
+    );
+  }
+
+  function openProfileMenu() {
+    if (
+      !viewedUserId ||
+      isCurrentUser
+    ) {
+      return;
+    }
+
+    const userIsBlocked =
+      isBlocked(viewedUserId);
+
+    Alert.alert(
+      'Profile actions',
+      undefined,
+      [
+        {
+          text: userIsBlocked
+            ? 'Unblock User'
+            : 'Block User',
+          style: userIsBlocked
+            ? 'default'
+            : 'destructive',
+          onPress: userIsBlocked
+            ? confirmUnblockUser
+            : confirmBlockUser,
+        },
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+      ]
+    );
+  }
+
   function openFollowing() {
     router.push({
       pathname: '/social',
@@ -590,16 +741,20 @@ export default function ProfileScreen({
       <ScreenHeader
         showBackButton={showBackButton}
         rightIconName={
-  isCurrentUser
-    ? 'settings-outline'
-    : undefined
-}
+          isCurrentUser
+            ? 'settings-outline'
+            : 'ellipsis-horizontal'
+        }
         onRightPress={
           isCurrentUser
             ? openSettings
-            : undefined
+            : openProfileMenu
         }
-        rightAccessibilityLabel="Open settings"
+        rightAccessibilityLabel={
+          isCurrentUser
+            ? 'Open settings'
+            : 'Open profile actions'
+        }
       />
 
       <ScrollView
