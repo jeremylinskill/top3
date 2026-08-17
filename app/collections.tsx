@@ -3,11 +3,11 @@ import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { useTop3 } from '@/context/top3-context';
 import { router } from 'expo-router';
 import {
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -133,7 +133,7 @@ export default function CollectionsScreen() {
           style={styles.createButton}
           onPress={() => router.push('/create-collection')}>
           <Text style={styles.createButtonText}>
-            ＋ Create Collection
+            ＋ Create List
           </Text>
         </Pressable>
       </View>

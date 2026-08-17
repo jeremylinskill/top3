@@ -166,7 +166,7 @@ export default function CreateCollectionScreen() {
                     }
                     accessibilityRole="button"
                     accessibilityLabel={
-                      `Create a Top 3 ${category.name} collection`
+                      `Create a Top 3 ${category.name} list`
                     }>
                     <Text
                       style={

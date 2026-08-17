@@ -404,7 +404,7 @@ export default function OnboardingTasteMatchScreen() {
                 {activeCollection?.title?.replace(
                   /^Top 3\s+/i,
                   ''
-                ) || 'Your collection'}
+                ) || 'Your list'}
               </Text>
             </View>
 

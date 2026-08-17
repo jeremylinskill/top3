@@ -237,7 +237,7 @@ export default function CollectionScreen() {
         <ScreenHeader showBackButton />
 
 
-        <PageHeader title="No Collection Selected" />
+        <PageHeader title="No List Selected" />
       </SafeAreaView>
     );
   }
@@ -445,7 +445,7 @@ function openSearch(rank: number) {
       );
 
       Alert.alert(
-        'Could not delete collection',
+        'Could not delete list',
         'Please try again.'
       );
     } finally {
@@ -465,7 +465,7 @@ function openSearch(rank: number) {
 
     Alert.alert(
       'Delete this Top 3?',
-      'This will permanently delete this collection and remove it from your profile, feed, and rankings.',
+      'This will permanently delete this list and remove it from your profile, feed, and rankings.',
       [
         {
           text: 'Cancel',
@@ -676,14 +676,14 @@ function openSearch(rank: number) {
             onPress={confirmDeleteCollection}
             disabled={isDeleting}
             accessibilityRole="button"
-            accessibilityLabel="Delete collection"
+            accessibilityLabel="Delete list"
             accessibilityState={{
               disabled: isDeleting,
             }}>
             <Text style={styles.deleteButtonText}>
               {isDeleting
                 ? 'Deleting…'
-                : 'Delete Collection'}
+                : 'Delete List'}
             </Text>
           </Pressable>
         ) : null}

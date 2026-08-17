@@ -154,7 +154,7 @@ export default function CreateAccountScreen() {
       <PageHeader
         title="Save your Top 3"
         subtitle={
-          'Create your account to publish your collection\nand start building your taste profile.'
+          'Create your account to publish your list\nand start building your taste profile.'
         }
         align="center"
       />

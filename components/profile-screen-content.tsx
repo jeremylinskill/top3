@@ -241,7 +241,7 @@ export default function ProfileScreenContent({
             </Text>
 
             <Text style={styles.emptyStateText}>
-              This person's collections are only visible to approved followers.
+              This person's lists are only visible to approved followers.
             </Text>
           </View>
         ) : publishedPosts.length === 0 ? (

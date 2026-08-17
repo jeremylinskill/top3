@@ -1286,11 +1286,11 @@ export default function DiscoverScreen() {
           <SearchInput
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholder="Search People and Collections"
+            placeholder="Search People and Lists"
             onFocus={() => setIsSearchFocused(true)}
             onBlur={() => setIsSearchFocused(false)}
             onSubmitEditing={submitSearch}
-            accessibilityLabel="Search People and Collections"
+            accessibilityLabel="Search People and Lists"
             onClear={clearSearch}
           />
 
@@ -1307,7 +1307,7 @@ export default function DiscoverScreen() {
                   },
                   {
                     value: 'trending',
-                    label: 'Collections',
+                    label: 'Lists',
                     accessibilityLabel:
                       'Show trending categories and topics',
                   },
@@ -1554,7 +1554,7 @@ export default function DiscoverScreen() {
             {matchingCollections.length > 0 ? (
               <View style={styles.resultSection}>
                 <Text style={styles.sectionTitle}>
-                  Collections containing “
+                  Lists containing “
                   {searchQuery.trim()}”
                 </Text>
 

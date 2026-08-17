@@ -35,12 +35,12 @@ function getNotificationMessage(
     case 'like':
       return collectionTitle
         ? `liked your ${collectionTitle}.`
-        : 'liked your collection.';
+        : 'liked your list.';
 
     case 'comment':
       return collectionTitle
         ? `commented on your ${collectionTitle}.`
-        : 'commented on your collection.';
+        : 'commented on your list.';
 
     case 'follow':
       return 'started following you.';
@@ -551,7 +551,7 @@ export default function NotificationsScreen() {
                                   }>
                                   {notification.collection
                                     ?.title ??
-                                    'collection'}
+                                    'list'}
                                 </Text>
                                 .
                               </>
@@ -565,7 +565,7 @@ export default function NotificationsScreen() {
                                   }>
                                   {notification.collection
                                     ?.title ??
-                                    'collection'}
+                                    'list'}
                                 </Text>
                                 .
                               </>

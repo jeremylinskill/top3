@@ -104,7 +104,7 @@ export default function SettingsScreen() {
 
     Alert.alert(
       'Delete your account?',
-      'This permanently deletes your Top 3 account, profile, collections, comments, likes, follows, and other account data. This cannot be undone.',
+      'This permanently deletes your Top 3 account, profile, lists, comments, likes, follows, and other account data. This cannot be undone.',
       [
         {
           text: 'Cancel',
@@ -239,7 +239,7 @@ router.replace('/onboarding');
                 </Text>
 
                 <Text style={styles.rowSubtitle}>
-                  Control who can view your collections
+                  Control who can view your lists
                 </Text>
               </View>
 

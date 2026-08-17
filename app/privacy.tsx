@@ -7,13 +7,13 @@ import { TYPOGRAPHY } from '@/constants/typography';
 import { useProfile } from '@/context/profile-context';
 import { useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -166,7 +166,7 @@ export default function PrivacyScreen() {
 
       <PageHeader
         title="Privacy"
-        subtitle="Choose who can see your collections."
+        subtitle="Choose who can see your lists."
       />
 
       <ScrollView
@@ -186,7 +186,7 @@ export default function PrivacyScreen() {
                 selectedVisibility
               }
               title="Public account"
-              description="Anyone can view your profile and published collections."
+              description="Anyone can view your profile and published lists."
               disabled={isSaving}
               onSelect={updateVisibility}
             />
@@ -197,11 +197,11 @@ export default function PrivacyScreen() {
                 selectedVisibility
               }
               title="Private account"
-              description="Only approved followers can view your published collections."
+              description="Only approved followers can view your published lists."
               details={[
                 'People must request to follow you.',
                 'You can approve or decline each request.',
-                'Your collections remain hidden from non-followers.',
+                'Your lists remain hidden from non-followers.',
                 'Your profile can still appear in search.',
               ]}
               disabled={isSaving}
