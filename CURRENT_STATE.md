@@ -1,13 +1,13 @@
 CURRENT_STATE.md
 
-Project: Top3Version: 2.2Status: Active DevelopmentLast Updated: August
+Project: Top3Version: 2.3Status: Active DevelopmentLast Updated: August
 17, 2026Current Branch: main
 
 Last Verified Commit
 
-85d2794
+db8b367
 
-Complete onboarding and account flow
+Add forgot password flow
 
 Dashboard
 
@@ -166,6 +166,10 @@ Sign In provider selection
 Email Sign Up
 
 Email Sign In
+
+Forgot Password
+
+Reset Password
 
 Check Email
 
@@ -417,7 +421,9 @@ Callback↓Pending list published↓Published / Lists → Overall
 onboarding↓Taste Match onboarding↓Feed
 
 Already have an account?↓Sign In├─ Continue with Apple├─ Continue with
-Google└─ Continue with Email↓Email Sign In
+Google└─ Continue with Email↓Email Sign In├─ Sign In└─ Forgot Password↓Send
+Reset Link↓Check Email / Open Email App↓Recovery Deep Link↓Reset
+Password↓Return to Sign In
 
 The obsolete standalone Welcome route and WelcomeScreen component have
 been removed. app/onboarding.tsx is the entry experience for new users.
@@ -444,6 +450,33 @@ Onboarding authentication intent distinguishes new-account creation from
 returning-user sign in so an existing user does not accidentally
 continue through new-user onboarding.
 
+Password Recovery
+
+Email password recovery is implemented through the shared authentication
+service and Supabase Auth.
+
+Email Sign In includes a Forgot password? action that opens
+app/(auth)/forgot-password.tsx.
+
+The Forgot Password screen validates the email address, requests a Supabase
+password-reset email, and then presents a Check your email state with an Open
+Email App action using the same message:// pattern as the onboarding
+confirmation flow.
+
+Password-reset deep links return to Top3 and establish the recovery session
+before app/(auth)/reset-password.tsx allows the user to choose and confirm a
+new password.
+
+The reset form validates password length and matching confirmation values.
+If Supabase reports that the submitted password is the same as the current
+password, Top3 presents a friendly Choose a different password alert without
+triggering the Expo development error overlay.
+
+The recovery flow has been verified end-to-end on device, including changing
+to a new password, signing in with the changed password, reusing a previously
+used password in a later reset, and rejecting only the password that is
+current at the time of the reset.
+
 Email Authentication
 
 Status: ✅ Complete
@@ -457,6 +490,18 @@ Email sign in
 Email verification flow
 
 Email confirmation deep-link callback
+
+Forgot-password entry from Email Sign In
+
+Password-reset email request through Supabase Auth
+
+Open Email App action after requesting a reset
+
+Password-recovery deep-link session handling
+
+Dedicated Reset Password screen
+
+Friendly same-password validation without a development error overlay
 
 Pending onboarding-list publishing after verification
 
@@ -908,6 +953,20 @@ Onboarding & account lifecycle
 
 ✅ Local onboarding reset after account deletion
 
+Authentication & account recovery
+
+✅ Forgot-password entry from Email Sign In
+
+✅ Supabase password-reset email request
+
+✅ Open Email App recovery handoff
+
+✅ Password-recovery deep-link session handling
+
+✅ Dedicated Reset Password flow
+
+✅ Friendly same-password validation
+
 Shared Supabase-backed data
 
 ✅ Authentication
@@ -937,6 +996,35 @@ Real community experiences
 ✅ Taste Match
 
 Recent Milestones
+
+August 17, 2026
+
+Password Recovery
+
+Added Forgot password? to Email Sign In.
+
+Added a dedicated Forgot Password screen that validates the user's email
+address and requests a Supabase password-reset email.
+
+Added a Check your email success state with an Open Email App action that
+reuses the existing message:// email-client pattern.
+
+Added a dedicated Reset Password screen that establishes the recovery
+session from the password-reset deep link and lets the user choose and
+confirm a new password.
+
+Added friendly handling when the submitted password matches the account's
+current password so the expected validation case does not trigger the Expo
+development error overlay.
+
+Verified the complete forgot-password flow end-to-end on device, including
+successful password changes, sign-in with the changed password, reuse of a
+previously used password in a later reset, and clean same-password
+validation.
+
+Verified npm run typecheck passes.
+
+Committed and pushed checkpoint db8b367 --- Add forgot password flow.
 
 August 17, 2026
 
@@ -1704,6 +1792,12 @@ authentication.
 Remember that email confirmation returns through
 app/(auth)/auth-callback.tsx and app/index.tsx completes any pending
 onboarding publish before routing to onboarding-published.
+
+Remember that Email Sign In includes a complete forgot-password flow.
+app/(auth)/forgot-password.tsx requests the Supabase reset email and offers
+Open Email App; app/(auth)/reset-password.tsx establishes the recovery
+session and updates the password. Expected same-password validation is shown
+as a friendly alert rather than a development error.
 
 Remember that account deletion is implemented through
 lib/supabase/account.ts and the delete-account Supabase Edge Function,

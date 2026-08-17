@@ -1,8 +1,8 @@
 Top3 Product Roadmap
 
-Version: 2.1Status: Active DevelopmentOwner: Jeremy LinskillLast
-Updated: August 17, 2026Last Verified Commit: 85d2794 --- Complete
-onboarding and account flow
+Version: 2.2Status: Active DevelopmentOwner: Jeremy LinskillLast
+Updated: August 17, 2026Last Verified Commit: db8b367 --- Add forgot
+password flow
 
 Purpose
 
@@ -46,7 +46,8 @@ Authentication, profiles, list persistence, social interactions, private
 accounts, follow requests, notifications, realtime synchronization,
 Settings, search providers, Feed, Discover, Taste Match, Apple Music
 previews, Movie / TV trailer playback, and the redesigned first-list
-onboarding and account lifecycle provide a stable foundation for the
+onboarding and account lifecycle, including email password recovery, provide
+a stable foundation for the
 next stage of the product.
 
 Recent work has begun shifting Top3 from simply surfacing community
@@ -63,7 +64,7 @@ Foundation Completed
 • Signed-out first-list onboarding• Lists → Overall onboarding
 education• Taste Match onboarding education• Account deletion• Email
 confirmation callback and pending-list publishing• Email authentication•
-Sign in with Apple• Sign in with Google• Persistent Supabase sessions•
+Forgot-password and password-reset recovery• Sign in with Apple• Sign in with Google• Persistent Supabase sessions•
 Stable authentication initialization• User profiles• Profile avatars•
 Profile editing• Privacy settings• Public and private accounts• Follow
 requests• Following / Followers• List persistence• Shared Likes• Shared
@@ -396,6 +397,20 @@ The long-term goal is not to maximize content creation or passive
 engagement, but to create meaningful connections through shared taste.
 
 Revision History
+
+Version 2.2 --- August 17, 2026
+
+Updated the roadmap to reflect the completed email password-recovery flow
+through commit db8b367.
+
+Key changes:
+
+• Recorded Forgot Password and Reset Password as completed authentication
+foundations.• Recorded Supabase password-reset email delivery and recovery
+deep-link handling as complete.• Recorded the Open Email App handoff as part
+of the recovery experience.• Preserved Discovery & Personalization as the
+active product milestone rather than creating a separate authentication
+initiative.
 
 Version 2.1 --- August 17, 2026
 

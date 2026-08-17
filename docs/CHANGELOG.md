@@ -6,6 +6,93 @@ Unlike CURRENT_STATE.md, which describes the application's current
 implementation, this document captures the major architectural and
 product milestones that shaped the application over time.
 
+v2.4 --- Password Recovery
+
+Released: August 17, 2026
+
+This release completes Top3's email password-recovery experience. Returning
+users can request a password-reset email from Email Sign In, open their email
+client directly from Top3, return through the recovery deep link, choose a
+new password, and sign back in.
+
+Added
+
+Forgot Password
+
+Added a Forgot password? action to the Email Sign In form.
+
+Added app/(auth)/forgot-password.tsx.
+
+Added email validation and Supabase password-reset email requests.
+
+Added a Check your email success state after the reset request is sent.
+
+Added an Open Email App action using the same message:// email-client pattern
+as the onboarding confirmation flow.
+
+Reset Password
+
+Added app/(auth)/reset-password.tsx.
+
+Added password-recovery deep-link session handling.
+
+Added new-password and confirmation fields with password visibility controls.
+
+Added password-length and matching-password validation.
+
+Added successful password update through Supabase Auth.
+
+Improved
+
+Password Recovery Errors
+
+Added friendly handling when the submitted new password matches the account's
+current password.
+
+Expected same-password validation now shows Choose a different password
+instead of triggering the Expo development error overlay.
+
+Recovery Testing
+
+Confirmed that Supabase permits reuse of a previously used password in a
+later reset; only the account's current password is rejected as the new
+password during that reset.
+
+Verified
+
+Verified reset-email delivery.
+
+Verified Open Email App from the Forgot Password confirmation state.
+
+Verified the password-reset deep link returns to Top3.
+
+Verified the recovery session is established.
+
+Verified a new password can be set successfully.
+
+Verified sign-in succeeds with the changed password.
+
+Verified a previously used password can be used again in a later recovery
+flow.
+
+Verified attempting to reset to the current password produces the friendly
+Choose a different password alert with no Expo red error overlay.
+
+Verified npm run typecheck passes.
+
+Checkpoint
+
+Committed and pushed db8b367 --- Add forgot password flow.
+
+Documentation
+
+Updated CURRENT_STATE.md to version 2.3.
+
+Updated ROADMAP.md to version 2.2.
+
+Recorded password recovery as a completed authentication foundation while
+preserving Discovery & Personalization as the active roadmap milestone.
+
 v2.3 --- Onboarding & Account Flow
 
 Released: August 17, 2026
