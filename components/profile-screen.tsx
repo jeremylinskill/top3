@@ -1,3 +1,6 @@
+import ActionSheet, {
+  ActionSheetAction,
+} from '@/components/action-sheet';
 import CommentsSheet from '@/components/comments-sheet';
 import ProfileScreenContent from '@/components/profile-screen-content';
 import ScreenHeader from '@/components/screen-header';
@@ -8,6 +11,10 @@ import { useAuth } from '@/hooks/use-auth';
 import type { FollowCounts } from '@/lib/supabase/follows';
 import { getFollowCounts } from '@/lib/supabase/follows';
 import { getProfileById } from '@/lib/supabase/profiles';
+import {
+  createUserReport,
+  ReportReason,
+} from '@/lib/supabase/reports';
 import { getPublishedPostsByUser } from '@/services/post-service';
 import { getTasteRecommendationForUser } from '@/services/taste-recommendation-service';
 import { Post } from '@/types/post';
@@ -32,6 +39,18 @@ type ProfileScreenProps = {
   userId?: string;
   showBackButton?: boolean;
 };
+
+type ModerationSheet =
+  | { type: 'profile-actions' }
+  | { type: 'report-reasons' }
+  | { type: 'confirm-block' }
+  | { type: 'confirm-unblock' }
+  | {
+      type: 'confirm-report';
+      reason: ReportReason;
+      reasonLabel: string;
+    }
+  | null;
 
 function normalizeTopic(topic?: string) {
   return topic?.trim().toLowerCase() || 'general';
@@ -113,6 +132,11 @@ export default function ProfileScreen({
     selectedCommentsPost,
     setSelectedCommentsPost,
   ] = useState<Post | null>(null);
+
+  const [
+    moderationSheet,
+    setModerationSheet,
+  ] = useState<ModerationSheet>(null);
 
   const [viewedUser, setViewedUser] = useState<
     UserProfile | null
@@ -519,6 +543,10 @@ export default function ProfileScreen({
     }
   }
 
+  function closeModerationSheet() {
+    setModerationSheet(null);
+  }
+
   function confirmBlockUser() {
     if (
       !viewedUserId ||
@@ -527,23 +555,9 @@ export default function ProfileScreen({
       return;
     }
 
-    Alert.alert(
-      `Block ${viewedUser.displayName}?`,
-      'They will no longer be connected to you through following, and you can unblock them later.',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Block',
-          style: 'destructive',
-          onPress: () => {
-            void handleBlockUser();
-          },
-        },
-      ]
-    );
+    setModerationSheet({
+      type: 'confirm-block',
+    });
   }
 
   function confirmUnblockUser() {
@@ -554,22 +568,74 @@ export default function ProfileScreen({
       return;
     }
 
-    Alert.alert(
-      `Unblock ${viewedUser.displayName}?`,
-      'You can follow each other again after unblocking.',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Unblock',
-          onPress: () => {
-            void handleUnblockUser();
-          },
-        },
-      ]
-    );
+    setModerationSheet({
+      type: 'confirm-unblock',
+    });
+  }
+
+  async function handleReportUser(
+    reason: ReportReason
+  ) {
+    if (
+      !viewedUserId ||
+      isCurrentUser
+    ) {
+      return;
+    }
+
+    try {
+      await createUserReport({
+        reporterId: profile.id,
+        reportedUserId: viewedUserId,
+        reason,
+      });
+
+      Alert.alert(
+        'Report submitted',
+        'Thanks for letting us know. Your report has been submitted for review.'
+      );
+    } catch (error) {
+      console.error(
+        'Failed to report user:',
+        error
+      );
+
+      Alert.alert(
+        'Unable to submit report',
+        'Please try again.'
+      );
+    }
+  }
+
+  function confirmReportUser(
+    reason: ReportReason,
+    reasonLabel: string
+  ) {
+    if (
+      !viewedUserId ||
+      isCurrentUser
+    ) {
+      return;
+    }
+
+    setModerationSheet({
+      type: 'confirm-report',
+      reason,
+      reasonLabel,
+    });
+  }
+
+  function openReportMenu() {
+    if (
+      !viewedUserId ||
+      isCurrentUser
+    ) {
+      return;
+    }
+
+    setModerationSheet({
+      type: 'report-reasons',
+    });
   }
 
   function openProfileMenu() {
@@ -580,30 +646,9 @@ export default function ProfileScreen({
       return;
     }
 
-    const userIsBlocked =
-      isBlocked(viewedUserId);
-
-    Alert.alert(
-      'Profile actions',
-      undefined,
-      [
-        {
-          text: userIsBlocked
-            ? 'Unblock User'
-            : 'Block User',
-          style: userIsBlocked
-            ? 'default'
-            : 'destructive',
-          onPress: userIsBlocked
-            ? confirmUnblockUser
-            : confirmBlockUser,
-        },
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-      ]
-    );
+    setModerationSheet({
+      type: 'profile-actions',
+    });
   }
 
   function openFollowing() {
@@ -688,6 +733,187 @@ export default function ProfileScreen({
 
   function closeComments() {
     setSelectedCommentsPost(null);
+  }
+
+  let moderationSheetTitle = '';
+  let moderationSheetMessage:
+    | string
+    | undefined;
+  let moderationSheetActions:
+    ActionSheetAction[] = [];
+
+  if (
+    moderationSheet &&
+    viewedUserId &&
+    !isCurrentUser
+  ) {
+    switch (moderationSheet.type) {
+      case 'profile-actions': {
+        const userIsBlocked =
+          isBlocked(viewedUserId);
+
+        moderationSheetTitle =
+          'Profile actions';
+
+        moderationSheetActions = [
+          {
+            label: 'Report User',
+            onPress: openReportMenu,
+          },
+          {
+            label: userIsBlocked
+              ? 'Unblock User'
+              : 'Block User',
+            variant: userIsBlocked
+              ? 'default'
+              : 'destructive',
+            onPress: userIsBlocked
+              ? confirmUnblockUser
+              : confirmBlockUser,
+          },
+          {
+            label: 'Cancel',
+            variant: 'cancel',
+            onPress: closeModerationSheet,
+          },
+        ];
+        break;
+      }
+
+      case 'report-reasons':
+        moderationSheetTitle =
+          'Report User';
+        moderationSheetMessage =
+          'Why are you reporting this user?';
+
+        moderationSheetActions = [
+          {
+            label: 'Spam',
+            onPress: () =>
+              confirmReportUser(
+                'spam',
+                'Spam'
+              ),
+          },
+          {
+            label: 'Harassment or bullying',
+            onPress: () =>
+              confirmReportUser(
+                'harassment',
+                'Harassment or bullying'
+              ),
+          },
+          {
+            label: 'Hate or abusive content',
+            onPress: () =>
+              confirmReportUser(
+                'hate_or_abuse',
+                'Hate or abusive content'
+              ),
+          },
+          {
+            label: 'Inappropriate content',
+            onPress: () =>
+              confirmReportUser(
+                'inappropriate_content',
+                'Inappropriate content'
+              ),
+          },
+          {
+            label: 'Impersonation',
+            onPress: () =>
+              confirmReportUser(
+                'impersonation',
+                'Impersonation'
+              ),
+          },
+          {
+            label: 'Other',
+            onPress: () =>
+              confirmReportUser(
+                'other',
+                'Other'
+              ),
+          },
+          {
+            label: 'Cancel',
+            variant: 'cancel',
+            onPress: closeModerationSheet,
+          },
+        ];
+        break;
+
+      case 'confirm-block':
+        moderationSheetTitle =
+          `Block ${viewedUser.displayName}?`;
+        moderationSheetMessage =
+          'They will no longer be connected to you through following, and you can unblock them later.';
+
+        moderationSheetActions = [
+          {
+            label: 'Block',
+            variant: 'destructive',
+            onPress: () => {
+              closeModerationSheet();
+              void handleBlockUser();
+            },
+          },
+          {
+            label: 'Cancel',
+            variant: 'cancel',
+            onPress: closeModerationSheet,
+          },
+        ];
+        break;
+
+      case 'confirm-unblock':
+        moderationSheetTitle =
+          `Unblock ${viewedUser.displayName}?`;
+        moderationSheetMessage =
+          'You can follow each other again after unblocking.';
+
+        moderationSheetActions = [
+          {
+            label: 'Unblock',
+            onPress: () => {
+              closeModerationSheet();
+              void handleUnblockUser();
+            },
+          },
+          {
+            label: 'Cancel',
+            variant: 'cancel',
+            onPress: closeModerationSheet,
+          },
+        ];
+        break;
+
+      case 'confirm-report':
+        moderationSheetTitle =
+          `Report ${viewedUser.displayName}?`;
+        moderationSheetMessage =
+          `Reason: ${moderationSheet.reasonLabel}`;
+
+        moderationSheetActions = [
+          {
+            label: 'Submit Report',
+            variant: 'destructive',
+            onPress: () => {
+              const reason =
+                moderationSheet.reason;
+
+              closeModerationSheet();
+              void handleReportUser(reason);
+            },
+          },
+          {
+            label: 'Cancel',
+            variant: 'cancel',
+            onPress: closeModerationSheet,
+          },
+        ];
+        break;
+    }
   }
 
   if (isLoadingProfile) {
@@ -822,6 +1048,14 @@ export default function ProfileScreen({
           onCommentsPress={openComments}
         />
       </ScrollView>
+
+      <ActionSheet
+        visible={moderationSheet !== null}
+        title={moderationSheetTitle}
+        message={moderationSheetMessage}
+        actions={moderationSheetActions}
+        onClose={closeModerationSheet}
+      />
 
       <CommentsSheet
         visible={
