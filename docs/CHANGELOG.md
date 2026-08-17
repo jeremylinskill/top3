@@ -2,19 +2,149 @@ CHANGELOG.md
 
 This document records significant milestones in the evolution of Top3.
 
-Unlike CURRENT_STATE.md, which describes the application's current implementation, this document captures the major architectural and product milestones that shaped the application over time.
+Unlike CURRENT_STATE.md, which describes the application's current
+implementation, this document captures the major architectural and
+product milestones that shaped the application over time.
 
-v2.2 — Onboarding Authentication & Video Games Search Architecture
+v2.3 --- Onboarding & Account Flow
+
+Released: August 17, 2026
+
+This release completes and polishes Top3's redesigned first-use
+onboarding and account lifecycle. New users can create their first Top 3
+list before creating an account, carry that list through authentication,
+publish it after email confirmation, and continue through product
+education for Lists, Overall rankings, and Taste Match.
+
+Added
+
+First-List Onboarding
+
+Added a signed-out onboarding experience that lets new users choose a
+category / topic and build their first Top 3 list before account
+creation.
+
+Preserved the onboarding list while the user moves through account
+creation and authentication.
+
+Email Confirmation Callback
+
+Added app/(auth)/auth-callback.tsx to complete the email-confirmation
+deep-link session handoff.
+
+Added pending-list publishing after the authenticated session is
+established.
+
+Added a consistent verification presentation across the callback →
+application-entry handoff.
+
+Post-Publish Product Education
+
+Added a Lists → Overall onboarding transformation after the first list
+is published.
+
+Added synchronized transition timing across the segmented toggle,
+headline / supporting copy, and published / Overall cards.
+
+Added Overall ranking education using the same card layout language as
+the published list.
+
+Preserved category-specific artwork proportions and applicable
+media-preview controls in the Overall onboarding card.
+
+Added Taste Match onboarding after the Overall ranking explanation.
+
+Account Deletion
+
+Added lib/supabase/account.ts.
+
+Added the delete-account Supabase Edge Function.
+
+Added permanent account deletion from Settings.
+
+Added local welcome / onboarding reset after successful account deletion
+so a deleted user returns to the beginning of onboarding.
+
+Improved
+
+Taste Match Onboarding
+
+Refined the Taste Match score animation so it begins at 0 and is already
+counting while the card fades into view.
+
+Authentication & Browser Handoff
+
+Improved the return from browser-based email confirmation so the user
+sees a consistent verification treatment while Top3 establishes the
+session and publishes the pending first list.
+
+Returning-User Intent
+
+Preserved the distinction between new-account creation and existing-user
+sign in during onboarding so returning users do not accidentally
+continue through new-user onboarding.
+
+Terminology
+
+Standardized "Lists" as the preferred user-facing term for Top 3s.
+
+Preserved existing collection terminology where it remains part of
+internal code, types, database helpers, persistence architecture,
+filenames, or historical documentation.
+
+Removed
+
+Removed app/welcome.tsx.
+
+Removed components/welcome-screen.tsx.
+
+The onboarding experience now owns the new-user entry flow.
+
+Verified
+
+Verified the redesigned onboarding flow on device.
+
+Verified the Published → Overall synchronized transition on device.
+
+Verified the Taste Match onboarding animation on device.
+
+Verified account deletion returns the app to the new-user onboarding
+state.
+
+Verified the browser → app email-confirmation handoff.
+
+Verified npm run typecheck passes with the complete staged working
+state.
+
+Checkpoint
+
+Committed and pushed 85d2794 --- Complete onboarding and account flow.
+
+Documentation
+
+Updated CURRENT_STATE.md to version 2.2.
+
+Updated ROADMAP.md to version 2.1.
+
+Standardized current product documentation around Lists as the preferred
+user-facing term while preserving historical milestone terminology.
+
+v2.2 --- Onboarding Authentication & Video Games Search Architecture
 
 Released: August 13, 2026
 
-This release refines the signed-out onboarding and returning-user authentication flow, enables Video Games search during onboarding, and standardizes the application-facing search-provider layer around Top3 content domains rather than external API names.
+This release refines the signed-out onboarding and returning-user
+authentication flow, enables Video Games search during onboarding, and
+standardizes the application-facing search-provider layer around Top3
+content domains rather than external API names.
 
 Added
 
 Onboarding Authentication Intent
 
-Added persistent onboarding authentication intent so Top3 can distinguish between users creating a new account and existing users signing in from the onboarding publish flow.
+Added persistent onboarding authentication intent so Top3 can
+distinguish between users creating a new account and existing users
+signing in from the onboarding publish flow.
 
 Added pending-publish state for onboarding collections.
 
@@ -24,9 +154,12 @@ Onboarding & Returning-User Flow
 
 Preserved access to the onboarding flow for new signed-out users.
 
-Returning signed-out users are routed to Sign In rather than Create Account after the welcome experience has already been seen.
+Returning signed-out users are routed to Sign In rather than Create
+Account after the welcome experience has already been seen.
 
-Existing users who choose Sign In while publishing an onboarding Top 3 are routed into their authenticated experience rather than continuing through new-user onboarding.
+Existing users who choose Sign In while publishing an onboarding Top 3
+are routed into their authenticated experience rather than continuing
+through new-user onboarding.
 
 Preserved the onboarding collection while authentication is in progress.
 
@@ -34,7 +167,9 @@ Video Games Search
 
 Enabled Video Games search for signed-out users during onboarding.
 
-Updated the Video Games Edge Function so the mobile client can invoke it with the app's publishable key while Twitch OAuth and the IGDB client secret remain server-side.
+Updated the Video Games Edge Function so the mobile client can invoke it
+with the app's publishable key while Twitch OAuth and the IGDB client
+secret remain server-side.
 
 Preserved Video Games search for authenticated users.
 
@@ -46,13 +181,15 @@ Renamed providers/games.ts to providers/video-games.ts.
 
 Renamed lib/supabase/igdb.ts to lib/supabase/video-games.ts.
 
-Renamed the Supabase Edge Function from igdb-search to video-game-search.
+Renamed the Supabase Edge Function from igdb-search to
+video-game-search.
 
 Updated supabase/config.toml for video-game-search.
 
 Updated the mobile client to invoke video-game-search.
 
-Kept IGDB-specific terminology inside the provider integration where it accurately describes the external service.
+Kept IGDB-specific terminology inside the provider integration where it
+accurately describes the external service.
 
 Provider Architecture Naming
 
@@ -60,9 +197,12 @@ Renamed providers/google-books.ts to providers/books.ts.
 
 Renamed providers/tmdb.ts to providers/movies-and-tv.ts.
 
-Confirmed providers/music.ts already uses the correct application-facing domain name while Apple Music-specific communication remains in lib/supabase/apple-music.ts and the apple-music-search Edge Function.
+Confirmed providers/music.ts already uses the correct application-facing
+domain name while Apple Music-specific communication remains in
+lib/supabase/apple-music.ts and the apple-music-search Edge Function.
 
-Standardized the application-facing provider layer around content domains:
+Standardized the application-facing provider layer around content
+domains:
 
 providers/books.ts
 
@@ -72,15 +212,20 @@ providers/music.ts
 
 providers/video-games.ts
 
-Kept Google Books, Open Library, TMDB, Apple Music, IGDB, and Twitch terminology inside the integration code where those names accurately describe the underlying external services.
+Kept Google Books, Open Library, TMDB, Apple Music, IGDB, and Twitch
+terminology inside the integration code where those names accurately
+describe the underlying external services.
 
-This keeps the application architecture independent of the specific metadata provider supplying each content domain.
+This keeps the application architecture independent of the specific
+metadata provider supplying each content domain.
 
 Removed
 
-Removed the old deployed igdb-search Supabase Edge Function after verifying video-game-search.
+Removed the old deployed igdb-search Supabase Edge Function after
+verifying video-game-search.
 
-Removed the unused providers/musicbrainz.ts implementation after confirming it had no active runtime imports or references.
+Removed the unused providers/musicbrainz.ts implementation after
+confirming it had no active runtime imports or references.
 
 Verified
 
@@ -88,31 +233,42 @@ Verified signed-out Video Games search during onboarding on device.
 
 Verified authenticated Video Games search continues to work.
 
-Verified the renamed video-game-search Supabase Edge Function after deployment.
+Verified the renamed video-game-search Supabase Edge Function after
+deployment.
 
 Verified the old igdb-search deployment was removed.
 
-Verified npm run typecheck passes after the client-side rename and onboarding changes.
+Verified npm run typecheck passes after the client-side rename and
+onboarding changes.
 
 Verified the Video Games Edge Function passes Deno validation.
 
-Verified npm run typecheck passes after the Books and Movies / TV provider renames and removal of the unused MusicBrainz provider.
+Verified npm run typecheck passes after the Books and Movies / TV
+provider renames and removal of the unused MusicBrainz provider.
 
 Documentation
 
-Updated CURRENT_STATE.md to reflect the current Video Games integration architecture and signed-out onboarding support.
+Updated CURRENT_STATE.md to reflect the current Video Games integration
+architecture and signed-out onboarding support.
 
-Updated TECHNICAL_ROADMAP.md to use current Video Games naming and architecture.
+Updated TECHNICAL_ROADMAP.md to use current Video Games naming and
+architecture.
 
-Updated ARCHITECTURE.md to document the domain-oriented provider abstraction and remove obsolete RAWG and MusicBrainz references from the current architecture.
+Updated ARCHITECTURE.md to document the domain-oriented provider
+abstraction and remove obsolete RAWG and MusicBrainz references from the
+current architecture.
 
-Preserved the historical v1.9 IGDB entries below because they accurately record the architecture and filenames that existed at that milestone.
+Preserved the historical v1.9 IGDB entries below because they accurately
+record the architecture and filenames that existed at that milestone.
 
-v2.1 — Movie & TV Trailer Playback
+v2.1 --- Movie & TV Trailer Playback
 
 Released: August 12, 2026
 
-This release adds in-app Movie and TV trailer playback throughout Top3, extends the existing media-control pattern beyond Apple Music previews, and adds availability-aware trailer controls so play buttons are hidden when TMDb does not provide a usable trailer.
+This release adds in-app Movie and TV trailer playback throughout Top3,
+extends the existing media-control pattern beyond Apple Music previews,
+and adds availability-aware trailer controls so play buttons are hidden
+when TMDb does not provide a usable trailer.
 
 Added
 
@@ -122,19 +278,24 @@ Added Movie trailer lookup through TMDb video metadata.
 
 Added TV Show trailer lookup through TMDb video metadata.
 
-Trailer selection prioritizes official YouTube trailers, then other YouTube trailers, then YouTube teasers.
+Trailer selection prioritizes official YouTube trailers, then other
+YouTube trailers, then YouTube teasers.
 
 In-App Trailer Playback
 
 Added react-native-webview.
 
-Added YouTube embed playback inside Top3 rather than opening the external YouTube app.
+Added YouTube embed playback inside Top3 rather than opening the
+external YouTube app.
 
-Added a black full-screen trailer presentation with a vertically centered 16:9 player.
+Added a black full-screen trailer presentation with a vertically
+centered 16:9 player.
 
-Added a subtle circular close control positioned above the trailer player.
+Added a subtle circular close control positioned above the trailer
+player.
 
-Delayed the close control until the trailer WebView finishes loading and fades it in for a more polished transition.
+Delayed the close control until the trailer WebView finishes loading and
+fades it in for a more polished transition.
 
 Trailer Controls
 
@@ -150,17 +311,21 @@ Community / Overall Top3 ranking rows
 
 Category Feed Overall ranking rows
 
-Because Feed, Profile, Published Top 3, and Category Feed Lists reuse Top3Card, trailer playback is available across those surfaces as well.
+Because Feed, Profile, Published Top 3, and Category Feed Lists reuse
+Top3Card, trailer playback is available across those surfaces as well.
 
 Trailer Availability
 
 Added an in-memory trailer URL cache in providers/tmdb.ts.
 
-Cached both successful trailer URLs and null results when TMDb returns no usable trailer.
+Cached both successful trailer URLs and null results when TMDb returns
+no usable trailer.
 
-Added getCachedTrailerAvailability() to expose confirmed available, confirmed unavailable, and not-yet-checked states.
+Added getCachedTrailerAvailability() to expose confirmed available,
+confirmed unavailable, and not-yet-checked states.
 
-Added availability pre-checks before Movie / TV play buttons are rendered.
+Added availability pre-checks before Movie / TV play buttons are
+rendered.
 
 Movie / TV play buttons are now hidden when TMDb has no usable trailer.
 
@@ -174,23 +339,32 @@ Starting a Movie or TV trailer stops any active Apple Music preview.
 
 Preserved the existing one-at-a-time shared Music preview behavior.
 
-Preserved Song, Album, and Artist preview controls across Search, RankedItemCard, Top3Card, Category Feed Overall, and Community / Overall Top3.
+Preserved Song, Album, and Artist preview controls across Search,
+RankedItemCard, Top3Card, Category Feed Overall, and Community / Overall
+Top3.
 
 Overall Ranking Presentation
 
-Refined Category Feed Overall ranking rows to better align with the existing Top3Card / RankedItemCard visual language.
+Refined Category Feed Overall ranking rows to better align with the
+existing Top3Card / RankedItemCard visual language.
 
-Kept the approved compact row treatment, shared artwork sizing, ranking hierarchy, and right-side media controls.
+Kept the approved compact row treatment, shared artwork sizing, ranking
+hierarchy, and right-side media controls.
 
 Known Limitation
 
-Some YouTube trailers may still be unavailable in a specific country or region even when TMDb identifies a usable trailer.
+Some YouTube trailers may still be unavailable in a specific country or
+region even when TMDb identifies a usable trailer.
 
-The current availability check confirms that TMDb returns a usable YouTube trailer but does not guarantee country-specific playback.
+The current availability check confirms that TMDb returns a usable
+YouTube trailer but does not guarantee country-specific playback.
 
-Regional validation is deferred because Top3 does not currently maintain a reliable user country / location value.
+Regional validation is deferred because Top3 does not currently maintain
+a reliable user country / location value.
 
-Future work could validate YouTube embeddability and regional restrictions if Top3 later introduces an appropriate country / region source.
+Future work could validate YouTube embeddability and regional
+restrictions if Top3 later introduces an appropriate country / region
+source.
 
 Verified
 
@@ -198,7 +372,8 @@ Verified Movie trailer playback on device.
 
 Verified TV Show trailer playback on device.
 
-Verified in-app YouTube playback rather than external YouTube-app playback.
+Verified in-app YouTube playback rather than external YouTube-app
+playback.
 
 Verified the refined delayed circular close control.
 
@@ -206,7 +381,8 @@ Verified trailer availability behavior in Search.
 
 Verified trailer availability behavior in RankedItemCard.
 
-Verified trailer availability behavior across Top3Card surfaces, including Feed, Profile, Published Top 3, and Category Feed Lists.
+Verified trailer availability behavior across Top3Card surfaces,
+including Feed, Profile, Published Top 3, and Category Feed Lists.
 
 Verified trailer availability behavior in Community Top3.
 
@@ -214,21 +390,29 @@ Verified trailer availability behavior in Category Feed Overall.
 
 Verified music previews remain functional across the supported surfaces.
 
-Verified Category Feed Overall presentation after the media-control layout refinement.
+Verified Category Feed Overall presentation after the media-control
+layout refinement.
 
 Verified npm run typecheck passes after the completed rollout.
 
 Documentation
 
-Updated CURRENT_STATE.md with the completed Movie / TV trailer architecture, availability cache, supported surfaces, and regional playback limitation.
+Updated CURRENT_STATE.md with the completed Movie / TV trailer
+architecture, availability cache, supported surfaces, and regional
+playback limitation.
 
-Updated ROADMAP.md to record Movie / TV trailers as a completed discovery foundation and defer regional YouTube validation as a future provider-resiliency enhancement.
+Updated ROADMAP.md to record Movie / TV trailers as a completed
+discovery foundation and defer regional YouTube validation as a future
+provider-resiliency enhancement.
 
-v2.0 — Apple Music Expansion & Music Discovery Refinement
+v2.0 --- Apple Music Expansion & Music Discovery Refinement
 
 Released: August 11, 2026
 
-This release expands Top3's Music experience beyond Songs to support Albums and Artists, improves Apple Music suggestions toward more evergreen and canonical results, and extends preview playback so Albums and Artists can surface representative music directly in search results.
+This release expands Top3's Music experience beyond Songs to support
+Albums and Artists, improves Apple Music suggestions toward more
+evergreen and canonical results, and extends preview playback so Albums
+and Artists can surface representative music directly in search results.
 
 Added
 
@@ -238,33 +422,40 @@ Added Albums as a supported Music topic.
 
 Added Artists as a supported Music topic.
 
-Added Apple Music Album search and Artist search through the existing authenticated apple-music-search Supabase Edge Function.
+Added Apple Music Album search and Artist search through the existing
+authenticated apple-music-search Supabase Edge Function.
 
 Album Previews
 
 Added representative track preview URLs to Album search results.
 
-Album preview enrichment selects a representative track from the album so users can preview music directly from an Album result.
+Album preview enrichment selects a representative track from the album
+so users can preview music directly from an Album result.
 
 Artist Previews
 
 Added representative song preview URLs to Artist search results.
 
-Artist preview enrichment allows users to preview music directly from an Artist result.
+Artist preview enrichment allows users to preview music directly from an
+Artist result.
 
 Artist Canonical Enrichment
 
 Added Apple Music top-results enrichment for Artist searches.
 
-Canonical Apple Music artist data can provide artist artwork and genre metadata when the standard search result is incomplete or points to a weaker duplicate.
+Canonical Apple Music artist data can provide artist artwork and genre
+metadata when the standard search result is incomplete or points to a
+weaker duplicate.
 
 Improved
 
 Music Suggestions
 
-Refined Album suggestions to favour evergreen, long-term popular albums rather than relying primarily on what is currently popular.
+Refined Album suggestions to favour evergreen, long-term popular albums
+rather than relying primarily on what is currently popular.
 
-Refined Artist suggestions to favour evergreen, canonical artists rather than relying primarily on current popularity.
+Refined Artist suggestions to favour evergreen, canonical artists rather
+than relying primarily on current popularity.
 
 Refined Song suggestions using the same evergreen-oriented approach.
 
@@ -272,33 +463,45 @@ Preserved the existing five-at-a-time suggestion and Shuffle experience.
 
 Album Search
 
-Enriched Album search results with representative track previews where Apple Music provides preview audio.
+Enriched Album search results with representative track previews where
+Apple Music provides preview audio.
 
-Preserved Album artwork and artist metadata while adding preview playback support.
+Preserved Album artwork and artist metadata while adding preview
+playback support.
 
 Artist Search
 
-Improved Artist search ranking and deduplication so canonical exact-name matches rank ahead of weaker or duplicate results.
+Improved Artist search ranking and deduplication so canonical exact-name
+matches rank ahead of weaker or duplicate results.
 
-Improved exact artist searches such as Nirvana so the canonical Apple Music artist result is selected and enriched with the correct artwork and genre metadata.
+Improved exact artist searches such as Nirvana so the canonical Apple
+Music artist result is selected and enriched with the correct artwork
+and genre metadata.
 
-Preserved representative preview playback for enriched canonical Artist results.
+Preserved representative preview playback for enriched canonical Artist
+results.
 
 Music Search Presentation
 
-Updated music-related search loading artwork placeholders to use square proportions instead of the portrait proportions used by Movies, Books, TV Shows, and Video Games.
+Updated music-related search loading artwork placeholders to use square
+proportions instead of the portrait proportions used by Movies, Books,
+TV Shows, and Video Games.
 
-Kept music artwork presentation aligned with the shared square Music artwork treatment.
+Kept music artwork presentation aligned with the shared square Music
+artwork treatment.
 
 Changed
 
 Apple Music Search Enrichment
 
-Extended apple-music-search so Album and Artist results can be enriched after the initial Apple Music search response.
+Extended apple-music-search so Album and Artist results can be enriched
+after the initial Apple Music search response.
 
-Artist canonical-result enrichment now uses Apple Music top-results data to resolve stronger canonical matches.
+Artist canonical-result enrichment now uses Apple Music top-results data
+to resolve stronger canonical matches.
 
-Artist ranking and deduplication now prefer the canonical enriched result when duplicate or competing exact-name results are returned.
+Artist ranking and deduplication now prefer the canonical enriched
+result when duplicate or competing exact-name results are returned.
 
 Verified
 
@@ -306,33 +509,43 @@ Verified Album preview playback on device.
 
 Verified Artist preview playback on device.
 
-Verified canonical Nirvana Artist search result displays the correct artist artwork and Alternative genre metadata.
+Verified canonical Nirvana Artist search result displays the correct
+artist artwork and Alternative genre metadata.
 
 Verified Artist ranking and deduplication on device.
 
 Verified square music search loading placeholders on device.
 
-Verified the updated apple-music-search Edge Function with Deno validation.
+Verified the updated apple-music-search Edge Function with Deno
+validation.
 
-Deployed the updated apple-music-search Supabase Edge Function after each validated server-side change.
+Deployed the updated apple-music-search Supabase Edge Function after
+each validated server-side change.
 
-Verified npm run typecheck passes after the client-side music search presentation changes.
+Verified npm run typecheck passes after the client-side music search
+presentation changes.
 
 Documentation
 
-Updated CURRENT_STATE.md to reflect Albums and Artists as active Music topics.
+Updated CURRENT_STATE.md to reflect Albums and Artists as active Music
+topics.
 
 Recorded evergreen Music suggestion improvements.
 
 Recorded Album and Artist preview enrichment.
 
-Recorded Artist canonical-result enrichment, ranking, and deduplication improvements.
+Recorded Artist canonical-result enrichment, ranking, and deduplication
+improvements.
 
-v1.9 — Discovery, Search & Recommendation Refinement
+v1.9 --- Discovery, Search & Recommendation Refinement
 
 Released: August 10, 2026
 
-This release strengthens Top3's discovery experience across Books, Video Games, the Home Feed, and Taste Match. It completes the migration from RAWG to IGDB, establishes a shared search-provider architecture, improves search and suggestion quality, and refines how personalized Taste Match recommendations are presented and explored.
+This release strengthens Top3's discovery experience across Books, Video
+Games, the Home Feed, and Taste Match. It completes the migration from
+RAWG to IGDB, establishes a shared search-provider architecture,
+improves search and suggestion quality, and refines how personalized
+Taste Match recommendations are presented and explored.
 
 Added
 
@@ -362,7 +575,8 @@ Added lib/supabase/igdb.ts.
 
 Added reusable hooks/use-debounced-value.ts.
 
-Standardized search debounce at 300 ms across Movies, TV Shows, Books, and Video Games.
+Standardized search debounce at 300 ms across Movies, TV Shows, Books,
+and Video Games.
 
 Discovery & Suggestions
 
@@ -384,11 +598,13 @@ Improved
 
 Video Game Search
 
-Improved game-title relevance scoring so exact and stronger title matches rank ahead of loosely related results.
+Improved game-title relevance scoring so exact and stronger title
+matches rank ahead of loosely related results.
 
 Improved partial-title searches through prefix fallback.
 
-Filtered secondary IGDB content such as DLC, expansions, bundles, and mods where possible.
+Filtered secondary IGDB content such as DLC, expansions, bundles, and
+mods where possible.
 
 Improved generic Video Games suggestions.
 
@@ -396,9 +612,11 @@ Book Search
 
 Improved Google Books result relevance.
 
-Improved edition deduplication so alternate editions can be consolidated without incorrectly removing distinct books that share title words.
+Improved edition deduplication so alternate editions can be consolidated
+without incorrectly removing distinct books that share title words.
 
-Improved handling of searches where query terms appear within longer, distinct book titles.
+Improved handling of searches where query terms appear within longer,
+distinct book titles.
 
 Improved default Books discovery through curated popular suggestions.
 
@@ -406,23 +624,28 @@ Personalized Feed & Recommendations
 
 Refined personalized Feed recommendation presentation.
 
-Added Taste Match recommendation explanations based on shared ranked picks.
+Added Taste Match recommendation explanations based on shared ranked
+picks.
 
 Made the full recommendation explanation block tappable.
 
-Connected recommendation explanations directly to the recommended user's Taste Match screen.
+Connected recommendation explanations directly to the recommended user's
+Taste Match screen.
 
 Preserved recommendation styling as a compact two-line treatment.
 
 Taste Match
 
-Added an animated count-up for the Taste Match percentage on screen load.
+Added an animated count-up for the Taste Match percentage on screen
+load.
 
-Refined animation pacing so the count slows naturally as it approaches the final score.
+Refined animation pacing so the count slows naturally as it approaches
+the final score.
 
 Updated the Taste Match summary area to use a white background.
 
-Applied the shared purple accent to Taste Match summary and recommendation messaging.
+Applied the shared purple accent to Taste Match summary and
+recommendation messaging.
 
 Matched the summary-card keyline treatment to the ranked-picks card.
 
@@ -434,13 +657,15 @@ Feed Refresh
 
 Pull-to-refresh reloads published posts and author data.
 
-Refreshing preserves the existing feed instead of returning to the full initial Loading feed… state.
+Refreshing preserves the existing feed instead of returning to the full
+initial Loading feed... state.
 
 Product & UI
 
 Added and refined Settings, About, and Privacy screens.
 
-Continued consolidation of shared colours, spacing, and reusable presentation patterns.
+Continued consolidation of shared colours, spacing, and reusable
+presentation patterns.
 
 Refined follow-request and notification presentation.
 
@@ -448,7 +673,8 @@ Changed
 
 Video Game Provider
 
-Replaced RAWG with IGDB after repeated RAWG Cloudflare HTTP 522 origin failures.
+Replaced RAWG with IGDB after repeated RAWG Cloudflare HTTP 522 origin
+failures.
 
 Removed providers/rawg.ts from the active application.
 
@@ -462,7 +688,8 @@ Moved application search routing to the shared provider registry.
 
 Moved post hydration to the shared searchByCategory() path.
 
-Preserved provider-specific ranking, fallback, filtering, and API behaviour within each provider.
+Preserved provider-specific ranking, fallback, filtering, and API
+behaviour within each provider.
 
 Verified
 
@@ -470,7 +697,8 @@ Verified improved Books search and suggestion behaviour on device.
 
 Verified improved Video Games search and suggestion behaviour on device.
 
-Verified Taste Match percentage animation and visual refinements on device.
+Verified Taste Match percentage animation and visual refinements on
+device.
 
 Verified recommendation explanation navigation to Taste Match.
 
@@ -480,21 +708,26 @@ Verified TypeScript with npm run typecheck.
 
 Deployed the updated igdb-search Supabase Edge Function.
 
-Committed and pushed checkpoint f833160 — Polish discovery, recommendations, and social experience.
+Committed and pushed checkpoint f833160 --- Polish discovery,
+recommendations, and social experience.
 
 Documentation
 
 Updated CURRENT_STATE.md to version 2.0.
 
-Recorded the completed discovery, search, recommendation, Taste Match, and Feed-refresh work.
+Recorded the completed discovery, search, recommendation, Taste Match,
+and Feed-refresh work.
 
 Preserved startup authentication monitoring as active technical debt.
 
-v1.8 — Private Accounts, Settings & Authentication Stability
+v1.8 --- Private Accounts, Settings & Authentication Stability
 
 Released: August 6, 2026
 
-This release completes Top3's first implementation of private accounts while refining the profile, settings, authentication, and notification experiences. It also focuses on stability improvements around authentication lifecycle events and overall application polish.
+This release completes Top3's first implementation of private accounts
+while refining the profile, settings, authentication, and notification
+experiences. It also focuses on stability improvements around
+authentication lifecycle events and overall application polish.
 
 Added
 
@@ -520,17 +753,21 @@ Improved
 
 Authentication
 
-Improved AuthProvider initialization to eliminate session restoration race conditions.
+Improved AuthProvider initialization to eliminate session restoration
+race conditions.
 
-Prevented authenticated screens from querying Supabase before authentication state is fully established.
+Prevented authenticated screens from querying Supabase before
+authentication state is fully established.
 
 Improved sign-out experience by preventing post-logout data requests.
 
-Updated email sign-in to provide friendly authentication errors instead of development error overlays for expected invalid credentials.
+Updated email sign-in to provide friendly authentication errors instead
+of development error overlays for expected invalid credentials.
 
 User Experience
 
-Removed Edit Profile action from the Profile screen in favour of the centralized Settings experience.
+Removed Edit Profile action from the Profile screen in favour of the
+centralized Settings experience.
 
 Refined Settings layout and sign-out treatment.
 
@@ -566,11 +803,14 @@ Updated ROADMAP.md progress.
 
 Recorded authentication and private account refinements.
 
-v1.7 — Supabase Realtime
+v1.7 --- Supabase Realtime
 
 Released: August 4, 2026
 
-This release completes Top3's first phase of live multi-user synchronization by introducing a shared Supabase Realtime architecture. Notifications, likes, comments, and follows now synchronize automatically across connected users without requiring manual refreshes.
+This release completes Top3's first phase of live multi-user
+synchronization by introducing a shared Supabase Realtime architecture.
+Notifications, likes, comments, and follows now synchronize
+automatically across connected users without requiring manual refreshes.
 
 Added
 
@@ -624,11 +864,14 @@ Updated ROADMAP.md to reflect completed realtime milestone.
 
 Recorded commit a3c2225 as the last verified milestone.
 
-v1.6 — In-App Notifications
+v1.6 --- In-App Notifications
 
 Released: August 2, 2026
 
-This release introduces Top3's in-app notification system, completing the core social engagement loop. Notifications are now generated automatically for likes, comments, and follows through Supabase database triggers and surfaced through a dedicated Notifications experience.
+This release introduces Top3's in-app notification system, completing
+the core social engagement loop. Notifications are now generated
+automatically for likes, comments, and follows through Supabase database
+triggers and surfaced through a dedicated Notifications experience.
 
 Added
 
@@ -650,11 +893,12 @@ Added collection title enrichment.
 
 Added read / unread state.
 
-Added “Mark all as read”.
+Added "Mark all as read".
 
 Added pull-to-refresh support.
 
-Added navigation to published collections from like and comment notifications.
+Added navigation to published collections from like and comment
+notifications.
 
 Added navigation to public profiles from follow notifications.
 
@@ -670,11 +914,13 @@ Improved
 
 Social Experience
 
-Completed the in-app notification experience for likes, comments, and follows.
+Completed the in-app notification experience for likes, comments, and
+follows.
 
 Unified notification loading through a shared context provider.
 
-Improved notification readability with actor names, avatars, and contextual collection titles.
+Improved notification readability with actor names, avatars, and
+contextual collection titles.
 
 Verified
 
@@ -696,11 +942,13 @@ Updated CURRENT_STATE.md to version 1.6.
 
 Recorded commit b2dad2c as the last verified milestone.
 
-v1.5 — Persistent Profile Avatars & Authentication Experience
+v1.5 --- Persistent Profile Avatars & Authentication Experience
 
 Released: August 2, 2026
 
-This release adds persistent profile avatars through Supabase Storage and completes a broader refinement of the authentication and profile experience.
+This release adds persistent profile avatars through Supabase Storage
+and completes a broader refinement of the authentication and profile
+experience.
 
 Added
 
@@ -710,7 +958,8 @@ Added an avatar_url column to the Supabase profiles table.
 
 Added a public Supabase Storage bucket named avatars.
 
-Added user-specific avatar storage paths based on the authenticated user ID.
+Added user-specific avatar storage paths based on the authenticated user
+ID.
 
 Added persistent avatar uploads through lib/supabase/storage.ts.
 
@@ -724,7 +973,7 @@ Added a local avatar preview before saving.
 
 Added a saving state while profile updates are in progress.
 
-Added a “Tap photo to change” affordance.
+Added a "Tap photo to change" affordance.
 
 Added client-side avatar file-size validation.
 
@@ -734,21 +983,27 @@ Added image MIME-type restrictions.
 
 Storage Security
 
-Added authenticated upload policies scoped to each user's own avatar folder.
+Added authenticated upload policies scoped to each user's own avatar
+folder.
 
-Added authenticated update policies scoped to each user's own avatar folder.
+Added authenticated update policies scoped to each user's own avatar
+folder.
 
-Added authenticated delete policies scoped to each user's own avatar folder.
+Added authenticated delete policies scoped to each user's own avatar
+folder.
 
-Added authenticated select access scoped to each user's own avatar folder to support Storage upsert.
+Added authenticated select access scoped to each user's own avatar
+folder to support Storage upsert.
 
-Removed broad public object-listing access while preserving public avatar URLs.
+Removed broad public object-listing access while preserving public
+avatar URLs.
 
 Authentication Experience
 
 Added a dedicated provider-choice Sign In screen.
 
-Added Apple, Google, and Email options to both account creation and sign in.
+Added Apple, Google, and Email options to both account creation and sign
+in.
 
 Added a reusable GoogleAuthButton.
 
@@ -772,9 +1027,11 @@ Applied PageHeader to Edit Profile.
 
 Clarified the role of ScreenHeader as the top navigation bar.
 
-Clarified the role of PageHeader as the page title and optional subtitle below the navigation bar.
+Clarified the role of PageHeader as the page title and optional subtitle
+below the navigation bar.
 
-Standardized page-title placement across authentication, collection, and profile screens.
+Standardized page-title placement across authentication, collection, and
+profile screens.
 
 Tooling
 
@@ -794,9 +1051,11 @@ Profile Persistence
 
 Updated ProfileProvider to load and persist avatar_url.
 
-Updated profile mapping between Supabase rows and the application UserProfile type.
+Updated profile mapping between Supabase rows and the application
+UserProfile type.
 
-Updated profile saving to wait for avatar upload and database persistence before navigating away.
+Updated profile saving to wait for avatar upload and database
+persistence before navigating away.
 
 Added optimistic profile updates with rollback on failure.
 
@@ -804,17 +1063,20 @@ Added cache-busting when replacing an avatar.
 
 Disabled profile editing while a save is in progress.
 
-Added friendly failure feedback when a profile update cannot be completed.
+Added friendly failure feedback when a profile update cannot be
+completed.
 
 Authentication Navigation
 
-Standardized provider-selection flow for account creation and returning-user sign in.
+Standardized provider-selection flow for account creation and
+returning-user sign in.
 
 Removed unnecessary back buttons from top-level provider-choice screens.
 
 Preserved back navigation on Email Sign In and Email Sign Up screens.
 
-Updated sign-out navigation so users return to the full Sign In provider-choice screen instead of the email-only form.
+Updated sign-out navigation so users return to the full Sign In
+provider-choice screen instead of the email-only form.
 
 User Interface
 
@@ -822,7 +1084,8 @@ Standardized authentication-screen backgrounds and shared colour tokens.
 
 Standardized title and subtitle layouts with PageHeader.
 
-Improved the visual consistency of Apple, Google, and Email authentication buttons.
+Improved the visual consistency of Apple, Google, and Email
+authentication buttons.
 
 Improved Edit Profile avatar discoverability and pressed-state feedback.
 
@@ -832,11 +1095,13 @@ Fixed avatar persistence after app restart.
 
 Fixed avatar persistence after sign out and sign in.
 
-Fixed replacement of an existing avatar by adding the scoped authenticated select policy required by Storage upsert.
+Fixed replacement of an existing avatar by adding the scoped
+authenticated select policy required by Storage upsert.
 
 Fixed profile navigation occurring before avatar upload completed.
 
-Fixed inconsistent title placement across authentication and profile screens.
+Fixed inconsistent title placement across authentication and profile
+screens.
 
 Fixed signed-out users being routed directly to the Email Sign In form.
 
@@ -862,19 +1127,24 @@ Recorded commit 32b5478 as the last verified milestone.
 
 Recorded persistent profile avatars as complete.
 
-Updated authentication, navigation, design-system, and technical-debt documentation.
+Updated authentication, navigation, design-system, and technical-debt
+documentation.
 
-v1.4 — Native Authentication Complete
+v1.4 --- Native Authentication Complete
 
 Released: July 31, 2026
 
-This release completes Top3's native authentication experience. Users can now authenticate using Email, Sign in with Apple, or Sign in with Google while sharing a common Supabase authentication architecture and persistent session model.
+This release completes Top3's native authentication experience. Users
+can now authenticate using Email, Sign in with Apple, or Sign in with
+Google while sharing a common Supabase authentication architecture and
+persistent session model.
 
 Added
 
 Google Authentication
 
-Added native Google Sign-In using @react-native-google-signin/google-signin.
+Added native Google Sign-In using
+@react-native-google-signin/google-signin.
 
 Added Google identity-token exchange through Supabase Auth.
 
@@ -896,7 +1166,8 @@ Added the Google Sign-In Expo config plugin.
 
 Added the reversed iOS URL scheme to app.json.
 
-Added Google client IDs to the application's public environment configuration.
+Added Google client IDs to the application's public environment
+configuration.
 
 Created and installed a new EAS iOS development build.
 
@@ -904,11 +1175,14 @@ Improved
 
 Authentication Flow
 
-Expanded the shared authentication service to support Email, Apple, and Google.
+Expanded the shared authentication service to support Email, Apple, and
+Google.
 
-Preserved the existing AuthProvider and session restoration architecture.
+Preserved the existing AuthProvider and session restoration
+architecture.
 
-Routed successful Google authentication through the existing application entry point.
+Routed successful Google authentication through the existing application
+entry point.
 
 Preserved existing email and Apple authentication behaviour.
 
@@ -916,9 +1190,11 @@ User Experience
 
 Added silent handling of cancelled Google sign-in attempts.
 
-Replaced technical Google authentication alerts with friendly user-facing messages.
+Replaced technical Google authentication alerts with friendly
+user-facing messages.
 
-Aligned Google authentication behaviour with the existing Apple experience.
+Aligned Google authentication behaviour with the existing Apple
+experience.
 
 Documentation
 
@@ -926,11 +1202,12 @@ Updated CURRENT_STATE.md to version 1.4.
 
 Recorded native Google authentication as complete.
 
-v1.3 — Native Apple Authentication
+v1.3 --- Native Apple Authentication
 
 Released: July 31, 2026
 
-This release adds native Sign in with Apple and completes the first production-ready social authentication provider for Top3.
+This release adds native Sign in with Apple and completes the first
+production-ready social authentication provider for Top3.
 
 Added
 
@@ -944,7 +1221,8 @@ Added support for both new-user registration and returning-user sign-in.
 
 Added persistent Apple-authenticated Supabase sessions.
 
-Added Apple name metadata preservation when available during first authorization.
+Added Apple name metadata preservation when available during first
+authorization.
 
 Platform Configuration
 
@@ -968,11 +1246,13 @@ Improved
 
 Authentication Flow
 
-Integrated Apple authentication into the existing authentication service.
+Integrated Apple authentication into the existing authentication
+service.
 
 Reused the existing AuthProvider and session flow.
 
-Routed successful Apple authentication through the existing application entry point.
+Routed successful Apple authentication through the existing application
+entry point.
 
 Preserved email authentication and verification behaviour.
 
@@ -982,7 +1262,8 @@ Improved first-login session initialization.
 
 Improved session restoration.
 
-Prevented authenticated screens from querying Supabase before auth initialization completed.
+Prevented authenticated screens from querying Supabase before auth
+initialization completed.
 
 Fixed
 
@@ -996,11 +1277,13 @@ Documentation
 
 Updated CURRENT_STATE.md to version 1.3.
 
-v1.2 — Design System & Collection Flow Refinement
+v1.2 --- Design System & Collection Flow Refinement
 
 Released: July 31, 2026
 
-This release focused on improving consistency, maintainability, and the overall collection creation experience while establishing reusable UI components.
+This release focused on improving consistency, maintainability, and the
+overall collection creation experience while establishing reusable UI
+components.
 
 Added
 
@@ -1010,7 +1293,8 @@ Reusable Chip component.
 
 Shared page layout architecture.
 
-Curated search suggestions that transition to community-driven suggestions.
+Curated search suggestions that transition to community-driven
+suggestions.
 
 Improved
 
@@ -1028,11 +1312,12 @@ Eliminated inconsistent page-title layouts.
 
 Eliminated duplicated chip implementations.
 
-v1.1 — Social Foundation Complete
+v1.1 --- Social Foundation Complete
 
 Released: July 30, 2026
 
-This release completed the migration of comments and likes to Supabase, establishing the application's backend social foundation.
+This release completed the migration of comments and likes to Supabase,
+establishing the application's backend social foundation.
 
 Added
 
@@ -1066,11 +1351,12 @@ Persistence after restart.
 
 Collection ID mapping.
 
-v1.0 — Platform Foundation
+v1.0 --- Platform Foundation
 
 Released: July 2026
 
-This milestone established the core architecture of Top3 as a persistent social application.
+This milestone established the core architecture of Top3 as a persistent
+social application.
 
 Added
 
