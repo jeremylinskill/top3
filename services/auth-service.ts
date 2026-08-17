@@ -8,8 +8,8 @@ import {
   User,
 } from '@supabase/supabase-js';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import * as Linking from 'expo-linking';
 import * as QueryParams from 'expo-auth-session/build/QueryParams';
+import * as Linking from 'expo-linking';
 
 export interface SignUpWithEmailParams {
   email: string;
@@ -99,6 +99,42 @@ export async function signInWithEmail({
   const { data, error } =
     await supabase.auth.signInWithPassword({
       email,
+      password,
+    });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+export async function requestPasswordReset(
+  email: string
+) {
+  const redirectTo =
+    Linking.createURL('/reset-password');
+
+  const { data, error } =
+    await supabase.auth.resetPasswordForEmail(
+      email,
+      {
+        redirectTo,
+      }
+    );
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+export async function updatePassword(
+  password: string
+) {
+  const { data, error } =
+    await supabase.auth.updateUser({
       password,
     });
 

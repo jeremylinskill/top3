@@ -1,14 +1,15 @@
 import AuthProviderButton from '@/components/auth-provider-button';
 import { signInWithEmail } from '@/services/auth-service';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import {
-    Alert,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 
 interface EmailSignInFormProps {
@@ -204,6 +205,26 @@ export default function EmailSignInForm({
             />
           </Pressable>
         </View>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Forgot password"
+          disabled={isSubmitting}
+          hitSlop={8}
+          onPress={() =>
+            router.push('/forgot-password')
+          }
+          style={({ pressed }) => [
+            styles.forgotPasswordButton,
+            pressed &&
+              !isSubmitting &&
+              styles.forgotPasswordButtonPressed,
+          ]}>
+          <Text
+            style={styles.forgotPasswordText}>
+            Forgot password?
+          </Text>
+        </Pressable>
       </View>
 
       <View style={styles.buttonContainer}>
@@ -281,6 +302,22 @@ const styles = StyleSheet.create({
 
   visibilityButtonPressed: {
     opacity: 0.6,
+  },
+
+  forgotPasswordButton: {
+    alignSelf: 'flex-end',
+    marginTop: 10,
+  },
+
+  forgotPasswordButtonPressed: {
+    opacity: 0.6,
+  },
+
+  forgotPasswordText: {
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: '600',
+    color: '#1573DD',
   },
 
   buttonContainer: {
