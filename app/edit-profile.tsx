@@ -29,6 +29,10 @@ export default function EditProfileScreen() {
   const { profile, updateProfile } = useProfile();
 
   const scrollViewRef = useRef<ScrollView>(null);
+  const usernameInputRef =
+    useRef<TextInput>(null);
+  const bioInputRef =
+    useRef<TextInput>(null);
 
   const [displayName, setDisplayName] = useState(
     profile.displayName
@@ -251,6 +255,9 @@ export default function EditProfileScreen() {
                 autoCorrect={false}
                 editable={!isSaving}
                 maxLength={50}
+                onSubmitEditing={() =>
+                  usernameInputRef.current?.focus()
+                }
                 returnKeyType="next"
               />
             </View>
@@ -266,6 +273,7 @@ export default function EditProfileScreen() {
                 </Text>
 
                 <TextInput
+                  ref={usernameInputRef}
                   style={styles.usernameTextInput}
                   value={username}
                   onChangeText={(value) =>
@@ -281,6 +289,9 @@ export default function EditProfileScreen() {
                   autoCorrect={false}
                   editable={!isSaving}
                   maxLength={30}
+                  onSubmitEditing={() =>
+                    bioInputRef.current?.focus()
+                  }
                   returnKeyType="next"
                 />
               </View>
@@ -292,6 +303,7 @@ export default function EditProfileScreen() {
               </Text>
 
               <TextInput
+                ref={bioInputRef}
                 style={[
                   styles.input,
                   styles.bioInput,

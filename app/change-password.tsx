@@ -9,7 +9,10 @@ import {
 } from '@/services/auth-service';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import {
+    useRef,
+    useState,
+} from 'react';
 import {
     Alert,
     Pressable,
@@ -22,6 +25,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ChangePasswordScreen() {
   const { user } = useAuth();
+
+  const newPasswordInputRef =
+    useRef<TextInput>(null);
+  const confirmPasswordInputRef =
+    useRef<TextInput>(null);
 
   const [currentPassword, setCurrentPassword] =
     useState('');
@@ -253,6 +261,9 @@ export default function ChangePasswordScreen() {
                 onChangeText={
                   setCurrentPassword
                 }
+                onSubmitEditing={() =>
+                  newPasswordInputRef.current?.focus()
+                }
                 placeholder="Enter your current password"
                 placeholderTextColor="#999999"
                 returnKeyType="next"
@@ -309,12 +320,16 @@ export default function ChangePasswordScreen() {
                 styles.passwordInputContainer
               }>
               <TextInput
+                ref={newPasswordInputRef}
                 accessibilityLabel="New password"
                 autoCapitalize="none"
                 autoComplete="new-password"
                 autoCorrect={false}
                 editable={!isSubmitting}
                 onChangeText={setNewPassword}
+                onSubmitEditing={() =>
+                  confirmPasswordInputRef.current?.focus()
+                }
                 placeholder="At least 8 characters"
                 placeholderTextColor="#999999"
                 returnKeyType="next"
@@ -371,6 +386,7 @@ export default function ChangePasswordScreen() {
                 styles.passwordInputContainer
               }>
               <TextInput
+                ref={confirmPasswordInputRef}
                 accessibilityLabel="Confirm new password"
                 autoCapitalize="none"
                 autoComplete="new-password"

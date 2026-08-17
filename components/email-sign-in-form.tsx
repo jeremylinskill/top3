@@ -2,7 +2,10 @@ import AuthProviderButton from '@/components/auth-provider-button';
 import { signInWithEmail } from '@/services/auth-service';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import {
+  useRef,
+  useState,
+} from 'react';
 import {
   Alert,
   Pressable,
@@ -36,6 +39,9 @@ function getSignInErrorMessage(error: unknown) {
 export default function EmailSignInForm({
   onSuccess,
 }: EmailSignInFormProps) {
+  const passwordInputRef =
+    useRef<TextInput>(null);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] =
     useState('');
@@ -137,8 +143,12 @@ export default function EmailSignInForm({
           autoComplete="email"
           autoCorrect={false}
           editable={!isSubmitting}
+          importantForAutofill="yes"
           keyboardType="email-address"
           onChangeText={setEmail}
+          onSubmitEditing={() =>
+            passwordInputRef.current?.focus()
+          }
           placeholder="you@example.com"
           placeholderTextColor="#999999"
           returnKeyType="next"
@@ -155,6 +165,7 @@ export default function EmailSignInForm({
 
         <View style={styles.passwordInputContainer}>
           <TextInput
+            ref={passwordInputRef}
             accessibilityLabel="Password"
             autoCapitalize="none"
             autoComplete="password"

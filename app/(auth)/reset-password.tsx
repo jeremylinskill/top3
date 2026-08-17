@@ -12,6 +12,7 @@ import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import {
     useEffect,
+    useRef,
     useState,
 } from 'react';
 import {
@@ -27,6 +28,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ResetPasswordScreen() {
   const url = Linking.useLinkingURL();
+
+  const confirmPasswordInputRef =
+    useRef<TextInput>(null);
 
   const [password, setPassword] =
     useState('');
@@ -323,6 +327,9 @@ export default function ResetPasswordScreen() {
                 autoCorrect={false}
                 editable={!isSubmitting}
                 onChangeText={setPassword}
+                onSubmitEditing={() =>
+                  confirmPasswordInputRef.current?.focus()
+                }
                 placeholder="At least 8 characters"
                 placeholderTextColor="#999999"
                 returnKeyType="next"
@@ -377,6 +384,7 @@ export default function ResetPasswordScreen() {
                 styles.passwordInputContainer
               }>
               <TextInput
+                ref={confirmPasswordInputRef}
                 accessibilityLabel="Confirm password"
                 autoCapitalize="none"
                 autoComplete="new-password"

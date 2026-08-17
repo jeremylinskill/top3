@@ -1,14 +1,17 @@
 import AuthProviderButton from '@/components/auth-provider-button';
 import { signUpWithEmail } from '@/services/auth-service';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
 import {
-    Alert,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  useRef,
+  useState,
+} from 'react';
+import {
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 
 interface EmailSignUpFormProps {
@@ -22,6 +25,11 @@ function isValidEmail(value: string) {
 export default function EmailSignUpForm({
   onSuccess,
 }: EmailSignUpFormProps) {
+  const passwordInputRef =
+    useRef<TextInput>(null);
+  const confirmPasswordInputRef =
+    useRef<TextInput>(null);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] =
@@ -143,6 +151,9 @@ export default function EmailSignUpForm({
           editable={!isSubmitting}
           keyboardType="email-address"
           onChangeText={setEmail}
+          onSubmitEditing={() =>
+            passwordInputRef.current?.focus()
+          }
           placeholder="you@example.com"
           placeholderTextColor="#999999"
           returnKeyType="next"
@@ -157,12 +168,16 @@ export default function EmailSignUpForm({
 
         <View style={styles.passwordInputContainer}>
           <TextInput
+            ref={passwordInputRef}
             accessibilityLabel="Password"
             autoCapitalize="none"
             autoComplete="new-password"
             autoCorrect={false}
             editable={!isSubmitting}
             onChangeText={setPassword}
+            onSubmitEditing={() =>
+              confirmPasswordInputRef.current?.focus()
+            }
             placeholder="At least 8 characters"
             placeholderTextColor="#999999"
             returnKeyType="next"
@@ -213,6 +228,7 @@ export default function EmailSignUpForm({
 
         <View style={styles.passwordInputContainer}>
           <TextInput
+            ref={confirmPasswordInputRef}
             accessibilityLabel="Confirm password"
             autoCapitalize="none"
             autoComplete="new-password"
