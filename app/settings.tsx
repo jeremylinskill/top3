@@ -22,7 +22,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SettingsScreen() {
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
 
   const [isSigningOut, setIsSigningOut] =
     useState(false);
@@ -32,12 +32,24 @@ export default function SettingsScreen() {
     setIsDeletingAccount,
   ] = useState(false);
 
+
+  const canChangePassword =
+    user?.identities?.some(
+      (identity) =>
+        identity.provider === 'email'
+    ) ?? false;
+
   function openEditProfile() {
     router.push('/edit-profile');
   }
 
   function openPrivacy() {
     router.push('/privacy');
+  }
+
+
+  function openChangePassword() {
+    router.push('/change-password');
   }
 
   function openAbout() {
@@ -249,6 +261,45 @@ router.replace('/onboarding');
                 color={COLORS.tertiaryText}
               />
             </Pressable>
+
+            {canChangePassword ? (
+              <>
+                <View style={styles.divider} />
+
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.row,
+                    pressed && styles.pressed,
+                  ]}
+                  onPress={openChangePassword}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open Change Password">
+                  <View style={styles.iconContainer}>
+                    <Ionicons
+                      name="key-outline"
+                      size={23}
+                      color={COLORS.text}
+                    />
+                  </View>
+
+                  <View style={styles.rowDetails}>
+                    <Text style={styles.rowTitle}>
+                      Change Password
+                    </Text>
+
+                    <Text style={styles.rowSubtitle}>
+                      Update your account password
+                    </Text>
+                  </View>
+
+                  <Ionicons
+                    name="chevron-forward"
+                    size={21}
+                    color={COLORS.tertiaryText}
+                  />
+                </Pressable>
+              </>
+            ) : null}
           </View>
         </View>
 
