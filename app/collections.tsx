@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CollectionsScreen() {
-  const { lists, selectList } = useTop3();
+  const { lists } = useTop3();
 
   function getCategory(categoryId: string) {
     return TOP3_CATEGORIES.find(
@@ -101,8 +101,12 @@ export default function CollectionsScreen() {
               key={list.id}
               style={styles.collectionCard}
               onPress={() => {
-                selectList(list.id);
-                router.push('/collection');
+                router.push({
+                  pathname: '/collection',
+                  params: {
+                    listId: list.id,
+                  },
+                });
               }}>
               <Text style={styles.icon}>{icon}</Text>
 

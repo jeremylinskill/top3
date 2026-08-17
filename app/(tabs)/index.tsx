@@ -72,7 +72,6 @@ export default function FeedScreen() {
 
   const {
     posts,
-    selectList,
   } = useTop3();
 
   const { loadCommentCounts } =
@@ -274,8 +273,12 @@ export default function FeedScreen() {
   }
 
   function editCollection(post: Post) {
-    selectList(post.collection.id);
-    router.push('/collection');
+    router.push({
+      pathname: '/collection',
+      params: {
+        listId: post.collection.id,
+      },
+    });
   }
 
   function openComments(post: Post) {

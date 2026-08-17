@@ -3,7 +3,6 @@ import ProfileScreenContent from '@/components/profile-screen-content';
 import ScreenHeader from '@/components/screen-header';
 import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
-import { useTop3 } from '@/context/top3-context';
 import { useAuth } from '@/hooks/use-auth';
 import type { FollowCounts } from '@/lib/supabase/follows';
 import { getFollowCounts } from '@/lib/supabase/follows';
@@ -75,8 +74,6 @@ export default function ProfileScreen({
 }: ProfileScreenProps) {
   const { isAuthenticated } = useAuth();
   const { profile } = useProfile();
-
-  const { selectList } = useTop3();
 
   const {
     isFollowing,
@@ -442,8 +439,12 @@ export default function ProfileScreen({
       return;
     }
 
-    selectList(post.collection.id);
-    router.push('/collection');
+    router.push({
+      pathname: '/collection',
+      params: {
+        listId: post.collection.id,
+      },
+    });
   }
 
   function openSettings() {

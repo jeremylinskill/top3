@@ -12,7 +12,6 @@ import { useLike } from '@/context/like-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
 import {
-  getCachedTrailerAvailability,
   getMovieTrailerUrl,
   getTvShowTrailerUrl,
 } from '@/providers/movies-and-tv';
@@ -177,7 +176,6 @@ export default function CategoryFeedScreen() {
 
   const {
     posts,
-    selectList,
   } = useTop3();
 
   const {
@@ -203,10 +201,6 @@ export default function CategoryFeedScreen() {
     loadingTrailerItemId,
     setLoadingTrailerItemId,
   ] = useState<string | null>(null);
-  const [
-    trailerAvailability,
-    setTrailerAvailability,
-  ] = useState<Record<string, boolean | undefined>>({});
 
   const [
     activeTrailerUrl,
@@ -527,8 +521,12 @@ if (isMounted) {
   }
 
   function editCollection(post: Post) {
-    selectList(post.collection.id);
-    router.push('/collection');
+    router.push({
+      pathname: '/collection',
+      params: {
+        listId: post.collection.id,
+      },
+    });
   }
 
   function openComments(post: Post) {
@@ -561,145 +559,57 @@ if (isMounted) {
   }
 
 
-  function getTrailerItemId(
+  function canPlayTrailer(
     itemId?: string
-  ): number | undefined {
-    if (!itemId || !category) {
-      return undefined;
+  ) {
+    if (!itemId) {
+      return false;
     }
 
-    const itemIdMatch =
-      category.id === 'movies'
-        ? /^movie-(\d+)$/.exec(itemId)
-        : category.id === 'tv'
-          ? /^tv-(\d+)$/.exec(itemId)
-          : null;
-
-    if (!itemIdMatch) {
-      return undefined;
-    }
-
-    const numericItemId =
-      Number(itemIdMatch[1]);
-
-    return Number.isFinite(numericItemId)
-      ? numericItemId
-      : undefined;
-  }
-
-
-
-  useEffect(() => {
-    if (
-      !category ||
-      !overallResult ||
+    return (
       (
-        category.id !== 'movies' &&
-        category.id !== 'tv'
+        category?.id === 'movies' &&
+        /^movie-\d+$/.test(itemId)
+      ) ||
+      (
+        category?.id === 'tv' &&
+        /^tv-\d+$/.test(itemId)
       )
-    ) {
-      return;
-    }
-
-    const trailerCategoryId:
-      'movies' | 'tv' = category.id;
-
-    const trailerOverallResult =
-      overallResult;
-
-    let isMounted = true;
-
-    async function loadTrailerAvailability() {
-      const updates: Record<
-        string,
-        boolean | undefined
-      > = {};
-
-      await Promise.all(
-        trailerOverallResult.items.map(
-          async (entry) => {
-            const item = entry.item;
-            const itemId =
-              getTrailerItemId(item.id);
-
-            if (itemId === undefined) {
-              updates[item.id] = false;
-              return;
-            }
-
-            const cachedAvailability =
-              getCachedTrailerAvailability(
-                trailerCategoryId,
-                itemId
-              );
-
-            if (
-              cachedAvailability !== undefined
-            ) {
-              updates[item.id] =
-                cachedAvailability;
-              return;
-            }
-
-            try {
-              const trailerUrl =
-                trailerCategoryId === 'movies'
-                  ? await getMovieTrailerUrl(
-                      itemId
-                    )
-                  : await getTvShowTrailerUrl(
-                      itemId
-                    );
-
-              updates[item.id] =
-                Boolean(trailerUrl);
-            } catch (error) {
-              if (__DEV__) {
-                console.warn(
-                  `Failed to check trailer availability for ${item.title}:`,
-                  error
-                );
-              }
-
-              updates[item.id] =
-                undefined;
-            }
-          }
-        )
-      );
-
-      if (isMounted) {
-        setTrailerAvailability(
-          (current) => ({
-            ...current,
-            ...updates,
-          })
-        );
-      }
-    }
-
-    void loadTrailerAvailability();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [
-    category?.id,
-    overallResult,
-  ]);
+    );
+  }
 
 
   async function playTrailer(
     item: CommunityTop3Result['items'][number]['item']
   ) {
-    if (!category) {
+    if (
+      !category ||
+      !canPlayTrailer(item.id)
+    ) {
+      return;
+    }
+
+    const movieIdMatch =
+      /^movie-(\d+)$/.exec(item.id);
+
+    const tvIdMatch =
+      /^tv-(\d+)$/.exec(item.id);
+
+    const itemIdMatch =
+      category.id === 'movies'
+        ? movieIdMatch
+        : category.id === 'tv'
+          ? tvIdMatch
+          : null;
+
+    if (!itemIdMatch) {
       return;
     }
 
     const itemId =
-      getTrailerItemId(item.id);
+      Number(itemIdMatch[1]);
 
-    if (itemId === undefined) {
+    if (!Number.isFinite(itemId)) {
       return;
     }
 
@@ -712,21 +622,8 @@ if (isMounted) {
           : await getTvShowTrailerUrl(itemId);
 
       if (!trailerUrl) {
-        setTrailerAvailability(
-          (current) => ({
-            ...current,
-            [item.id]: false,
-          })
-        );
         return;
       }
-
-      setTrailerAvailability(
-        (current) => ({
-          ...current,
-          [item.id]: true,
-        })
-      );
 
       const embedUrl =
         getYouTubeEmbedUrl(trailerUrl);
@@ -824,7 +721,7 @@ if (isMounted) {
 
   const overallTitle = topicLabel
     ? `${category.name} • ${topicLabel}`
-    : category.name;
+    : `All ${category.name}`;
 
   const artworkRule =
     getCategoryArtworkRule(
@@ -1074,9 +971,9 @@ if (isMounted) {
                       </Text>
                     </View>
 
-                    {trailerAvailability[
+                    {canPlayTrailer(
                       entry.item.id
-                    ] === true ? (
+                    ) ? (
                       <Pressable
                         style={({ pressed }) => [
                           styles.previewButton,

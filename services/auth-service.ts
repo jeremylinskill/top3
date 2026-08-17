@@ -8,6 +8,8 @@ import {
   User,
 } from '@supabase/supabase-js';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Linking from 'expo-linking';
+import * as QueryParams from 'expo-auth-session/build/QueryParams';
 
 export interface SignUpWithEmailParams {
   email: string;
@@ -36,10 +38,16 @@ export async function signUpWithEmail({
   email,
   password,
 }: SignUpWithEmailParams) {
+  const emailRedirectTo =
+    Linking.createURL('/auth-callback');
+
   const { data, error } =
     await supabase.auth.signUp({
       email,
       password,
+      options: {
+        emailRedirectTo,
+      },
     });
 
   if (error) {
@@ -47,6 +55,41 @@ export async function signUpWithEmail({
   }
 
   return data;
+}
+
+export async function setSessionFromUrl(
+  url: string
+): Promise<Session | null> {
+  const {
+    params,
+    errorCode,
+  } = QueryParams.getQueryParams(url);
+
+  if (errorCode) {
+    throw new Error(errorCode);
+  }
+
+  const accessToken =
+    params.access_token;
+
+  const refreshToken =
+    params.refresh_token;
+
+  if (!accessToken || !refreshToken) {
+    return null;
+  }
+
+  const { data, error } =
+    await supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
+
+  if (error) {
+    throw error;
+  }
+
+  return data.session;
 }
 
 export async function signInWithEmail({
@@ -198,33 +241,15 @@ export async function getSession(): Promise<
   Session | null
 > {
   const {
-    data: sessionData,
-    error: sessionError,
+    data,
+    error,
   } = await supabase.auth.getSession();
 
-  if (sessionError) {
-    throw sessionError;
+  if (error) {
+    throw error;
   }
 
-  const currentSession =
-    sessionData.session;
-
-  if (!currentSession) {
-    return null;
-  }
-
-  const {
-    data: refreshedData,
-    error: refreshError,
-  } = await supabase.auth.refreshSession(
-    currentSession
-  );
-
-  if (refreshError) {
-    throw refreshError;
-  }
-
-  return refreshedData.session;
+  return data.session;
 }
 
 export async function signOut() {

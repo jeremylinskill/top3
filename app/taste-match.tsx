@@ -17,7 +17,6 @@ import { UserProfile } from '@/types/user-profile';
 import {
   SharedRankComparison,
 } from '@/utils/calculate-taste-match';
-import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import {
   useEffect,
@@ -437,12 +436,10 @@ return getTasteRecommendationForUser({
     title,
     rank,
     sharedItems,
-    matchingNumberOneItems,
   }: {
     title?: string;
     rank: number;
     sharedItems: string[];
-    matchingNumberOneItems: string[];
   }) {
     const normalizedTitle =
       normalizeValue(title);
@@ -455,14 +452,6 @@ return getTasteRecommendationForUser({
           normalizedTitle
       );
 
-    const isMatchingNumberOne =
-      rank === 1 &&
-      Boolean(normalizedTitle) &&
-      matchingNumberOneItems.some(
-        (item) =>
-          normalizeValue(item) ===
-          normalizedTitle
-      );
 
     return (
       <View
@@ -484,19 +473,6 @@ return getTasteRecommendationForUser({
           {title || 'Not ranked'}
         </Text>
 
-        {isMatchingNumberOne ? (
-          <Ionicons
-            name="trophy"
-            size={15}
-            color={COLORS.trophy}
-          />
-        ) : isShared ? (
-          <Ionicons
-            name="sparkles"
-            size={16}
-            color={COLORS.sparkle}
-          />
-        ) : null}
       </View>
     );
   }
@@ -678,8 +654,6 @@ return getTasteRecommendationForUser({
                                     itemIndex + 1,
                                   sharedItems:
                                     comparison.sharedItems,
-                                  matchingNumberOneItems:
-                                    tasteMatch.matchingNumberOneItems,
                                 })}
                               </View>
                             ))}
@@ -710,8 +684,6 @@ return getTasteRecommendationForUser({
                                     itemIndex + 1,
                                   sharedItems:
                                     comparison.sharedItems,
-                                  matchingNumberOneItems:
-                                    tasteMatch.matchingNumberOneItems,
                                 })}
                               </View>
                             ))}
@@ -798,13 +770,13 @@ const styles = StyleSheet.create({
   scoreLabel: {
     ...TYPOGRAPHY.headline,
     marginTop: SPACING.xl,
-    color: '#5928ed',
+    color: COLORS.text,
   },
 
   score: {
     ...TYPOGRAPHY.display,
     marginTop: 2,
-    color: '#5928ed',
+    color: COLORS.text,
   },
 
   summary: {
@@ -888,8 +860,8 @@ const styles = StyleSheet.create({
   },
 
   rankNumber: {
+    ...TYPOGRAPHY.caption,
     width: 22,
-    fontSize: 22,
     fontWeight: '700',
     color: COLORS.text,
   },

@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function CheckEmailScreen() {
   async function handleOpenEmail() {
     try {
-      await Linking.openURL('mailto:');
+      await Linking.openURL('message://');
     } catch (error) {
       console.error(
         'Unable to open email app:',

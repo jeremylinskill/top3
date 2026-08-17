@@ -34,6 +34,10 @@ import {
 import {
   KeyboardAvoidingView,
 } from 'react-native-keyboard-controller';
+import {
+  Gesture,
+  GestureDetector,
+} from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type CommentsSheetProps = {
@@ -43,6 +47,8 @@ type CommentsSheetProps = {
 };
 
 const CLOSED_TRANSLATE_Y = 800;
+const DISMISS_DISTANCE = 120;
+const DISMISS_VELOCITY = 1.2;
 
 export default function CommentsSheet({
   visible,
@@ -220,6 +226,64 @@ export default function CommentsSheet({
     });
   }
 
+  const dismissGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .enabled(
+          !isClosing &&
+          keyboardHeight === 0
+        )
+        .activeOffsetY(8)
+        .failOffsetX([-24, 24])
+        .runOnJS(true)
+        .onBegin(() => {
+          translateY.stopAnimation();
+        })
+        .onUpdate((event) => {
+          translateY.setValue(
+            Math.max(0, event.translationY)
+          );
+        })
+        .onEnd((event) => {
+          const shouldDismiss =
+            event.translationY >=
+              DISMISS_DISTANCE ||
+            event.velocityY >=
+              DISMISS_VELOCITY * 1000;
+
+          if (shouldDismiss) {
+            handleClose();
+            return;
+          }
+
+          Animated.spring(translateY, {
+            toValue: 0,
+            useNativeDriver: true,
+            damping: 25,
+            stiffness: 230,
+            mass: 0.9,
+          }).start();
+        })
+        .onFinalize((_event, success) => {
+          if (success || isClosing) {
+            return;
+          }
+
+          Animated.spring(translateY, {
+            toValue: 0,
+            useNativeDriver: true,
+            damping: 25,
+            stiffness: 230,
+            mass: 0.9,
+          }).start();
+        }),
+    [
+      isClosing,
+      keyboardHeight,
+      translateY,
+    ]
+  );
+
   function handlePostComment() {
     if (
       !collectionId ||
@@ -325,9 +389,12 @@ export default function CommentsSheet({
                 transform: [{ translateY }],
               },
             ]}>
-            <View style={styles.handle} />
+            <GestureDetector
+              gesture={dismissGesture}>
+              <View style={styles.dragArea}>
+                <View style={styles.handle} />
 
-            <View style={styles.header}>
+                <View style={styles.header}>
               <Text style={styles.title}>
                 Comments
               </Text>
@@ -348,8 +415,10 @@ export default function CommentsSheet({
                   size={22}
                   color={COLORS.text}
                 />
-              </Pressable>
-            </View>
+                </Pressable>
+                </View>
+              </View>
+            </GestureDetector>
 
             <ScrollView
               style={styles.scrollView}
@@ -622,6 +691,10 @@ const styles = StyleSheet.create({
     borderTopRightRadius:
       RADIUS.xxxl,
     overflow: 'hidden',
+  },
+
+  dragArea: {
+    backgroundColor: COLORS.background,
   },
 
   handle: {

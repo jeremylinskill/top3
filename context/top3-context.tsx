@@ -2,6 +2,7 @@ import { useProfile } from '@/context/profile-context';
 import { useAuth } from '@/hooks/use-auth';
 import {
   createCollection,
+  deleteCollection,
   getCollections,
   publishCollection,
   updateCollection,
@@ -30,7 +31,7 @@ type Top3ContextValue = {
   posts: Post[];
   currentList: Top3List | null;
   isCollectionsLoaded: boolean;
-  createList: (input: CreateListInput) => string;
+  createList: (input: CreateListInput) => Promise<string>;
   selectList: (listId: string) => void;
   setItemAtRank: (
     rank: number,
@@ -39,6 +40,7 @@ type Top3ContextValue = {
   removeItemAtRank: (rank: number) => void;
   setItems: (items: Top3List['items']) => void;
   publishCurrentList: () => void;
+  deleteCurrentList: () => Promise<void>;
 };
 
 type Top3ProviderProps = {
@@ -172,9 +174,9 @@ export function Top3Provider({
     };
   }, [user]);
 
-  function createList(
+  async function createList(
     input: CreateListInput
-  ): string {
+  ): Promise<string> {
     const normalizedCategory =
       input.category.trim().toLowerCase();
 
@@ -226,32 +228,28 @@ export function Top3Provider({
           )
         );
 
-        async function saveExistingTitle() {
-          try {
-            const savedList =
-              await updateCollection(
-                existingListId,
-                {
-                  title: input.title,
-                }
-              );
+        try {
+          const savedList =
+            await updateCollection(
+              existingListId,
+              {
+                title: input.title,
+              }
+            );
 
-            setLists((currentLists) =>
-              currentLists.map((list) =>
-                list.id === existingListId
-                  ? savedList
-                  : list
-              )
-            );
-          } catch (error) {
-            console.error(
-              'Failed to update existing collection title:',
-              error
-            );
-          }
+          setLists((currentLists) =>
+            currentLists.map((list) =>
+              list.id === existingListId
+                ? savedList
+                : list
+            )
+          );
+        } catch (error) {
+          console.error(
+            'Failed to update existing collection title:',
+            error
+          );
         }
-
-        saveExistingTitle();
       }
 
       setCurrentListId(existingListId);
@@ -264,80 +262,24 @@ export function Top3Provider({
       );
     }
 
-    const userId = user.id;
-
-    const now = new Date().toISOString();
-
-    const temporaryId =
-      `pending-${normalizedCategory}-` +
-      `${normalizedType}-` +
-      `${normalizedTopic}-${Date.now()}`;
-
-    const pendingList: Top3List = {
-      id: temporaryId,
-      category: input.category,
-      type: input.type,
-      topic: input.topic,
-      title: input.title,
-      items: [null, null, null],
-      createdAt: now,
-      updatedAt: now,
-    };
+    const savedList =
+      await createCollection({
+        userId: user.id,
+        category: input.category,
+        type: input.type,
+        topic: input.topic,
+        title: input.title,
+        items: [null, null, null],
+      });
 
     setLists((currentLists) => [
       ...currentLists,
-      pendingList,
+      savedList,
     ]);
 
-    setCurrentListId(temporaryId);
+    setCurrentListId(savedList.id);
 
-    async function saveCollection() {
-      try {
-        const savedList = await createCollection({
-          userId,
-          category: input.category,
-          type: input.type,
-          topic: input.topic,
-          title: input.title,
-          items: [null, null, null],
-        });
-
-        setLists((currentLists) =>
-          currentLists.map((list) =>
-            list.id === temporaryId
-              ? savedList
-              : list
-          )
-        );
-
-        setCurrentListId((currentId) =>
-          currentId === temporaryId
-            ? savedList.id
-            : currentId
-        );
-      } catch (error) {
-        console.error(
-          'Failed to create collection in Supabase:',
-          error
-        );
-
-        setLists((currentLists) =>
-          currentLists.filter(
-            (list) => list.id !== temporaryId
-          )
-        );
-
-        setCurrentListId((currentId) =>
-          currentId === temporaryId
-            ? ''
-            : currentId
-        );
-      }
-    }
-
-    saveCollection();
-
-    return temporaryId;
+    return savedList.id;
   }
 
   function selectList(listId: string) {
@@ -602,6 +544,34 @@ export function Top3Provider({
     savePublishedCollection();
   }
 
+
+  async function deleteCurrentList(): Promise<void> {
+    if (!currentList) {
+      throw new Error(
+        'A current collection is required to delete a collection.'
+      );
+    }
+
+    const collectionId = currentList.id;
+
+    await deleteCollection(collectionId);
+
+    setLists((currentLists) =>
+      currentLists.filter(
+        (list) => list.id !== collectionId
+      )
+    );
+
+    setPosts((currentPosts) =>
+      currentPosts.filter(
+        (post) =>
+          post.collection.id !== collectionId
+      )
+    );
+
+    setCurrentListId('');
+  }
+
   return (
     <Top3Context.Provider
       value={{
@@ -615,6 +585,7 @@ export function Top3Provider({
         removeItemAtRank,
         setItems,
         publishCurrentList,
+        deleteCurrentList,
       }}>
       {children}
     </Top3Context.Provider>

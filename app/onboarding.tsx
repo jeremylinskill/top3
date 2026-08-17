@@ -32,7 +32,7 @@ const BRAND_HEIGHT = 40;
 // These values are intentionally different because the two headline
 // compositions have different visual font-box spacing. The result is
 // a matching perceived gap between Top 3 and the first headline.
-const INTRO_BRAND_GAP = 0;
+const INTRO_BRAND_GAP = 8;
 const CATEGORY_BRAND_GAP = -28;
 
 

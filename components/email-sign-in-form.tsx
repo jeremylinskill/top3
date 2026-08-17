@@ -1,8 +1,10 @@
 import AuthProviderButton from '@/components/auth-provider-button';
 import { signInWithEmail } from '@/services/auth-service';
+import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import {
     Alert,
+    Pressable,
     StyleSheet,
     Text,
     TextInput,
@@ -36,6 +38,8 @@ export default function EmailSignInForm({
   const [email, setEmail] = useState('');
   const [password, setPassword] =
     useState('');
+  const [showPassword, setShowPassword] =
+    useState(false);
   const [isSubmitting, setIsSubmitting] =
     useState(false);
 
@@ -148,24 +152,58 @@ export default function EmailSignInForm({
           Password
         </Text>
 
-        <TextInput
-          accessibilityLabel="Password"
-          autoCapitalize="none"
-          autoComplete="password"
-          autoCorrect={false}
-          editable={!isSubmitting}
-          onChangeText={setPassword}
-          onSubmitEditing={() => {
-            void handleSubmit();
-          }}
-          placeholder="Enter your password"
-          placeholderTextColor="#999999"
-          returnKeyType="done"
-          secureTextEntry
-          style={styles.input}
-          textContentType="password"
-          value={password}
-        />
+        <View style={styles.passwordInputContainer}>
+          <TextInput
+            accessibilityLabel="Password"
+            autoCapitalize="none"
+            autoComplete="password"
+            autoCorrect={false}
+            editable={!isSubmitting}
+            onChangeText={setPassword}
+            onSubmitEditing={() => {
+              void handleSubmit();
+            }}
+            placeholder="Enter your password"
+            placeholderTextColor="#999999"
+            returnKeyType="done"
+            secureTextEntry={!showPassword}
+            style={styles.passwordInput}
+            textContentType="password"
+            value={password}
+          />
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={
+              showPassword
+                ? 'Hide password'
+                : 'Show password'
+            }
+            disabled={isSubmitting}
+            hitSlop={8}
+            onPress={() =>
+              setShowPassword(
+                (currentValue) =>
+                  !currentValue
+              )
+            }
+            style={({ pressed }) => [
+              styles.visibilityButton,
+              pressed &&
+                !isSubmitting &&
+                styles.visibilityButtonPressed,
+            ]}>
+            <Ionicons
+              name={
+                showPassword
+                  ? 'eye-off-outline'
+                  : 'eye-outline'
+              }
+              size={22}
+              color="#666666"
+            />
+          </Pressable>
+        </View>
       </View>
 
       <View style={styles.buttonContainer}>
@@ -211,6 +249,38 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 22,
     color: '#222222',
+  },
+
+  passwordInputContainer: {
+    width: '100%',
+    minHeight: 54,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#D9D9D9',
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+  },
+
+  passwordInput: {
+    flex: 1,
+    minHeight: 54,
+    paddingLeft: 16,
+    paddingRight: 8,
+    fontSize: 16,
+    lineHeight: 22,
+    color: '#222222',
+  },
+
+  visibilityButton: {
+    width: 48,
+    minHeight: 54,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  visibilityButtonPressed: {
+    opacity: 0.6,
   },
 
   buttonContainer: {

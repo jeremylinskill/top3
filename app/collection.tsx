@@ -15,12 +15,17 @@ import { formatRelativeTime } from '@/utils/format-relative-time';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
-import { router } from 'expo-router';
+import {
+  router,
+  useLocalSearchParams,
+} from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Pressable,
   StyleSheet,
+  Text,
   View
 } from 'react-native';
 import DraggableFlatList, {
@@ -42,9 +47,13 @@ const DRAG_INSTRUCTION_KEY =
 export default function CollectionScreen() {
   const {
     currentList,
+    lists,
+    isCollectionsLoaded,
+    selectList,
     setItems: setCurrentListItems,
     removeItemAtRank: removeCurrentListItemAtRank,
     publishCurrentList,
+    deleteCurrentList,
   } = useTop3();
 
 
@@ -70,18 +79,58 @@ export default function CollectionScreen() {
   } = useAuth();
 
 
+  const params =
+    useLocalSearchParams<{
+      listId?: string | string[];
+    }>();
+
+
+  const requestedListId =
+    Array.isArray(params.listId)
+      ? params.listId[0]
+      : params.listId;
+
+
+  const requestedList =
+    requestedListId
+      ? lists.find(
+          (list) =>
+            list.id === requestedListId
+        ) ?? null
+      : null;
+
+
+  useEffect(() => {
+    if (
+      requestedListId &&
+      currentList?.id !== requestedListId
+    ) {
+      selectList(requestedListId);
+    }
+  }, [
+    requestedListId,
+    currentList?.id,
+    selectList,
+  ]);
+
+
   const isOnboardingCollection =
+    !requestedListId &&
     onboardingCollection !== null;
 
 
   const activeCollection =
     isOnboardingCollection
       ? onboardingCollection
-      : currentList;
+      : requestedList ??
+        currentList;
 
 
   const [activeIndex, setActiveIndex] =
     useState<number | null>(null);
+
+  const [isDeleting, setIsDeleting] =
+    useState(false);
 
 
   const selectedItems =
@@ -92,7 +141,24 @@ export default function CollectionScreen() {
 
   const selectedItemCount = selectedItems.length;
   const emptySlotCount = 3 - selectedItemCount;
-  const canPublish = selectedItemCount === 3;
+
+  const persistedCollection =
+    isOnboardingCollection
+      ? null
+      : requestedList ??
+        currentList;
+
+  const hasUnpublishedChanges =
+    !persistedCollection?.publishedAt ||
+    !persistedCollection.updatedAt ||
+    new Date(persistedCollection.updatedAt).getTime() >
+      new Date(
+        persistedCollection.publishedAt
+      ).getTime();
+
+  const canPublish =
+    selectedItemCount === 3 &&
+    hasUnpublishedChanges;
 
 
   useEffect(() => {
@@ -149,6 +215,22 @@ export default function CollectionScreen() {
   }, [selectedItemCount]);
 
 
+  if (
+    requestedListId &&
+    !isCollectionsLoaded
+  ) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScreenHeader showBackButton />
+
+        <View style={styles.loadingState}>
+          <ActivityIndicator size="small" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+
   if (!activeCollection) {
     return (
       <SafeAreaView style={styles.container}>
@@ -170,6 +252,13 @@ export default function CollectionScreen() {
       (categoryItem) =>
         categoryItem.id === category
     )?.icon ?? '⭐';
+
+
+  const displayTitle =
+    activeCollection.title.replace(
+      /^Top 3\s+/i,
+      ''
+    );
 
 
   const draggableRows: DraggableRow[] =
@@ -244,14 +333,33 @@ export default function CollectionScreen() {
   }
 
 
-  function openSearch(rank: number) {
+function openSearch(rank: number) {
+  if (isOnboardingCollection) {
     router.push({
       pathname: '/search',
       params: {
         rank: String(rank),
       },
     });
+    return;
   }
+
+  const searchCollection =
+    requestedList ??
+    currentList;
+
+  if (!searchCollection) {
+    return;
+  }
+
+  router.push({
+    pathname: '/search',
+    params: {
+      rank: String(rank),
+      listId: searchCollection.id,
+    },
+  });
+}
 
 
   function openItemActions(
@@ -312,16 +420,66 @@ export default function CollectionScreen() {
     publishCurrentList();
 
 
+    router.replace('/(tabs)');
+  }
+
+
+  async function deleteCollection() {
     if (
-      __DEV__ ||
-      !profile.hasCompletedOnboarding
+      isOnboardingCollection ||
+      !persistedCollection ||
+      isDeleting
     ) {
-      router.replace('/onboarding-published');
       return;
     }
 
+    setIsDeleting(true);
 
-    router.replace('/(tabs)');
+    try {
+      await deleteCurrentList();
+      router.replace('/(tabs)');
+    } catch (error) {
+      console.error(
+        'Failed to delete collection:',
+        error
+      );
+
+      Alert.alert(
+        'Could not delete collection',
+        'Please try again.'
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
+
+  function confirmDeleteCollection() {
+    if (
+      isOnboardingCollection ||
+      !persistedCollection ||
+      isDeleting
+    ) {
+      return;
+    }
+
+    Alert.alert(
+      'Delete this Top 3?',
+      'This will permanently delete this collection and remove it from your profile, feed, and rankings.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            void deleteCollection();
+          },
+        },
+      ]
+    );
   }
 
 
@@ -461,10 +619,7 @@ export default function CollectionScreen() {
 
 
       <PageHeader
-        title={`${categoryIcon} ${activeCollection.title.replace(
-          /^Top 3\s+/i,
-          ''
-        )}`}
+        title={`${categoryIcon} ${displayTitle}`}
         subtitle={subtitle ?? undefined}
       />
 
@@ -506,8 +661,32 @@ export default function CollectionScreen() {
         <PrimaryButton
           title="Publish Top 3"
           onPress={publishCollection}
-          disabled={!canPublish}
+          disabled={!canPublish || isDeleting}
         />
+
+        {!isOnboardingCollection &&
+        persistedCollection ? (
+          <Pressable
+            style={({ pressed }) => [
+              styles.deleteButton,
+              pressed &&
+                !isDeleting &&
+                styles.deleteButtonPressed,
+            ]}
+            onPress={confirmDeleteCollection}
+            disabled={isDeleting}
+            accessibilityRole="button"
+            accessibilityLabel="Delete collection"
+            accessibilityState={{
+              disabled: isDeleting,
+            }}>
+            <Text style={styles.deleteButtonText}>
+              {isDeleting
+                ? 'Deleting…'
+                : 'Delete Collection'}
+            </Text>
+          </Pressable>
+        ) : null}
       </View>
     </SafeAreaView>
   );
@@ -518,6 +697,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F8F8',
+  },
+
+
+  loadingState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
 
@@ -537,6 +723,7 @@ const styles = StyleSheet.create({
   row: {
     position: 'relative',
     paddingHorizontal: 6,
+      marginBottom: 12,
     opacity: 1,
     overflow: 'visible',
   },
@@ -593,6 +780,26 @@ const styles = StyleSheet.create({
     bottom: 10,
     width: StyleSheet.hairlineWidth,
     backgroundColor: '#E5E5E5',
+  },
+
+
+  deleteButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+    paddingVertical: 12,
+  },
+
+
+  deleteButtonPressed: {
+    opacity: 0.6,
+  },
+
+
+  deleteButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FF3B30',
   },
 
 

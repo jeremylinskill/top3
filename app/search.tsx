@@ -208,19 +208,20 @@ function getYouTubeEmbedHtml(
 
 
 export default function SearchScreen() {
-  const { rank } = useLocalSearchParams();
-
-  const {
-    currentList,
-    setItemAtRank: setCurrentListItemAtRank,
-  } = useTop3();
-
+  const { rank, listId } = useLocalSearchParams();
+  const { currentList, setItemAtRank } = useTop3();
   const {
     collection: onboardingCollection,
     setItemAtRank: setOnboardingItemAtRank,
   } = useOnboardingCollection();
 
+  const requestedListId =
+    Array.isArray(listId)
+      ? listId[0]
+      : listId;
+
   const isOnboardingCollection =
+    !requestedListId &&
     onboardingCollection !== null;
 
   const activeCollection =
@@ -926,15 +927,9 @@ function chooseSuggestion(
     stopPreview();
 
     if (isOnboardingCollection) {
-      setOnboardingItemAtRank(
-        selectedRank,
-        item
-      );
+      setOnboardingItemAtRank(selectedRank, item);
     } else {
-      setCurrentListItemAtRank(
-        selectedRank,
-        item
-      );
+      setItemAtRank(selectedRank, item);
     }
 
     router.back();

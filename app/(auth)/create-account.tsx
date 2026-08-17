@@ -23,28 +23,24 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function CreateAccountScreen() {
   const {
     collection: onboardingCollection,
-    isPendingPublish,
-    setAuthIntent,
+    prepareAuthHandoff,
   } = useOnboardingCollection();
 
 
   const isSavingOnboardingCollection =
-    Boolean(
-      onboardingCollection &&
-      isPendingPublish
-    );
+    Boolean(onboardingCollection);
 
 
-  function prepareSignUpIntent() {
+  async function prepareSignUpIntent() {
     if (isSavingOnboardingCollection) {
-      setAuthIntent('sign-up');
+      await prepareAuthHandoff('sign-up');
     }
   }
 
 
   async function handleAppleSignUp() {
     try {
-      prepareSignUpIntent();
+      await prepareSignUpIntent();
 
       await signInWithApple();
       router.replace('/');
@@ -75,7 +71,7 @@ export default function CreateAccountScreen() {
 
   async function handleGoogleSignUp() {
     try {
-      prepareSignUpIntent();
+      await prepareSignUpIntent();
 
       const result = await signInWithGoogle();
 
@@ -113,9 +109,22 @@ export default function CreateAccountScreen() {
   }
 
 
-  function handleEmailSignUp() {
-    prepareSignUpIntent();
-    router.push('/sign-up-email');
+  async function handleEmailSignUp() {
+    try {
+      await prepareSignUpIntent();
+      router.push('/sign-up-email');
+    } catch (error) {
+      console.error(
+        'Failed to prepare email sign-up:',
+        error
+      );
+
+
+      Alert.alert(
+        'Unable to continue',
+        'Please try again.'
+      );
+    }
   }
 
 

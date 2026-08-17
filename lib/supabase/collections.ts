@@ -72,6 +72,54 @@ function normalizeItems(
   return normalizedItems as Top3List['items'];
 }
 
+function normalizeIdentityValue(
+  value?: string | null
+): string {
+  const normalizedValue =
+    value?.trim().toLowerCase() ?? '';
+
+  return normalizedValue || 'general';
+}
+
+function normalizeOptionalValue(
+  value?: string
+): string | null {
+  const trimmedValue = value?.trim();
+
+  return trimmedValue
+    ? trimmedValue
+    : null;
+}
+
+function collectionMatchesIdentity(
+  collection: Top3List,
+  input: Pick<
+    CreateCollectionInput,
+    'category' | 'type' | 'topic'
+  >
+): boolean {
+  return (
+    normalizeIdentityValue(
+      collection.category
+    ) ===
+      normalizeIdentityValue(
+        input.category
+      ) &&
+    normalizeIdentityValue(
+      collection.type
+    ) ===
+      normalizeIdentityValue(
+        input.type
+      ) &&
+    normalizeIdentityValue(
+      collection.topic
+    ) ===
+      normalizeIdentityValue(
+        input.topic
+      )
+  );
+}
+
 function mapCollectionRow(
   row: CollectionRow
 ): Top3List {
@@ -216,13 +264,19 @@ export async function createCollection(
 ): Promise<Top3List> {
   const now = new Date().toISOString();
 
+  const normalizedType =
+    normalizeOptionalValue(input.type);
+
+  const normalizedTopic =
+    normalizeOptionalValue(input.topic);
+
   const { data, error } = await supabase
     .from('collections')
     .insert({
       user_id: input.userId,
-      category: input.category,
-      type: input.type ?? null,
-      topic: input.topic ?? null,
+      category: input.category.trim(),
+      type: normalizedType,
+      topic: normalizedTopic,
       title: input.title,
       status: 'draft',
       items:
@@ -232,15 +286,37 @@ export async function createCollection(
     .select()
     .single();
 
-  if (error) {
+  if (!error) {
+    return mapCollectionRow(
+      data as CollectionRow
+    );
+  }
+
+  if (error.code !== '23505') {
     throw new Error(
       `Failed to create collection: ${error.message}`
     );
   }
 
-  return mapCollectionRow(
-    data as CollectionRow
-  );
+  const existingCollections =
+    await getCollections(input.userId);
+
+  const existingCollection =
+    existingCollections.find(
+      (collection) =>
+        collectionMatchesIdentity(
+          collection,
+          input
+        )
+    );
+
+  if (!existingCollection) {
+    throw new Error(
+      `Failed to create collection: ${error.message}`
+    );
+  }
+
+  return existingCollection;
 }
 
 export async function updateCollection(
@@ -259,15 +335,17 @@ export async function updateCollection(
   };
 
   if (input.category !== undefined) {
-    updates.category = input.category;
+    updates.category = input.category.trim();
   }
 
   if (input.type !== undefined) {
-    updates.type = input.type || null;
+    updates.type =
+      normalizeOptionalValue(input.type);
   }
 
   if (input.topic !== undefined) {
-    updates.topic = input.topic || null;
+    updates.topic =
+      normalizeOptionalValue(input.topic);
   }
 
   if (input.title !== undefined) {

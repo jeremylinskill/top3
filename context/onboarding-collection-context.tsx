@@ -9,7 +9,6 @@ import {
   useState,
 } from 'react';
 
-
 export type OnboardingCollection = {
   category: string;
   type?: string;
@@ -22,12 +21,10 @@ export type OnboardingCollection = {
   ];
 };
 
-
 export type OnboardingAuthIntent =
   | 'sign-in'
   | 'sign-up'
   | null;
-
 
 type StartOnboardingCollectionInput = {
   category: string;
@@ -35,7 +32,6 @@ type StartOnboardingCollectionInput = {
   topic?: string;
   title: string;
 };
-
 
 type OnboardingCollectionContextValue = {
   collection: OnboardingCollection | null;
@@ -58,15 +54,16 @@ type OnboardingCollectionContextValue = {
   setAuthIntent: (
     intent: OnboardingAuthIntent
   ) => void;
+  prepareAuthHandoff: (
+    intent: Exclude<OnboardingAuthIntent, null>
+  ) => Promise<void>;
   clearAuthIntent: () => void;
   clearCollection: () => void;
 };
 
-
 type OnboardingCollectionProviderProps = {
   children: ReactNode;
 };
-
 
 const STORAGE_KEY =
   'top3-onboarding-collection-v1';
@@ -77,12 +74,10 @@ const PENDING_PUBLISH_STORAGE_KEY =
 const AUTH_INTENT_STORAGE_KEY =
   'top3-onboarding-auth-intent-v1';
 
-
 const OnboardingCollectionContext =
   createContext<
     OnboardingCollectionContextValue | undefined
   >(undefined);
-
 
 export function OnboardingCollectionProvider({
   children,
@@ -107,10 +102,8 @@ export function OnboardingCollectionProvider({
   const [isLoading, setIsLoading] =
     useState(true);
 
-
   useEffect(() => {
     let isCancelled = false;
-
 
     async function loadOnboardingState() {
       try {
@@ -130,11 +123,9 @@ export function OnboardingCollectionProvider({
           ),
         ]);
 
-
         if (isCancelled) {
           return;
         }
-
 
         if (storedCollectionValue) {
           const storedCollection =
@@ -145,11 +136,9 @@ export function OnboardingCollectionProvider({
           setCollection(storedCollection);
         }
 
-
         setIsPendingPublish(
           storedPendingPublishValue === 'true'
         );
-
 
         if (
           storedAuthIntentValue === 'sign-in' ||
@@ -173,21 +162,17 @@ export function OnboardingCollectionProvider({
       }
     }
 
-
     loadOnboardingState();
-
 
     return () => {
       isCancelled = true;
     };
   }, []);
 
-
   useEffect(() => {
     if (isLoading) {
       return;
     }
-
 
     async function saveCollection() {
       try {
@@ -197,7 +182,6 @@ export function OnboardingCollectionProvider({
           );
           return;
         }
-
 
         await AsyncStorage.setItem(
           STORAGE_KEY,
@@ -211,19 +195,16 @@ export function OnboardingCollectionProvider({
       }
     }
 
-
     saveCollection();
   }, [
     collection,
     isLoading,
   ]);
 
-
   useEffect(() => {
     if (isLoading) {
       return;
     }
-
 
     async function savePendingPublish() {
       try {
@@ -233,7 +214,6 @@ export function OnboardingCollectionProvider({
           );
           return;
         }
-
 
         await AsyncStorage.setItem(
           PENDING_PUBLISH_STORAGE_KEY,
@@ -247,19 +227,16 @@ export function OnboardingCollectionProvider({
       }
     }
 
-
     savePendingPublish();
   }, [
     isLoading,
     isPendingPublish,
   ]);
 
-
   useEffect(() => {
     if (isLoading) {
       return;
     }
-
 
     async function saveAuthIntent() {
       try {
@@ -269,7 +246,6 @@ export function OnboardingCollectionProvider({
           );
           return;
         }
-
 
         await AsyncStorage.setItem(
           AUTH_INTENT_STORAGE_KEY,
@@ -283,20 +259,17 @@ export function OnboardingCollectionProvider({
       }
     }
 
-
     saveAuthIntent();
   }, [
     authIntent,
     isLoading,
   ]);
 
-
   function startCollection(
     input: StartOnboardingCollectionInput
   ) {
     setIsPendingPublish(false);
     setAuthIntentState(null);
-
 
     setCollection({
       category: input.category,
@@ -306,7 +279,6 @@ export function OnboardingCollectionProvider({
       items: [null, null, null],
     });
   }
-
 
   function setItemAtRank(
     rank: number,
@@ -319,10 +291,8 @@ export function OnboardingCollectionProvider({
       return;
     }
 
-
     setIsPendingPublish(false);
     setAuthIntentState(null);
-
 
     setCollection(
       (currentCollection) => {
@@ -330,14 +300,11 @@ export function OnboardingCollectionProvider({
           return currentCollection;
         }
 
-
         const nextItems = [
           ...currentCollection.items,
         ] as OnboardingCollection['items'];
 
-
         nextItems[rank - 1] = item;
-
 
         return {
           ...currentCollection,
@@ -346,7 +313,6 @@ export function OnboardingCollectionProvider({
       }
     );
   }
-
 
   function removeItemAtRank(
     rank: number
@@ -358,17 +324,14 @@ export function OnboardingCollectionProvider({
       return;
     }
 
-
     setIsPendingPublish(false);
     setAuthIntentState(null);
-
 
     setCollection(
       (currentCollection) => {
         if (!currentCollection) {
           return currentCollection;
         }
-
 
         const remainingItems =
           currentCollection.items.filter(
@@ -380,14 +343,12 @@ export function OnboardingCollectionProvider({
               index !== rank - 1
           );
 
-
         const nextItems = [
           ...remainingItems,
           ...Array(
             3 - remainingItems.length
           ).fill(null),
         ] as OnboardingCollection['items'];
-
 
         return {
           ...currentCollection,
@@ -397,20 +358,17 @@ export function OnboardingCollectionProvider({
     );
   }
 
-
   function setItems(
     items: OnboardingCollection['items']
   ) {
     setIsPendingPublish(false);
     setAuthIntentState(null);
 
-
     setCollection(
       (currentCollection) => {
         if (!currentCollection) {
           return currentCollection;
         }
-
 
         return {
           ...currentCollection,
@@ -420,21 +378,17 @@ export function OnboardingCollectionProvider({
     );
   }
 
-
   function markPendingPublish() {
     if (!collection) {
       return;
     }
 
-
     setIsPendingPublish(true);
   }
-
 
   function clearPendingPublish() {
     setIsPendingPublish(false);
   }
-
 
   function setAuthIntent(
     intent: OnboardingAuthIntent
@@ -442,18 +396,43 @@ export function OnboardingCollectionProvider({
     setAuthIntentState(intent);
   }
 
+  async function prepareAuthHandoff(
+    intent: Exclude<OnboardingAuthIntent, null>
+  ) {
+    if (!collection) {
+      throw new Error(
+        'No onboarding collection is available to save.'
+      );
+    }
+
+    await AsyncStorage.multiSet([
+      [
+        STORAGE_KEY,
+        JSON.stringify(collection),
+      ],
+      [
+        PENDING_PUBLISH_STORAGE_KEY,
+        'true',
+      ],
+      [
+        AUTH_INTENT_STORAGE_KEY,
+        intent,
+      ],
+    ]);
+
+    setIsPendingPublish(true);
+    setAuthIntentState(intent);
+  }
 
   function clearAuthIntent() {
     setAuthIntentState(null);
   }
-
 
   function clearCollection() {
     setIsPendingPublish(false);
     setAuthIntentState(null);
     setCollection(null);
   }
-
 
   const value =
     useMemo<OnboardingCollectionContextValue>(
@@ -469,6 +448,7 @@ export function OnboardingCollectionProvider({
         markPendingPublish,
         clearPendingPublish,
         setAuthIntent,
+        prepareAuthHandoff,
         clearAuthIntent,
         clearCollection,
       }),
@@ -480,7 +460,6 @@ export function OnboardingCollectionProvider({
       ]
     );
 
-
   return (
     <OnboardingCollectionContext.Provider
       value={value}>
@@ -489,19 +468,16 @@ export function OnboardingCollectionProvider({
   );
 }
 
-
 export function useOnboardingCollection() {
   const context = useContext(
     OnboardingCollectionContext
   );
-
 
   if (!context) {
     throw new Error(
       'useOnboardingCollection must be used inside an OnboardingCollectionProvider'
     );
   }
-
 
   return context;
 }

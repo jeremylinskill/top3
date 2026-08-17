@@ -16,6 +16,7 @@ import {
 import {
   ActivityIndicator,
   StyleSheet,
+  Text,
   View,
 } from 'react-native';
 
@@ -54,6 +55,13 @@ export default function IndexScreen() {
     if (
       isAuthLoading ||
       isOnboardingCollectionLoading
+    ) {
+      return;
+    }
+
+
+    if (
+      isProcessingPendingPublish.current
     ) {
       return;
     }
@@ -207,8 +215,6 @@ export default function IndexScreen() {
         if (isMounted) {
           isProcessingPendingPublish.current =
             false;
-
-          clearPendingPublish();
         }
 
 
@@ -283,7 +289,7 @@ export default function IndexScreen() {
         if (hasSeen) {
           router.replace('/sign-in');
         } else {
-          router.replace('/welcome');
+          router.replace('/onboarding');
         }
       } catch (error) {
         console.error(
@@ -293,7 +299,7 @@ export default function IndexScreen() {
 
 
         if (isMounted) {
-          router.replace('/welcome');
+          router.replace('/onboarding');
         }
       }
     }
@@ -321,12 +327,30 @@ export default function IndexScreen() {
   ]);
 
 
+  const isFinishingOnboardingAccount =
+    isAuthenticated &&
+    Boolean(onboardingCollection) &&
+    isPendingPublish;
+
+
   return (
     <View style={styles.container}>
       <ActivityIndicator
         size="large"
         color="#222222"
       />
+
+      {isFinishingOnboardingAccount ? (
+        <>
+          <Text style={styles.title}>
+            Verifying your email…
+          </Text>
+
+          <Text style={styles.description}>
+            We&apos;re finishing your Top3 account.
+          </Text>
+        </>
+      ) : null}
     </View>
   );
 }
@@ -338,5 +362,26 @@ const styles = StyleSheet.create({
     backgroundColor: '#FAFAFA',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+
+
+  title: {
+    marginTop: 24,
+    fontSize: 28,
+    lineHeight: 34,
+    fontWeight: '700',
+    color: '#222222',
+    textAlign: 'center',
+  },
+
+
+  description: {
+    marginTop: 12,
+    maxWidth: 340,
+    fontSize: 16,
+    lineHeight: 24,
+    color: '#666666',
+    textAlign: 'center',
   },
 });

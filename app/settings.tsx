@@ -5,17 +5,19 @@ import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
 import { TYPOGRAPHY } from '@/constants/typography';
 import { useAuth } from '@/hooks/use-auth';
+import { deleteAccount } from '@/lib/supabase/account';
+import { resetWelcomeStatus } from '@/services/onboarding-service';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -24,6 +26,11 @@ export default function SettingsScreen() {
 
   const [isSigningOut, setIsSigningOut] =
     useState(false);
+
+  const [
+    isDeletingAccount,
+    setIsDeletingAccount,
+  ] = useState(false);
 
   function openEditProfile() {
     router.push('/edit-profile');
@@ -83,6 +90,74 @@ export default function SettingsScreen() {
       );
     } finally {
       setIsSigningOut(false);
+    }
+  }
+
+
+  function confirmDeleteAccount() {
+    if (
+      isDeletingAccount ||
+      isSigningOut
+    ) {
+      return;
+    }
+
+    Alert.alert(
+      'Delete your account?',
+      'This permanently deletes your Top 3 account, profile, collections, comments, likes, follows, and other account data. This cannot be undone.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete Account',
+          style: 'destructive',
+          onPress: () => {
+            void handleDeleteAccount();
+          },
+        },
+      ]
+    );
+  }
+
+  async function handleDeleteAccount() {
+    if (
+      isDeletingAccount ||
+      isSigningOut
+    ) {
+      return;
+    }
+
+    setIsDeletingAccount(true);
+
+    try {
+      await deleteAccount();
+
+      await resetWelcomeStatus();
+
+      try {
+        await signOut();
+      } catch (signOutError) {
+        console.warn(
+          'Account was deleted, but local sign out failed:',
+          signOutError
+        );
+      }
+
+router.replace('/onboarding');
+    } catch (error) {
+      console.error(
+        'Failed to delete account:',
+        error
+      );
+
+      Alert.alert(
+        'Unable to Delete Account',
+        'Something went wrong while deleting your account. Please try again.'
+      );
+    } finally {
+      setIsDeletingAccount(false);
     }
   }
 
@@ -224,16 +299,23 @@ export default function SettingsScreen() {
               styles.signOutButton,
               pressed &&
                 !isSigningOut &&
+                !isDeletingAccount &&
                 styles.pressed,
-              isSigningOut &&
+              (isSigningOut ||
+                isDeletingAccount) &&
                 styles.disabled,
             ]}
             onPress={confirmSignOut}
-            disabled={isSigningOut}
+            disabled={
+              isSigningOut ||
+              isDeletingAccount
+            }
             accessibilityRole="button"
             accessibilityLabel="Sign out of Top 3"
             accessibilityState={{
-              disabled: isSigningOut,
+              disabled:
+                isSigningOut ||
+                isDeletingAccount,
             }}>
             {isSigningOut ? (
               <ActivityIndicator
@@ -246,6 +328,46 @@ export default function SettingsScreen() {
               {isSigningOut
                 ? 'Signing Out…'
                 : 'Sign Out'}
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.deleteAccountButton,
+              pressed &&
+                !isDeletingAccount &&
+                !isSigningOut &&
+                styles.pressed,
+              (isDeletingAccount ||
+                isSigningOut) &&
+                styles.disabled,
+            ]}
+            onPress={confirmDeleteAccount}
+            disabled={
+              isDeletingAccount ||
+              isSigningOut
+            }
+            accessibilityRole="button"
+            accessibilityLabel="Delete Top 3 account"
+            accessibilityState={{
+              disabled:
+                isDeletingAccount ||
+                isSigningOut,
+            }}>
+            {isDeletingAccount ? (
+              <ActivityIndicator
+                size="small"
+                color="#FF3B30"
+              />
+            ) : null}
+
+            <Text
+              style={
+                styles.deleteAccountButtonText
+              }>
+              {isDeletingAccount
+                ? 'Deleting Account…'
+                : 'Delete Account'}
             </Text>
           </Pressable>
         </View>
@@ -351,6 +473,26 @@ const styles = StyleSheet.create({
   signOutButtonText: {
     ...TYPOGRAPHY.headline,
     color: COLORS.text,
+    textAlign: 'center',
+  },
+
+  deleteAccountButton: {
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    marginTop: SPACING.md,
+    paddingHorizontal: SPACING.xl,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    borderColor: '#FF3B30',
+    backgroundColor: COLORS.surface,
+  },
+
+  deleteAccountButtonText: {
+    ...TYPOGRAPHY.headline,
+    color: '#FF3B30',
     textAlign: 'center',
   },
 

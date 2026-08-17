@@ -5,7 +5,6 @@ import {
   useComments,
 } from '@/context/comment-context';
 import { useProfile } from '@/context/profile-context';
-import { useTop3 } from '@/context/top3-context';
 import { getProfileById } from '@/lib/supabase/profiles';
 import { getPublishedPosts } from '@/services/post-service';
 import { Post } from '@/types/post';
@@ -49,8 +48,6 @@ export default function PublishedTop3Screen() {
     : params.postId;
 
   const { profile } = useProfile();
-
-  const { selectList } = useTop3();
 
   const {
     addComment,
@@ -249,8 +246,12 @@ export default function PublishedTop3Screen() {
       return;
     }
 
-    selectList(currentPost.collection.id);
-    router.push('/collection');
+    router.push({
+      pathname: '/collection',
+      params: {
+        listId: currentPost.collection.id,
+      },
+    });
   }
 
   return (

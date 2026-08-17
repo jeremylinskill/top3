@@ -17,12 +17,12 @@ import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
 import { formatRelativeTime } from '@/utils/format-relative-time';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import {
   useEffect,
   useRef,
   useState,
 } from 'react';
-import { router } from 'expo-router';
 import {
   Animated,
   Image,
@@ -56,20 +56,6 @@ type Top3CardProps = {
   tasteMatchSharedPickCount?: number;
   onTasteMatchPress?: () => void;
 };
-
-function formatLabel(value: string) {
-  return value
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .map(
-      (word) =>
-        word.charAt(0).toUpperCase() +
-        word.slice(1)
-    )
-    .join(' ');
-}
-
 
 function getYouTubeEmbedUrl(
   trailerUrl: string
@@ -212,40 +198,16 @@ export default function Top3Card({
       item.id === post.collection.category
   );
 
-  const categoryName =
-    category?.name ??
-    formatLabel(post.collection.category);
-
   const artworkRule =
     getCategoryArtworkRule(
       post.collection.category
     );
 
-  const rawType =
-    post.collection.type?.trim();
-
-  const rawTopic =
-    post.collection.topic?.trim();
-
-  const normalizedTopic =
-    rawTopic?.toLowerCase();
-
-  const displayTitleParts = [
-    categoryName,
-    rawType
-      ? formatLabel(rawType)
-      : undefined,
-    rawTopic &&
-    normalizedTopic !== 'general'
-      ? formatLabel(rawTopic)
-      : undefined,
-  ].filter(
-    (value): value is string =>
-      Boolean(value)
-  );
-
   const displayTitle =
-    displayTitleParts.join(' • ');
+    post.collection.title.replace(
+      /^Top 3\s+/i,
+      ''
+    );
 
   const publishedText = formatRelativeTime(
     post.publishedAt
@@ -896,14 +858,6 @@ export default function Top3Card({
                     </Pressable>
                   ) : null}
 
-                  {isTasteMatch ? (
-                    <Ionicons
-                      name="sparkles"
-                      size={14}
-                      color={COLORS.sparkle}
-                      style={styles.tasteMatchIcon}
-                    />
-                  ) : null}
                 </View>
               );
             }
@@ -1312,12 +1266,6 @@ const styles = StyleSheet.create({
   itemDetails: {
     flex: 1,
     minWidth: 0,
-  },
-
-  tasteMatchIcon: {
-    flexShrink: 0,
-    marginLeft: 8,
-    marginRight: 18,
   },
 
   itemTitle: {

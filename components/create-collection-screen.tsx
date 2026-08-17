@@ -1,124 +1,33 @@
-import CollectionForm, {
-  CollectionFormValues,
-  getInitialCollectionFormValues,
-} from '@/components/collection-form';
 import PageHeader from '@/components/page-header';
-import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
-import { TOP3_CATEGORIES } from '@/constants/top3-categories';
-import { useTop3 } from '@/context/top3-context';
-import { Top3List } from '@/types/top3-list';
-import { buildCollectionTitle } from '@/utils/build-collection-title';
+import {
+  CategoryId,
+  TOP3_CATEGORIES,
+} from '@/constants/top3-categories';
 import {
   router,
   useLocalSearchParams,
 } from 'expo-router';
-import { useState } from 'react';
+import { useEffect } from 'react';
 import {
+  Pressable,
   ScrollView,
   StyleSheet,
+  Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 
-function normalizeValue(value?: string) {
-  return value?.trim().toLowerCase() ?? '';
-}
-
-
-function collectionAlreadyExists(
-  existingLists: Top3List[],
-  categoryId: string,
-  topicName?: string
-) {
-  const normalizedCategoryId =
-    normalizeValue(categoryId);
-
-
-  const normalizedTopic =
-    normalizeValue(topicName);
-
-
-  return existingLists.some((list) => {
-    return (
-      Boolean(list.publishedAt) &&
-      normalizeValue(list.category) ===
-        normalizedCategoryId &&
-      normalizeValue(list.topic) ===
-        normalizedTopic
-    );
-  });
-}
-
-
-function getInitialValuesForCategory(
-  existingLists: Top3List[],
-  requestedCategoryId?: string,
-  requestedTopicId?: string
-): CollectionFormValues {
-  if (!requestedCategoryId) {
-    return getInitialCollectionFormValues(
-      existingLists
-    );
-  }
-
-
-  const category = TOP3_CATEGORIES.find(
-    (item) =>
-      item.id === requestedCategoryId
-  );
-
-
-  if (!category) {
-    return getInitialCollectionFormValues(
-      existingLists
-    );
-  }
-
-
-  if (requestedTopicId) {
-    const requestedTopic =
-      category.topics.find(
-        (topic) =>
-          topic.id === requestedTopicId
-      );
-
-
-    if (requestedTopic) {
-      const alreadyExists =
-        collectionAlreadyExists(
-          existingLists,
-          category.id,
-          requestedTopic.name
-        );
-
-
-      if (!alreadyExists) {
-        return {
-          categoryId: category.id,
-          typeId: '',
-          topicId: requestedTopic.id,
-          title: buildCollectionTitle(
-            category.id,
-            requestedTopic.id
-          ),
-        };
-      }
-    }
-  }
-
-
-  return {
-    categoryId: category.id,
-    typeId: '',
-    topicId: '',
-    title: buildCollectionTitle(
-      category.id,
-      ''
-    ),
-  };
-}
+const CATEGORY_ORDER: CategoryId[] = [
+  'albums',
+  'artists',
+  'books',
+  'movies',
+  'songs',
+  'tv',
+  'games',
+];
 
 
 export default function CreateCollectionScreen() {
@@ -129,126 +38,95 @@ export default function CreateCollectionScreen() {
     }>();
 
 
-  const categoryId = Array.isArray(
-    params.categoryId
-  )
-    ? params.categoryId[0]
-    : params.categoryId;
+  const requestedCategoryId =
+    Array.isArray(params.categoryId)
+      ? params.categoryId[0]
+      : params.categoryId;
 
 
-  const topicId = Array.isArray(
-    params.topicId
-  )
-    ? params.topicId[0]
-    : params.topicId;
+  const requestedTopicId =
+    Array.isArray(params.topicId)
+      ? params.topicId[0]
+      : params.topicId;
 
 
-  const { createList, lists } =
-    useTop3();
-
-
-  const [formValues, setFormValues] =
-    useState(() =>
-      getInitialValuesForCategory(
-        lists,
-        categoryId,
-        topicId
-      )
-    );
-
-
-  const selectedCategory =
-    TOP3_CATEGORIES.find(
-      (item) =>
-        item.id ===
-        formValues.categoryId
-    );
-
-
-  const requiresType =
-    Boolean(
-      selectedCategory?.types?.length
-    );
-
-
-  const canCreate =
-    Boolean(formValues.categoryId) &&
-    Boolean(formValues.title) &&
-    (
-      !requiresType ||
-      Boolean(formValues.typeId)
-    );
-
-
-  function createCollection() {
-    if (!canCreate) {
+  useEffect(() => {
+    if (!requestedCategoryId) {
       return;
     }
 
 
-    const category =
-      TOP3_CATEGORIES.find(
-        (item) =>
-          item.id ===
-          formValues.categoryId
+    router.replace(
+      {
+        pathname: '/create-topic',
+        params: {
+          categoryId: requestedCategoryId,
+          ...(requestedTopicId
+            ? { topicId: requestedTopicId }
+            : {}),
+        },
+      } as never
+    );
+  }, [
+    requestedCategoryId,
+    requestedTopicId,
+  ]);
+
+
+  const categories =
+    CATEGORY_ORDER
+      .map((categoryId) =>
+        TOP3_CATEGORIES.find(
+          (category) =>
+            category.id === categoryId
+        )
+      )
+      .filter(
+        (
+          category
+        ): category is NonNullable<
+          (typeof TOP3_CATEGORIES)[number]
+        > => Boolean(category)
       );
 
 
-    if (!category) {
-      return;
-    }
+  function chooseCategory(
+    categoryId: CategoryId
+  ) {
+    router.push(
+      {
+        pathname: '/create-topic',
+        params: {
+          categoryId,
+        },
+      } as never
+    );
+  }
 
 
-    const type = formValues.typeId
-      ? category.types?.find(
-          (item) =>
-            item.id ===
-            formValues.typeId
-        )
-      : undefined;
+  if (requestedCategoryId) {
+    return (
+      <SafeAreaView
+        style={styles.container}
+        edges={['top', 'left', 'right']}>
+        <ScreenHeader />
 
-
-    const topics =
-      type?.topics ??
-      category.topics;
-
-
-    const topic = formValues.topicId
-      ? topics.find(
-          (item) =>
-            item.id ===
-            formValues.topicId
-        )?.name
-      : undefined;
-
-
-    createList({
-      category:
-        formValues.categoryId,
-      type: type?.name,
-      topic,
-      title: formValues.title,
-    });
-
-
-    router.push('/collection');
+        <View style={styles.redirecting} />
+      </SafeAreaView>
+    );
   }
 
 
   return (
     <SafeAreaView
       style={styles.container}
-      edges={[
-        'top',
-        'left',
-        'right',
-      ]}>
+      edges={['top', 'left', 'right']}>
       <ScreenHeader />
 
 
       <PageHeader
-        title="Share your favorites"
-        subtitle="What would you like to rank today?"
+        title="Create a Top 3"
+        subtitle="What would you like to rank?"
       />
 
 
@@ -257,25 +135,60 @@ export default function CreateCollectionScreen() {
         contentContainerStyle={
           styles.content
         }
-        showsVerticalScrollIndicator={
-          false
-        }
-        keyboardShouldPersistTaps="handled">
-        <CollectionForm
-          existingLists={lists}
-          values={formValues}
-          onChange={setFormValues}
-        />
+        showsVerticalScrollIndicator={false}>
+        <View style={styles.categoryGrid}>
+          {categories.map(
+            (category, index) => {
+              const isLastOddCard =
+                categories.length % 2 === 1 &&
+                index ===
+                  categories.length - 1;
+
+
+              return (
+                <View
+                  key={category.id}
+                  style={[
+                    styles.categoryCardWrapper,
+                    isLastOddCard &&
+                      styles.lastCategoryCard,
+                  ]}>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.categoryCard,
+                      pressed &&
+                        styles.categoryCardPressed,
+                    ]}
+                    onPress={() =>
+                      chooseCategory(
+                        category.id
+                      )
+                    }
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      `Create a Top 3 ${category.name} collection`
+                    }>
+                    <Text
+                      style={
+                        styles.categoryIcon
+                      }>
+                      {category.icon}
+                    </Text>
+
+
+                    <Text
+                      style={
+                        styles.categoryLabel
+                      }>
+                      {category.name}
+                    </Text>
+                  </Pressable>
+                </View>
+              );
+            }
+          )}
+        </View>
       </ScrollView>
-
-
-      <View style={styles.bottomBar}>
-        <PrimaryButton
-          title="Continue"
-          onPress={createCollection}
-          disabled={!canCreate}
-        />
-      </View>
     </SafeAreaView>
   );
 }
@@ -296,17 +209,71 @@ const styles = StyleSheet.create({
 
   content: {
     paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingTop: 0,
+    paddingBottom: 36,
   },
 
 
-  bottomBar: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 20,
-    backgroundColor: '#F8F8F8',
-    borderTopWidth:
-      StyleSheet.hairlineWidth,
-    borderTopColor: '#EAEAEA',
+  categoryGrid: {
+    width: '100%',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: 12,
+  },
+
+
+  categoryCardWrapper: {
+    width: '48.5%',
+  },
+
+
+  lastCategoryCard: {
+    marginLeft: '25.75%',
+  },
+
+
+  categoryCard: {
+    width: '100%',
+    minHeight: 112,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 18,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#EAEAEA',
+    borderRadius: 18,
+  },
+
+
+  categoryCardPressed: {
+    opacity: 0.78,
+    transform: [
+      {
+        scale: 0.98,
+      },
+    ],
+  },
+
+
+  categoryIcon: {
+    fontSize: 30,
+    lineHeight: 38,
+  },
+
+
+  categoryLabel: {
+    marginTop: 8,
+    fontSize: 17,
+    lineHeight: 23,
+    fontWeight: '700',
+    color: '#222222',
+    textAlign: 'center',
+  },
+
+
+  redirecting: {
+    flex: 1,
   },
 });

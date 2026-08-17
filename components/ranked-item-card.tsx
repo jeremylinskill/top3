@@ -589,16 +589,14 @@ export default function RankedItemCard({
 
 const styles = StyleSheet.create({
   card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    paddingVertical: 15,
-    paddingHorizontal: 10,
-    marginVertical: 4,
-    borderWidth: 1,
-    borderColor: '#EEEEEE',
-  },
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: '#FFFFFF',
+  borderRadius: 16,
+  padding: 16,
+  borderWidth: 1,
+  borderColor: '#EEEEEE',
+},
 
 
   rankContainer: {

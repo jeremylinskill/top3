@@ -1,5 +1,5 @@
 import {
-    TOP3_CATEGORIES,
+  TOP3_CATEGORIES,
 } from '@/constants/top3-categories';
 
 export function buildCollectionTitle(
@@ -21,7 +21,7 @@ export function buildCollectionTitle(
     `Top 3 ${category.name}`;
 
   if (!typeOrTopicId) {
-    return baseTitle;
+    return `Top 3 All ${category.name}`;
   }
 
   const type =
@@ -61,7 +61,7 @@ export function buildCollectionTitle(
     !topic ||
     topic.id === 'general'
   ) {
-    return baseTitle;
+    return `Top 3 All ${category.name}`;
   }
 
   return `${baseTitle} • ${topic.name}`;

@@ -1,8 +1,10 @@
 import AuthProviderButton from '@/components/auth-provider-button';
 import { signUpWithEmail } from '@/services/auth-service';
+import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import {
     Alert,
+    Pressable,
     StyleSheet,
     Text,
     TextInput,
@@ -24,6 +26,12 @@ export default function EmailSignUpForm({
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] =
     useState('');
+  const [showPassword, setShowPassword] =
+    useState(false);
+  const [
+    showConfirmPassword,
+    setShowConfirmPassword,
+  ] = useState(false);
   const [isSubmitting, setIsSubmitting] =
     useState(false);
 
@@ -147,21 +155,55 @@ export default function EmailSignUpForm({
       <View style={styles.field}>
         <Text style={styles.label}>Password</Text>
 
-        <TextInput
-          accessibilityLabel="Password"
-          autoCapitalize="none"
-          autoComplete="new-password"
-          autoCorrect={false}
-          editable={!isSubmitting}
-          onChangeText={setPassword}
-          placeholder="At least 8 characters"
-          placeholderTextColor="#999999"
-          returnKeyType="next"
-          secureTextEntry
-          style={styles.input}
-          textContentType="newPassword"
-          value={password}
-        />
+        <View style={styles.passwordInputContainer}>
+          <TextInput
+            accessibilityLabel="Password"
+            autoCapitalize="none"
+            autoComplete="new-password"
+            autoCorrect={false}
+            editable={!isSubmitting}
+            onChangeText={setPassword}
+            placeholder="At least 8 characters"
+            placeholderTextColor="#999999"
+            returnKeyType="next"
+            secureTextEntry={!showPassword}
+            style={styles.passwordInput}
+            textContentType="newPassword"
+            value={password}
+          />
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={
+              showPassword
+                ? 'Hide password'
+                : 'Show password'
+            }
+            disabled={isSubmitting}
+            hitSlop={8}
+            onPress={() =>
+              setShowPassword(
+                (currentValue) =>
+                  !currentValue
+              )
+            }
+            style={({ pressed }) => [
+              styles.visibilityButton,
+              pressed &&
+                !isSubmitting &&
+                styles.visibilityButtonPressed,
+            ]}>
+            <Ionicons
+              name={
+                showPassword
+                  ? 'eye-off-outline'
+                  : 'eye-outline'
+              }
+              size={22}
+              color="#666666"
+            />
+          </Pressable>
+        </View>
       </View>
 
       <View style={styles.field}>
@@ -169,22 +211,56 @@ export default function EmailSignUpForm({
           Confirm password
         </Text>
 
-        <TextInput
-          accessibilityLabel="Confirm password"
-          autoCapitalize="none"
-          autoComplete="new-password"
-          autoCorrect={false}
-          editable={!isSubmitting}
-          onChangeText={setConfirmPassword}
-          onSubmitEditing={handleSubmit}
-          placeholder="Enter your password again"
-          placeholderTextColor="#999999"
-          returnKeyType="done"
-          secureTextEntry
-          style={styles.input}
-          textContentType="newPassword"
-          value={confirmPassword}
-        />
+        <View style={styles.passwordInputContainer}>
+          <TextInput
+            accessibilityLabel="Confirm password"
+            autoCapitalize="none"
+            autoComplete="new-password"
+            autoCorrect={false}
+            editable={!isSubmitting}
+            onChangeText={setConfirmPassword}
+            onSubmitEditing={handleSubmit}
+            placeholder="Enter your password again"
+            placeholderTextColor="#999999"
+            returnKeyType="done"
+            secureTextEntry={!showConfirmPassword}
+            style={styles.passwordInput}
+            textContentType="newPassword"
+            value={confirmPassword}
+          />
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={
+              showConfirmPassword
+                ? 'Hide confirmed password'
+                : 'Show confirmed password'
+            }
+            disabled={isSubmitting}
+            hitSlop={8}
+            onPress={() =>
+              setShowConfirmPassword(
+                (currentValue) =>
+                  !currentValue
+              )
+            }
+            style={({ pressed }) => [
+              styles.visibilityButton,
+              pressed &&
+                !isSubmitting &&
+                styles.visibilityButtonPressed,
+            ]}>
+            <Ionicons
+              name={
+                showConfirmPassword
+                  ? 'eye-off-outline'
+                  : 'eye-outline'
+              }
+              size={22}
+              color="#666666"
+            />
+          </Pressable>
+        </View>
       </View>
 
       <View style={styles.buttonContainer}>
@@ -228,6 +304,38 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 22,
     color: '#222222',
+  },
+
+  passwordInputContainer: {
+    width: '100%',
+    minHeight: 54,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#D9D9D9',
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+  },
+
+  passwordInput: {
+    flex: 1,
+    minHeight: 54,
+    paddingLeft: 16,
+    paddingRight: 8,
+    fontSize: 16,
+    lineHeight: 22,
+    color: '#222222',
+  },
+
+  visibilityButton: {
+    width: 48,
+    minHeight: 54,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  visibilityButtonPressed: {
+    opacity: 0.6,
   },
 
   buttonContainer: {

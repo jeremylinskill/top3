@@ -1,3 +1,6 @@
+
+
+
 import { AuthGate } from '@/components/auth-gate';
 import { AudioPreviewProvider } from '@/context/audio-preview-context';
 import { CommentProvider } from '@/context/comment-context';
@@ -56,13 +59,13 @@ export default function RootLayout() {
                                 <Stack.Screen name="index" />
 
 
-                                <Stack.Screen name="welcome" />
-
-
                                 <Stack.Screen name="onboarding" />
 
 
                                 <Stack.Screen name="onboarding-published" />
+
+
+                                <Stack.Screen name="onboarding-overall-top3" />
 
 
                                 <Stack.Screen name="onboarding-taste-match" />

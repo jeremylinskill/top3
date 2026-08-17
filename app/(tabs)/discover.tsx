@@ -1999,7 +1999,7 @@ export default function DiscoverScreen() {
               <Text style={styles.sectionTitle}>
                 {showTrendingTopics
                   ? 'Trending Topics'
-                  : 'Featured Topics'}
+                  : 'Featured Genres'}
               </Text>
 
               {isLoading ? (

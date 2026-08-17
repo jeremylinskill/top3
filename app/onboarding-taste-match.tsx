@@ -289,18 +289,17 @@ export default function OnboardingTasteMatchScreen() {
             useNativeDriver: true,
           }
         ),
+        Animated.timing(
+          scoreProgress,
+          {
+            toValue: 1,
+            duration: 860,
+            easing:
+              Easing.out(Easing.cubic),
+            useNativeDriver: false,
+          }
+        ),
       ]),
-      Animated.delay(80),
-      Animated.timing(
-        scoreProgress,
-        {
-          toValue: 1,
-          duration: 900,
-          easing:
-            Easing.out(Easing.cubic),
-          useNativeDriver: false,
-        }
-      ),
     ]).start();
 
 
@@ -337,23 +336,31 @@ export default function OnboardingTasteMatchScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.brand}>
-          Top 3
-        </Text>
+        <View style={styles.headerBlock}>
+          <Animated.Text
+            style={[
+              styles.title,
+              {
+                opacity:
+                  titleOpacity,
+              },
+            ]}>
+            Find people who share
+            {'\n'}
+            your taste.
+          </Animated.Text>
 
-
-        <Animated.Text
-          style={[
-            styles.title,
-            {
-              opacity:
-                titleOpacity,
-            },
-          ]}>
-          Find people who share
-          {'\n'}
-          your taste.
-        </Animated.Text>
+          <Animated.Text
+            style={[
+              styles.subtitle,
+              {
+                opacity:
+                  titleOpacity,
+              },
+            ]}>
+            See how much you have in common.
+          </Animated.Text>
+        </View>
 
 
         <Animated.View
@@ -488,23 +495,19 @@ const styles = StyleSheet.create({
 
   content: {
     flex: 1,
-    justifyContent: 'center',
     paddingHorizontal: 20,
+    paddingTop: 72,
     paddingBottom: 20,
   },
 
 
-  brand: {
-    fontSize: 34,
-    lineHeight: 40,
-    fontWeight: '800',
-    color: '#222222',
-    textAlign: 'center',
+
+  headerBlock: {
+    minHeight: 128,
   },
 
 
   title: {
-    marginTop: 12,
     paddingHorizontal: 8,
     fontSize: 28,
     lineHeight: 34,
@@ -514,8 +517,17 @@ const styles = StyleSheet.create({
   },
 
 
+  subtitle: {
+    marginTop: 12,
+    fontSize: 17,
+    lineHeight: 24,
+    color: '#777777',
+    textAlign: 'center',
+  },
+
+
   matchCard: {
-    marginTop: 34,
+    marginTop: 20,
     paddingHorizontal: 24,
     paddingTop: 28,
     paddingBottom: 26,
