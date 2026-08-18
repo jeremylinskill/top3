@@ -15,6 +15,14 @@ export type CreateUserReportInput = {
   details?: string | null;
 };
 
+export type CreatePostReportInput = {
+  reporterId: string;
+  reportedUserId: string;
+  reportedPostId: string;
+  reason: ReportReason;
+  details?: string | null;
+};
+
 export async function createUserReport({
   reporterId,
   reportedUserId,
@@ -54,6 +62,8 @@ export async function createUserReport({
       reporter_id: normalizedReporterId,
       reported_user_id:
         normalizedReportedUserId,
+      target_type: 'user',
+      reported_post_id: null,
       reason,
       details: normalizedDetails,
     });
@@ -61,6 +71,64 @@ export async function createUserReport({
   if (error) {
     throw new Error(
       `Failed to report user: ${error.message}`
+    );
+  }
+}
+
+export async function createPostReport({
+  reporterId,
+  reportedUserId,
+  reportedPostId,
+  reason,
+  details,
+}: CreatePostReportInput): Promise<void> {
+  const normalizedReporterId =
+    reporterId.trim();
+
+  const normalizedReportedUserId =
+    reportedUserId.trim();
+
+  const normalizedReportedPostId =
+    reportedPostId.trim();
+
+  const normalizedDetails =
+    details?.trim() || null;
+
+  if (
+    !normalizedReporterId ||
+    !normalizedReportedUserId ||
+    !normalizedReportedPostId
+  ) {
+    throw new Error(
+      'Reporter, reported user, and post IDs are required to create a post report.'
+    );
+  }
+
+  if (
+    normalizedReporterId ===
+    normalizedReportedUserId
+  ) {
+    throw new Error(
+      'A user cannot report their own post.'
+    );
+  }
+
+  const { error } = await supabase
+    .from('reports')
+    .insert({
+      reporter_id: normalizedReporterId,
+      reported_user_id:
+        normalizedReportedUserId,
+      target_type: 'post',
+      reported_post_id:
+        normalizedReportedPostId,
+      reason,
+      details: normalizedDetails,
+    });
+
+  if (error) {
+    throw new Error(
+      `Failed to report post: ${error.message}`
     );
   }
 }

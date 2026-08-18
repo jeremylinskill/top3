@@ -1,3 +1,6 @@
+import ActionSheet, {
+  ActionSheetAction,
+} from '@/components/action-sheet';
 import CommentsSheet from '@/components/comments-sheet';
 import ScreenHeader from '@/components/screen-header';
 import SegmentedControl from '@/components/segmented-control';
@@ -7,15 +10,21 @@ import {
 } from '@/constants/category-artwork-rules';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { useAudioPreview } from '@/context/audio-preview-context';
+import { useBlock } from '@/context/block-context';
 import { useComments } from '@/context/comment-context';
 import { useLike } from '@/context/like-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
+import { getPublicProfilesByIds } from '@/lib/supabase/profiles';
+import {
+  createPostReport,
+  createUserReport,
+  ReportReason,
+} from '@/lib/supabase/reports';
 import {
   getMovieTrailerUrl,
   getTvShowTrailerUrl,
 } from '@/providers/movies-and-tv';
-import { getPublicProfilesByIds } from '@/lib/supabase/profiles';
 import {
   getPublishedPosts
 } from '@/services/post-service';
@@ -38,6 +47,7 @@ import {
 } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Animated,
   Image,
   Modal,
@@ -51,6 +61,41 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 
 type CategoryView = 'lists' | 'overall';
+
+type CategoryFeedModerationSheet =
+  | {
+      type: 'actions';
+      post: Post;
+    }
+  | {
+      type: 'post-reasons';
+      post: Post;
+    }
+  | {
+      type: 'confirm-post';
+      post: Post;
+      reason: ReportReason;
+      reasonLabel: string;
+    }
+  | {
+      type: 'user-reasons';
+      post: Post;
+    }
+  | {
+      type: 'confirm-user';
+      post: Post;
+      reason: ReportReason;
+      reasonLabel: string;
+    }
+  | {
+      type: 'confirm-block';
+      post: Post;
+    }
+  | {
+      type: 'confirm-unblock';
+      post: Post;
+    }
+  | null;
 
 
 function getYouTubeEmbedUrl(
@@ -175,6 +220,12 @@ export default function CategoryFeedScreen() {
   const { profile } = useProfile();
 
   const {
+    isBlocked,
+    blockUser,
+    unblockUser,
+  } = useBlock();
+
+  const {
     posts,
   } = useTop3();
 
@@ -237,6 +288,13 @@ export default function CategoryFeedScreen() {
     selectedCommentsPost,
     setSelectedCommentsPost,
   ] = useState<Post | null>(null);
+
+  const [
+    moderationSheet,
+    setModerationSheet,
+  ] = useState<CategoryFeedModerationSheet>(
+    null
+  );
 
   const category = TOP3_CATEGORIES.find(
     (item) =>
@@ -537,6 +595,549 @@ if (isMounted) {
     setSelectedCommentsPost(null);
   }
 
+  function closeModerationSheet() {
+    setModerationSheet(null);
+  }
+
+  function openPostActions(post: Post) {
+    if (post.authorId === profile.id) {
+      return;
+    }
+
+    setModerationSheet({
+      type: 'actions',
+      post,
+    });
+  }
+
+  function openReportPostReasons(post: Post) {
+    if (post.authorId === profile.id) {
+      return;
+    }
+
+    setModerationSheet({
+      type: 'post-reasons',
+      post,
+    });
+  }
+
+  function confirmPostReport(
+    post: Post,
+    reason: ReportReason,
+    reasonLabel: string
+  ) {
+    if (post.authorId === profile.id) {
+      return;
+    }
+
+    setModerationSheet({
+      type: 'confirm-post',
+      post,
+      reason,
+      reasonLabel,
+    });
+  }
+
+  function openReportUserReasons(post: Post) {
+    if (post.authorId === profile.id) {
+      return;
+    }
+
+    setModerationSheet({
+      type: 'user-reasons',
+      post,
+    });
+  }
+
+  function confirmUserReport(
+    post: Post,
+    reason: ReportReason,
+    reasonLabel: string
+  ) {
+    if (post.authorId === profile.id) {
+      return;
+    }
+
+    setModerationSheet({
+      type: 'confirm-user',
+      post,
+      reason,
+      reasonLabel,
+    });
+  }
+
+  function confirmBlockUser(post: Post) {
+    if (post.authorId === profile.id) {
+      return;
+    }
+
+    setModerationSheet({
+      type: 'confirm-block',
+      post,
+    });
+  }
+
+  function confirmUnblockUser(post: Post) {
+    if (post.authorId === profile.id) {
+      return;
+    }
+
+    setModerationSheet({
+      type: 'confirm-unblock',
+      post,
+    });
+  }
+
+  async function handleReportPost(
+    post: Post,
+    reason: ReportReason
+  ) {
+    if (post.authorId === profile.id) {
+      return;
+    }
+
+    try {
+      await createPostReport({
+        reporterId: profile.id,
+        reportedUserId: post.authorId,
+        reportedPostId: post.id,
+        reason,
+      });
+
+      Alert.alert(
+        'Report submitted',
+        'Thanks for letting us know. Your report has been submitted for review.'
+      );
+    } catch (error) {
+      console.error(
+        'Failed to report list from category feed:',
+        error
+      );
+
+      Alert.alert(
+        'Unable to submit report',
+        'Please try again.'
+      );
+    }
+  }
+
+  async function handleReportUser(
+    post: Post,
+    reason: ReportReason
+  ) {
+    if (post.authorId === profile.id) {
+      return;
+    }
+
+    try {
+      await createUserReport({
+        reporterId: profile.id,
+        reportedUserId: post.authorId,
+        reason,
+      });
+
+      Alert.alert(
+        'Report submitted',
+        'Thanks for letting us know. Your report has been submitted for review.'
+      );
+    } catch (error) {
+      console.error(
+        'Failed to report user from category feed:',
+        error
+      );
+
+      Alert.alert(
+        'Unable to submit report',
+        'Please try again.'
+      );
+    }
+  }
+
+  async function handleBlockUser(post: Post) {
+    if (post.authorId === profile.id) {
+      return;
+    }
+
+    try {
+      await blockUser(post.authorId);
+
+      const author =
+        getPostAuthor(post.authorId);
+
+      Alert.alert(
+        'User blocked',
+        `${author?.displayName ?? 'This user'} has been blocked.`
+      );
+    } catch (error) {
+      console.error(
+        'Failed to block user from category feed:',
+        error
+      );
+
+      Alert.alert(
+        'Unable to block user',
+        'Please try again.'
+      );
+    }
+  }
+
+  async function handleUnblockUser(post: Post) {
+    if (post.authorId === profile.id) {
+      return;
+    }
+
+    try {
+      await unblockUser(post.authorId);
+
+      const author =
+        getPostAuthor(post.authorId);
+
+      Alert.alert(
+        'User unblocked',
+        `${author?.displayName ?? 'This user'} has been unblocked.`
+      );
+    } catch (error) {
+      console.error(
+        'Failed to unblock user from category feed:',
+        error
+      );
+
+      Alert.alert(
+        'Unable to unblock user',
+        'Please try again.'
+      );
+    }
+  }
+
+  let moderationSheetTitle:
+    | string
+    | undefined;
+  let moderationSheetMessage:
+    | string
+    | undefined;
+  let moderationSheetActions:
+    ActionSheetAction[] = [];
+
+  if (moderationSheet) {
+    switch (moderationSheet.type) {
+      case 'actions': {
+        const userIsBlocked =
+          isBlocked(
+            moderationSheet.post.authorId
+          );
+
+        moderationSheetActions = [
+          {
+            label: 'Report List',
+            onPress: () =>
+              openReportPostReasons(
+                moderationSheet.post
+              ),
+          },
+          {
+            label: 'Report User',
+            onPress: () =>
+              openReportUserReasons(
+                moderationSheet.post
+              ),
+          },
+          {
+            label: userIsBlocked
+              ? 'Unblock User'
+              : 'Block User',
+            variant: userIsBlocked
+              ? 'default'
+              : 'destructive',
+            onPress: userIsBlocked
+              ? () =>
+                  confirmUnblockUser(
+                    moderationSheet.post
+                  )
+              : () =>
+                  confirmBlockUser(
+                    moderationSheet.post
+                  ),
+          },
+          {
+            label: 'Cancel',
+            variant: 'cancel',
+            onPress: closeModerationSheet,
+          },
+        ];
+        break;
+      }
+
+      case 'post-reasons':
+        moderationSheetTitle =
+          'Report List';
+        moderationSheetMessage =
+          'Why are you reporting this list?';
+
+        moderationSheetActions = [
+          {
+            label: 'Spam',
+            onPress: () =>
+              confirmPostReport(
+                moderationSheet.post,
+                'spam',
+                'Spam'
+              ),
+          },
+          {
+            label: 'Harassment or bullying',
+            onPress: () =>
+              confirmPostReport(
+                moderationSheet.post,
+                'harassment',
+                'Harassment or bullying'
+              ),
+          },
+          {
+            label: 'Hate or abusive content',
+            onPress: () =>
+              confirmPostReport(
+                moderationSheet.post,
+                'hate_or_abuse',
+                'Hate or abusive content'
+              ),
+          },
+          {
+            label: 'Inappropriate content',
+            onPress: () =>
+              confirmPostReport(
+                moderationSheet.post,
+                'inappropriate_content',
+                'Inappropriate content'
+              ),
+          },
+          {
+            label: 'Impersonation',
+            onPress: () =>
+              confirmPostReport(
+                moderationSheet.post,
+                'impersonation',
+                'Impersonation'
+              ),
+          },
+          {
+            label: 'Other',
+            onPress: () =>
+              confirmPostReport(
+                moderationSheet.post,
+                'other',
+                'Other'
+              ),
+          },
+          {
+            label: 'Cancel',
+            variant: 'cancel',
+            onPress: closeModerationSheet,
+          },
+        ];
+        break;
+
+      case 'confirm-post':
+        moderationSheetTitle =
+          'Report this list?';
+        moderationSheetMessage =
+          `Reason: ${moderationSheet.reasonLabel}`;
+
+        moderationSheetActions = [
+          {
+            label: 'Submit Report',
+            variant: 'destructive',
+            onPress: () => {
+              const {
+                post,
+                reason,
+              } = moderationSheet;
+
+              closeModerationSheet();
+              void handleReportPost(
+                post,
+                reason
+              );
+            },
+          },
+          {
+            label: 'Cancel',
+            variant: 'cancel',
+            onPress: closeModerationSheet,
+          },
+        ];
+        break;
+
+      case 'user-reasons':
+        moderationSheetTitle =
+          'Report User';
+        moderationSheetMessage =
+          'Why are you reporting this user?';
+
+        moderationSheetActions = [
+          {
+            label: 'Spam',
+            onPress: () =>
+              confirmUserReport(
+                moderationSheet.post,
+                'spam',
+                'Spam'
+              ),
+          },
+          {
+            label: 'Harassment or bullying',
+            onPress: () =>
+              confirmUserReport(
+                moderationSheet.post,
+                'harassment',
+                'Harassment or bullying'
+              ),
+          },
+          {
+            label: 'Hate or abusive content',
+            onPress: () =>
+              confirmUserReport(
+                moderationSheet.post,
+                'hate_or_abuse',
+                'Hate or abusive content'
+              ),
+          },
+          {
+            label: 'Inappropriate content',
+            onPress: () =>
+              confirmUserReport(
+                moderationSheet.post,
+                'inappropriate_content',
+                'Inappropriate content'
+              ),
+          },
+          {
+            label: 'Impersonation',
+            onPress: () =>
+              confirmUserReport(
+                moderationSheet.post,
+                'impersonation',
+                'Impersonation'
+              ),
+          },
+          {
+            label: 'Other',
+            onPress: () =>
+              confirmUserReport(
+                moderationSheet.post,
+                'other',
+                'Other'
+              ),
+          },
+          {
+            label: 'Cancel',
+            variant: 'cancel',
+            onPress: closeModerationSheet,
+          },
+        ];
+        break;
+
+      case 'confirm-user': {
+        const author =
+          getPostAuthor(
+            moderationSheet.post.authorId
+          );
+
+        moderationSheetTitle =
+          `Report ${author?.displayName ?? 'this user'}?`;
+        moderationSheetMessage =
+          `Reason: ${moderationSheet.reasonLabel}`;
+
+        moderationSheetActions = [
+          {
+            label: 'Submit Report',
+            variant: 'destructive',
+            onPress: () => {
+              const {
+                post,
+                reason,
+              } = moderationSheet;
+
+              closeModerationSheet();
+              void handleReportUser(
+                post,
+                reason
+              );
+            },
+          },
+          {
+            label: 'Cancel',
+            variant: 'cancel',
+            onPress: closeModerationSheet,
+          },
+        ];
+        break;
+      }
+
+      case 'confirm-block': {
+        const author =
+          getPostAuthor(
+            moderationSheet.post.authorId
+          );
+
+        moderationSheetTitle =
+          `Block ${author?.displayName ?? 'this user'}?`;
+        moderationSheetMessage =
+          'They will no longer be connected to you through following, and you can unblock them later.';
+
+        moderationSheetActions = [
+          {
+            label: 'Block',
+            variant: 'destructive',
+            onPress: () => {
+              const post =
+                moderationSheet.post;
+
+              closeModerationSheet();
+              void handleBlockUser(post);
+            },
+          },
+          {
+            label: 'Cancel',
+            variant: 'cancel',
+            onPress: closeModerationSheet,
+          },
+        ];
+        break;
+      }
+
+      case 'confirm-unblock': {
+        const author =
+          getPostAuthor(
+            moderationSheet.post.authorId
+          );
+
+        moderationSheetTitle =
+          `Unblock ${author?.displayName ?? 'this user'}?`;
+        moderationSheetMessage =
+          'You can follow each other again after unblocking.';
+
+        moderationSheetActions = [
+          {
+            label: 'Unblock',
+            onPress: () => {
+              const post =
+                moderationSheet.post;
+
+              closeModerationSheet();
+              void handleUnblockUser(post);
+            },
+          },
+          {
+            label: 'Cancel',
+            variant: 'cancel',
+            onPress: closeModerationSheet,
+          },
+        ];
+        break;
+      }
+    }
+  }
+
   function handleCommunityLike() {
     if (
       !communityPost ||
@@ -823,6 +1424,12 @@ if (isMounted) {
                       isCurrentUserPost
                         ? () =>
                             editCollection(post)
+                        : undefined
+                    }
+                    onMorePress={
+                      !isCurrentUserPost
+                        ? () =>
+                            openPostActions(post)
                         : undefined
                     }
                     onCommentsPress={() =>
@@ -1183,6 +1790,14 @@ if (isMounted) {
           </View>
         )}
       </ScrollView>
+
+      <ActionSheet
+        visible={moderationSheet !== null}
+        title={moderationSheetTitle}
+        message={moderationSheetMessage}
+        actions={moderationSheetActions}
+        onClose={closeModerationSheet}
+      />
 
       <CommentsSheet
         visible={

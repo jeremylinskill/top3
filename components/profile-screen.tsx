@@ -12,6 +12,7 @@ import type { FollowCounts } from '@/lib/supabase/follows';
 import { getFollowCounts } from '@/lib/supabase/follows';
 import { getProfileById } from '@/lib/supabase/profiles';
 import {
+  createPostReport,
   createUserReport,
   ReportReason,
 } from '@/lib/supabase/reports';
@@ -47,6 +48,20 @@ type ModerationSheet =
   | { type: 'confirm-unblock' }
   | {
       type: 'confirm-report';
+      reason: ReportReason;
+      reasonLabel: string;
+    }
+  | {
+      type: 'list-actions';
+      post: Post;
+    }
+  | {
+      type: 'list-report-reasons';
+      post: Post;
+    }
+  | {
+      type: 'confirm-list-report';
+      post: Post;
       reason: ReportReason;
       reasonLabel: string;
     }
@@ -651,6 +666,94 @@ export default function ProfileScreen({
     });
   }
 
+  function openListMenu(post: Post) {
+    if (
+      !viewedUserId ||
+      isCurrentUser ||
+      post.authorId !== viewedUserId
+    ) {
+      return;
+    }
+
+    setModerationSheet({
+      type: 'list-actions',
+      post,
+    });
+  }
+
+  function openListReportReasons(post: Post) {
+    if (
+      !viewedUserId ||
+      isCurrentUser ||
+      post.authorId !== viewedUserId
+    ) {
+      return;
+    }
+
+    setModerationSheet({
+      type: 'list-report-reasons',
+      post,
+    });
+  }
+
+  function confirmListReport(
+    post: Post,
+    reason: ReportReason,
+    reasonLabel: string
+  ) {
+    if (
+      !viewedUserId ||
+      isCurrentUser ||
+      post.authorId !== viewedUserId
+    ) {
+      return;
+    }
+
+    setModerationSheet({
+      type: 'confirm-list-report',
+      post,
+      reason,
+      reasonLabel,
+    });
+  }
+
+  async function handleReportList(
+    post: Post,
+    reason: ReportReason
+  ) {
+    if (
+      !viewedUserId ||
+      isCurrentUser ||
+      post.authorId !== viewedUserId
+    ) {
+      return;
+    }
+
+    try {
+      await createPostReport({
+        reporterId: profile.id,
+        reportedUserId: viewedUserId,
+        reportedPostId: post.id,
+        reason,
+      });
+
+      Alert.alert(
+        'Report submitted',
+        'Thanks for letting us know. Your report has been submitted for review.'
+      );
+    } catch (error) {
+      console.error(
+        'Failed to report list from profile:',
+        error
+      );
+
+      Alert.alert(
+        'Unable to submit report',
+        'Please try again.'
+      );
+    }
+  }
+
   function openFollowing() {
     router.push({
       pathname: '/social',
@@ -735,7 +838,9 @@ export default function ProfileScreen({
     setSelectedCommentsPost(null);
   }
 
-  let moderationSheetTitle = '';
+  let moderationSheetTitle:
+    | string
+    | undefined;
   let moderationSheetMessage:
     | string
     | undefined;
@@ -753,7 +858,7 @@ export default function ProfileScreen({
           isBlocked(viewedUserId);
 
         moderationSheetTitle =
-          'Profile actions';
+          undefined;
 
         moderationSheetActions = [
           {
@@ -913,6 +1018,126 @@ export default function ProfileScreen({
           },
         ];
         break;
+
+      case 'list-actions':
+        moderationSheetTitle =
+          undefined;
+
+        moderationSheetActions = [
+          {
+            label: 'Report List',
+            onPress: () =>
+              openListReportReasons(
+                moderationSheet.post
+              ),
+          },
+          {
+            label: 'Cancel',
+            variant: 'cancel',
+            onPress: closeModerationSheet,
+          },
+        ];
+        break;
+
+      case 'list-report-reasons':
+        moderationSheetTitle =
+          'Report List';
+        moderationSheetMessage =
+          'Why are you reporting this list?';
+
+        moderationSheetActions = [
+          {
+            label: 'Spam',
+            onPress: () =>
+              confirmListReport(
+                moderationSheet.post,
+                'spam',
+                'Spam'
+              ),
+          },
+          {
+            label: 'Harassment or bullying',
+            onPress: () =>
+              confirmListReport(
+                moderationSheet.post,
+                'harassment',
+                'Harassment or bullying'
+              ),
+          },
+          {
+            label: 'Hate or abusive content',
+            onPress: () =>
+              confirmListReport(
+                moderationSheet.post,
+                'hate_or_abuse',
+                'Hate or abusive content'
+              ),
+          },
+          {
+            label: 'Inappropriate content',
+            onPress: () =>
+              confirmListReport(
+                moderationSheet.post,
+                'inappropriate_content',
+                'Inappropriate content'
+              ),
+          },
+          {
+            label: 'Impersonation',
+            onPress: () =>
+              confirmListReport(
+                moderationSheet.post,
+                'impersonation',
+                'Impersonation'
+              ),
+          },
+          {
+            label: 'Other',
+            onPress: () =>
+              confirmListReport(
+                moderationSheet.post,
+                'other',
+                'Other'
+              ),
+          },
+          {
+            label: 'Cancel',
+            variant: 'cancel',
+            onPress: closeModerationSheet,
+          },
+        ];
+        break;
+
+      case 'confirm-list-report':
+        moderationSheetTitle =
+          'Report this list?';
+        moderationSheetMessage =
+          `Reason: ${moderationSheet.reasonLabel}`;
+
+        moderationSheetActions = [
+          {
+            label: 'Submit Report',
+            variant: 'destructive',
+            onPress: () => {
+              const {
+                post,
+                reason,
+              } = moderationSheet;
+
+              closeModerationSheet();
+              void handleReportList(
+                post,
+                reason
+              );
+            },
+          },
+          {
+            label: 'Cancel',
+            variant: 'cancel',
+            onPress: closeModerationSheet,
+          },
+        ];
+        break;
     }
   }
 
@@ -1044,6 +1269,11 @@ export default function ProfileScreen({
             isCurrentUser
               ? editCollection
               : undefined
+          }
+          onMorePostPress={
+            isCurrentUser
+              ? undefined
+              : openListMenu
           }
           onCommentsPress={openComments}
         />

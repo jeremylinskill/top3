@@ -24,7 +24,7 @@ export type ActionSheetAction = {
 
 type ActionSheetProps = {
   visible: boolean;
-  title: string;
+  title?: string;
   message?: string;
   actions: ActionSheetAction[];
   onClose: () => void;
@@ -37,6 +37,9 @@ export default function ActionSheet({
   actions,
   onClose,
 }: ActionSheetProps) {
+  const showHeader =
+    Boolean(title) || Boolean(message);
+
   return (
     <Modal
       visible={visible}
@@ -53,19 +56,33 @@ export default function ActionSheet({
         />
 
         <View style={styles.sheet}>
-          <View style={styles.header}>
-            <Text style={styles.title}>
-              {title}
-            </Text>
+          {showHeader ? (
+            <View style={styles.header}>
+              {title ? (
+                <Text style={styles.title}>
+                  {title}
+                </Text>
+              ) : null}
 
-            {message ? (
-              <Text style={styles.message}>
-                {message}
-              </Text>
-            ) : null}
-          </View>
+              {message ? (
+                <Text
+                  style={[
+                    styles.message,
+                    !title &&
+                      styles.messageWithoutTitle,
+                  ]}>
+                  {message}
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
 
-          <View style={styles.actions}>
+          <View
+            style={[
+              styles.actions,
+              showHeader &&
+                styles.actionsWithHeader,
+            ]}>
             {actions.map(
               (
                 action,
@@ -91,6 +108,8 @@ export default function ActionSheet({
                     }}
                     style={({ pressed }) => [
                       styles.actionButton,
+                      index > 0 &&
+                        styles.actionButtonSpacing,
                       isDestructive &&
                         styles.destructiveButton,
                       isCancel &&
@@ -161,7 +180,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  actions: {
+  messageWithoutTitle: {
+    marginTop: 0,
+  },
+
+  actions: {},
+
+  actionsWithHeader: {
     marginTop: SPACING.xxl,
   },
 
@@ -171,9 +196,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.lg,
-    marginTop: SPACING.md,
     borderRadius: RADIUS.lg,
     backgroundColor: COLORS.background,
+  },
+
+  actionButtonSpacing: {
+    marginTop: SPACING.md,
   },
 
   destructiveButton: {
@@ -211,8 +239,8 @@ const styles = StyleSheet.create({
   },
 
   cancelText: {
-  color: COLORS.text,
-},
+    color: COLORS.text,
+  },
 
   actionTextDisabled: {
     color: COLORS.tertiaryText,

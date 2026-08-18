@@ -9,11 +9,11 @@ import { TYPOGRAPHY } from '@/constants/typography';
 import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
 import {
-    Image,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 
 type ProfileScreenContentProps = {
@@ -48,6 +48,7 @@ type ProfileScreenContentProps = {
   onPostPress: (post: Post) => void;
   onCommentsPress: (post: Post) => void;
   onEditPost?: (post: Post) => void;
+  onMorePostPress?: (post: Post) => void;
 };
 
 export default function ProfileScreenContent({
@@ -79,6 +80,7 @@ export default function ProfileScreenContent({
   onPostPress,
   onCommentsPress,
   onEditPost,
+  onMorePostPress,
 }: ProfileScreenContentProps) {
   const shouldShowTasteMatch =
     !isCurrentUser &&
@@ -280,6 +282,11 @@ export default function ProfileScreenContent({
                 onEditPress={
                   isCurrentUser && onEditPost
                     ? () => onEditPost(post)
+                    : undefined
+                }
+                onMorePress={
+                  !isCurrentUser && onMorePostPress
+                    ? () => onMorePostPress(post)
                     : undefined
                 }
                 onCommentsPress={() =>

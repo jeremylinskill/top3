@@ -1,3 +1,6 @@
+import ActionSheet, {
+  ActionSheetAction,
+} from '@/components/action-sheet';
 import ScreenHeader from '@/components/screen-header';
 import Top3Card from '@/components/top3-card';
 import {
@@ -6,6 +9,10 @@ import {
 } from '@/context/comment-context';
 import { useProfile } from '@/context/profile-context';
 import { getProfileById } from '@/lib/supabase/profiles';
+import {
+  createPostReport,
+  ReportReason,
+} from '@/lib/supabase/reports';
 import { getPublishedPosts } from '@/services/post-service';
 import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
@@ -21,6 +28,7 @@ import {
 } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Image,
   Keyboard,
   KeyboardAvoidingView,
@@ -37,6 +45,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 function normalizeTopic(topic?: string) {
   return topic?.trim().toLowerCase() || 'general';
 }
+
+type ReportTop3Sheet =
+  | { type: 'actions' }
+  | { type: 'reasons' }
+  | {
+      type: 'confirm';
+      reason: ReportReason;
+      reasonLabel: string;
+    }
+  | null;
 
 export default function PublishedTop3Screen() {
   const params = useLocalSearchParams<{
@@ -67,6 +85,11 @@ export default function PublishedTop3Screen() {
 
   const [commentText, setCommentText] =
     useState('');
+
+  const [
+    reportSheet,
+    setReportSheet,
+  ] = useState<ReportTop3Sheet>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -254,6 +277,199 @@ export default function PublishedTop3Screen() {
     });
   }
 
+  function closeReportSheet() {
+    setReportSheet(null);
+  }
+
+  function openPostActions() {
+    if (isCurrentUserPost) {
+      return;
+    }
+
+    setReportSheet({
+      type: 'actions',
+    });
+  }
+
+  function openReportReasons() {
+    if (isCurrentUserPost) {
+      return;
+    }
+
+    setReportSheet({
+      type: 'reasons',
+    });
+  }
+
+  function confirmPostReport(
+    reason: ReportReason,
+    reasonLabel: string
+  ) {
+    if (isCurrentUserPost) {
+      return;
+    }
+
+    setReportSheet({
+      type: 'confirm',
+      reason,
+      reasonLabel,
+    });
+  }
+
+  async function handleReportPost(
+    reason: ReportReason
+  ) {
+    if (isCurrentUserPost) {
+      return;
+    }
+
+    try {
+      await createPostReport({
+        reporterId: profile.id,
+        reportedUserId: authorId,
+        reportedPostId: currentPost.id,
+        reason,
+      });
+
+      Alert.alert(
+        'Report submitted',
+        'Thanks for letting us know. Your report has been submitted for review.'
+      );
+    } catch (error) {
+      console.error(
+        'Failed to report Top 3:',
+        error
+      );
+
+      Alert.alert(
+        'Unable to submit report',
+        'Please try again.'
+      );
+    }
+  }
+
+  let reportSheetTitle:
+    | string
+    | undefined;
+  let reportSheetMessage:
+    | string
+    | undefined;
+  let reportSheetActions:
+    ActionSheetAction[] = [];
+
+  if (
+    reportSheet &&
+    !isCurrentUserPost
+  ) {
+    switch (reportSheet.type) {
+      case 'actions':
+        reportSheetTitle =
+          undefined;
+
+        reportSheetActions = [
+          {
+            label: 'Report List',
+            onPress: openReportReasons,
+          },
+          {
+            label: 'Cancel',
+            variant: 'cancel',
+            onPress: closeReportSheet,
+          },
+        ];
+        break;
+
+      case 'reasons':
+        reportSheetTitle =
+          'Report List';
+        reportSheetMessage =
+          'Why are you reporting this list?';
+
+        reportSheetActions = [
+          {
+            label: 'Spam',
+            onPress: () =>
+              confirmPostReport(
+                'spam',
+                'Spam'
+              ),
+          },
+          {
+            label: 'Harassment or bullying',
+            onPress: () =>
+              confirmPostReport(
+                'harassment',
+                'Harassment or bullying'
+              ),
+          },
+          {
+            label: 'Hate or abusive content',
+            onPress: () =>
+              confirmPostReport(
+                'hate_or_abuse',
+                'Hate or abusive content'
+              ),
+          },
+          {
+            label: 'Inappropriate content',
+            onPress: () =>
+              confirmPostReport(
+                'inappropriate_content',
+                'Inappropriate content'
+              ),
+          },
+          {
+            label: 'Impersonation',
+            onPress: () =>
+              confirmPostReport(
+                'impersonation',
+                'Impersonation'
+              ),
+          },
+          {
+            label: 'Other',
+            onPress: () =>
+              confirmPostReport(
+                'other',
+                'Other'
+              ),
+          },
+          {
+            label: 'Cancel',
+            variant: 'cancel',
+            onPress: closeReportSheet,
+          },
+        ];
+        break;
+
+      case 'confirm':
+        reportSheetTitle =
+          'Report this list?';
+        reportSheetMessage =
+          `Reason: ${reportSheet.reasonLabel}`;
+
+        reportSheetActions = [
+          {
+            label: 'Submit Report',
+            variant: 'destructive',
+            onPress: () => {
+              const reason =
+                reportSheet.reason;
+
+              closeReportSheet();
+              void handleReportPost(reason);
+            },
+          },
+          {
+            label: 'Cancel',
+            variant: 'cancel',
+            onPress: closeReportSheet,
+          },
+        ];
+        break;
+    }
+  }
+
   return (
     <SafeAreaView
       style={styles.container}
@@ -266,7 +482,20 @@ export default function PublishedTop3Screen() {
             : undefined
         }
         keyboardVerticalOffset={0}>
-        <ScreenHeader showBackButton />
+        <ScreenHeader
+          showBackButton
+          rightIconName={
+            isCurrentUserPost
+              ? undefined
+              : 'ellipsis-horizontal'
+          }
+          onRightPress={
+            isCurrentUserPost
+              ? undefined
+              : openPostActions
+          }
+          rightAccessibilityLabel="Open Top 3 actions"
+        />
 
         <ScrollView
           style={styles.scrollView}
@@ -464,6 +693,14 @@ export default function PublishedTop3Screen() {
           </View>
         </View>
       </KeyboardAvoidingView>
+
+      <ActionSheet
+        visible={reportSheet !== null}
+        title={reportSheetTitle}
+        message={reportSheetMessage}
+        actions={reportSheetActions}
+        onClose={closeReportSheet}
+      />
     </SafeAreaView>
   );
 }

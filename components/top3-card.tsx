@@ -44,6 +44,7 @@ type Top3CardProps = {
   onCommentsPress?: () => void;
   onTitlePress?: () => void;
   onEditPress?: () => void;
+  onMorePress?: () => void;
   highlightQuery?: string;
   tasteMatchItemTitles?: string[];
   recommendationTitle?: string;
@@ -138,6 +139,7 @@ export default function Top3Card({
   onCommentsPress,
   onTitlePress,
   onEditPress,
+  onMorePress,
   highlightQuery,
   tasteMatchItemTitles = [],
   recommendationTitle,
@@ -589,6 +591,24 @@ export default function Top3Card({
               size="small"
             />
           ) : null}
+
+          {onMorePress ? (
+            <Pressable
+              style={({ pressed }) => [
+                styles.moreButton,
+                pressed && styles.pressed,
+              ]}
+              onPress={onMorePress}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel={`Open actions for ${displayTitle}`}>
+              <Ionicons
+                name="ellipsis-horizontal"
+                size={22}
+                color="#666666"
+              />
+            </Pressable>
+          ) : null}
         </View>
       ) : null}
 
@@ -634,6 +654,24 @@ export default function Top3Card({
             <Ionicons
               name="create-outline"
               size={20}
+              color="#666666"
+            />
+          </Pressable>
+        ) : null}
+
+        {!showAuthor && onMorePress ? (
+          <Pressable
+            style={({ pressed }) => [
+              styles.moreButton,
+              pressed && styles.pressed,
+            ]}
+            onPress={onMorePress}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={`Open actions for ${displayTitle}`}>
+            <Ionicons
+              name="ellipsis-horizontal"
+              size={22}
               color="#666666"
             />
           </Pressable>
@@ -1183,6 +1221,16 @@ const styles = StyleSheet.create({
   },
 
   editButton: {
+    width: 36,
+    height: 36,
+    marginLeft: 8,
+    marginRight: -7,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  moreButton: {
     width: 36,
     height: 36,
     marginLeft: 8,
