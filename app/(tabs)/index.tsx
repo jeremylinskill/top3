@@ -98,6 +98,12 @@ type FeedReportSheet =
       type: 'confirm-unblock';
       post: Post;
     }
+  | {
+      type: 'report-success';
+    }
+  | {
+      type: 'report-error';
+    }
   | null;
 
 export default function FeedScreen() {
@@ -454,20 +460,18 @@ export default function FeedScreen() {
         reason,
       });
 
-      Alert.alert(
-        'Report submitted',
-        'Thanks for letting us know. Your report has been submitted for review.'
-      );
+      setReportSheet({
+        type: 'report-success',
+      });
     } catch (error) {
       console.error(
         'Failed to report Top 3 from feed:',
         error
       );
 
-      Alert.alert(
-        'Unable to submit report',
-        'Please try again.'
-      );
+      setReportSheet({
+        type: 'report-error',
+      });
     }
   }
 
@@ -486,20 +490,18 @@ export default function FeedScreen() {
         reason,
       });
 
-      Alert.alert(
-        'Report submitted',
-        'Thanks for letting us know. Your report has been submitted for review.'
-      );
+      setReportSheet({
+        type: 'report-success',
+      });
     } catch (error) {
       console.error(
         'Failed to report user from feed:',
         error
       );
 
-      Alert.alert(
-        'Unable to submit report',
-        'Please try again.'
-      );
+      setReportSheet({
+        type: 'report-error',
+      });
     }
   }
 
@@ -885,6 +887,36 @@ export default function FeedScreen() {
         ];
         break;
       }
+
+      case 'report-success':
+        reportSheetTitle =
+          'Report submitted';
+        reportSheetMessage =
+          'Thanks for letting us know. Your report has been submitted for review.';
+
+        reportSheetActions = [
+          {
+            label: 'OK',
+            variant: 'cancel',
+            onPress: closeReportSheet,
+          },
+        ];
+        break;
+
+      case 'report-error':
+        reportSheetTitle =
+          'Unable to submit report';
+        reportSheetMessage =
+          'Please try again.';
+
+        reportSheetActions = [
+          {
+            label: 'OK',
+            variant: 'cancel',
+            onPress: closeReportSheet,
+          },
+        ];
+        break;
     }
   }
 

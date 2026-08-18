@@ -95,6 +95,12 @@ type CategoryFeedModerationSheet =
       type: 'confirm-unblock';
       post: Post;
     }
+  | {
+      type: 'report-success';
+    }
+  | {
+      type: 'report-error';
+    }
   | null;
 
 
@@ -704,20 +710,18 @@ if (isMounted) {
         reason,
       });
 
-      Alert.alert(
-        'Report submitted',
-        'Thanks for letting us know. Your report has been submitted for review.'
-      );
+      setModerationSheet({
+        type: 'report-success',
+      });
     } catch (error) {
       console.error(
         'Failed to report list from category feed:',
         error
       );
 
-      Alert.alert(
-        'Unable to submit report',
-        'Please try again.'
-      );
+      setModerationSheet({
+        type: 'report-error',
+      });
     }
   }
 
@@ -736,20 +740,18 @@ if (isMounted) {
         reason,
       });
 
-      Alert.alert(
-        'Report submitted',
-        'Thanks for letting us know. Your report has been submitted for review.'
-      );
+      setModerationSheet({
+        type: 'report-success',
+      });
     } catch (error) {
       console.error(
         'Failed to report user from category feed:',
         error
       );
 
-      Alert.alert(
-        'Unable to submit report',
-        'Please try again.'
-      );
+      setModerationSheet({
+        type: 'report-error',
+      });
     }
   }
 
@@ -1135,6 +1137,36 @@ if (isMounted) {
         ];
         break;
       }
+
+      case 'report-success':
+        moderationSheetTitle =
+          'Report submitted';
+        moderationSheetMessage =
+          'Thanks for letting us know. Your report has been submitted for review.';
+
+        moderationSheetActions = [
+          {
+            label: 'OK',
+            variant: 'cancel',
+            onPress: closeModerationSheet,
+          },
+        ];
+        break;
+
+      case 'report-error':
+        moderationSheetTitle =
+          'Unable to submit report';
+        moderationSheetMessage =
+          'Please try again.';
+
+        moderationSheetActions = [
+          {
+            label: 'OK',
+            variant: 'cancel',
+            onPress: closeModerationSheet,
+          },
+        ];
+        break;
     }
   }
 

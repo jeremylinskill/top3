@@ -1,3 +1,6 @@
+import ActionSheet, {
+  ActionSheetAction,
+} from '@/components/action-sheet';
 import { AVATAR } from '@/constants/avatar';
 import { COLORS } from '@/constants/colors';
 import { RADIUS } from '@/constants/radius';
@@ -7,6 +10,10 @@ import {
   useComments,
 } from '@/context/comment-context';
 import { useProfile } from '@/context/profile-context';
+import {
+  createCommentReport,
+  ReportReason,
+} from '@/lib/supabase/reports';
 import { Post } from '@/types/post';
 import { formatRelativeTime } from '@/utils/format-relative-time';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,7 +24,6 @@ import {
   useState,
 } from 'react';
 import {
-  Alert,
   Animated,
   Easing,
   Image,
@@ -32,13 +38,40 @@ import {
   View,
 } from 'react-native';
 import {
-  KeyboardAvoidingView,
-} from 'react-native-keyboard-controller';
-import {
   Gesture,
   GestureDetector,
 } from 'react-native-gesture-handler';
+import {
+  KeyboardAvoidingView,
+} from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+type CommentActionSheet =
+  | {
+      type: 'actions';
+      comment: Comment;
+    }
+  | {
+      type: 'report-reasons';
+      comment: Comment;
+    }
+  | {
+      type: 'confirm-report';
+      comment: Comment;
+      reason: ReportReason;
+      reasonLabel: string;
+    }
+  | {
+      type: 'confirm-delete';
+      comment: Comment;
+    }
+  | {
+      type: 'report-success';
+    }
+  | {
+      type: 'report-error';
+    }
+  | null;
 
 type CommentsSheetProps = {
   visible: boolean;
@@ -78,6 +111,11 @@ export default function CommentsSheet({
 
   const [isClosing, setIsClosing] =
     useState(false);
+
+  const [
+    commentActionSheet,
+    setCommentActionSheet,
+  ] = useState<CommentActionSheet>(null);
 
   const translateY = useRef(
     new Animated.Value(CLOSED_TRANSLATE_Y)
@@ -310,6 +348,19 @@ export default function CommentsSheet({
     }
   }
 
+  function closeCommentActionSheet() {
+    setCommentActionSheet(null);
+  }
+
+  function openCommentActions(
+    comment: Comment
+  ) {
+    setCommentActionSheet({
+      type: 'actions',
+      comment,
+    });
+  }
+
   function confirmDeleteComment(
     comment: Comment
   ) {
@@ -319,23 +370,286 @@ export default function CommentsSheet({
       return;
     }
 
-    Alert.alert(
-      'Delete comment?',
-      'This comment will be permanently removed.',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            deleteComment(comment.id);
+    setCommentActionSheet({
+      type: 'confirm-delete',
+      comment,
+    });
+  }
+
+  function openReportCommentReasons(
+    comment: Comment
+  ) {
+    if (
+      comment.authorId === profile.id
+    ) {
+      return;
+    }
+
+    setCommentActionSheet({
+      type: 'report-reasons',
+      comment,
+    });
+  }
+
+  function confirmReportComment(
+    comment: Comment,
+    reason: ReportReason,
+    reasonLabel: string
+  ) {
+    if (
+      comment.authorId === profile.id
+    ) {
+      return;
+    }
+
+    setCommentActionSheet({
+      type: 'confirm-report',
+      comment,
+      reason,
+      reasonLabel,
+    });
+  }
+
+  async function handleReportComment(
+    comment: Comment,
+    reason: ReportReason
+  ) {
+    if (
+      comment.authorId === profile.id
+    ) {
+      return;
+    }
+
+    try {
+      await createCommentReport({
+        reporterId: profile.id,
+        reportedUserId: comment.authorId,
+        reportedCommentId: comment.id,
+        reason,
+      });
+
+      setCommentActionSheet({
+        type: 'report-success',
+      });
+    } catch (error) {
+      console.error(
+        'Failed to report comment:',
+        error
+      );
+
+      setCommentActionSheet({
+        type: 'report-error',
+      });
+    }
+  }
+
+  let commentActionSheetTitle:
+    | string
+    | undefined;
+  let commentActionSheetMessage:
+    | string
+    | undefined;
+  let commentActionSheetActions:
+    ActionSheetAction[] = [];
+
+  if (commentActionSheet) {
+    switch (commentActionSheet.type) {
+      case 'actions':
+        commentActionSheetTitle =
+          undefined;
+
+        commentActionSheetActions =
+          commentActionSheet.comment.authorId ===
+          profile.id
+            ? [
+                {
+                  label: 'Delete Comment',
+                  variant: 'destructive',
+                  onPress: () =>
+                    confirmDeleteComment(
+                      commentActionSheet.comment
+                    ),
+                },
+                {
+                  label: 'Cancel',
+                  variant: 'cancel',
+                  onPress:
+                    closeCommentActionSheet,
+                },
+              ]
+            : [
+                {
+                  label: 'Report Comment',
+                  onPress: () =>
+                    openReportCommentReasons(
+                      commentActionSheet.comment
+                    ),
+                },
+                {
+                  label: 'Cancel',
+                  variant: 'cancel',
+                  onPress:
+                    closeCommentActionSheet,
+                },
+              ];
+        break;
+
+      case 'report-reasons':
+        commentActionSheetTitle =
+          'Report Comment';
+        commentActionSheetMessage =
+          'Why are you reporting this comment?';
+
+        commentActionSheetActions = [
+          {
+            label: 'Spam',
+            onPress: () =>
+              confirmReportComment(
+                commentActionSheet.comment,
+                'spam',
+                'Spam'
+              ),
           },
-        },
-      ]
-    );
+          {
+            label: 'Harassment or bullying',
+            onPress: () =>
+              confirmReportComment(
+                commentActionSheet.comment,
+                'harassment',
+                'Harassment or bullying'
+              ),
+          },
+          {
+            label: 'Hate or abusive content',
+            onPress: () =>
+              confirmReportComment(
+                commentActionSheet.comment,
+                'hate_or_abuse',
+                'Hate or abusive content'
+              ),
+          },
+          {
+            label: 'Inappropriate content',
+            onPress: () =>
+              confirmReportComment(
+                commentActionSheet.comment,
+                'inappropriate_content',
+                'Inappropriate content'
+              ),
+          },
+          {
+            label: 'Impersonation',
+            onPress: () =>
+              confirmReportComment(
+                commentActionSheet.comment,
+                'impersonation',
+                'Impersonation'
+              ),
+          },
+          {
+            label: 'Other',
+            onPress: () =>
+              confirmReportComment(
+                commentActionSheet.comment,
+                'other',
+                'Other'
+              ),
+          },
+          {
+            label: 'Cancel',
+            variant: 'cancel',
+            onPress: closeCommentActionSheet,
+          },
+        ];
+        break;
+
+      case 'confirm-report':
+        commentActionSheetTitle =
+          'Report this comment?';
+        commentActionSheetMessage =
+          `Reason: ${commentActionSheet.reasonLabel}`;
+
+        commentActionSheetActions = [
+          {
+            label: 'Submit Report',
+            variant: 'destructive',
+            onPress: () => {
+              const {
+                comment,
+                reason,
+              } = commentActionSheet;
+
+              closeCommentActionSheet();
+              void handleReportComment(
+                comment,
+                reason
+              );
+            },
+          },
+          {
+            label: 'Cancel',
+            variant: 'cancel',
+            onPress: closeCommentActionSheet,
+          },
+        ];
+        break;
+
+      case 'confirm-delete':
+        commentActionSheetTitle =
+          'Delete comment?';
+        commentActionSheetMessage =
+          'This comment will be permanently removed.';
+
+        commentActionSheetActions = [
+          {
+            label: 'Delete',
+            variant: 'destructive',
+            onPress: () => {
+              const comment =
+                commentActionSheet.comment;
+
+              closeCommentActionSheet();
+              deleteComment(comment.id);
+            },
+          },
+          {
+            label: 'Cancel',
+            variant: 'cancel',
+            onPress: closeCommentActionSheet,
+          },
+        ];
+        break;
+
+      case 'report-success':
+        commentActionSheetTitle =
+          'Report submitted';
+        commentActionSheetMessage =
+          'Thanks for letting us know. Your report has been submitted for review.';
+
+        commentActionSheetActions = [
+          {
+            label: 'OK',
+            variant: 'cancel',
+            onPress: closeCommentActionSheet,
+          },
+        ];
+        break;
+
+      case 'report-error':
+        commentActionSheetTitle =
+          'Unable to submit report';
+        commentActionSheetMessage =
+          'Please try again.';
+
+        commentActionSheetActions = [
+          {
+            label: 'OK',
+            variant: 'cancel',
+            onPress: closeCommentActionSheet,
+          },
+        ];
+        break;
+    }
   }
 
   return (
@@ -463,8 +777,8 @@ export default function CommentsSheet({
                           comment.authorId ===
                           profile.id
                         }
-                        onDelete={() =>
-                          confirmDeleteComment(
+                        onMenuPress={() =>
+                          openCommentActions(
                             comment
                           )
                         }
@@ -557,6 +871,16 @@ export default function CommentsSheet({
             </View>
           </Animated.View>
         </KeyboardAvoidingView>
+
+        <ActionSheet
+          visible={
+            commentActionSheet !== null
+          }
+          title={commentActionSheetTitle}
+          message={commentActionSheetMessage}
+          actions={commentActionSheetActions}
+          onClose={closeCommentActionSheet}
+        />
       </View>
     </Modal>
   );
@@ -565,13 +889,13 @@ export default function CommentsSheet({
 type CommentRowProps = {
   comment: Comment;
   isOwnComment: boolean;
-  onDelete: () => void;
+  onMenuPress: () => void;
 };
 
 function CommentRow({
   comment,
   isOwnComment,
-  onDelete,
+  onMenuPress,
 }: CommentRowProps) {
   const createdAtText =
     formatRelativeTime(
@@ -621,26 +945,28 @@ function CommentRow({
             </Text>
           </View>
 
-          {isOwnComment ? (
-            <Pressable
-              style={({ pressed }) => [
-                styles.commentMenuButton,
-                pressed &&
-                  styles.pressed,
-              ]}
-              onPress={onDelete}
-              hitSlop={10}
-              accessibilityRole="button"
-              accessibilityLabel="Delete comment">
-              <Ionicons
-                name="ellipsis-horizontal"
-                size={18}
-                color={
-                  COLORS.tertiaryText
-                }
-              />
-            </Pressable>
-          ) : null}
+          <Pressable
+            style={({ pressed }) => [
+              styles.commentMenuButton,
+              pressed &&
+                styles.pressed,
+            ]}
+            onPress={onMenuPress}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={
+              isOwnComment
+                ? 'Open comment actions'
+                : 'Open comment reporting actions'
+            }>
+            <Ionicons
+              name="ellipsis-horizontal"
+              size={18}
+              color={
+                COLORS.tertiaryText
+              }
+            />
+          </Pressable>
         </View>
 
         <Text

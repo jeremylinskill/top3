@@ -28,7 +28,6 @@ import {
 } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Keyboard,
   KeyboardAvoidingView,
@@ -38,7 +37,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  View,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -54,6 +53,8 @@ type ReportTop3Sheet =
       reason: ReportReason;
       reasonLabel: string;
     }
+  | { type: 'report-success' }
+  | { type: 'report-error' }
   | null;
 
 export default function PublishedTop3Screen() {
@@ -331,20 +332,18 @@ export default function PublishedTop3Screen() {
         reason,
       });
 
-      Alert.alert(
-        'Report submitted',
-        'Thanks for letting us know. Your report has been submitted for review.'
-      );
+      setReportSheet({
+        type: 'report-success',
+      });
     } catch (error) {
       console.error(
         'Failed to report Top 3:',
         error
       );
 
-      Alert.alert(
-        'Unable to submit report',
-        'Please try again.'
-      );
+      setReportSheet({
+        type: 'report-error',
+      });
     }
   }
 
@@ -357,12 +356,13 @@ export default function PublishedTop3Screen() {
   let reportSheetActions:
     ActionSheetAction[] = [];
 
-  if (
-    reportSheet &&
-    !isCurrentUserPost
-  ) {
+  if (reportSheet) {
     switch (reportSheet.type) {
       case 'actions':
+        if (isCurrentUserPost) {
+          closeReportSheet();
+          break;
+        }
         reportSheetTitle =
           undefined;
 
@@ -380,6 +380,10 @@ export default function PublishedTop3Screen() {
         break;
 
       case 'reasons':
+        if (isCurrentUserPost) {
+          closeReportSheet();
+          break;
+        }
         reportSheetTitle =
           'Report List';
         reportSheetMessage =
@@ -443,6 +447,10 @@ export default function PublishedTop3Screen() {
         break;
 
       case 'confirm':
+        if (isCurrentUserPost) {
+          closeReportSheet();
+          break;
+        }
         reportSheetTitle =
           'Report this list?';
         reportSheetMessage =
@@ -462,6 +470,36 @@ export default function PublishedTop3Screen() {
           },
           {
             label: 'Cancel',
+            variant: 'cancel',
+            onPress: closeReportSheet,
+          },
+        ];
+        break;
+
+      case 'report-success':
+        reportSheetTitle =
+          'Report submitted';
+        reportSheetMessage =
+          'Thanks for letting us know. Your report has been submitted for review.';
+
+        reportSheetActions = [
+          {
+            label: 'OK',
+            variant: 'cancel',
+            onPress: closeReportSheet,
+          },
+        ];
+        break;
+
+      case 'report-error':
+        reportSheetTitle =
+          'Unable to submit report';
+        reportSheetMessage =
+          'Please try again.';
+
+        reportSheetActions = [
+          {
+            label: 'OK',
             variant: 'cancel',
             onPress: closeReportSheet,
           },

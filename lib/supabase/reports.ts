@@ -23,6 +23,14 @@ export type CreatePostReportInput = {
   details?: string | null;
 };
 
+export type CreateCommentReportInput = {
+  reporterId: string;
+  reportedUserId: string;
+  reportedCommentId: string;
+  reason: ReportReason;
+  details?: string | null;
+};
+
 export async function createUserReport({
   reporterId,
   reportedUserId,
@@ -64,6 +72,7 @@ export async function createUserReport({
         normalizedReportedUserId,
       target_type: 'user',
       reported_post_id: null,
+      reported_comment_id: null,
       reason,
       details: normalizedDetails,
     });
@@ -122,6 +131,7 @@ export async function createPostReport({
       target_type: 'post',
       reported_post_id:
         normalizedReportedPostId,
+      reported_comment_id: null,
       reason,
       details: normalizedDetails,
     });
@@ -129,6 +139,65 @@ export async function createPostReport({
   if (error) {
     throw new Error(
       `Failed to report post: ${error.message}`
+    );
+  }
+}
+
+export async function createCommentReport({
+  reporterId,
+  reportedUserId,
+  reportedCommentId,
+  reason,
+  details,
+}: CreateCommentReportInput): Promise<void> {
+  const normalizedReporterId =
+    reporterId.trim();
+
+  const normalizedReportedUserId =
+    reportedUserId.trim();
+
+  const normalizedReportedCommentId =
+    reportedCommentId.trim();
+
+  const normalizedDetails =
+    details?.trim() || null;
+
+  if (
+    !normalizedReporterId ||
+    !normalizedReportedUserId ||
+    !normalizedReportedCommentId
+  ) {
+    throw new Error(
+      'Reporter, reported user, and comment IDs are required to create a comment report.'
+    );
+  }
+
+  if (
+    normalizedReporterId ===
+    normalizedReportedUserId
+  ) {
+    throw new Error(
+      'A user cannot report their own comment.'
+    );
+  }
+
+  const { error } = await supabase
+    .from('reports')
+    .insert({
+      reporter_id: normalizedReporterId,
+      reported_user_id:
+        normalizedReportedUserId,
+      target_type: 'comment',
+      reported_post_id: null,
+      reported_comment_id:
+        normalizedReportedCommentId,
+      reason,
+      details: normalizedDetails,
+    });
+
+  if (error) {
+    throw new Error(
+      `Failed to report comment: ${error.message}`
     );
   }
 }

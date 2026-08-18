@@ -65,6 +65,8 @@ type ModerationSheet =
       reason: ReportReason;
       reasonLabel: string;
     }
+  | { type: 'report-success' }
+  | { type: 'report-error' }
   | null;
 
 function normalizeTopic(topic?: string) {
@@ -605,20 +607,18 @@ export default function ProfileScreen({
         reason,
       });
 
-      Alert.alert(
-        'Report submitted',
-        'Thanks for letting us know. Your report has been submitted for review.'
-      );
+      setModerationSheet({
+        type: 'report-success',
+      });
     } catch (error) {
       console.error(
         'Failed to report user:',
         error
       );
 
-      Alert.alert(
-        'Unable to submit report',
-        'Please try again.'
-      );
+      setModerationSheet({
+        type: 'report-error',
+      });
     }
   }
 
@@ -737,20 +737,18 @@ export default function ProfileScreen({
         reason,
       });
 
-      Alert.alert(
-        'Report submitted',
-        'Thanks for letting us know. Your report has been submitted for review.'
-      );
+      setModerationSheet({
+        type: 'report-success',
+      });
     } catch (error) {
       console.error(
         'Failed to report list from profile:',
         error
       );
 
-      Alert.alert(
-        'Unable to submit report',
-        'Please try again.'
-      );
+      setModerationSheet({
+        type: 'report-error',
+      });
     }
   }
 
@@ -1133,6 +1131,36 @@ export default function ProfileScreen({
           },
           {
             label: 'Cancel',
+            variant: 'cancel',
+            onPress: closeModerationSheet,
+          },
+        ];
+        break;
+
+      case 'report-success':
+        moderationSheetTitle =
+          'Report submitted';
+        moderationSheetMessage =
+          'Thanks for letting us know. Your report has been submitted for review.';
+
+        moderationSheetActions = [
+          {
+            label: 'OK',
+            variant: 'cancel',
+            onPress: closeModerationSheet,
+          },
+        ];
+        break;
+
+      case 'report-error':
+        moderationSheetTitle =
+          'Unable to submit report';
+        moderationSheetMessage =
+          'Please try again.';
+
+        moderationSheetActions = [
+          {
+            label: 'OK',
             variant: 'cancel',
             onPress: closeModerationSheet,
           },
