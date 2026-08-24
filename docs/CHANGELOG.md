@@ -6,6 +6,128 @@ Unlike CURRENT_STATE.md, which describes the application's current
 implementation, this document captures the major architectural and
 product milestones that shaped the application over time.
 
+v2.8 --- Apple Account Lifecycle & Authorization Revocation
+
+Released: August 24, 2026
+
+This release completes Top3's Sign in with Apple account-lifecycle support.
+Apple authorization codes are now exchanged server-side for refresh tokens,
+the tokens are stored in protected Supabase infrastructure, and Apple
+authorization is revoked before an Apple-authenticated Top3 account is
+permanently deleted.
+
+Added
+
+Apple Authorization Token Capture
+
+Added the authenticated apple-auth-token Supabase Edge Function.
+
+After successful native Sign in with Apple, Top3 sends the Apple authorization
+code to the Edge Function.
+
+The Edge Function generates the Apple client secret server-side and exchanges
+the authorization code with Apple for a refresh token.
+
+Added protected apple_auth_tokens persistence keyed by the authenticated
+Supabase user ID.
+
+Apple credentials required for the exchange — Team ID, Key ID, Client ID, and
+private signing key — are stored only as Supabase Edge Function secrets and
+are not exposed to the mobile client.
+
+Apple Authorization Revocation
+
+Extended the permanent delete-account Supabase Edge Function to detect a
+stored Apple refresh token for the authenticated user.
+
+Before deleting the Supabase Auth user, delete-account now generates the
+required Apple client secret and submits the stored refresh token to Apple's
+authorization revocation endpoint.
+
+Apple revocation failure stops account deletion rather than silently deleting
+the Top3 account while leaving the Apple authorization active.
+
+Improved
+
+Sign in with Apple
+
+Updated the Apple authentication flow so the authorization code returned by
+the native Apple credential is captured and sent to the server-side
+apple-auth-token function after successful Supabase sign-in.
+
+Preserved the existing native Apple identity-token exchange, session handling,
+name-metadata preservation, and onboarding behavior.
+
+Account Deletion
+
+Preserved the existing Settings → delete-account flow and local onboarding /
+welcome reset after successful deletion.
+
+Apple-authenticated accounts now complete Apple authorization revocation as
+part of the permanent deletion transaction before the Supabase Auth user is
+removed.
+
+Security
+
+Kept Apple private-key material and client-secret generation entirely
+server-side.
+
+Stored Apple refresh tokens in protected Supabase data rather than client
+storage.
+
+Temporary Verification Infrastructure
+
+Added a temporary apple-auth-revoke-test Edge Function and Settings test
+action solely to verify Apple revocation end-to-end.
+
+Removed the temporary deployed apple-auth-revoke-test function, local
+function folder, and Settings test UI after successful verification.
+
+Verified
+
+Verified Apple authorization-code exchange produces a valid Apple refresh
+token.
+
+Verified the Apple refresh token is stored successfully for the authenticated
+Supabase user.
+
+Verified Apple authorization revocation succeeds end-to-end.
+
+Verified the permanent delete-account implementation uses the same verified
+Apple revocation path.
+
+Verified the temporary revocation test infrastructure was removed after
+validation.
+
+Re-authorized the admin Apple account after revocation testing and confirmed a
+fresh Apple refresh token was stored successfully.
+
+Verified deno check passes for apple-auth-token.
+
+Verified deno check passes for delete-account.
+
+Verified npm run typecheck passes.
+
+Checkpoint
+
+Committed and pushed e285efc containing the completed Apple account-lifecycle
+implementation and verification cleanup.
+
+Committed and pushed f8c62c3 --- Ignore local privacy audit artifacts.
+
+Verified the working tree is clean after the completed checkpoint.
+
+Documentation
+
+Updated CURRENT_STATE.md to version 2.7.
+
+Recorded Apple authorization-code capture, protected refresh-token storage,
+server-side Apple credential handling, and authorization revocation before
+account deletion as completed authentication foundations.
+
+Recorded the temporary revocation verification infrastructure as removed after
+successful end-to-end testing.
+
 v2.7 --- Sharing, Deep Links & V1 Analytics
 
 Released: August 22, 2026

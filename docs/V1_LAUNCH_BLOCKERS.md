@@ -252,7 +252,23 @@ Verified server-side implementation
 
 The client invokes the authenticated delete-account Supabase Edge Function.
 
-The Edge Function identifies the authenticated user and deletes the account through Supabase Auth admin.deleteUser().
+For Sign in with Apple accounts, the native Apple authorization code is sent
+after successful sign-in to the authenticated apple-auth-token Edge Function,
+which exchanges it server-side for an Apple refresh token and stores that
+token in the protected apple_auth_tokens table keyed by Supabase user ID.
+
+Apple Team ID, Key ID, Client ID, and private signing key are stored only as
+Supabase Edge Function secrets.
+
+Before deleting an Apple-authenticated account, delete-account loads the
+stored Apple refresh token and revokes the user's Apple authorization through
+Apple's revocation endpoint.
+
+If Apple authorization revocation fails, account deletion stops rather than
+deleting the Top3 account while leaving the Apple authorization active.
+
+The Edge Function then identifies the authenticated user and deletes the
+account through Supabase Auth admin.deleteUser().
 
 The client treats deletion as successful only when the Edge Function explicitly returns success.
 
@@ -270,6 +286,21 @@ Collection-dependent comments, likes, and notifications also cascade through the
 
 Direct user relationships in blocks, notifications, and reports cascade from auth.users.
 
+Apple authorization verification
+
+Apple authorization-code exchange and refresh-token persistence were verified
+end-to-end.
+
+Apple authorization revocation was verified end-to-end using temporary test
+infrastructure that exercised the same revocation path now used by the
+permanent delete-account function.
+
+The temporary apple-auth-revoke-test Edge Function and Settings test UI were
+removed after verification.
+
+The admin Apple account was re-authorized after testing and a fresh stored
+Apple refresh token was confirmed.
+
 Post-deletion integrity verification
 
 A database-wide orphan audit was run after the real-device deletion test.
@@ -280,11 +311,18 @@ No orphaned profiles, collections, comments, likes, follows, blocks, notificatio
 
 V1 conclusion
 
-Closed. Account deletion is implemented and verified end-to-end for V1. No known account-deletion launch blocker remains.
+Closed. Account deletion is implemented and verified end-to-end for V1,
+including the Sign in with Apple authorization lifecycle required to revoke
+Apple authorization before permanent deletion. No known account-deletion
+launch blocker remains.
 
 Release-candidate note
 
-Account deletion should still be included in the final release-candidate regression test, but no additional account-deletion implementation work is currently required.
+Account deletion should still be included in the final release-candidate
+regression test. For an Apple-authenticated test account, confirm the
+production deletion path continues to revoke Apple authorization before
+deleting the Top3 account. No additional account-deletion implementation work
+is currently required.
 
 🟢 2.2 Sign-out/session lifecycle — VERIFIED
 
@@ -335,6 +373,10 @@ Forgot Password successfully sends the password-reset email.
 The password-reset link/deep-link opens the Top3 reset-password flow and allows the user to choose a new password.
 
 Logged-in users can change their password through Settings.
+
+Native Sign in with Apple works and its server-side authorization-code /
+refresh-token lifecycle has been verified as part of account deletion under
+2.1.
 
 Sign-out/session handling and sequential account switching have been independently verified under 2.2.
 
@@ -526,6 +568,10 @@ No service-role/private secrets are bundled into the client.
 
 Edge Function secrets are configured server-side.
 
+Apple Team ID, Key ID, Client ID, and private signing key used for Apple token
+exchange/revocation are configured as Supabase Edge Function secrets and are
+not exposed to the mobile client.
+
 API keys intended to remain private are not exposed in the shipped bundle.
 
 Development/test endpoints and debug logging are removed or acceptable for production.
@@ -680,7 +726,9 @@ Account deletion
 
 🟢 VERIFIED
 
-End-to-end iPhone deletion, Auth removal, cascade architecture, and zero-orphan database audit verified
+End-to-end iPhone deletion, Auth removal, cascade architecture, zero-orphan
+database audit, Apple refresh-token persistence, and Apple authorization
+revocation verified
 
 Sign-out/session lifecycle
 
@@ -692,7 +740,9 @@ Authentication
 
 🟢 VERIFIED
 
-Email sign-up/verification/sign-in, password recovery/reset/change, and session lifecycle verified; reviewer/demo credentials remain a 6.2 submission task
+Email sign-up/verification/sign-in, password recovery/reset/change, native
+Sign in with Apple account lifecycle, and session lifecycle verified;
+reviewer/demo credentials remain a 6.2 submission task
 
 Privacy policy
 

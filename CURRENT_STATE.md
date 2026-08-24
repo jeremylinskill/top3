@@ -1,13 +1,13 @@
 CURRENT_STATE.md
 
-Project: Top3Version: 2.6Status: Active DevelopmentLast Updated: August
-21, 2026Current Branch: main
+Project: Top3Version: 2.7Status: Active DevelopmentLast Updated: August
+24, 2026Current Branch: main
 
 Last Verified Commit
 
-db8b367
+f8c62c3
 
-Add forgot password flow
+Ignore local privacy audit artifacts
 
 Dashboard
 
@@ -27,7 +27,11 @@ Overall rankings, and Taste Match.
 
 Account deletion is implemented through a Supabase Edge Function and
 resets local onboarding / welcome state so a deleted user returns to the
-beginning of the onboarding experience.
+beginning of the onboarding experience. Sign in with Apple accounts also
+capture the Apple authorization code during sign-in, exchange it server-side
+for an Apple refresh token, and store that token in the protected
+apple_auth_tokens table. The permanent delete-account Edge Function revokes
+the stored Apple authorization with Apple before deleting the Top3 account.
 
 User-generated-content moderation is implemented for reported lists and
 comments. Moderators can review reports and remove reported content
@@ -579,6 +583,29 @@ Friendly user-facing error messages
 
 Official native Apple authentication button
 
+Apple account-lifecycle support:
+
+The native Apple credential's authorization code is sent to the authenticated
+apple-auth-token Supabase Edge Function after successful sign-in. The Edge
+Function generates the Apple client secret server-side, exchanges the
+authorization code with Apple, and stores the resulting refresh token in the
+protected apple_auth_tokens table keyed by Supabase user ID.
+
+Apple Team ID, Key ID, Client ID, and private signing key are stored only as
+Supabase Edge Function secrets. The private key is never exposed to the
+mobile client.
+
+When an Apple-authenticated user deletes their Top3 account, the permanent
+delete-account Edge Function loads the stored refresh token and calls Apple's
+token revocation endpoint before deleting the Supabase Auth user. Revocation
+failure stops account deletion rather than silently leaving the Apple
+authorization active.
+
+The Apple revocation flow was verified end-to-end using a temporary
+verification Edge Function. That temporary function and its Settings test UI
+were removed after verification. The admin account was subsequently
+re-authorized and a fresh stored Apple refresh token was confirmed.
+
 Google Sign In
 
 Status: ✅ Complete
@@ -843,7 +870,9 @@ animated percentage that begins counting as the card fades in.
 
 Account deletion removes the authenticated account through the
 delete-account Supabase Edge Function, signs the user out, and resets
-local welcome state so a deleted user returns to onboarding.
+local welcome state so a deleted user returns to onboarding. For accounts
+with a stored Apple refresh token, the Edge Function revokes the user's
+Sign in with Apple authorization before deleting the Supabase Auth user.
 
 The obsolete standalone Welcome screen has been removed.
 
@@ -1084,6 +1113,10 @@ Onboarding & account lifecycle
 
 ✅ Account deletion
 
+✅ Sign in with Apple authorization-code capture and server-side refresh-token storage
+
+✅ Apple authorization revocation before deletion for Apple-authenticated accounts
+
 ✅ Local onboarding reset after account deletion
 
 Authentication & account recovery
@@ -1181,6 +1214,43 @@ query
 post-launch and classified as a high-priority scalability initiative
 
 Recent Milestones
+
+August 24, 2026
+
+Apple Account Deletion & Authorization Revocation
+
+Added the authenticated apple-auth-token Supabase Edge Function to exchange
+the authorization code returned by native Sign in with Apple for an Apple
+refresh token.
+
+Added protected server-side persistence of Apple refresh tokens in
+apple_auth_tokens, keyed by the authenticated Supabase user ID.
+
+Configured Apple Team ID, Key ID, Client ID, and private signing key as
+Supabase Edge Function secrets.
+
+Extended the permanent delete-account Edge Function so Apple authorization is
+revoked through Apple's /auth/revoke endpoint before the Supabase Auth user is
+deleted.
+
+Made Apple revocation failure stop account deletion so Top3 does not silently
+delete the local account while leaving the Apple authorization active.
+
+Verified Apple refresh-token acquisition and persistence end-to-end.
+
+Verified Apple authorization revocation end-to-end with a temporary
+apple-auth-revoke-test Edge Function, then removed the temporary deployed
+function, local function folder, and Settings test UI.
+
+Re-authorized the admin Apple account after testing and confirmed a fresh
+refresh token was stored successfully.
+
+Verified deno check passes for apple-auth-token and delete-account.
+
+Verified npm run typecheck passes.
+
+Committed and pushed the completed application checkpoint e285efc and
+housekeeping checkpoint f8c62c3. The working tree was verified clean.
 
 August 22, 2026
 
@@ -2152,6 +2222,19 @@ app/(auth)/forgot-password.tsx requests the Supabase reset email and
 offers Open Email App; app/(auth)/reset-password.tsx establishes the
 recovery session and updates the password. Expected same-password
 validation is shown as a friendly alert rather than a development error.
+
+Remember that Sign in with Apple now has a server-side account-lifecycle
+path. services/auth-service.ts sends Apple's authorization code to the
+apple-auth-token Edge Function after successful Apple sign-in. The function
+exchanges it for an Apple refresh token and stores that token in
+apple_auth_tokens. Do not move Apple private-key or client-secret generation
+into the mobile application.
+
+Remember that delete-account revokes a stored Apple refresh token with Apple
+before deleting the Supabase Auth user. If Apple revocation fails, deletion
+stops. The temporary apple-auth-revoke-test function and Settings test UI
+were removed after successful verification; do not recreate them as
+production functionality.
 
 Remember that account deletion is implemented through
 lib/supabase/account.ts and the delete-account Supabase Edge Function,

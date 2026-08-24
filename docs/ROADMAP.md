@@ -1,8 +1,8 @@
 Top3 Product Roadmap
 
-Version: 2.4Status: Active DevelopmentOwner: Jeremy LinskillLast
-Updated: August 20, 2026Last Verified Commit: db8b367 --- Add forgot
-password flow
+Version: 2.5Status: Active DevelopmentOwner: Jeremy LinskillLast
+Updated: August 24, 2026Last Verified Commit: f8c62c3 --- Ignore local privacy
+audit artifacts
 
 Purpose
 
@@ -51,9 +51,12 @@ provide a stable foundation for the next stage of the product.
 
 Recent work has also completed important moderation-removal foundations,
 published-list and Overall ranking sharing, deep-link access to shared public
-content, and the current V1 product-analytics instrumentation. The
-architectural changes required for Top3's Feed to scale well beyond the
-initial launch population have also been identified.
+content, the current V1 product-analytics instrumentation, and the Sign in
+with Apple account-lifecycle path required for reliable account deletion.
+Apple authorization codes are exchanged server-side for refresh tokens, and
+Apple authorization is revoked before an Apple-authenticated Top3 account is
+deleted. The architectural changes required for Top3's Feed to scale well
+beyond the initial launch population have also been identified.
 
 The current milestone is to prepare a stable, safe, polished V1 for App
 Store release and begin gathering real-user behaviour before investing
@@ -70,8 +73,9 @@ Foundation Completed
 • Signed-out first-list onboarding• Lists → Overall onboarding
 education• Taste Match onboarding education• Account deletion• Email
 confirmation callback and pending-list publishing• Email authentication•
-Forgot-password and password-reset recovery• Sign in with Apple• Sign in
-with Google• Persistent Supabase sessions• Stable authentication
+Forgot-password and password-reset recovery• Sign in with Apple• Server-side
+Apple authorization-code exchange and protected refresh-token storage• Apple
+authorization revocation before account deletion• Sign in with Google• Persistent Supabase sessions• Stable authentication
 initialization• User profiles• Profile avatars• Profile editing• Privacy
 settings• Public and private accounts• Follow requests• Following /
 Followers• List persistence• Shared Likes• Shared Comments• In-app
@@ -99,9 +103,10 @@ Current Priorities
 
 • Complete a V1 launch-readiness audit• Fix App Store launch blockers
 before adding major new product scope• Continue validating onboarding
-completion and account-lifecycle reliability• Verify reporting,
-moderation, blocking, privacy, security, and account-deletion
-requirements• Continue performance and stability optimization where it
+completion and authentication reliability• Treat the verified Sign in with
+Apple revocation path as the production account-deletion foundation• Verify
+remaining reporting, moderation, blocking, privacy, security, and
+account-deletion requirements• Continue performance and stability optimization where it
 affects launch quality• Preserve the current Feed and Taste Match
 experience for initial real-user validation• Defer cursor-paginated Feed
 migration, server-side recommendation candidate generation, and other
@@ -126,7 +131,9 @@ Before Launch
 • Complete an App Store readiness audit• Resolve crash, data-loss,
 security, privacy, authentication, account-lifecycle, and moderation
 blockers• Verify user-generated-content safety requirements, including
-reporting, moderation, and blocking• Verify account deletion end-to-end•
+reporting, moderation, and blocking• Preserve the verified Apple authorization
+revocation path and complete final account-deletion regression testing for the
+release candidate•
 Verify core onboarding, Create, publish, Feed, Profile, Discover,
 Search, Likes, Comments, Following, notifications, Taste Match, and
 media-preview flows on device• Confirm production configuration and
@@ -299,6 +306,39 @@ foundation• Admin dashboard enhancements• Community
 events• Additional content categories• Additional entertainment
 providers• Large-scale Feed and recommendation infrastructure as usage
 requires
+
+Authentication & Account Lifecycle
+
+Status: V1 Foundation Complete
+
+Top3 supports Email, native Sign in with Apple, and native Google Sign-In
+through the shared Supabase authentication architecture.
+
+For Sign in with Apple, the authorization code returned by the native Apple
+credential is sent to the authenticated apple-auth-token Supabase Edge
+Function. The function generates Apple's client secret server-side, exchanges
+the authorization code for a refresh token, and stores that refresh token in
+the protected apple_auth_tokens table keyed by Supabase user ID.
+
+Apple Team ID, Key ID, Client ID, and private signing key remain server-side
+as Supabase Edge Function secrets.
+
+The permanent delete-account Edge Function checks for a stored Apple refresh
+token and revokes the user's Apple authorization before deleting the Supabase
+Auth user. If Apple revocation fails, account deletion stops rather than
+leaving an active Apple authorization behind.
+
+The Apple refresh-token acquisition, persistence, and revocation paths have
+been verified end-to-end. Temporary revocation-test infrastructure was removed
+after validation, and the test admin account was re-authorized successfully.
+
+Launch Direction
+
+• Preserve the current server-side Apple token architecture• Do not expose
+Apple signing credentials or refresh tokens to the mobile client• Include
+account deletion in final release-candidate regression testing• Re-check
+App Store account-deletion and Sign in with Apple requirements if Apple's
+review guidance changes before submission
 
 Sharing & Product Analytics
 
@@ -538,6 +578,26 @@ The long-term goal is not to maximize content creation or passive
 engagement, but to create meaningful connections through shared taste.
 
 Revision History
+
+Version 2.5 --- August 24, 2026
+
+Updated the roadmap to reflect completion and end-to-end verification of the
+Sign in with Apple account-lifecycle architecture required for reliable
+account deletion.
+
+Key changes:
+
+• Recorded server-side Apple authorization-code exchange through the
+apple-auth-token Edge Function.• Recorded protected Apple refresh-token
+storage keyed by Supabase user ID.• Recorded Apple authorization revocation
+before permanent deletion of Apple-authenticated Top3 accounts.• Recorded the
+fail-safe that stops account deletion when Apple revocation fails.• Recorded
+Apple signing credentials as server-side Supabase Edge Function secrets.•
+Recorded successful end-to-end refresh-token acquisition, persistence, and
+revocation verification.• Recorded removal of the temporary revocation-test
+infrastructure after verification.• Updated the last verified repository
+checkpoint to f8c62c3.• Preserved V1 Launch Readiness as the current product
+milestone.
 
 Version 2.4 --- August 22, 2026
 
