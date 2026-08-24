@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "top3",
+    "name": "Top 3",
     "slug": "top3",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -12,6 +12,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.jeremylinskillsteam.top3",
       "usesAppleSignIn": true,
+      "entitlements": {
+        "com.apple.developer.declared-age-range": true
+      },
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
