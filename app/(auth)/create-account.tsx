@@ -198,11 +198,6 @@ export default function CreateAccountScreen() {
           <EmailAuthButton
             onPress={handleEmailSignUp}
           />
-
-
-          <Text style={styles.ageNotice}>
-  {'By continuing, you confirm that you’re\nat least 13 years old.'}
-</Text>
         </View>
 
 
@@ -279,16 +274,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: COLORS.tertiaryText,
   },
-
-
- ageNotice: {
-  marginTop: 2,
-  paddingHorizontal: 12,
-  fontSize: 16,
-  lineHeight: 22,
-  color: COLORS.tertiaryText,
-  textAlign: 'center',
-},
 
 
   signInContainer: {
