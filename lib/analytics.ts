@@ -48,7 +48,14 @@ export function initializeAnalytics() {
     return;
   }
 
-  init(apiKey);
+ init(apiKey, undefined, {
+  trackingOptions: {
+    adid: false,
+    carrier: false,
+    deviceManufacturer: false,
+    deviceModel: false,
+  },
+});
 
   isInitialized = true;
 }

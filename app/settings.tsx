@@ -8,6 +8,7 @@ import { useProfile } from '@/context/profile-context';
 import { useAuth } from '@/hooks/use-auth';
 import { deleteAccount } from '@/lib/supabase/account';
 import { resetWelcomeStatus } from '@/services/onboarding-service';
+import { clearRecentSearches } from '@/services/recent-search-service';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -157,8 +158,16 @@ export default function SettingsScreen() {
 
     setIsDeletingAccount(true);
 
+    const deletingUserId = user?.id ?? null;
+
     try {
       await deleteAccount();
+
+      if (deletingUserId) {
+        await clearRecentSearches(
+          deletingUserId
+        );
+      }
 
       await resetWelcomeStatus();
 
