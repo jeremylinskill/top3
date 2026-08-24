@@ -4,6 +4,7 @@ import { COLORS } from '@/constants/colors';
 import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
 import { TYPOGRAPHY } from '@/constants/typography';
+import { useProfile } from '@/context/profile-context';
 import { useAuth } from '@/hooks/use-auth';
 import { deleteAccount } from '@/lib/supabase/account';
 import { resetWelcomeStatus } from '@/services/onboarding-service';
@@ -23,6 +24,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SettingsScreen() {
   const { signOut, user } = useAuth();
+  const { profile } = useProfile();
 
   const [isSigningOut, setIsSigningOut] =
     useState(false);
@@ -47,6 +49,10 @@ export default function SettingsScreen() {
     router.push('/privacy');
   }
 
+  function openBlockedUsers() {
+    router.push('/blocked-users');
+  }
+
 
   function openChangePassword() {
     router.push('/change-password');
@@ -54,6 +60,14 @@ export default function SettingsScreen() {
 
   function openAbout() {
     router.push('/about');
+  }
+
+  function openSupport() {
+    router.push('/support');
+  }
+
+  function openModeration() {
+    router.push('/moderation');
   }
 
   function confirmSignOut() {
@@ -262,6 +276,41 @@ router.replace('/onboarding');
               />
             </Pressable>
 
+            <View style={styles.divider} />
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.row,
+                pressed && styles.pressed,
+              ]}
+              onPress={openBlockedUsers}
+              accessibilityRole="button"
+              accessibilityLabel="Open Blocked Users">
+              <View style={styles.iconContainer}>
+                <Ionicons
+                  name="ban-outline"
+                  size={23}
+                  color={COLORS.text}
+                />
+              </View>
+
+              <View style={styles.rowDetails}>
+                <Text style={styles.rowTitle}>
+                  Blocked Users
+                </Text>
+
+                <Text style={styles.rowSubtitle}>
+                  Manage people you've blocked
+                </Text>
+              </View>
+
+              <Ionicons
+                name="chevron-forward"
+                size={21}
+                color={COLORS.tertiaryText}
+              />
+            </Pressable>
+
             {canChangePassword ? (
               <>
                 <View style={styles.divider} />
@@ -341,6 +390,81 @@ router.replace('/onboarding');
                 color={COLORS.tertiaryText}
               />
             </Pressable>
+
+            <View style={styles.divider} />
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.row,
+                pressed && styles.pressed,
+              ]}
+              onPress={openSupport}
+              accessibilityRole="button"
+              accessibilityLabel="Open Support">
+              <View style={styles.iconContainer}>
+                <Ionicons
+                  name="help-circle-outline"
+                  size={23}
+                  color={COLORS.text}
+                />
+              </View>
+
+              <View style={styles.rowDetails}>
+                <Text style={styles.rowTitle}>
+                  Support
+                </Text>
+
+                <Text style={styles.rowSubtitle}>
+                  Get help or contact Top3 support
+                </Text>
+              </View>
+
+              <Ionicons
+                name="chevron-forward"
+                size={21}
+                color={COLORS.tertiaryText}
+              />
+            </Pressable>
+
+            {profile.isAdmin ? (
+              <>
+                <View style={styles.divider} />
+
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.row,
+                    pressed && styles.pressed,
+                  ]}
+                  onPress={openModeration}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open Moderation">
+                  <View style={styles.iconContainer}>
+                    <Ionicons
+                      name="shield-outline"
+                      size={23}
+                      color={COLORS.text}
+                    />
+                  </View>
+
+                  <View style={styles.rowDetails}>
+                    <Text style={styles.rowTitle}>
+                      Moderation
+                    </Text>
+
+                    <Text style={styles.rowSubtitle}>
+                      Review pending reports
+                    </Text>
+                  </View>
+
+                  <Ionicons
+                    name="chevron-forward"
+                    size={21}
+                    color={COLORS.tertiaryText}
+                  />
+                </Pressable>
+              </>
+            ) : null}
+
           </View>
         </View>
 
@@ -454,9 +578,9 @@ const styles = StyleSheet.create({
   },
 
   signOutSection: {
-    marginTop: 'auto',
-    paddingTop: 32,
-  },
+  marginTop: SPACING.xl,
+  paddingTop: 8,
+},
 
   card: {
     backgroundColor: COLORS.surface,

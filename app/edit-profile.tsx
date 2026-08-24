@@ -1,3 +1,4 @@
+import ActionSheet from '@/components/action-sheet';
 import PageHeader from '@/components/page-header';
 import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
@@ -24,6 +25,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 const MAX_AVATAR_FILE_SIZE =
   5 * 1024 * 1024;
+
+type ProfileActionSheet =
+  | { type: 'display-name-blocked' }
+  | { type: 'username-blocked' }
+  | { type: 'bio-blocked' }
+  | null;
 
 export default function EditProfileScreen() {
   const { profile, updateProfile } = useProfile();
@@ -52,6 +59,9 @@ export default function EditProfileScreen() {
 
   const [isSaving, setIsSaving] =
     useState(false);
+
+  const [profileActionSheet, setProfileActionSheet] =
+    useState<ProfileActionSheet>(null);
 
   const trimmedDisplayName =
     displayName.trim();
@@ -138,6 +148,49 @@ export default function EditProfileScreen() {
 
       router.back();
     } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : typeof error === 'object' &&
+            error !== null &&
+            'message' in error &&
+            typeof error.message === 'string'
+          ? error.message
+          : String(error);
+
+      if (
+        errorMessage.includes(
+          'PROFILE_DISPLAY_NAME_BLOCKED_CONTENT'
+        )
+      ) {
+        setProfileActionSheet({
+          type: 'display-name-blocked',
+        });
+        return;
+      }
+
+      if (
+        errorMessage.includes(
+          'PROFILE_USERNAME_BLOCKED_CONTENT'
+        )
+      ) {
+        setProfileActionSheet({
+          type: 'username-blocked',
+        });
+        return;
+      }
+
+      if (
+        errorMessage.includes(
+          'PROFILE_BIO_BLOCKED_CONTENT'
+        )
+      ) {
+        setProfileActionSheet({
+          type: 'bio-blocked',
+        });
+        return;
+      }
+
       console.error(
         'Failed to save profile:',
         error
@@ -150,6 +203,32 @@ export default function EditProfileScreen() {
     } finally {
       setIsSaving(false);
     }
+  }
+
+  let actionSheetTitle = '';
+  let actionSheetMessage = '';
+
+  switch (profileActionSheet?.type) {
+    case 'display-name-blocked':
+      actionSheetTitle =
+        'Display name not allowed';
+      actionSheetMessage =
+        "Your display name contains language that isn't allowed on Top3. Please revise it and try again.";
+      break;
+
+    case 'username-blocked':
+      actionSheetTitle =
+        'Username not allowed';
+      actionSheetMessage =
+        "Your username contains language that isn't allowed on Top3. Please revise it and try again.";
+      break;
+
+    case 'bio-blocked':
+      actionSheetTitle =
+        'Bio not allowed';
+      actionSheetMessage =
+        "Your bio contains language that isn't allowed on Top3. Please revise it and try again.";
+      break;
   }
 
   return (
@@ -341,6 +420,23 @@ export default function EditProfileScreen() {
           />
         </View>
       </KeyboardAvoidingView>
+
+      <ActionSheet
+        visible={profileActionSheet !== null}
+        title={actionSheetTitle}
+        message={actionSheetMessage}
+        actions={[
+          {
+            label: 'OK',
+            variant: 'cancel',
+            onPress: () =>
+              setProfileActionSheet(null),
+          },
+        ]}
+        onClose={() =>
+          setProfileActionSheet(null)
+        }
+      />
     </SafeAreaView>
   );
 }

@@ -24,6 +24,7 @@ import {
   useState,
 } from 'react';
 import {
+  Alert,
   Animated,
   Easing,
   Image,
@@ -70,6 +71,9 @@ type CommentActionSheet =
     }
   | {
       type: 'report-error';
+    }
+  | {
+      type: 'comment-blocked';
     }
   | null;
 
@@ -322,7 +326,7 @@ export default function CommentsSheet({
     ]
   );
 
-  function handlePostComment() {
+  async function handlePostComment() {
     if (
       !collectionId ||
       !canPost
@@ -330,21 +334,49 @@ export default function CommentsSheet({
       return;
     }
 
-    const newComment = addComment({
-      postId: collectionId,
-      authorId: profile.id,
-      authorDisplayName:
-        profile.displayName,
-      authorUsername:
-        profile.username,
-      authorAvatarUrl:
-        profile.avatarUrl,
-      text: trimmedComment,
-    });
+    try {
+      const newComment = await addComment({
+        postId: collectionId,
+        authorId: profile.id,
+        authorDisplayName:
+          profile.displayName,
+        authorUsername:
+          profile.username,
+        authorAvatarUrl:
+          profile.avatarUrl,
+        text: trimmedComment,
+      });
 
-    if (newComment) {
-      setCommentText('');
-      Keyboard.dismiss();
+      if (newComment) {
+        setCommentText('');
+        Keyboard.dismiss();
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : String(error);
+
+      if (
+        errorMessage.includes(
+          'COMMENT_BLOCKED_CONTENT'
+        )
+      ) {
+        setCommentActionSheet({
+          type: 'comment-blocked',
+        });
+        return;
+      }
+
+      console.error(
+        'Failed to post comment:',
+        error
+      );
+
+      Alert.alert(
+        'Unable to post comment',
+        'Something went wrong while posting your comment. Please try again.'
+      );
     }
   }
 
@@ -579,7 +611,6 @@ export default function CommentsSheet({
                 reason,
               } = commentActionSheet;
 
-              closeCommentActionSheet();
               void handleReportComment(
                 comment,
                 reason
@@ -625,6 +656,21 @@ export default function CommentsSheet({
           'Report submitted';
         commentActionSheetMessage =
           'Thanks for letting us know. Your report has been submitted for review.';
+
+        commentActionSheetActions = [
+          {
+            label: 'OK',
+            variant: 'cancel',
+            onPress: closeCommentActionSheet,
+          },
+        ];
+        break;
+
+      case 'comment-blocked':
+        commentActionSheetTitle =
+          'Comment not posted';
+        commentActionSheetMessage =
+          "This comment contains language that isn't allowed on Top3. Please revise it and try again.";
 
         commentActionSheetActions = [
           {

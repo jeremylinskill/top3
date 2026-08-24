@@ -8,9 +8,12 @@ import { useBlock } from '@/context/block-context';
 import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
 import { useAuth } from '@/hooks/use-auth';
+import { trackAnalyticsEvent } from '@/lib/analytics';
+import { sharePublishedCollection } from '@/lib/share';
 import type { FollowCounts } from '@/lib/supabase/follows';
 import { getFollowCounts } from '@/lib/supabase/follows';
 import { getProfileById } from '@/lib/supabase/profiles';
+import { subscribeToTableChanges } from '@/lib/supabase/realtime';
 import {
   createPostReport,
   createUserReport,
@@ -22,8 +25,10 @@ import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
 import { router } from 'expo-router';
 import {
+  useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import {
@@ -168,6 +173,9 @@ export default function ProfileScreen({
       Boolean(userId && userId !== profile.id)
     );
 
+  const trackedProfileViewIdRef =
+    useRef<string | null>(null);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -187,6 +195,19 @@ export default function ProfileScreen({
 
         if (isMounted) {
           setViewedUser(requestedProfile);
+
+          if (
+            requestedProfile &&
+            trackedProfileViewIdRef.current !==
+              requestedProfile.id
+          ) {
+            trackedProfileViewIdRef.current =
+              requestedProfile.id;
+
+            trackAnalyticsEvent(
+              'profile_viewed'
+            );
+          }
         }
       } catch (error) {
         console.error(
@@ -283,24 +304,25 @@ export default function ProfileScreen({
     };
   }, [isCurrentUser, viewedUserId]);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadPosts() {
+  const loadProfilePosts = useCallback(
+    async ({
+      showLoading = false,
+    }: {
+      showLoading?: boolean;
+    } = {}) => {
       if (
         !isAuthenticated ||
         !profile.id ||
         !viewedUserId
       ) {
-        if (isMounted) {
-          setAllPosts([]);
-          setIsLoadingPosts(false);
-        }
-
+        setAllPosts([]);
+        setIsLoadingPosts(false);
         return;
       }
 
-      setIsLoadingPosts(true);
+      if (showLoading) {
+        setIsLoadingPosts(true);
+      }
 
       try {
         const currentUserPosts =
@@ -309,18 +331,12 @@ export default function ProfileScreen({
           );
 
         if (viewedUserId === profile.id) {
-          if (isMounted) {
-            setAllPosts(currentUserPosts);
-          }
-
+          setAllPosts(currentUserPosts);
           return;
         }
 
         if (!canViewPosts) {
-          if (isMounted) {
-            setAllPosts(currentUserPosts);
-          }
-
+          setAllPosts(currentUserPosts);
           return;
         }
 
@@ -329,39 +345,60 @@ export default function ProfileScreen({
             viewedUserId
           );
 
-        if (isMounted) {
-          setAllPosts(
-            mergePosts(
-              currentUserPosts,
-              viewedUserPosts
-            )
-          );
-        }
+        setAllPosts(
+          mergePosts(
+            currentUserPosts,
+            viewedUserPosts
+          )
+        );
       } catch (error) {
         console.error(
           'Failed to load profile posts:',
           error
         );
 
-        if (isMounted) {
-          setAllPosts([]);
-        }
+        setAllPosts([]);
       } finally {
-        if (isMounted) {
+        if (showLoading) {
           setIsLoadingPosts(false);
         }
       }
+    },
+    [
+      canViewPosts,
+      isAuthenticated,
+      profile.id,
+      viewedUserId,
+    ]
+  );
+
+  useEffect(() => {
+    void loadProfilePosts({
+      showLoading: true,
+    });
+  }, [loadProfilePosts]);
+
+  useEffect(() => {
+    if (
+      !isAuthenticated ||
+      !viewedUserId
+    ) {
+      return;
     }
 
-    void loadPosts();
-
-    return () => {
-      isMounted = false;
-    };
+    return subscribeToTableChanges({
+      channelName:
+        `profile-collections-${viewedUserId}`,
+      table: 'collections',
+      filter:
+        `user_id=eq.${viewedUserId}`,
+      onChange: async () => {
+        await loadProfilePosts();
+      },
+    });
   }, [
-    canViewPosts,
     isAuthenticated,
-    profile.id,
+    loadProfilePosts,
     viewedUserId,
   ]);
 
@@ -515,10 +552,7 @@ export default function ProfileScreen({
     try {
       await blockUser(viewedUserId);
 
-      Alert.alert(
-        'User blocked',
-        `${viewedUser.displayName} has been blocked.`
-      );
+      router.back();
     } catch (error) {
       console.error(
         'Failed to block user:',
@@ -832,6 +866,14 @@ export default function ProfileScreen({
     setSelectedCommentsPost(post);
   }
 
+  async function shareCollection(post: Post) {
+    await sharePublishedCollection({
+      postId: post.id,
+      title: post.collection.title,
+      source: 'profile',
+    });
+  }
+
   function closeComments() {
     setSelectedCommentsPost(null);
   }
@@ -1005,7 +1047,6 @@ export default function ProfileScreen({
               const reason =
                 moderationSheet.reason;
 
-              closeModerationSheet();
               void handleReportUser(reason);
             },
           },
@@ -1122,7 +1163,6 @@ export default function ProfileScreen({
                 reason,
               } = moderationSheet;
 
-              closeModerationSheet();
               void handleReportList(
                 post,
                 reason
@@ -1304,6 +1344,9 @@ export default function ProfileScreen({
               : openListMenu
           }
           onCommentsPress={openComments}
+          onSharePost={(post) => {
+            void shareCollection(post);
+          }}
         />
       </ScrollView>
 

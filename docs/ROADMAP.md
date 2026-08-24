@@ -1,7 +1,7 @@
 Top3 Product Roadmap
 
-Version: 2.2Status: Active DevelopmentOwner: Jeremy LinskillLast
-Updated: August 17, 2026Last Verified Commit: db8b367 --- Add forgot
+Version: 2.4Status: Active DevelopmentOwner: Jeremy LinskillLast
+Updated: August 20, 2026Last Verified Commit: db8b367 --- Add forgot
 password flow
 
 Purpose
@@ -36,7 +36,7 @@ Conversation --- Encourage discussion rather than passive consumption.
 
 Current Milestone
 
-Discovery & Personalization
+V1 Launch Readiness
 
 Status: Current Focus 🚧
 
@@ -46,56 +46,136 @@ Authentication, profiles, list persistence, social interactions, private
 accounts, follow requests, notifications, realtime synchronization,
 Settings, search providers, Feed, Discover, Taste Match, Apple Music
 previews, Movie / TV trailer playback, and the redesigned first-list
-onboarding and account lifecycle, including email password recovery, provide
-a stable foundation for the
-next stage of the product.
+onboarding and account lifecycle, including email password recovery,
+provide a stable foundation for the next stage of the product.
 
-Recent work has begun shifting Top3 from simply surfacing community
-content toward making discovery more relevant to each user. Personalized
-Feed recommendations can now use Taste Match and shared ranked picks to
-explain why another user's list may be interesting.
+Recent work has also completed important moderation-removal foundations,
+published-list and Overall ranking sharing, deep-link access to shared public
+content, and the current V1 product-analytics instrumentation. The
+architectural changes required for Top3's Feed to scale well beyond the
+initial launch population have also been identified.
 
-The current milestone is to strengthen that discovery system before
-expanding into more advanced recommendation intelligence or major new
-platform features.
+The current milestone is to prepare a stable, safe, polished V1 for App
+Store release and begin gathering real-user behaviour before investing
+in larger post-launch architecture migrations or speculative
+recommendation work.
+
+Discovery & Personalization remains a core product direction, but
+additional large-scale Feed and recommendation infrastructure is
+deliberately deferred until after V1 launch unless it becomes necessary
+for launch reliability.
 
 Foundation Completed
 
 • Signed-out first-list onboarding• Lists → Overall onboarding
 education• Taste Match onboarding education• Account deletion• Email
 confirmation callback and pending-list publishing• Email authentication•
-Forgot-password and password-reset recovery• Sign in with Apple• Sign in with Google• Persistent Supabase sessions•
-Stable authentication initialization• User profiles• Profile avatars•
-Profile editing• Privacy settings• Public and private accounts• Follow
-requests• Following / Followers• List persistence• Shared Likes• Shared
-Comments• In-app notifications• Settings• About• Supabase Realtime for
-Notifications, Likes, Comments, and Following• Feed• Discover• Community
-Top3• Overall Top3• Taste Match• Personalized Feed recommendations•
-Taste Match recommendation explanations• Shared search-provider
-architecture• TMDb search for Movies and TV Shows• TMDb Movie / TV
-trailer playback inside Top3• Availability-aware Movie / TV trailer
-controls• Google Books search with Open Library fallback• IGDB search
-for Video Games through a Supabase Edge Function• Apple Music search for
-Songs, Albums, and Artists through a Supabase Edge Function• Apple Music
-audio previews for Songs, Albums, and Artists• Genre-aware and evergreen
-Apple Music suggestions• Feed pull-to-refresh
+Forgot-password and password-reset recovery• Sign in with Apple• Sign in
+with Google• Persistent Supabase sessions• Stable authentication
+initialization• User profiles• Profile avatars• Profile editing• Privacy
+settings• Public and private accounts• Follow requests• Following /
+Followers• List persistence• Shared Likes• Shared Comments• In-app
+notifications• Settings• About• Supabase Realtime for Notifications,
+Likes, Comments, and Following• Feed• Discover• Community Top3• Overall
+Top3• Taste Match• Personalized Feed recommendations• Taste Match
+recommendation explanations• Shared search-provider architecture• TMDb
+search for Movies and TV Shows• TMDb Movie / TV trailer playback inside
+Top3• Availability-aware Movie / TV trailer controls• Google Books
+search with Open Library fallback• IGDB search for Video Games through a
+Supabase Edge Function• Apple Music search for Songs, Albums, and
+Artists through a Supabase Edge Function• Apple Music audio previews for
+Songs, Albums, and Artists• Genre-aware and evergreen Apple Music
+suggestions• Feed pull-to-refresh• Reported-list and reported-comment
+moderation workflow• Moderator Remove Content action• Removed-content
+filtering through removed_at• Creator-scoped moderation removal Realtime
+propagation• collections_published_feed_idx for the future published
+Feed path• Published List sharing from Feed, Profile, Category Feed, and
+Published Top 3• Overall ranking sharing• Deep-link routing to published
+Lists and Overall rankings• Logged-out read access to shared published,
+non-removed collections• V1 Amplitude product analytics• Successful-share
+tracking with source attribution
 
 Current Priorities
 
-• Continue validating onboarding completion and account-lifecycle
-reliability• Improve Feed relevance and ranking• Improve personalized
-recommendation quality• Expand Discover browsing and filtering• Improve
-profile discovery• Continue refining Taste Match as a discovery signal•
-Continue search-quality and provider-resiliency improvements• Continue
-refining Apple Music search, suggestions, ranking, previews, and
-metadata quality• Continue improving Movie / TV trailer resiliency where
-practical• Expand conversation and engagement opportunities• Continue
-performance and stability optimization• Prepare architecture for push
-notifications
+• Complete a V1 launch-readiness audit• Fix App Store launch blockers
+before adding major new product scope• Continue validating onboarding
+completion and account-lifecycle reliability• Verify reporting,
+moderation, blocking, privacy, security, and account-deletion
+requirements• Continue performance and stability optimization where it
+affects launch quality• Preserve the current Feed and Taste Match
+experience for initial real-user validation• Defer cursor-paginated Feed
+migration, server-side recommendation candidate generation, and other
+large-scale Feed infrastructure until post-launch• Continue
+search-quality and provider-resiliency improvements when they affect
+launch reliability• Prepare architecture for push notifications without
+making push a V1 launch dependency unless product requirements change
+
+V1 Launch Readiness
+
+Status: Current Focus
+
+Goal
+
+Release a stable, safe, polished version of Top3 through the App Store
+so the product can begin gathering real-user behaviour and validate
+which discovery, social, and recommendation experiences deserve the next
+investments.
+
+Before Launch
+
+• Complete an App Store readiness audit• Resolve crash, data-loss,
+security, privacy, authentication, account-lifecycle, and moderation
+blockers• Verify user-generated-content safety requirements, including
+reporting, moderation, and blocking• Verify account deletion end-to-end•
+Verify core onboarding, Create, publish, Feed, Profile, Discover,
+Search, Likes, Comments, Following, notifications, Taste Match, and
+media-preview flows on device• Confirm production configuration and
+provider credentials• Review App Store metadata, privacy disclosures,
+permissions, and required support / policy surfaces• Perform final
+performance and reliability testing• Update project documentation to
+match the release candidate
+
+Launch Decision --- Feed Scalability
+
+Top3 will intentionally launch V1 with the existing client-side Feed
+architecture so the product can gather real usage data before a larger
+Feed rewrite.
+
+The current implementation retrieves the complete published-post
+dataset, hydrates posts client-side where required, and constructs
+followed-user and Taste Match personalization on the client. This is
+acceptable for initial low-volume launch but is not the intended
+architecture for a very large community.
+
+The post-launch target is a cursor-paginated, server-generated Feed that
+returns small pages of ready-to-render entries. Follow relationships and
+recommendation candidate selection should increasingly be handled
+server-side / database-side.
+
+Taste Match ranking behaviour should be preserved, but candidate
+generation must become bounded at scale rather than comparing against an
+unbounded global post/user dataset.
+
+The partial Postgres index collections_published_feed_idx has already
+been added for published, non-removed collections using published_at
+DESC, user_id, and id to support the future paginated Feed path.
+
+This work is deliberately deferred until after V1 launch. It is a
+conscious product and architecture decision, not forgotten technical
+debt.
+
+Success Looks Like
+
+Top3 reaches real users with the existing core experience stable and
+safe, without delaying launch for scale infrastructure that is not yet
+required.
+
+Real usage informs the next discovery, recommendation, retention, and
+scalability priorities.
 
 Initiative 1 --- Strengthen Discovery
 
-Status: Current Focus
+Status: Active / Post-Launch Continuation
 
 Improve the discovery experiences that already exist so users
 consistently encounter relevant people, lists, and entertainment without
@@ -178,7 +258,7 @@ without turning profiles into overly complex social-media pages.
 Opportunities
 
 • Profile customization• Featured lists• Pinned lists• List history•
-List sharing• User achievements• Activity summaries• Taste summaries
+Richer sharing / web presentation• User achievements• Activity summaries• Taste summaries
 
 Success Looks Like
 
@@ -195,9 +275,8 @@ to encourage meaningful interaction around shared interests.
 Opportunities
 
 • Richer comment experiences• Conversation prompts around shared picks•
-Recommendation-driven discussion• Improved social activity context• List
-sharing• Friend invitations• Push notifications• Re-engagement
-experiences
+Recommendation-driven discussion• Improved social activity context• Friend
+invitations• Push notifications• Re-engagement experiences
 
 Guiding Principle
 
@@ -215,9 +294,43 @@ discovery, identity, and conversation experiences are strong.
 Opportunities
 
 • Broader activity experiences• Collaborative lists• Creator tools•
-Moderation• Reporting and safety tools• Admin dashboard• Product
-analytics• Community events• Additional content categories• Additional
-entertainment providers
+Expanded moderation and safety tooling beyond the V1 reporting / removal
+foundation• Admin dashboard enhancements• Community
+events• Additional content categories• Additional entertainment
+providers• Large-scale Feed and recommendation infrastructure as usage
+requires
+
+Sharing & Product Analytics
+
+Status: V1 Foundation Complete
+
+Top3 supports native sharing of individual published Lists and community
+Overall rankings.
+
+Published Lists can be shared from Feed, Profile, Category Feed, and the
+Published Top 3 detail screen. Overall rankings can be shared directly from
+Category Feed.
+
+Shared links deep-link back to the appropriate Top3 destination. Public
+published, non-removed collections can be read while signed out through
+restricted Supabase anonymous access so a recipient with Top3 installed does
+not need an account merely to view shared public content.
+
+Amplitude provides the current V1 product-analytics foundation. The scoped
+core events are implemented, including collection_shared. Share events are
+recorded only after the native share action completes successfully and carry
+source attribution for feed, profile, category_feed, published_detail, and
+overall.
+
+Future Sharing Work
+
+Universal Links / HTTPS web fallback should be implemented once the
+production Top3 domain is confirmed. This will allow recipients without the
+app installed to receive a useful web destination instead of relying only on
+the custom top3:// scheme.
+
+Analytics should now be driven by real product questions and observed usage
+rather than adding events speculatively before launch.
 
 Push Notifications
 
@@ -321,6 +434,10 @@ Every future feature should:
 
 • Prioritize quality and reliability before adding new features.
 
+• Design data access, Realtime subscriptions, and client computation
+with a very large user base in mind; flag unbounded global reads or
+fan-out before extending them.
+
 • Extend existing product patterns before creating parallel systems.
 
 Technical Strategy
@@ -350,6 +467,28 @@ changed.
 
 New infrastructure should extend existing architecture wherever
 practical rather than creating duplicate systems.
+
+Scalability is a standing architecture requirement. New work should
+avoid unbounded client-side global reads, client-side processing of
+global datasets, global Realtime fan-out, and repeated view-time
+external-provider hydration when those patterns would become material as
+Top3 grows.
+
+Do not prematurely rebuild working V1 systems solely for hypothetical
+scale. Document known scale limits, create the supporting database
+foundations where low-risk, and schedule larger migrations before usage
+reaches those limits.
+
+Post-Launch Scalability Priority
+
+• Replace complete published-post retrieval with cursor-paginated,
+server-generated Feed pages• Move followed-user Feed selection into
+server/database queries• Bound Taste Match recommendation candidate
+generation server-side• Evaluate incremental / precomputed taste
+relationships as usage grows• Persist render-ready item artwork /
+metadata where practical so Feed rendering does not depend on large
+volumes of view-time provider hydration• Use targeted rather than global
+Realtime propagation for moderation and other high-volume events
 
 Selecting the Next Milestone
 
@@ -393,24 +532,68 @@ Top3 succeeds when users:
 
 • Build lasting lists that reflect who they are.
 
+• Share Lists and Overall rankings when they are useful to others.
+
 The long-term goal is not to maximize content creation or passive
 engagement, but to create meaningful connections through shared taste.
 
 Revision History
 
-Version 2.2 --- August 17, 2026
+Version 2.4 --- August 22, 2026
 
-Updated the roadmap to reflect the completed email password-recovery flow
-through commit db8b367.
+Updated the roadmap to reflect completion of the current sharing, deep-link,
+signed-out public-viewing, and V1 analytics milestone.
 
 Key changes:
 
-• Recorded Forgot Password and Reset Password as completed authentication
-foundations.• Recorded Supabase password-reset email delivery and recovery
-deep-link handling as complete.• Recorded the Open Email App handoff as part
-of the recovery experience.• Preserved Discovery & Personalization as the
-active product milestone rather than creating a separate authentication
-initiative.
+• Recorded native sharing for published Lists across Feed, Profile, Category
+Feed, and Published Top 3.• Recorded direct sharing of Overall rankings.•
+Recorded deep-link routing for published Lists and Overall rankings.•
+Recorded restricted anonymous read access for published, non-removed
+collections so shared public content can be viewed while signed out.•
+Recorded the current V1 Amplitude analytics scope as complete.•
+Recorded collection_shared as a successful-share event with source
+attribution for feed, profile, category_feed, published_detail, and overall.•
+Removed basic List sharing and Product analytics from future-opportunity
+lists because their V1 foundations now exist.• Deferred Universal Links /
+HTTPS web fallback until the production Top3 domain is confirmed.
+
+Version 2.3 --- August 20, 2026
+
+Shifted the active milestone from Discovery & Personalization to V1
+Launch Readiness and documented the deliberate post-launch Feed
+scalability direction.
+
+Key changes:
+
+• Established App Store / V1 launch readiness as the immediate product
+priority.• Recorded reported-list and reported-comment moderation,
+moderator content removal, removed_at filtering, and creator-scoped
+Realtime removal propagation as completed foundations.• Documented that
+the current V1 Feed retrieves the complete published-post dataset and
+performs personalization / Taste Match selection client-side.•
+Explicitly accepted the current Feed architecture for initial low-volume
+launch and real-user validation.• Established cursor-paginated,
+server-generated Feed delivery and bounded server-side Taste Match
+candidate generation as high-priority post-launch scalability work.•
+Recorded collections_published_feed_idx as an existing database
+foundation for that future Feed path.• Added scalability as a standing
+architecture requirement while explicitly avoiding premature pre-launch
+infrastructure rewrites.
+
+Version 2.2 --- August 17, 2026
+
+Updated the roadmap to reflect the completed email password-recovery
+flow through commit db8b367.
+
+Key changes:
+
+• Recorded Forgot Password and Reset Password as completed
+authentication foundations.• Recorded Supabase password-reset email
+delivery and recovery deep-link handling as complete.• Recorded the Open
+Email App handoff as part of the recovery experience.• Preserved
+Discovery & Personalization as the active product milestone rather than
+creating a separate authentication initiative.
 
 Version 2.1 --- August 17, 2026
 

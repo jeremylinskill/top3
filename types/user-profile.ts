@@ -20,4 +20,10 @@ export type UserProfile = {
    * completed or skipped the first-time onboarding flow.
    */
   hasCompletedOnboarding: boolean;
+
+  /**
+   * Indicates whether this profile has access
+   * to administrative moderation tools.
+   */
+  isAdmin: boolean;
 };

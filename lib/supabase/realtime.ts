@@ -1,10 +1,18 @@
 import { supabase } from '@/lib/supabase';
 
+export type PostgresChangesPayload = {
+  eventType: 'INSERT' | 'UPDATE' | 'DELETE';
+  new: Record<string, unknown>;
+  old: Record<string, unknown>;
+};
+
 type PostgresChangesSubscriptionInput = {
   channelName: string;
   table: string;
   filter?: string;
-  onChange: () => void | Promise<void>;
+  onChange: (
+    payload: PostgresChangesPayload
+  ) => void | Promise<void>;
 };
 
 export function subscribeToTableChanges({
@@ -13,8 +21,13 @@ export function subscribeToTableChanges({
   filter,
   onChange,
 }: PostgresChangesSubscriptionInput) {
+  const uniqueChannelName =
+    `${channelName}-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2, 8)}`;
+
   const channel = supabase
-    .channel(channelName)
+    .channel(uniqueChannelName)
     .on(
       'postgres_changes',
       {
@@ -23,8 +36,10 @@ export function subscribeToTableChanges({
         table,
         ...(filter ? { filter } : {}),
       },
-      () => {
-        void onChange();
+      (payload) => {
+        void onChange(
+          payload as PostgresChangesPayload
+        );
       }
     )
     .subscribe((status, error) => {

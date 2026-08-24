@@ -10,6 +10,7 @@ import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
 import { useAuth } from '@/hooks/use-auth';
+import { sharePublishedCollection } from '@/lib/share';
 import { getPublicProfilesByIds } from '@/lib/supabase/profiles';
 import {
   createPostReport,
@@ -345,6 +346,14 @@ export default function FeedScreen() {
 
   function openComments(post: Post) {
     setSelectedCommentsPost(post);
+  }
+
+  async function shareCollection(post: Post) {
+    await sharePublishedCollection({
+      postId: post.id,
+      title: post.collection.title,
+      source: 'feed',
+    });
   }
 
   function closeComments() {
@@ -704,7 +713,6 @@ export default function FeedScreen() {
                 reason,
               } = reportSheet;
 
-              closeReportSheet();
               void handleReportPost(
                 post,
                 reason
@@ -809,7 +817,6 @@ export default function FeedScreen() {
                 reason,
               } = reportSheet;
 
-              closeReportSheet();
               void handleReportUser(
                 post,
                 reason
@@ -1131,6 +1138,9 @@ export default function FeedScreen() {
                     onCommentsPress={() =>
                       openComments(post)
                     }
+                    onSharePress={() => {
+                      void shareCollection(post);
+                    }}
                   />
                 </View>
               );

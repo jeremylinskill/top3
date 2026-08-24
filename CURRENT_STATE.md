@@ -1,7 +1,7 @@
 CURRENT_STATE.md
 
-Project: Top3Version: 2.3Status: Active DevelopmentLast Updated: August
-17, 2026Current Branch: main
+Project: Top3Version: 2.6Status: Active DevelopmentLast Updated: August
+21, 2026Current Branch: main
 
 Last Verified Commit
 
@@ -29,13 +29,47 @@ Account deletion is implemented through a Supabase Edge Function and
 resets local onboarding / welcome state so a deleted user returns to the
 beginning of the onboarding experience.
 
+User-generated-content moderation is implemented for reported lists and
+comments. Moderators can review reports and remove reported content
+through the moderation workflow. Removed collections are excluded from
+normal collection / published-post queries through removed_at filtering.
+
+V1 prohibited-content filtering is implemented and verified for comments
+and the free-form profile fields display name, username, and bio.
+Enforcement is server-side in Supabase. A shared content_filter_terms table
+contains a conservative 49-term production hard-block list, and
+contains_blocked_content(text) normalizes case and punctuation before
+whole-term / phrase matching. Expected content rejections use the
+established Top3-styled ActionSheet experience and preserve entered text
+for correction.
+
+Creator-side moderation removal propagation is implemented through the
+shared Supabase Realtime helper and the moderation_content_removals
+event table. Authenticated users can select only their own removal-event
+rows through RLS. When one of the authenticated user's published lists
+is removed by moderation, Top3Provider evicts that collection and its
+corresponding post from local state and clears currentListId when
+necessary, preventing removed content from being reopened through stale
+Create state.
+
 Current Priority
 
-Continue improving discovery, feed relevance, recommendations, media
-experience, and overall product quality while monitoring startup
-authentication stability.
+Prioritize V1 launch readiness and App Store preparation while
+continuing to monitor startup authentication stability and fixing
+launch-blocking issues in safety, privacy, security, moderation,
+reliability, and data integrity.
+
+The current Feed architecture is acceptable for initial low-volume
+launch and real-user validation, but it is not the intended large-scale
+production architecture. Cursor-paginated, server-generated Feed work is
+deliberately deferred until post-launch and should be treated as a
+high-priority scalability initiative before published collection volume
+becomes materially expensive for clients.
 
 Architecture should always be discussed before implementation begins.
+Scalability must be considered explicitly for new architecture and
+data-access patterns because Top3 is intended to support a very large
+user base.
 
 Typecheck
 
@@ -101,6 +135,10 @@ Supabase Storage
 Supabase Edge Functions
 
 Row Level Security
+
+Analytics
+
+Amplitude Analytics for React Native
 
 State Management
 
@@ -421,9 +459,9 @@ Callback↓Pending list published↓Published / Lists → Overall
 onboarding↓Taste Match onboarding↓Feed
 
 Already have an account?↓Sign In├─ Continue with Apple├─ Continue with
-Google└─ Continue with Email↓Email Sign In├─ Sign In└─ Forgot Password↓Send
-Reset Link↓Check Email / Open Email App↓Recovery Deep Link↓Reset
-Password↓Return to Sign In
+Google└─ Continue with Email↓Email Sign In├─ Sign In└─ Forgot
+Password↓Send Reset Link↓Check Email / Open Email App↓Recovery Deep
+Link↓Reset Password↓Return to Sign In
 
 The obsolete standalone Welcome route and WelcomeScreen component have
 been removed. app/onboarding.tsx is the entry experience for new users.
@@ -458,24 +496,24 @@ service and Supabase Auth.
 Email Sign In includes a Forgot password? action that opens
 app/(auth)/forgot-password.tsx.
 
-The Forgot Password screen validates the email address, requests a Supabase
-password-reset email, and then presents a Check your email state with an Open
-Email App action using the same message:// pattern as the onboarding
-confirmation flow.
+The Forgot Password screen validates the email address, requests a
+Supabase password-reset email, and then presents a Check your email
+state with an Open Email App action using the same message:// pattern as
+the onboarding confirmation flow.
 
-Password-reset deep links return to Top3 and establish the recovery session
-before app/(auth)/reset-password.tsx allows the user to choose and confirm a
-new password.
+Password-reset deep links return to Top3 and establish the recovery
+session before app/(auth)/reset-password.tsx allows the user to choose
+and confirm a new password.
 
-The reset form validates password length and matching confirmation values.
-If Supabase reports that the submitted password is the same as the current
-password, Top3 presents a friendly Choose a different password alert without
-triggering the Expo development error overlay.
+The reset form validates password length and matching confirmation
+values. If Supabase reports that the submitted password is the same as
+the current password, Top3 presents a friendly Choose a different
+password alert without triggering the Expo development error overlay.
 
-The recovery flow has been verified end-to-end on device, including changing
-to a new password, signing in with the changed password, reusing a previously
-used password in a later reset, and rejecting only the password that is
-current at the time of the reset.
+The recovery flow has been verified end-to-end on device, including
+changing to a new password, signing in with the changed password,
+reusing a previously used password in a later reset, and rejecting only
+the password that is current at the time of the reset.
 
 Email Authentication
 
@@ -763,7 +801,20 @@ Realtime
 
 ✅ Following
 
+✅ Creator-scoped moderation content removals
+
 Shared subscription helper: lib/supabase/realtime.ts
+
+The shared Realtime helper passes Postgres change payloads to
+subscribers so callers can react to a specific changed row without
+automatically re-querying an entire table.
+
+Top3Provider subscribes to moderation_content_removals with a
+server-side user_id filter for the authenticated user. The table has RLS
+enabled and authenticated users can select only rows where user_id =
+auth.uid(). This avoids exposing global moderation-removal activity to
+clients and prevents the creator-side removal flow from requiring a full
+collections reload.
 
 List Flow
 
@@ -926,6 +977,88 @@ pacing near the final score.
 Taste Match presentation uses the shared purple accent for match
 information and recommendation messaging.
 
+Sharing & Analytics
+
+Status: ✅ Complete for current V1 scope
+
+Published individual Lists can be shared through the native iOS Share Sheet from Feed, Profile, Category Feed list cards, and Published Top 3 detail.
+
+Overall community rankings can also be shared from Category Feed. Shared Overall deep links preserve category, topic, and view=overall so recipients land directly on the Overall ranking.
+
+Deep links currently use the Top3 custom URL scheme. Logged-out recipients who already have Top3 installed can open shared published Lists and Overall rankings.
+
+Supabase anonymous access to collections is deliberately limited to SELECT access for published, non-removed collections through table grants plus Row Level Security. Drafts remain inaccessible to anonymous users.
+
+Universal Links and a public web fallback for recipients who do not have Top3 installed are deferred until the production Top3 domain is confirmed.
+
+Amplitude analytics is implemented for the current V1 event scope. The collection_shared event is recorded only when the native Share Sheet reports a completed share; dismissing the Share Sheet does not record collection_shared.
+
+collection_shared includes source attribution for:
+
+• feed
+• profile
+• category_feed
+• published_detail
+• overall
+
+The current analytics event set covers account creation and onboarding, collection lifecycle actions, search and item activity, discovery and profile activity, follows, likes, comments, Taste Match, collection views, notification opens, and successful collection shares.
+
+Feed Architecture & Scalability
+
+Current V1 implementation:
+
+• services/post-service.ts retrieves the complete published-post dataset
+through getPublishedPosts().
+
+• Published posts are hydrated client-side. If a persisted item is
+missing artwork, hydration can fall back to searchByCategory(), with an
+in-memory hydrated-item cache reducing repeated provider lookups during
+the session.
+
+• utils/build-personalized-feed.ts constructs the personalized Feed on
+the client from the available published posts.
+
+• The main chronological portion contains the current user's posts and
+posts from followed users.
+
+• Taste Match recommendations are also calculated client-side. The
+current recommendation service groups the available post dataset by
+author and uses calculateTasteMatch() to compare eligible users.
+
+• Recommendations currently insert one suggested post after every three
+priority posts when recommendations are available.
+
+Scalability decision:
+
+The current architecture is intentionally retained for V1 launch so Top3
+can begin gathering real-user usage data before a larger Feed migration.
+It is considered suitable for initial low-volume usage, not for a very
+large published-post corpus.
+
+The target post-launch architecture is a cursor-paginated,
+server-generated Feed that returns only a small page of ready-to-render
+entries at a time. Follow relationships and recommendation candidate
+selection should be handled server-side / database-side rather than
+requiring the phone to download the global published-post dataset.
+
+Taste Match ranking rules should be preserved, but candidate generation
+must be bounded at scale. Longer-term optimization may include
+incrementally precomputed taste relationships rather than comparing the
+current user with every author when the Feed opens.
+
+Persisted collection items should normally contain the artwork and
+metadata needed to render them. View-time external-provider hydration
+should not become a dependency of the large-scale Feed path.
+
+A partial Postgres index named collections_published_feed_idx has been
+added for published, non-removed collections using published_at DESC,
+user_id, and id. It supports the planned cursor-paginated Feed while
+avoiding index entries for drafts and removed collections.
+
+Future Feed pagination and server-side recommendation work is
+deliberately deferred until after V1 launch. This is an explicit product
+/ architecture decision, not forgotten technical debt.
+
 Current Source of Truth
 
 User-facing product terminology
@@ -995,7 +1128,165 @@ Real community experiences
 
 ✅ Taste Match
 
+Sharing & analytics
+
+✅ Published List sharing
+
+✅ Overall ranking sharing
+
+✅ Deep-link routing to shared Lists and Overall rankings
+
+✅ Logged-out access to published, non-removed shared content for installed-app recipients
+
+✅ Amplitude analytics implemented for current V1 scope
+
+✅ Successful-share tracking with source attribution
+
+➡️ Universal Links / public web fallback deferred until the production domain is confirmed
+
+Moderation
+
+✅ Reported-list and reported-comment moderation workflow
+
+✅ Moderator Remove Content action
+
+✅ Removed collections excluded by removed_at filtering
+
+✅ moderation_content_removals event table with authenticated
+user-scoped RLS
+
+✅ Creator-side Realtime eviction of moderated collections / posts from
+Top3Provider local state
+
+✅ V1 prohibited-content filtering for comments, display name, username,
+and bio
+
+✅ Server-side Supabase enforcement using content_filter_terms and
+contains_blocked_content(text)
+
+✅ Conservative 49-term production hard-block list installed and verified
+
+✅ Top3-styled rejection messaging with entered text preserved for
+correction
+
+Feed scalability
+
+⚠️ V1 Feed currently retrieves the complete published-post dataset and
+builds personalization / Taste Match recommendations client-side
+
+✅ collections_published_feed_idx added for the future published Feed
+query
+
+➡️ Cursor-paginated, server-generated Feed intentionally deferred until
+post-launch and classified as a high-priority scalability initiative
+
 Recent Milestones
+
+August 22, 2026
+
+Sharing, Deep Links & Analytics
+
+Added native iOS sharing for published individual Lists across Feed, Profile, Category Feed list cards, and Published Top 3 detail.
+
+Added sharing for Overall community rankings from Category Feed.
+
+Added deep-link routing for Overall rankings using category, topic, and view=overall parameters and verified shared Overall links land on the Overall view.
+
+Enabled logged-out recipients with Top3 installed to load shared public content by adding deliberately restricted anonymous SELECT access for published, non-removed collections. Drafts remain protected by Row Level Security.
+
+Completed the current V1 Amplitude analytics instrumentation.
+
+Added collection_shared tracking that fires only after a completed native Share Sheet action and does not fire when the Share Sheet is dismissed.
+
+Added collection_shared source attribution for feed, profile, category_feed, published_detail, and overall.
+
+Verified the share events and source properties in Amplitude Live Events.
+
+Verified npm run typecheck passes after the sharing analytics rollout.
+
+Universal Links / public web fallback remain deferred until the production Top3 domain is confirmed.
+
+August 21, 2026
+
+V1 Prohibited-Content Filtering
+
+Completed and verified the V1 automated prohibited-content filtering layer
+for comments and the free-form profile fields display name, username, and
+bio.
+
+Added server-side Supabase enforcement and the shared content_filter_terms
+table with a conservative 49-term production hard-block list.
+
+Verified contains_blocked_content(text) normalizes case and punctuation and
+matches normalized whole terms / phrases rather than unsafe raw substrings.
+
+Removed the temporary top3filtertest proof-of-concept term after production
+verification.
+
+Verified database acceptance tests for normal text, direct threats, case
+and punctuation variations, embedded prohibited phrases, and the legitimate
+title “Kill Bill.”
+
+Verified end-to-end on iPhone that prohibited comments are not published,
+the Top3-styled “Comment not posted” ActionSheet appears, and entered text
+remains available for correction.
+
+Verified prohibited-content rejection for profile display name, username,
+and bio.
+
+Consolidated Published Top 3 comments onto the shared CommentsSheet:
+removed the inline comments section / bottom composer and made the comment
+icon open CommentsSheet consistently with other list surfaces.
+
+August 20, 2026
+
+Moderation Removal & Feed Scalability Review
+
+Completed and verified the moderator Remove Content flow for reported
+lists.
+
+Removed collections are filtered from collection and published-post
+reads using removed_at.
+
+Added moderation_content_removals as the event source for creator-side
+moderation removal propagation.
+
+Granted authenticated SELECT access to moderation_content_removals,
+enabled RLS, and added a policy restricting users to rows where user_id
+= auth.uid().
+
+Updated the shared Realtime helper to pass Postgres change payloads to
+subscribers.
+
+Added a user-scoped moderation_content_removals subscription to
+Top3Provider. INSERT events for removed posts evict the affected
+collection from lists, remove its corresponding post from posts, and
+clear currentListId when necessary without reloading the full
+collections dataset.
+
+Verified on device that moderated creator content is removed from
+Profile / local list state and does not remain available as stale
+published content in the Create flow.
+
+Reviewed Feed scalability and confirmed that the current V1 Feed
+retrieves the complete published-post dataset, hydrates posts
+client-side, and performs personalized Feed / Taste Match selection
+client-side.
+
+Decided to retain the current Feed architecture for initial V1 launch
+and real-user validation rather than completing a speculative
+large-scale Feed rewrite before App Store release.
+
+Defined cursor-paginated, server-generated Feed delivery with bounded
+server-side recommendation candidate generation as a high-priority
+post-launch scalability direction.
+
+Added collections_published_feed_idx, a partial index over published,
+non-removed collections using published_at DESC, user_id, and id, to
+support the future paginated Feed path.
+
+Verified npm run typecheck passes after the Realtime moderation-removal
+changes.
 
 August 17, 2026
 
@@ -1006,21 +1297,21 @@ Added Forgot password? to Email Sign In.
 Added a dedicated Forgot Password screen that validates the user's email
 address and requests a Supabase password-reset email.
 
-Added a Check your email success state with an Open Email App action that
-reuses the existing message:// email-client pattern.
+Added a Check your email success state with an Open Email App action
+that reuses the existing message:// email-client pattern.
 
 Added a dedicated Reset Password screen that establishes the recovery
 session from the password-reset deep link and lets the user choose and
 confirm a new password.
 
-Added friendly handling when the submitted password matches the account's
-current password so the expected validation case does not trigger the Expo
-development error overlay.
+Added friendly handling when the submitted password matches the
+account's current password so the expected validation case does not
+trigger the Expo development error overlay.
 
-Verified the complete forgot-password flow end-to-end on device, including
-successful password changes, sign-in with the changed password, reuse of a
-previously used password in a later reset, and clean same-password
-validation.
+Verified the complete forgot-password flow end-to-end on device,
+including successful password changes, sign-in with the changed
+password, reuse of a previously used password in a later reset, and
+clean same-password validation.
 
 Verified npm run typecheck passes.
 
@@ -1631,7 +1922,24 @@ Monitor the intermittent Supabase JWT issued at future startup error
 after adding an explicit session refresh during authentication
 initialization.
 
+Post-launch Feed scalability: replace complete published-post retrieval
+and client-side Feed construction with cursor-paginated,
+server-generated Feed pages before published collection volume makes the
+current approach materially expensive.
+
+Post-launch recommendation scalability: bound Taste Match candidate
+generation server-side and evaluate incremental / precomputed taste
+relationships as usage grows. Do not design the large-scale
+recommendation path around downloading every user's published posts to
+the client.
+
+Post-launch metadata scalability: avoid making view-time external search
+provider hydration a dependency of Feed rendering; persist render-ready
+collection-item metadata wherever practical.
+
 Medium Priority
+
+Add Universal Links and a public web fallback for shared Lists / Overall rankings after the production Top3 domain is confirmed, so recipients without the app installed have a useful destination.
 
 Scope AsyncStorage keys by authenticated user where appropriate.
 
@@ -1771,6 +2079,52 @@ current popularity.
 Remember that Create List intentionally keeps all supported topics
 visible even when a matching topic list has already been published.
 
+Remember that V1 prohibited-content filtering is implemented server-side
+for comments, display name, username, and bio. content_filter_terms stores
+the production hard-block vocabulary and contains_blocked_content(text)
+performs normalized whole-term / phrase matching. Do not replace this with
+a second client-only filtering architecture.
+
+Remember that the production hard-block list currently contains 49
+deliberately conservative terms / phrases. Ordinary profanity and
+context-dependent language are intentionally not automatic hard blocks;
+contextual abuse is handled through reporting, blocking, and admin
+moderation.
+
+Remember that expected prohibited-content rejection uses the established
+Top3-styled ActionSheet experience and preserves entered text for
+correction. Do not introduce native Alert.alert() for these moderation
+rejections.
+
+Remember that Published Top 3 uses the shared CommentsSheet opened from the
+comment icon rather than a separate inline comments section / composer.
+
+Remember that moderation removal uses moderation_content_removals as a
+user-scoped Realtime event source. Authenticated users may select only
+their own removal-event rows. Top3Provider uses INSERT payloads to evict
+the affected creator collection / post from local state without a full
+collections reload.
+
+Remember that the V1 Feed currently retrieves the complete
+published-post dataset and builds followed-user / Taste Match
+personalization client-side. This is accepted for initial launch only
+and is not the intended large-scale architecture.
+
+Remember that the planned post-launch Feed architecture is
+cursor-paginated and server-generated. The client should eventually
+request small pages of ready-to-render Feed entries rather than download
+the global published-post dataset. Taste Match candidate generation must
+also become bounded / server-side at scale.
+
+Remember that collections_published_feed_idx has already been added to
+support published, non-removed Feed retrieval. Do not recreate the index
+unnecessarily.
+
+Remember that scalability is a standing architecture requirement. Flag
+new patterns that depend on unbounded global reads, client-side
+processing of global datasets, global Realtime fan-out, or repeated
+view-time external API hydration before extending them.
+
 Remember that list titles are generated centrally by
 utils/build-collection-title.ts and topic-specific titles use Top 3
 Category • Topic. The helper retains its existing implementation
@@ -1794,14 +2148,16 @@ app/(auth)/auth-callback.tsx and app/index.tsx completes any pending
 onboarding publish before routing to onboarding-published.
 
 Remember that Email Sign In includes a complete forgot-password flow.
-app/(auth)/forgot-password.tsx requests the Supabase reset email and offers
-Open Email App; app/(auth)/reset-password.tsx establishes the recovery
-session and updates the password. Expected same-password validation is shown
-as a friendly alert rather than a development error.
+app/(auth)/forgot-password.tsx requests the Supabase reset email and
+offers Open Email App; app/(auth)/reset-password.tsx establishes the
+recovery session and updates the password. Expected same-password
+validation is shown as a friendly alert rather than a development error.
 
 Remember that account deletion is implemented through
 lib/supabase/account.ts and the delete-account Supabase Edge Function,
 and Settings resets local welcome state after successful deletion.
+
+Remember that sharing uses the native iOS Share Sheet and custom Top3 deep links. Published Lists are shareable from Feed, Profile, Category Feed, and Published Top 3; Overall rankings are shareable from Category Feed. Anonymous collection reads are restricted to published, non-removed rows. collection_shared is tracked only for completed shares and includes feed, profile, category_feed, published_detail, or overall source attribution. Universal Links / public web fallback remain deferred until the production domain is confirmed.
 
 Do not recommend migrating Following again---it has already been
 completed.

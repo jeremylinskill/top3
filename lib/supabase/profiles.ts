@@ -4,7 +4,6 @@ import {
   UserProfile,
 } from '@/types/user-profile';
 
-
 type ProfileRow = {
   id: string;
   username: string;
@@ -13,15 +12,14 @@ type ProfileRow = {
   avatar_url: string | null;
   is_public: boolean;
   has_completed_onboarding: boolean;
+  is_admin: boolean;
 };
-
 
 function mapProfileRow(
   row: ProfileRow
 ): UserProfile {
   const visibility: ProfileVisibility =
     row.is_public ? 'public' : 'private';
-
 
   return {
     id: row.id,
@@ -32,9 +30,9 @@ function mapProfileRow(
     visibility,
     hasCompletedOnboarding:
       row.has_completed_onboarding,
+    isAdmin: row.is_admin,
   };
 }
-
 
 function getUniqueUserIds(
   userIds: string[]
@@ -48,7 +46,6 @@ function getUniqueUserIds(
   );
 }
 
-
 const PROFILE_SELECT = `
   id,
   username,
@@ -56,9 +53,9 @@ const PROFILE_SELECT = `
   bio,
   avatar_url,
   is_public,
-  has_completed_onboarding
+  has_completed_onboarding,
+  is_admin
 `;
-
 
 export async function searchPublicProfiles(
   query: string,
@@ -68,11 +65,9 @@ export async function searchPublicProfiles(
   const normalizedCurrentUserId =
     currentUserId.trim();
 
-
   if (!normalizedQuery) {
     return [];
   }
-
 
   let profilesQuery = supabase
     .from('profiles')
@@ -85,7 +80,6 @@ export async function searchPublicProfiles(
     })
     .limit(20);
 
-
   if (normalizedCurrentUserId) {
     profilesQuery = profilesQuery.neq(
       'id',
@@ -93,21 +87,17 @@ export async function searchPublicProfiles(
     );
   }
 
-
   const { data, error } =
     await profilesQuery;
-
 
   if (error) {
     throw error;
   }
 
-
   return (data ?? []).map((row) =>
     mapProfileRow(row as ProfileRow)
   );
 }
-
 
 export async function getNewestPublicProfiles(
   currentUserId: string,
@@ -116,17 +106,14 @@ export async function getNewestPublicProfiles(
   const normalizedUserId =
     currentUserId.trim();
 
-
   if (!normalizedUserId) {
     return [];
   }
-
 
   const safeLimit = Math.min(
     Math.max(limit, 1),
     20
   );
-
 
   const { data, error } = await supabase
     .from('profiles')
@@ -138,17 +125,14 @@ export async function getNewestPublicProfiles(
     })
     .limit(safeLimit);
 
-
   if (error) {
     throw error;
   }
-
 
   return (data ?? []).map((row) =>
     mapProfileRow(row as ProfileRow)
   );
 }
-
 
 export async function getProfilesByIds(
   userIds: string[]
@@ -156,28 +140,23 @@ export async function getProfilesByIds(
   const uniqueUserIds =
     getUniqueUserIds(userIds);
 
-
   if (uniqueUserIds.length === 0) {
     return [];
   }
-
 
   const { data, error } = await supabase
     .from('profiles')
     .select(PROFILE_SELECT)
     .in('id', uniqueUserIds);
 
-
   if (error) {
     throw error;
   }
-
 
   return (data ?? []).map((row) =>
     mapProfileRow(row as ProfileRow)
   );
 }
-
 
 export async function getPublicProfilesByIds(
   userIds: string[]
@@ -185,11 +164,9 @@ export async function getPublicProfilesByIds(
   const uniqueUserIds =
     getUniqueUserIds(userIds);
 
-
   if (uniqueUserIds.length === 0) {
     return [];
   }
-
 
   const { data, error } = await supabase
     .from('profiles')
@@ -197,28 +174,23 @@ export async function getPublicProfilesByIds(
     .in('id', uniqueUserIds)
     .eq('is_public', true);
 
-
   if (error) {
     throw error;
   }
-
 
   return (data ?? []).map((row) =>
     mapProfileRow(row as ProfileRow)
   );
 }
 
-
 export async function getProfileById(
   userId: string
 ): Promise<UserProfile | null> {
   const normalizedUserId = userId.trim();
 
-
   if (!normalizedUserId) {
     return null;
   }
-
 
   const { data, error } = await supabase
     .from('profiles')
@@ -226,16 +198,13 @@ export async function getProfileById(
     .eq('id', normalizedUserId)
     .maybeSingle();
 
-
   if (error) {
     throw error;
   }
 
-
   if (!data) {
     return null;
   }
-
 
   return mapProfileRow(data as ProfileRow);
 }

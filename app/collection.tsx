@@ -336,11 +336,12 @@ export default function CollectionScreen() {
 function openSearch(rank: number) {
   if (isOnboardingCollection) {
     router.push({
-      pathname: '/search',
-      params: {
-        rank: String(rank),
-      },
-    });
+  pathname: '/search',
+  params: {
+    rank: String(rank),
+    source: 'onboarding',
+  },
+});
     return;
   }
 

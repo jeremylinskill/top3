@@ -30,6 +30,11 @@ type CommentRow = {
     | null;
 };
 
+type VisibleCommentCountRow = {
+  collection_id: string;
+  comment_count: number | string;
+};
+
 const COMMENT_SELECT = `
   id,
   collection_id,
@@ -83,6 +88,7 @@ export async function getAllComments(): Promise<
   const { data, error } = await supabase
     .from('comments')
     .select(COMMENT_SELECT)
+    .is('removed_at', null)
     .order('created_at', {
       ascending: true,
     })
@@ -104,6 +110,7 @@ export async function getCommentsForCollection(
     .from('comments')
     .select(COMMENT_SELECT)
     .eq('collection_id', collectionId)
+    .is('removed_at', null)
     .order('created_at', {
       ascending: true,
     })
@@ -125,18 +132,12 @@ export async function getCommentCounts(
     return {};
   }
 
-  const { data, error } = await supabase
-    .from('comments')
-    .select('collection_id')
-    .in(
-      'collection_id',
-      collectionIds
-    )
-    .returns<
-      {
-        collection_id: string;
-      }[]
-    >();
+  const { data, error } = await supabase.rpc(
+    'get_visible_comment_counts',
+    {
+      collection_ids: collectionIds,
+    }
+  );
 
   if (error) {
     throw new Error(
@@ -144,15 +145,25 @@ export async function getCommentCounts(
     );
   }
 
-  return (data ?? []).reduce<
-    Record<string, number>
-  >((counts, comment) => {
-    counts[comment.collection_id] =
-      (counts[comment.collection_id] ??
-        0) + 1;
+  return (
+    (data as VisibleCommentCountRow[] | null) ??
+    []
+  ).reduce<Record<string, number>>(
+    (counts, row) => {
+      const normalizedCount =
+        typeof row.comment_count === 'number'
+          ? row.comment_count
+          : Number(row.comment_count);
 
-    return counts;
-  }, {});
+      counts[row.collection_id] =
+        Number.isFinite(normalizedCount)
+          ? normalizedCount
+          : 0;
+
+      return counts;
+    },
+    {}
+  );
 }
 
 export async function createComment(
@@ -209,6 +220,7 @@ export async function updateComment(
         new Date().toISOString(),
     })
     .eq('id', commentId)
+    .is('removed_at', null)
     .select(COMMENT_SELECT)
     .single<CommentRow>();
 

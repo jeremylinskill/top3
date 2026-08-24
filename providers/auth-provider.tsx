@@ -1,20 +1,23 @@
 import {
-    getCurrentUser,
-    getSession,
-    onAuthStateChange,
-    signOut as signOutFromService,
+  identifyAnalyticsUser,
+} from '@/lib/analytics';
+import {
+  getCurrentUser,
+  getSession,
+  onAuthStateChange,
+  signOut as signOutFromService,
 } from '@/services/auth-service';
 import {
-    Session,
-    User,
+  Session,
+  User,
 } from '@supabase/supabase-js';
 import {
-    createContext,
-    PropsWithChildren,
-    useCallback,
-    useEffect,
-    useMemo,
-    useState,
+  createContext,
+  PropsWithChildren,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
 } from 'react';
 
 interface AuthContextValue {
@@ -26,7 +29,9 @@ interface AuthContextValue {
 }
 
 export const AuthContext =
-  createContext<AuthContextValue | undefined>(undefined);
+  createContext<AuthContextValue | undefined>(
+    undefined
+  );
 
 export function AuthProvider({
   children,
@@ -91,6 +96,10 @@ export function AuthProvider({
   }, []);
 
   const user = getCurrentUser(session);
+
+  useEffect(() => {
+    identifyAnalyticsUser(user?.id);
+  }, [user?.id]);
 
   const value =
     useMemo<AuthContextValue>(

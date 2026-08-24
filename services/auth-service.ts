@@ -21,6 +21,11 @@ export interface SignInWithEmailParams {
   password: string;
 }
 
+type AppleAuthTokenResponse = {
+  success?: boolean;
+  error?: string;
+};
+
 const googleIosClientId =
   process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 
@@ -149,6 +154,44 @@ export async function isAppleSignInAvailable() {
   return AppleAuthentication.isAvailableAsync();
 }
 
+async function storeAppleRefreshToken(
+  authorizationCode: string
+) {
+  const { data, error } =
+    await supabase.functions.invoke(
+      'apple-auth-token',
+      {
+        method: 'POST',
+        body: {
+          authorizationCode,
+        },
+      }
+    );
+
+  if (error) {
+    console.error(
+      'Apple auth token Edge Function invocation failed:',
+      error
+    );
+
+    return;
+  }
+
+  const response =
+    data as AppleAuthTokenResponse | null;
+
+  if (
+    response?.error ||
+    !response?.success
+  ) {
+    console.error(
+      'Apple auth token Edge Function returned an error:',
+      response?.error ??
+        'Invalid response.'
+    );
+  }
+}
+
 export async function signInWithApple() {
   const isAvailable =
     await AppleAuthentication.isAvailableAsync();
@@ -183,6 +226,12 @@ export async function signInWithApple() {
 
   if (error) {
     throw error;
+  }
+
+  if (credential.authorizationCode) {
+    void storeAppleRefreshToken(
+      credential.authorizationCode
+    );
   }
 
   /*

@@ -6,14 +6,389 @@ Unlike CURRENT_STATE.md, which describes the application's current
 implementation, this document captures the major architectural and
 product milestones that shaped the application over time.
 
+v2.7 --- Sharing, Deep Links & V1 Analytics
+
+Released: August 22, 2026
+
+This release completes Top3's current V1 sharing and product-analytics
+foundation. Users can share individual published Lists and community Overall
+rankings, shared public content can be opened while signed out, and Amplitude
+now records successful shares with source attribution.
+
+Added
+
+Published List Sharing
+
+Added native sharing for individual published Lists from the Home Feed.
+
+Added native sharing for individual published Lists from Profile.
+
+Added native sharing for individual published Lists from Category Feed.
+
+Added native sharing from the Published Top 3 detail screen.
+
+Overall Ranking Sharing
+
+Added native sharing for community Overall rankings from Category Feed.
+
+Added deep-link parameters that identify the category, topic, and Overall
+view so a shared Overall link opens the intended ranking rather than only
+landing on the Lists tab.
+
+Signed-Out Shared Content
+
+Added restricted Supabase anonymous SELECT access for collections that are
+published and not removed.
+
+This allows recipients with Top3 installed to open shared public published
+content without first signing into a Top3 account.
+
+Drafts, removed collections, and authenticated write operations remain
+protected.
+
+Product Analytics
+
+Completed the currently scoped V1 Amplitude analytics implementation.
+
+Added collection_shared tracking for successful native share actions.
+
+Added share-source attribution for:
+
+feed
+
+profile
+
+category_feed
+
+published_detail
+
+overall
+
+Improved
+
+Share Analytics Accuracy
+
+collection_shared is recorded only when React Native reports a completed
+native share action.
+
+Dismissing the iOS Share Sheet does not record collection_shared.
+
+Deep-Link Behaviour
+
+Verified published List links continue to route to the Published Top 3
+destination.
+
+Verified Overall ranking links route to Category Feed with the Overall view
+active.
+
+Known Limitation
+
+Top3 sharing currently uses the custom top3:// URL scheme.
+
+Universal Links / HTTPS web fallback remains deferred until the production
+Top3 domain is confirmed.
+
+Recipients without Top3 installed therefore do not yet have the intended
+public web fallback experience.
+
+Verified
+
+Verified individual published List sharing on device.
+
+Verified Overall ranking sharing on device.
+
+Verified a shared Overall link opens the intended Overall ranking.
+
+Verified shared published public content can be opened while logged out.
+
+Verified anonymous database access remains limited to published,
+non-removed collections.
+
+Verified completed shares produce collection_shared in Amplitude Live
+Events.
+
+Verified dismissing the iOS Share Sheet does not produce a false
+collection_shared event.
+
+Verified source attribution in Amplitude for feed, profile, category_feed,
+published_detail, and overall.
+
+Verified npm run typecheck passes after each sharing and analytics source
+change.
+
+Documentation
+
+Updated CURRENT_STATE.md to version 2.6.
+
+Updated ROADMAP.md to version 2.4.
+
+Recorded sharing, deep-link access, signed-out public viewing, and the
+current V1 analytics scope as completed foundations.
+
+Recorded Universal Links / HTTPS web fallback as deferred until the
+production Top3 domain is confirmed.
+
+v2.6 --- V1 Prohibited-Content Filtering
+
+Released: August 21, 2026
+
+This release adds Top3's V1 automated prohibited-content filtering layer
+for comments and free-form profile fields. Enforcement is server-side in
+Supabase, uses a deliberately conservative production hard-block list, and
+preserves the established Top3 user experience for expected moderation
+rejections.
+
+Added
+
+Prohibited-Content Filtering
+
+Added server-side prohibited-content enforcement for comments.
+
+Added server-side prohibited-content enforcement for profile display name,
+username, and bio.
+
+Added the shared content_filter_terms table as the production source of
+truth for hard-blocked terms and phrases.
+
+Loaded a conservative 49-term V1 production hard-block list focused on
+high-confidence severe content while avoiding ordinary profanity and broad,
+context-dependent language that could create unnecessary false positives.
+
+Added contains_blocked_content(text) to normalize user-generated text and
+perform whole-term / phrase matching.
+
+Improved
+
+Normalization & Matching
+
+Prohibited-content checks normalize case and punctuation before matching so
+straightforward formatting variations do not bypass the filter.
+
+Matching avoids unsafe raw-substring behaviour so legitimate entertainment
+titles and words are not rejected merely because they contain a shorter
+blocked sequence.
+
+Moderation Error Handling
+
+Expected prohibited-content rejections use the established Top3-styled
+ActionSheet experience rather than native alerts or development error
+overlays.
+
+Rejected user input remains available so the user can correct it rather
+than having to re-enter the complete comment or profile field.
+
+Published Top 3 Comments
+
+Consolidated Published Top 3 onto the shared CommentsSheet experience.
+
+Removed the separate inline comments section and bottom composer from the
+Published Top 3 screen.
+
+The comment icon now opens CommentsSheet consistently with other list
+surfaces.
+
+Removed
+
+Temporary Filter Test Term
+
+Removed the temporary top3filtertest proof-of-concept term after the
+production filtering path was verified.
+
+Verified
+
+Verified normal text is accepted by the database filter.
+
+Verified direct prohibited threats are rejected.
+
+Verified uppercase and punctuation variations are rejected after
+normalization.
+
+Verified prohibited phrases embedded in surrounding text are rejected.
+
+Verified the legitimate entertainment title “Kill Bill” remains accepted.
+
+Verified on iPhone that a prohibited comment is not published.
+
+Verified the Top3-styled “Comment not posted” ActionSheet appears for a
+rejected comment.
+
+Verified the typed comment remains in the composer for correction after
+rejection.
+
+Verified no native alert or Expo development error overlay appears for the
+expected moderation rejection.
+
+Verified prohibited-content rejection for profile display name.
+
+Verified prohibited-content rejection for username.
+
+Verified prohibited-content rejection for bio.
+
+Verified npm run typecheck passes after the completed client-side
+moderation handling.
+
+Documentation
+
+Updated CURRENT_STATE.md to version 2.5.
+
+Recorded V1 prohibited-content filtering as implemented and verified for
+comments and free-form profile fields.
+
+Recorded the 49-term production hard-block list and normalized whole-term /
+phrase matching architecture.
+
+Recorded the shared Top3-styled rejection experience and input-preservation
+behaviour.
+
+Recorded Published Top 3's use of the shared CommentsSheet.
+
+v2.5 --- Moderation Removal & V1 Scalability Decision
+
+Released: August 20, 2026
+
+This release completes Top3's reported-content removal flow, improves
+creator-side synchronization when moderation removes a published list,
+and documents the architectural decision to prioritize V1 App Store
+launch before migrating the Feed to its long-term large-scale
+architecture.
+
+Added
+
+Moderation Removal Events
+
+Added the moderation_content_removals event table as the creator-scoped
+Realtime source for moderation removals.
+
+Enabled Row Level Security on moderation_content_removals.
+
+Added authenticated SELECT access restricted to rows where user_id =
+auth.uid().
+
+Added a user-scoped Realtime subscription for moderation removal INSERT
+events.
+
+Database Scalability Foundation
+
+Added collections_published_feed_idx, a partial index for published,
+non-removed collections using published_at DESC, user_id, and id.
+
+The index is intended to support the future cursor-paginated Feed path
+without indexing drafts or removed collections.
+
+Improved
+
+Moderation
+
+Completed and verified the moderator Remove Content action for reported
+lists.
+
+Removed collections are excluded from normal collection and
+published-post queries through removed_at filtering.
+
+Updated creator-side state handling so a collection removed by
+moderation is evicted from the authenticated user's local lists and its
+corresponding post is removed from local post state.
+
+Clears currentListId when the moderated collection is the active
+collection, preventing removed content from remaining available through
+stale Create state.
+
+Realtime Architecture
+
+Updated the shared Supabase Realtime helper so Postgres change payloads
+are passed to subscribers.
+
+Top3Provider can now react directly to the affected moderation-removal
+row rather than reloading the complete collections dataset.
+
+The moderation removal subscription is filtered server-side to the
+authenticated user's user_id, avoiding global moderation-event fan-out
+to clients.
+
+Feed Scalability Review
+
+Reviewed the current personalized Feed architecture.
+
+Confirmed that the V1 Feed currently retrieves the complete
+published-post dataset, hydrates posts client-side where required, and
+builds followed-user and Taste Match personalization on the client.
+
+Confirmed that Taste Match recommendation generation currently operates
+over the available published-post dataset and groups posts by author
+before calculating matches.
+
+Decided to retain this architecture for initial V1 launch and real-user
+validation rather than completing a speculative large-scale Feed rewrite
+before App Store release.
+
+Defined the post-launch target as a cursor-paginated, server-generated
+Feed that returns small pages of ready-to-render entries.
+
+Defined bounded server-side recommendation candidate generation as the
+long-term direction for Taste Match recommendations at scale.
+
+Identified view-time external-provider hydration as a pattern that
+should not become a dependency of the large-scale Feed path;
+render-ready artwork and metadata should be persisted wherever
+practical.
+
+Product Direction
+
+Shifted the immediate product priority from continued Discovery &
+Personalization expansion to V1 Launch Readiness.
+
+Discovery and personalization remain core product pillars, but larger
+Feed, recommendation, and infrastructure migrations are deliberately
+deferred until after launch unless required for launch reliability.
+
+Established scalability as a standing architecture requirement for
+future development. New patterns that depend on unbounded global reads,
+client-side processing of global datasets, global Realtime fan-out, or
+repeated view-time external API hydration should be flagged before they
+are extended.
+
+Verified
+
+Verified moderator Remove Content succeeds without an error.
+
+Verified the processed report disappears from the Moderation queue.
+
+Verified the removed list disappears from the creator's Profile / local
+list state.
+
+Verified removed content no longer remains available through stale
+Create state after the creator-side Realtime removal handling.
+
+Verified the moderation Supabase Edge Function passes Deno validation.
+
+Deployed the updated moderation Supabase Edge Function successfully.
+
+Verified npm run typecheck passes after the Realtime moderation-removal
+changes.
+
+Documentation
+
+Updated CURRENT_STATE.md to version 2.4.
+
+Updated ROADMAP.md to version 2.3.
+
+Recorded V1 Launch Readiness as the current product milestone.
+
+Recorded the current Feed scalability limitation and the deliberate
+decision to defer cursor-paginated, server-generated Feed work until
+post-launch.
+
+Recorded collections_published_feed_idx as an existing database
+foundation for the future Feed architecture.
+
 v2.4 --- Password Recovery
 
 Released: August 17, 2026
 
-This release completes Top3's email password-recovery experience. Returning
-users can request a password-reset email from Email Sign In, open their email
-client directly from Top3, return through the recovery deep link, choose a
-new password, and sign back in.
+This release completes Top3's email password-recovery experience.
+Returning users can request a password-reset email from Email Sign In,
+open their email client directly from Top3, return through the recovery
+deep link, choose a new password, and sign back in.
 
 Added
 
@@ -27,8 +402,8 @@ Added email validation and Supabase password-reset email requests.
 
 Added a Check your email success state after the reset request is sent.
 
-Added an Open Email App action using the same message:// email-client pattern
-as the onboarding confirmation flow.
+Added an Open Email App action using the same message:// email-client
+pattern as the onboarding confirmation flow.
 
 Reset Password
 
@@ -36,7 +411,8 @@ Added app/(auth)/reset-password.tsx.
 
 Added password-recovery deep-link session handling.
 
-Added new-password and confirmation fields with password visibility controls.
+Added new-password and confirmation fields with password visibility
+controls.
 
 Added password-length and matching-password validation.
 
@@ -46,8 +422,8 @@ Improved
 
 Password Recovery Errors
 
-Added friendly handling when the submitted new password matches the account's
-current password.
+Added friendly handling when the submitted new password matches the
+account's current password.
 
 Expected same-password validation now shows Choose a different password
 instead of triggering the Expo development error overlay.
@@ -72,11 +448,12 @@ Verified a new password can be set successfully.
 
 Verified sign-in succeeds with the changed password.
 
-Verified a previously used password can be used again in a later recovery
-flow.
+Verified a previously used password can be used again in a later
+recovery flow.
 
-Verified attempting to reset to the current password produces the friendly
-Choose a different password alert with no Expo red error overlay.
+Verified attempting to reset to the current password produces the
+friendly Choose a different password alert with no Expo red error
+overlay.
 
 Verified npm run typecheck passes.
 
@@ -90,8 +467,9 @@ Updated CURRENT_STATE.md to version 2.3.
 
 Updated ROADMAP.md to version 2.2.
 
-Recorded password recovery as a completed authentication foundation while
-preserving Discovery & Personalization as the active roadmap milestone.
+Recorded password recovery as a completed authentication foundation
+while preserving Discovery & Personalization as the active roadmap
+milestone.
 
 v2.3 --- Onboarding & Account Flow
 

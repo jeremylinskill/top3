@@ -6,6 +6,7 @@ import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { TYPOGRAPHY } from '@/constants/typography';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
+import { trackAnalyticsEvent } from '@/lib/analytics';
 import { getPublicProfilesByIds } from '@/lib/supabase/profiles';
 import {
   getPublishedPosts,
@@ -242,6 +243,9 @@ export default function TasteMatchScreen() {
   const scoreAnimationFrame =
     useRef<number | null>(null);
 
+  const trackedTasteMatchRef =
+    useRef(false);
+
   useEffect(() => {
   let isMounted = true;
 
@@ -347,6 +351,25 @@ return getTasteRecommendationForUser({
     profile.id,
     viewedUser,
   ]);
+
+  useEffect(() => {
+    trackedTasteMatchRef.current = false;
+  }, [userId]);
+
+  useEffect(() => {
+    if (
+      !tasteMatch ||
+      trackedTasteMatchRef.current
+    ) {
+      return;
+    }
+
+    trackedTasteMatchRef.current = true;
+
+    trackAnalyticsEvent(
+      'taste_match_viewed'
+    );
+  }, [tasteMatch]);
 
   useEffect(() => {
     if (!tasteMatch) {

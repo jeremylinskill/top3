@@ -10,6 +10,7 @@ import {
   MIN_TRENDING_TOPICS,
 } from '@/constants/discover-featured';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
+import { useBlock } from '@/context/block-context';
 import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
@@ -134,6 +135,10 @@ function formatResultCaption(
 export default function DiscoverScreen() {
   const { profile } = useProfile();
   const { createList } = useTop3();
+
+  const {
+    blockedUserIds,
+  } = useBlock();
 
   const {
     followedUserIds,
@@ -282,11 +287,31 @@ export default function DiscoverScreen() {
     };
   }, [profile.id]);
 
+  const visiblePosts = useMemo(
+    () =>
+      allPosts.filter(
+        (post) =>
+          !blockedUserIds.includes(post.authorId)
+      ),
+    [allPosts, blockedUserIds]
+  );
+
+  const visibleNewestProfiles = useMemo(
+    () =>
+      newestProfiles.filter(
+        (candidateProfile) =>
+          !blockedUserIds.includes(
+            candidateProfile.id
+          )
+      ),
+    [blockedUserIds, newestProfiles]
+  );
+
   const publishedCountByCategory = useMemo(
     () => {
       const counts = new Map<string, number>();
 
-      allPosts.forEach((post) => {
+      visiblePosts.forEach((post) => {
         const categoryId = normalizeValue(
           post.collection.category
         );
@@ -303,7 +328,7 @@ export default function DiscoverScreen() {
 
       return counts;
     },
-    [allPosts]
+    [visiblePosts]
   );
 
   const allTopics = useMemo<
@@ -314,7 +339,7 @@ export default function DiscoverScreen() {
       DiscoverTopic
     >();
 
-    allPosts.forEach((post) => {
+    visiblePosts.forEach((post) => {
       const categoryId = normalizeValue(
         post.collection.category
       );
@@ -393,14 +418,14 @@ export default function DiscoverScreen() {
         );
       }
     );
-  }, [allPosts]);
+  }, [visiblePosts]);
 
   const trendingPosts = useMemo(() => {
     const cutoffTime =
       Date.now() -
       TRENDING_WINDOW_DAYS * 24 * 60 * 60 * 1000;
 
-    const recentPosts = allPosts.filter((post) => {
+    const recentPosts = visiblePosts.filter((post) => {
       const publishedTime = new Date(
         post.publishedAt
       ).getTime();
@@ -413,8 +438,8 @@ export default function DiscoverScreen() {
 
     return recentPosts.length > 0
       ? recentPosts
-      : allPosts;
-  }, [allPosts]);
+      : visiblePosts;
+  }, [visiblePosts]);
 
   const trendingCategories = useMemo(() => {
     const counts = new Map<string, number>();
@@ -625,7 +650,7 @@ export default function DiscoverScreen() {
     const publishedPostCountByUserId =
       new Map<string, number>();
 
-    allPosts.forEach((post) => {
+    visiblePosts.forEach((post) => {
       publishedPostCountByUserId.set(
         post.authorId,
         (publishedPostCountByUserId.get(
@@ -646,7 +671,8 @@ export default function DiscoverScreen() {
       .filter(
         ({ user }) =>
           user.id !== profile.id &&
-          !followedUserIds.includes(user.id)
+          !followedUserIds.includes(user.id) &&
+          !blockedUserIds.includes(user.id)
       )
       .sort((first, second) => {
         if (second.score !== first.score) {
@@ -689,9 +715,10 @@ export default function DiscoverScreen() {
       })
       .slice(0, 3);
   }, [
-    allPosts,
+    visiblePosts,
     profilesByUserId,
     followedUserIds,
+    blockedUserIds,
     profile.id,
   ]);
 
@@ -699,7 +726,7 @@ export default function DiscoverScreen() {
     const publishedCountByUserId =
       new Map<string, number>();
 
-    allPosts.forEach((post) => {
+    visiblePosts.forEach((post) => {
       publishedCountByUserId.set(
         post.authorId,
         (publishedCountByUserId.get(
@@ -714,7 +741,11 @@ export default function DiscoverScreen() {
       .map(([userId, collectionCount]) => {
         const user = profilesByUserId[userId];
 
-        if (!user || user.id === profile.id) {
+        if (
+          !user ||
+          user.id === profile.id ||
+          blockedUserIds.includes(user.id)
+        ) {
           return null;
         }
 
@@ -748,8 +779,9 @@ export default function DiscoverScreen() {
       })
       .slice(0, 3);
   }, [
-    allPosts,
+    visiblePosts,
     profilesByUserId,
+    blockedUserIds,
     profile.id,
   ]);
 
@@ -776,7 +808,9 @@ export default function DiscoverScreen() {
             );
 
           if (isMounted) {
-            setProfileSearchResults(matchingProfiles);
+            setProfileSearchResults(
+              matchingProfiles
+            );
           }
         } catch (error) {
           console.error(
@@ -797,7 +831,10 @@ export default function DiscoverScreen() {
       isMounted = false;
       clearTimeout(searchDelay);
     };
-  }, [normalizedSearchQuery, profile.id]);
+  }, [
+    normalizedSearchQuery,
+    profile.id,
+  ]);
 
   const isSearching =
     normalizedSearchQuery.length > 0;
@@ -851,7 +888,7 @@ export default function DiscoverScreen() {
       MatchingCollection
     >();
 
-    allPosts.forEach((post) => {
+    visiblePosts.forEach((post) => {
       const itemMatches =
         post.collection.items.some((item) => {
           if (!item) {
@@ -938,11 +975,23 @@ export default function DiscoverScreen() {
       );
     });
   }, [
-    allPosts,
+    visiblePosts,
     normalizedSearchQuery,
   ]);
 
-  const filteredPeople = profileSearchResults;
+  const filteredPeople = useMemo(
+    () =>
+      profileSearchResults.filter(
+        (candidateProfile) =>
+          !blockedUserIds.includes(
+            candidateProfile.id
+          )
+      ),
+    [
+      blockedUserIds,
+      profileSearchResults,
+    ]
+  );
 
   const resultCount =
     filteredCategories.length +
@@ -1865,14 +1914,14 @@ export default function DiscoverScreen() {
             ) : null}
 
             {tasteRecommendations.length === 0 ? (
-              newestProfiles.length > 0 ? (
+              visibleNewestProfiles.length > 0 ? (
                 <View style={styles.tasteSection}>
                   <Text style={styles.sectionTitle}>
                     New Members
                   </Text>
 
                   <View style={styles.tasteList}>
-                    {newestProfiles.map((user) => {
+                    {visibleNewestProfiles.map((user) => {
                       const userIsFollowed =
                         isFollowing(user.id);
 

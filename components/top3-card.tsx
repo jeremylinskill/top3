@@ -42,6 +42,7 @@ type Top3CardProps = {
   onPress?: () => void;
   onAuthorPress?: () => void;
   onCommentsPress?: () => void;
+  onSharePress?: () => void;
   onTitlePress?: () => void;
   onEditPress?: () => void;
   onMorePress?: () => void;
@@ -137,6 +138,7 @@ export default function Top3Card({
   onPress,
   onAuthorPress,
   onCommentsPress,
+  onSharePress,
   onTitlePress,
   onEditPress,
   onMorePress,
@@ -1016,6 +1018,25 @@ export default function Top3Card({
               {displayedCommentCount}
             </Text>
           </Pressable>
+
+          {onSharePress ? (
+            <Pressable
+              style={({ pressed }) => [
+                styles.footerItem,
+                styles.shareButton,
+                pressed && styles.pressed,
+              ]}
+              onPress={onSharePress}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel={`Share ${displayTitle}`}>
+              <Ionicons
+                name="share-outline"
+                size={17}
+                color="#777777"
+              />
+            </Pressable>
+          ) : null}
         </View>
       </View>
       </View>
@@ -1363,6 +1384,12 @@ const styles = StyleSheet.create({
   engagementButton: {
     minHeight: 30,
     minWidth: 40,
+    justifyContent: 'center',
+  },
+
+  shareButton: {
+    minHeight: 30,
+    minWidth: 30,
     justifyContent: 'center',
   },
 

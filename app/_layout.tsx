@@ -9,6 +9,7 @@ import { OnboardingCollectionProvider } from '@/context/onboarding-collection-co
 import { ProfileProvider } from '@/context/profile-context';
 import { Top3Provider } from '@/context/top3-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { initializeAnalytics } from '@/lib/analytics';
 import { AuthProvider } from '@/providers/auth-provider';
 import {
   DarkTheme,
@@ -17,19 +18,21 @@ import {
 } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import 'react-native-reanimated';
-
 
 export const unstable_settings = {
   anchor: '(tabs)',
 };
 
-
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
+  useEffect(() => {
+    initializeAnalytics();
+  }, []);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -38,9 +41,9 @@ export default function RootLayout() {
           <AuthGate>
             <OnboardingCollectionProvider>
               <ProfileProvider>
-                <NotificationProvider>
-                  <FollowProvider>
-                    <BlockProvider>
+                <BlockProvider>
+                  <NotificationProvider>
+                    <FollowProvider>
                       <LikeProvider>
                         <CommentProvider>
                           <Top3Provider>
@@ -57,48 +60,33 @@ export default function RootLayout() {
                                   }}>
                                   <Stack.Screen name="index" />
 
-
                                   <Stack.Screen name="onboarding" />
-
 
                                   <Stack.Screen name="onboarding-published" />
 
-
                                   <Stack.Screen name="onboarding-overall-top3" />
-
 
                                   <Stack.Screen name="onboarding-taste-match" />
 
-
                                   <Stack.Screen name="(tabs)" />
-
 
                                   <Stack.Screen name="collections" />
 
-
                                   <Stack.Screen name="collection" />
-
 
                                   <Stack.Screen name="search" />
 
-
                                   <Stack.Screen name="edit-profile" />
-
 
                                   <Stack.Screen name="notifications" />
 
-
                                   <Stack.Screen name="public-profile" />
-
 
                                   <Stack.Screen name="published-top3" />
 
-
                                   <Stack.Screen name="community-top3" />
 
-
                                   <Stack.Screen name="overall-top3-topics" />
-
 
                                   <Stack.Screen
                                     name="modal"
@@ -108,16 +96,15 @@ export default function RootLayout() {
                                   />
                                 </Stack>
 
-
                                 <StatusBar style="auto" />
                               </ThemeProvider>
                             </AudioPreviewProvider>
                           </Top3Provider>
                         </CommentProvider>
                       </LikeProvider>
-                    </BlockProvider>
-                  </FollowProvider>
-                </NotificationProvider>
+                    </FollowProvider>
+                  </NotificationProvider>
+                </BlockProvider>
               </ProfileProvider>
             </OnboardingCollectionProvider>
           </AuthGate>

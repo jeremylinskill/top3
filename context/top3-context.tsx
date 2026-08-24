@@ -1,5 +1,6 @@
 import { useProfile } from '@/context/profile-context';
 import { useAuth } from '@/hooks/use-auth';
+import { trackAnalyticsEvent } from '@/lib/analytics';
 import {
   createCollection,
   deleteCollection,
@@ -7,6 +8,7 @@ import {
   publishCollection,
   updateCollection,
 } from '@/lib/supabase/collections';
+import { subscribeToTableChanges } from '@/lib/supabase/realtime';
 import { Post } from '@/types/post';
 import { Top3Item } from '@/types/top3-item';
 import { Top3List } from '@/types/top3-list';
@@ -174,6 +176,65 @@ export function Top3Provider({
     };
   }, [user]);
 
+  useEffect(() => {
+    const userId = user?.id;
+
+    if (!userId) {
+      return;
+    }
+
+    return subscribeToTableChanges({
+      channelName:
+        `moderation-removals-${userId}`,
+      table:
+        'moderation_content_removals',
+      filter: `user_id=eq.${userId}`,
+      onChange: (payload) => {
+        if (
+          payload.eventType !== 'INSERT'
+        ) {
+          return;
+        }
+
+        const targetType =
+          payload.new.target_type;
+
+        const targetId =
+          payload.new.target_id;
+
+        if (
+          targetType !== 'post' ||
+          typeof targetId !== 'string' ||
+          !targetId
+        ) {
+          return;
+        }
+
+        setLists((currentLists) =>
+          currentLists.filter(
+            (list) =>
+              list.id !== targetId
+          )
+        );
+
+        setPosts((currentPosts) =>
+          currentPosts.filter(
+            (post) =>
+              post.collection.id !==
+              targetId
+          )
+        );
+
+        setCurrentListId(
+          (currentId) =>
+            currentId === targetId
+              ? ''
+              : currentId
+        );
+      },
+    });
+  }, [user?.id]);
+
   async function createList(
     input: CreateListInput
   ): Promise<string> {
@@ -279,6 +340,13 @@ export function Top3Provider({
 
     setCurrentListId(savedList.id);
 
+    trackAnalyticsEvent(
+      'collection_started',
+      {
+        category: savedList.category,
+      }
+    );
+
     return savedList.id;
   }
 
@@ -311,6 +379,18 @@ export function Top3Provider({
 
     nextItems[rank - 1] = item;
 
+    const wasComplete =
+      currentList.items.every(
+        (existingItem) =>
+          existingItem !== null
+      );
+
+    const isNowComplete =
+      nextItems.every(
+        (nextItem) =>
+          nextItem !== null
+      );
+
     const now = new Date().toISOString();
 
     setLists((currentLists) =>
@@ -339,6 +419,19 @@ export function Top3Provider({
               : list
           )
         );
+
+        if (
+          !wasComplete &&
+          isNowComplete
+        ) {
+          trackAnalyticsEvent(
+            'collection_completed',
+            {
+              category:
+                savedList.category,
+            }
+          );
+        }
       } catch (error) {
         console.error(
           'Failed to save collection item:',
@@ -465,6 +558,8 @@ export function Top3Provider({
     }
 
     const collectionId = currentList.id;
+    const wasAlreadyPublished =
+      Boolean(currentList.publishedAt);
 
     async function savePublishedCollection() {
       try {
@@ -533,6 +628,19 @@ export function Top3Provider({
                 : post
           );
         });
+
+        trackAnalyticsEvent(
+          wasAlreadyPublished
+            ? 'collection_edited'
+            : 'collection_published',
+          {
+            category: savedList.category,
+            rankCount:
+              savedList.items.filter(
+                (item) => item !== null
+              ).length,
+          }
+        );
       } catch (error) {
         console.error(
           'Failed to publish collection in Supabase:',

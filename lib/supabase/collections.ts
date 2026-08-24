@@ -159,6 +159,7 @@ export async function getCollections(
     .from('collections')
     .select('*')
     .eq('user_id', userId)
+    .is('removed_at', null)
     .order('updated_at', {
       ascending: false,
     });
@@ -181,6 +182,7 @@ export async function getPublishedPosts(): Promise<
     .from('collections')
     .select('*')
     .eq('status', 'published')
+    .is('removed_at', null)
     .not('published_at', 'is', null)
     .order('published_at', {
       ascending: false,
@@ -205,6 +207,7 @@ export async function getPublishedPostsByUser(
     .select('*')
     .eq('user_id', userId)
     .eq('status', 'published')
+    .is('removed_at', null)
     .not('published_at', 'is', null)
     .order('published_at', {
       ascending: false,
@@ -246,7 +249,8 @@ export async function getCollectionsByIds(
         title
       `
     )
-    .in('id', uniqueCollectionIds);
+    .in('id', uniqueCollectionIds)
+    .is('removed_at', null);
 
   if (error) {
     throw new Error(

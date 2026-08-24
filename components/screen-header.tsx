@@ -20,6 +20,9 @@ type ScreenHeaderProps = {
   rightIconName?: IoniconName;
   onRightPress?: () => void;
   rightAccessibilityLabel?: string;
+  secondaryRightIconName?: IoniconName;
+  onSecondaryRightPress?: () => void;
+  secondaryRightAccessibilityLabel?: string;
 };
 
 export default function ScreenHeader({
@@ -29,57 +32,92 @@ export default function ScreenHeader({
   rightIconName,
   onRightPress,
   rightAccessibilityLabel = 'Open menu',
+  secondaryRightIconName,
+  onSecondaryRightPress,
+  secondaryRightAccessibilityLabel = 'Open secondary action',
 }: ScreenHeaderProps) {
   const showRightAction =
     Boolean(rightIconName) &&
     Boolean(onRightPress);
 
+  const showSecondaryRightAction =
+    Boolean(secondaryRightIconName) &&
+    Boolean(onSecondaryRightPress);
+
   return (
     <View style={styles.header}>
       <View style={styles.topBar}>
-        {showBackButton ? (
-          <Pressable
-            style={({ pressed }) => [
-              styles.sideSlot,
-              pressed && styles.pressed,
-            ]}
-            onPress={() => router.back()}
-            hitSlop={10}
-            accessibilityRole="button"
-            accessibilityLabel="Go back">
-            <Ionicons
-              name="chevron-back"
-              size={28}
-              color={COLORS.text}
-            />
-          </Pressable>
-        ) : (
+        <View style={styles.sideActions}>
+          {showBackButton ? (
+            <Pressable
+              style={({ pressed }) => [
+                styles.sideSlot,
+                pressed && styles.pressed,
+              ]}
+              onPress={() => router.back()}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel="Go back">
+              <Ionicons
+                name="chevron-back"
+                size={28}
+                color={COLORS.text}
+              />
+            </Pressable>
+          ) : (
+            <View style={styles.sideSlot} />
+          )}
+
           <View style={styles.sideSlot} />
-        )}
+        </View>
 
         <Text style={styles.brand}>Top 3</Text>
 
-        {showRightAction ? (
-          <Pressable
-            style={({ pressed }) => [
-              styles.sideSlot,
-              pressed && styles.pressed,
-            ]}
-            onPress={onRightPress}
-            hitSlop={10}
-            accessibilityRole="button"
-            accessibilityLabel={
-              rightAccessibilityLabel
-            }>
-            <Ionicons
-              name={rightIconName}
-              size={26}
-              color={COLORS.text}
-            />
-          </Pressable>
-        ) : (
-          <View style={styles.sideSlot} />
-        )}
+        <View style={styles.sideActions}>
+          {showSecondaryRightAction ? (
+            <Pressable
+              style={({ pressed }) => [
+                styles.sideSlot,
+                pressed && styles.pressed,
+              ]}
+              onPress={onSecondaryRightPress}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel={
+                secondaryRightAccessibilityLabel
+              }>
+              <Ionicons
+                name={secondaryRightIconName}
+                size={24}
+                color={COLORS.text}
+              />
+            </Pressable>
+          ) : (
+            <View style={styles.sideSlot} />
+          )}
+
+          {showRightAction ? (
+            <Pressable
+              style={({ pressed }) => [
+                styles.sideSlot,
+                pressed && styles.pressed,
+              ]}
+              onPress={onRightPress}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel={
+                rightAccessibilityLabel
+              }>
+              <Ionicons
+                name={rightIconName}
+                size={26}
+                color={COLORS.text}
+              />
+            </Pressable>
+          ) : (
+            <View style={styles.sideSlot} />
+          )}
+        </View>
       </View>
 
       {title ? (
@@ -110,6 +148,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: SPACING.sm,
+  },
+
+  sideActions: {
+    width: 88,
+    height: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 
   sideSlot: {

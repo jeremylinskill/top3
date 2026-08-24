@@ -1,34 +1,35 @@
+import { useBlock } from '@/context/block-context';
 import { useAuth } from '@/hooks/use-auth';
 import {
-    CollectionSummary,
-    getCollectionsByIds,
+  CollectionSummary,
+  getCollectionsByIds,
 } from '@/lib/supabase/collections';
 import {
-    acceptFollowRequest as acceptFollowRequestInDatabase,
-    declineFollowRequest as declineFollowRequestInDatabase,
-    FollowRequest,
-    getFollowRequestSnapshot,
+  acceptFollowRequest as acceptFollowRequestInDatabase,
+  declineFollowRequest as declineFollowRequestInDatabase,
+  FollowRequest,
+  getFollowRequestSnapshot,
 } from '@/lib/supabase/follow-requests';
 import {
-    getNotifications,
-    markAllNotificationsRead as markAllReadInDatabase,
-    markNotificationRead as markReadInDatabase,
-    Notification,
+  getNotifications,
+  markAllNotificationsRead as markAllReadInDatabase,
+  markNotificationRead as markReadInDatabase,
+  Notification,
 } from '@/lib/supabase/notifications';
 import {
-    getProfileById,
-    getProfilesByIds,
+  getProfileById,
+  getProfilesByIds,
 } from '@/lib/supabase/profiles';
 import { subscribeToTableChanges } from '@/lib/supabase/realtime';
 import { UserProfile } from '@/types/user-profile';
 import {
-    createContext,
-    ReactNode,
-    useCallback,
-    useContext,
-    useEffect,
-    useMemo,
-    useState,
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
 } from 'react';
 
 export type EnrichedNotification =
@@ -194,6 +195,7 @@ export function NotificationProvider({
   children,
 }: NotificationProviderProps) {
   const { user } = useAuth();
+  const { blockedUserIds } = useBlock();
 
   const [notifications, setNotifications] =
     useState<EnrichedNotification[]>([]);
@@ -295,17 +297,47 @@ export function NotificationProvider({
     refreshNotifications,
   ]);
 
+  const visibleNotifications =
+    useMemo(
+      () =>
+        notifications.filter(
+          (notification) =>
+            !blockedUserIds.includes(
+              notification.actorUserId
+            )
+        ),
+      [
+        blockedUserIds,
+        notifications,
+      ]
+    );
+
+  const visiblePendingFollowRequests =
+    useMemo(
+      () =>
+        pendingFollowRequests.filter(
+          (request) =>
+            !blockedUserIds.includes(
+              request.requesterUserId
+            )
+        ),
+      [
+        blockedUserIds,
+        pendingFollowRequests,
+      ]
+    );
+
   const unreadCount = useMemo(
     () =>
-      notifications.filter(
+      visibleNotifications.filter(
         (notification) =>
           !notification.isRead
       ).length,
-    [notifications]
+    [visibleNotifications]
   );
 
   const pendingFollowRequestCount =
-    pendingFollowRequests.length;
+    visiblePendingFollowRequests.length;
 
   const markNotificationRead =
     useCallback(
@@ -413,7 +445,7 @@ export function NotificationProvider({
     useCallback(
       async (requestId: string) => {
         const request =
-          pendingFollowRequests.find(
+          visiblePendingFollowRequests.find(
             (item) =>
               item.id === requestId
           );
@@ -447,7 +479,7 @@ export function NotificationProvider({
         }
       },
       [
-        pendingFollowRequests,
+        visiblePendingFollowRequests,
         refreshNotifications,
       ]
     );
@@ -456,7 +488,7 @@ export function NotificationProvider({
     useCallback(
       async (requestId: string) => {
         const request =
-          pendingFollowRequests.find(
+          visiblePendingFollowRequests.find(
             (item) =>
               item.id === requestId
           );
@@ -490,7 +522,7 @@ export function NotificationProvider({
         }
       },
       [
-        pendingFollowRequests,
+        visiblePendingFollowRequests,
         refreshNotifications,
       ]
     );
@@ -498,8 +530,10 @@ export function NotificationProvider({
   const contextValue =
     useMemo<NotificationContextValue>(
       () => ({
-        notifications,
-        pendingFollowRequests,
+        notifications:
+          visibleNotifications,
+        pendingFollowRequests:
+          visiblePendingFollowRequests,
         unreadCount,
         pendingFollowRequestCount,
         isLoading,
@@ -510,8 +544,8 @@ export function NotificationProvider({
         declineFollowRequest,
       }),
       [
-        notifications,
-        pendingFollowRequests,
+        visibleNotifications,
+        visiblePendingFollowRequests,
         unreadCount,
         pendingFollowRequestCount,
         isLoading,

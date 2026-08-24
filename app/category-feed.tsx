@@ -15,6 +15,10 @@ import { useComments } from '@/context/comment-context';
 import { useLike } from '@/context/like-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
+import {
+  shareOverallCollection,
+  sharePublishedCollection,
+} from '@/lib/share';
 import { getPublicProfilesByIds } from '@/lib/supabase/profiles';
 import {
   createPostReport,
@@ -197,6 +201,7 @@ export default function CategoryFeedScreen() {
     category?: string | string[];
     topic?: string | string[];
     itemQuery?: string | string[];
+    view?: string | string[];
   }>();
 
   const categoryId = Array.isArray(
@@ -216,6 +221,12 @@ export default function CategoryFeedScreen() {
   )
     ? params.itemQuery[0]
     : params.itemQuery;
+
+  const viewParam = Array.isArray(
+    params.view
+  )
+    ? params.view[0]
+    : params.view;
 
   const normalizedTopic =
     normalizeValue(topicParam) || 'general';
@@ -288,7 +299,11 @@ export default function CategoryFeedScreen() {
     useState(true);
 
   const [activeView, setActiveView] =
-    useState<CategoryView>('lists');
+    useState<CategoryView>(
+      normalizeValue(viewParam) === 'overall'
+        ? 'overall'
+        : 'lists'
+    );
 
   const [
     selectedCommentsPost,
@@ -301,6 +316,14 @@ export default function CategoryFeedScreen() {
   ] = useState<CategoryFeedModerationSheet>(
     null
   );
+
+  useEffect(() => {
+    setActiveView(
+      normalizeValue(viewParam) === 'overall'
+        ? 'overall'
+        : 'lists'
+    );
+  }, [viewParam]);
 
   const category = TOP3_CATEGORIES.find(
     (item) =>
@@ -595,6 +618,14 @@ if (isMounted) {
 
   function openComments(post: Post) {
     setSelectedCommentsPost(post);
+  }
+
+  async function shareCollection(post: Post) {
+    await sharePublishedCollection({
+      postId: post.id,
+      title: post.collection.title,
+      source: 'category_feed',
+    });
   }
 
   function closeComments() {
@@ -1191,6 +1222,22 @@ if (isMounted) {
     );
   }
 
+  async function shareOverallList() {
+    if (!categoryId) {
+      return;
+    }
+
+    await shareOverallCollection({
+      category: categoryId,
+      topic:
+        normalizedTopic === 'general'
+          ? undefined
+          : normalizedTopic,
+      title: overallTitle,
+      source: 'overall',
+    });
+  }
+
 
   function canPlayTrailer(
     itemId?: string
@@ -1467,6 +1514,9 @@ if (isMounted) {
                     onCommentsPress={() =>
                       openComments(post)
                     }
+                    onSharePress={() => {
+                      void shareCollection(post);
+                    }}
                   />
                 );
               })}
@@ -1816,6 +1866,24 @@ if (isMounted) {
                       displayedCommunityCommentCount
                     }
                   </Text>
+                </Pressable>
+
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.engagementButton,
+                    pressed && styles.pressed,
+                  ]}
+                  onPress={() => {
+                    void shareOverallList();
+                  }}
+                  hitSlop={10}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Share ${overallTitle}`}>
+                  <Ionicons
+                    name="share-outline"
+                    size={17}
+                    color="#777777"
+                  />
                 </Pressable>
               </View>
             </View>

@@ -94,32 +94,17 @@ export async function createBlock(
     );
   }
 
-  const { error: blockError } =
-    await supabase
-      .from('blocks')
-      .insert({
-        blocker_id: normalizedBlockerId,
-        blocked_user_id:
-          normalizedBlockedUserId,
-      });
+  const { error } = await supabase.rpc(
+    'block_user',
+    {
+      target_user_id:
+        normalizedBlockedUserId,
+    }
+  );
 
-  if (blockError) {
+  if (error) {
     throw new Error(
-      `Failed to block user: ${blockError.message}`
-    );
-  }
-
-  const { error: followError } =
-    await supabase
-      .from('follows')
-      .delete()
-      .or(
-        `and(follower_id.eq.${normalizedBlockerId},following_id.eq.${normalizedBlockedUserId}),and(follower_id.eq.${normalizedBlockedUserId},following_id.eq.${normalizedBlockerId})`
-      );
-
-  if (followError) {
-    throw new Error(
-      `User was blocked, but follow relationships could not be removed: ${followError.message}`
+      `Failed to block user: ${error.message}`
     );
   }
 }

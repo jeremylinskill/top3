@@ -8,11 +8,12 @@ import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { useAudioPreview } from '@/context/audio-preview-context';
 import { useOnboardingCollection } from '@/context/onboarding-collection-context';
 import { useTop3 } from '@/context/top3-context';
+import { trackAnalyticsEvent } from '@/lib/analytics';
+import { getMovieTrailerUrl } from '@/providers/movies-and-tv';
 import {
   getPopularSuggestionsByCategory,
   getSearchProvider,
 } from '@/providers/search';
-import { getMovieTrailerUrl } from '@/providers/movies-and-tv';
 import { getPublishedPosts } from '@/services/post-service';
 import { Top3Item } from '@/types/top3-item';
 import { Ionicons } from '@expo/vector-icons';
@@ -208,24 +209,29 @@ function getYouTubeEmbedHtml(
 
 
 export default function SearchScreen() {
-  const { rank, listId } = useLocalSearchParams();
-  const { currentList, setItemAtRank } = useTop3();
+  const params = useLocalSearchParams();
+
+  const rank = params.rank;
+
+  const sourceParam = Array.isArray(params.source)
+    ? params.source[0]
+    : params.source;
+
+  const {
+    currentList,
+    setItemAtRank: setCurrentListItemAtRank,
+  } = useTop3();
+
   const {
     collection: onboardingCollection,
     setItemAtRank: setOnboardingItemAtRank,
   } = useOnboardingCollection();
 
-  const requestedListId =
-    Array.isArray(listId)
-      ? listId[0]
-      : listId;
-
-  const isOnboardingCollection =
-    !requestedListId &&
-    onboardingCollection !== null;
+  const isOnboardingSearch =
+    sourceParam === 'onboarding';
 
   const activeCollection =
-    isOnboardingCollection
+    isOnboardingSearch
       ? onboardingCollection
       : currentList;
 
@@ -283,6 +289,9 @@ export default function SearchScreen() {
     useRef(new Animated.Value(0)).current;
   const isShuffling = useRef(false);
   const latestSearchId = useRef(0);
+  const trackedSearchKeys = useRef(
+    new Set<string>()
+  );
 
   const selectedCategory = TOP3_CATEGORIES.find(
     (category) => category.id === activeCollection?.category
@@ -570,6 +579,30 @@ export default function SearchScreen() {
     activeCollection?.topic,
   ]);
 
+  function trackCompletedSearch(
+    searchKey: string,
+    categoryId: string
+  ) {
+    if (
+      trackedSearchKeys.current.has(
+        searchKey
+      )
+    ) {
+      return;
+    }
+
+    trackedSearchKeys.current.add(
+      searchKey
+    );
+
+    trackAnalyticsEvent(
+      'search_performed',
+      {
+        category: categoryId,
+      }
+    );
+  }
+
   useEffect(() => {
     const effectSearchId =
       ++latestSearchId.current;
@@ -609,6 +642,12 @@ export default function SearchScreen() {
         setHasSearched(true);
         setSearchError(null);
         setIsLoading(false);
+
+        trackCompletedSearch(
+          cacheKey,
+          categoryId
+        );
+
         return;
       }
 
@@ -652,6 +691,11 @@ export default function SearchScreen() {
         setSearchResults(results);
         setHasSearched(true);
         setSearchError(null);
+
+        trackCompletedSearch(
+          cacheKey,
+          categoryId
+        );
       } catch (error) {
         if (
           searchId !== latestSearchId.current
@@ -926,11 +970,26 @@ function chooseSuggestion(
 
     stopPreview();
 
-    if (isOnboardingCollection) {
-      setOnboardingItemAtRank(selectedRank, item);
+    if (isOnboardingSearch) {
+      setOnboardingItemAtRank(
+        selectedRank,
+        item
+      );
     } else {
-      setItemAtRank(selectedRank, item);
+      setCurrentListItemAtRank(
+        selectedRank,
+        item
+      );
     }
+
+    trackAnalyticsEvent(
+      'item_added',
+      {
+        category: activeCollection?.category,
+        rank: selectedRank,
+        source: 'search',
+      }
+    );
 
     router.back();
   }

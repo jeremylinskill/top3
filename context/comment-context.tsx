@@ -1,4 +1,6 @@
+import { useBlock } from '@/context/block-context';
 import { useAuth } from '@/hooks/use-auth';
+import { trackAnalyticsEvent } from '@/lib/analytics';
 import {
   CommentRecord,
   createComment,
@@ -62,7 +64,7 @@ type CommentContextValue = {
   ) => number;
   addComment: (
     input: AddCommentInput
-  ) => Comment | null;
+  ) => Promise<Comment | null>;
   deleteComment: (
     commentId: string
   ) => void;
@@ -128,6 +130,7 @@ export function CommentProvider({
   children,
 }: CommentProviderProps) {
   const { user } = useAuth();
+  const { blockedUserIds } = useBlock();
 
   const [comments, setComments] = useState<
     Comment[]
@@ -186,6 +189,18 @@ export function CommentProvider({
       Object.keys(commentCounts);
   }, [commentCounts]);
 
+  const getVisibleComments =
+    useCallback(
+      (sourceComments: Comment[]) =>
+        sourceComments.filter(
+          (comment) =>
+            !blockedUserIds.includes(
+              comment.authorId
+            )
+        ),
+      [blockedUserIds]
+    );
+
   const loadCommentsForCollection =
     useCallback(
       async (collectionId: string) => {
@@ -224,13 +239,18 @@ export function CommentProvider({
               )
             );
 
+          const visibleComments =
+            getVisibleComments(
+              mappedComments
+            );
+
           setComments(mappedComments);
 
           setCommentCounts(
             (currentCounts) => ({
               ...currentCounts,
               [collectionId]:
-                mappedComments.length,
+                visibleComments.length,
             })
           );
         } catch (error) {
@@ -259,6 +279,7 @@ export function CommentProvider({
       [
         user?.id,
         clearCommentsForCollection,
+        getVisibleComments,
       ]
     );
 
@@ -370,12 +391,17 @@ export function CommentProvider({
           commentRecords.map(mapCommentRecord)
         );
 
+        const visibleComments =
+          getVisibleComments(
+            mappedComments
+          );
+
         setComments(mappedComments);
         setCommentCounts(
           (currentCounts) => ({
             ...currentCounts,
             [collectionId]:
-              mappedComments.length,
+              visibleComments.length,
           })
         );
       } catch (error) {
@@ -384,7 +410,10 @@ export function CommentProvider({
           error
         );
       }
-    }, [user?.id]);
+    }, [
+      user?.id,
+      getVisibleComments,
+    ]);
 
   const refreshCommentCountsFromRealtime =
     useCallback(async () => {
@@ -451,16 +480,51 @@ export function CommentProvider({
         return [];
       }
 
-      return sortComments(comments);
+      return sortComments(
+        getVisibleComments(comments)
+      );
     },
-    [activeCollectionId, comments]
+    [
+      activeCollectionId,
+      comments,
+      getVisibleComments,
+    ]
   );
+
+  useEffect(() => {
+    if (!activeCollectionId) {
+      return;
+    }
+
+    const visibleCommentCount =
+      getVisibleComments(comments).length;
+
+    setCommentCounts(
+      (currentCounts) => ({
+        ...currentCounts,
+        [activeCollectionId]:
+          visibleCommentCount,
+      })
+    );
+  }, [
+    activeCollectionId,
+    comments,
+    getVisibleComments,
+  ]);
 
   const getCommentCount = useCallback(
     (
       collectionId: string,
       baseCount = 0
     ) => {
+      if (
+        activeCollectionId === collectionId
+      ) {
+        return getVisibleComments(
+          comments
+        ).length;
+      }
+
       const loadedCount =
         commentCounts[collectionId];
 
@@ -470,13 +534,18 @@ export function CommentProvider({
 
       return Math.max(0, loadedCount);
     },
-    [commentCounts]
+    [
+      activeCollectionId,
+      commentCounts,
+      comments,
+      getVisibleComments,
+    ]
   );
 
   const addComment = useCallback(
-    (
+    async (
       input: AddCommentInput
-    ): Comment | null => {
+    ): Promise<Comment | null> => {
       const currentUserId = user?.id;
       const trimmedText =
         input.text.trim();
@@ -517,7 +586,6 @@ export function CommentProvider({
         );
       }
 
-
       setCommentCounts(
         (currentCounts) => ({
           ...currentCounts,
@@ -527,93 +595,103 @@ export function CommentProvider({
         })
       );
 
+      try {
+        const createdComment =
+          await createComment(
+            currentUserId,
+            collectionId,
+            trimmedText
+          );
 
-      const userId = currentUserId;
+        trackAnalyticsEvent(
+          'comment_added'
+        );
 
-      async function persistComment() {
-        try {
-          const createdComment =
-            await createComment(
-              userId,
-              collectionId,
-              trimmedText
+        const mappedComment: Comment = {
+          ...mapCommentRecord(
+            createdComment
+          ),
+          authorDisplayName:
+            input.authorDisplayName,
+          authorUsername:
+            input.authorUsername,
+          authorAvatarUrl:
+            input.authorAvatarUrl,
+        };
+
+        setComments((currentComments) => {
+          const optimisticCommentExists =
+            currentComments.some(
+              (comment) =>
+                comment.id ===
+                optimisticComment.id
             );
 
-          const mappedComment: Comment = {
-            ...mapCommentRecord(
-              createdComment
-            ),
-            authorDisplayName:
-              input.authorDisplayName,
-            authorUsername:
-              input.authorUsername,
-            authorAvatarUrl:
-              input.authorAvatarUrl,
-          };
+          if (
+            !optimisticCommentExists
+          ) {
+            return currentComments;
+          }
 
-          setComments((currentComments) => {
-            const optimisticCommentExists =
-              currentComments.some(
-                (comment) =>
-                  comment.id ===
-                  optimisticComment.id
-              );
+          return sortComments(
+            currentComments.map(
+              (comment) =>
+                comment.id ===
+                optimisticComment.id
+                  ? mappedComment
+                  : comment
+            )
+          );
+        });
 
-            if (
-              !optimisticCommentExists
-            ) {
-              return currentComments;
-            }
+        return mappedComment;
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : String(error);
 
-            return sortComments(
-              currentComments.map(
-                (comment) =>
-                  comment.id ===
-                  optimisticComment.id
-                    ? mappedComment
-                    : comment
-              )
-            );
-          });
-        } catch (error) {
+        const isBlockedContentError =
+          errorMessage.includes(
+            'COMMENT_BLOCKED_CONTENT'
+          );
+
+        if (!isBlockedContentError) {
           console.error(
             'Failed to create comment:',
             error
           );
-
-          setComments((currentComments) =>
-            currentComments.filter(
-              (comment) =>
-                comment.id !==
-                optimisticComment.id
-            )
-          );
-
-          setCommentCounts(
-            (currentCounts) => ({
-              ...currentCounts,
-              [collectionId]: Math.max(
-                0,
-                (currentCounts[
-                  collectionId
-                ] ?? 1) - 1
-              ),
-            })
-          );
         }
+
+        setComments((currentComments) =>
+          currentComments.filter(
+            (comment) =>
+              comment.id !==
+              optimisticComment.id
+          )
+        );
+
+        setCommentCounts(
+          (currentCounts) => ({
+            ...currentCounts,
+            [collectionId]: Math.max(
+              0,
+              (currentCounts[
+                collectionId
+              ] ?? 1) - 1
+            ),
+          })
+        );
+
+        throw error;
       }
-
-      void persistComment();
-
-      return optimisticComment;
     },
     [
       user?.id,
       activeCollectionId,
-      commentCounts,
-      comments,
     ]
   );
+
 
   const deleteComment = useCallback(
     (commentId: string) => {

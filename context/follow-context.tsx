@@ -1,4 +1,5 @@
 import { useAuth } from '@/hooks/use-auth';
+import { trackAnalyticsEvent } from '@/lib/analytics';
 import {
   acceptFollowRequest as acceptFollowRequestInDatabase,
   cancelFollowRequest as cancelFollowRequestInDatabase,
@@ -378,6 +379,10 @@ export function FollowProvider({
           await createFollow(
             currentUserId,
             normalizedUserId
+          );
+
+          trackAnalyticsEvent(
+            'user_followed'
           );
         } catch (error) {
           console.error(

@@ -1,4 +1,5 @@
 import { useAuth } from '@/hooks/use-auth';
+import { trackAnalyticsEvent } from '@/lib/analytics';
 import {
   createLike,
   deleteLike,
@@ -201,6 +202,10 @@ export function LikeProvider({
           await createLike(
             currentUserId,
             postId
+          );
+
+          trackAnalyticsEvent(
+            'collection_liked'
           );
         } catch (error) {
           console.error(

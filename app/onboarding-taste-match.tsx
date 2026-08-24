@@ -3,6 +3,7 @@ import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
 import { useAuth } from '@/hooks/use-auth';
+import { trackAnalyticsEvent } from '@/lib/analytics';
 import { getPublishedPostsByUser } from '@/lib/supabase/collections';
 import { Top3List } from '@/types/top3-list';
 import { router } from 'expo-router';
@@ -321,6 +322,10 @@ export default function OnboardingTasteMatchScreen() {
       await updateProfile({
         hasCompletedOnboarding: true,
       });
+
+      trackAnalyticsEvent(
+        'onboarding_completed'
+      );
     } catch (error) {
       console.error(
         'Failed to complete onboarding:',

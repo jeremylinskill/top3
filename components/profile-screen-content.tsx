@@ -47,6 +47,7 @@ type ProfileScreenContentProps = {
   onTitlePress: (post: Post) => void;
   onPostPress: (post: Post) => void;
   onCommentsPress: (post: Post) => void;
+  onSharePost?: (post: Post) => void;
   onEditPost?: (post: Post) => void;
   onMorePostPress?: (post: Post) => void;
 };
@@ -79,6 +80,7 @@ export default function ProfileScreenContent({
   onTitlePress,
   onPostPress,
   onCommentsPress,
+  onSharePost,
   onEditPost,
   onMorePostPress,
 }: ProfileScreenContentProps) {
@@ -291,6 +293,11 @@ export default function ProfileScreenContent({
                 }
                 onCommentsPress={() =>
                   onCommentsPress(post)
+                }
+                onSharePress={
+                  onSharePost
+                    ? () => onSharePost(post)
+                    : undefined
                 }
               />
             ))}
