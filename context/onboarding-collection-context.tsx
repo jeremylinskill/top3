@@ -127,34 +127,55 @@ export function OnboardingCollectionProvider({
           return;
         }
 
-        if (storedCollectionValue) {
-          const storedCollection =
-            JSON.parse(
-              storedCollectionValue
-            ) as OnboardingCollection;
-
-          setCollection(storedCollection);
-        }
-
-        setIsPendingPublish(
-          storedPendingPublishValue === 'true'
-        );
-
-        if (
-          storedAuthIntentValue === 'sign-in' ||
-          storedAuthIntentValue === 'sign-up'
-        ) {
-          setAuthIntentState(
-            storedAuthIntentValue
+        const hasPersistedAuthHandoff =
+          Boolean(storedCollectionValue) &&
+          storedPendingPublishValue === 'true' &&
+          (
+            storedAuthIntentValue === 'sign-in' ||
+            storedAuthIntentValue === 'sign-up'
           );
-        } else {
-          setAuthIntentState(null);
+
+        if (!hasPersistedAuthHandoff) {
+          await AsyncStorage.multiRemove([
+            STORAGE_KEY,
+            PENDING_PUBLISH_STORAGE_KEY,
+            AUTH_INTENT_STORAGE_KEY,
+          ]);
+
+          return;
         }
+
+        const storedCollection =
+          JSON.parse(
+            storedCollectionValue as string
+          ) as OnboardingCollection;
+
+        setCollection(storedCollection);
+        setIsPendingPublish(true);
+        setAuthIntentState(
+          storedAuthIntentValue as Exclude<
+            OnboardingAuthIntent,
+            null
+          >
+        );
       } catch (error) {
         console.error(
           'Failed to load onboarding collection state:',
           error
         );
+
+        try {
+          await AsyncStorage.multiRemove([
+            STORAGE_KEY,
+            PENDING_PUBLISH_STORAGE_KEY,
+            AUTH_INTENT_STORAGE_KEY,
+          ]);
+        } catch (cleanupError) {
+          console.error(
+            'Failed to clear invalid onboarding collection state:',
+            cleanupError
+          );
+        }
       } finally {
         if (!isCancelled) {
           setIsLoading(false);
@@ -162,108 +183,12 @@ export function OnboardingCollectionProvider({
       }
     }
 
-    loadOnboardingState();
+    void loadOnboardingState();
 
     return () => {
       isCancelled = true;
     };
   }, []);
-
-  useEffect(() => {
-    if (isLoading) {
-      return;
-    }
-
-    async function saveCollection() {
-      try {
-        if (!collection) {
-          await AsyncStorage.removeItem(
-            STORAGE_KEY
-          );
-          return;
-        }
-
-        await AsyncStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify(collection)
-        );
-      } catch (error) {
-        console.error(
-          'Failed to save onboarding collection:',
-          error
-        );
-      }
-    }
-
-    saveCollection();
-  }, [
-    collection,
-    isLoading,
-  ]);
-
-  useEffect(() => {
-    if (isLoading) {
-      return;
-    }
-
-    async function savePendingPublish() {
-      try {
-        if (!isPendingPublish) {
-          await AsyncStorage.removeItem(
-            PENDING_PUBLISH_STORAGE_KEY
-          );
-          return;
-        }
-
-        await AsyncStorage.setItem(
-          PENDING_PUBLISH_STORAGE_KEY,
-          'true'
-        );
-      } catch (error) {
-        console.error(
-          'Failed to save onboarding pending-publish state:',
-          error
-        );
-      }
-    }
-
-    savePendingPublish();
-  }, [
-    isLoading,
-    isPendingPublish,
-  ]);
-
-  useEffect(() => {
-    if (isLoading) {
-      return;
-    }
-
-    async function saveAuthIntent() {
-      try {
-        if (!authIntent) {
-          await AsyncStorage.removeItem(
-            AUTH_INTENT_STORAGE_KEY
-          );
-          return;
-        }
-
-        await AsyncStorage.setItem(
-          AUTH_INTENT_STORAGE_KEY,
-          authIntent
-        );
-      } catch (error) {
-        console.error(
-          'Failed to save onboarding auth intent:',
-          error
-        );
-      }
-    }
-
-    saveAuthIntent();
-  }, [
-    authIntent,
-    isLoading,
-  ]);
 
   function startCollection(
     input: StartOnboardingCollectionInput
@@ -388,6 +313,10 @@ export function OnboardingCollectionProvider({
 
   function clearPendingPublish() {
     setIsPendingPublish(false);
+
+    void AsyncStorage.removeItem(
+      PENDING_PUBLISH_STORAGE_KEY
+    );
   }
 
   function setAuthIntent(
@@ -426,12 +355,22 @@ export function OnboardingCollectionProvider({
 
   function clearAuthIntent() {
     setAuthIntentState(null);
+
+    void AsyncStorage.removeItem(
+      AUTH_INTENT_STORAGE_KEY
+    );
   }
 
   function clearCollection() {
     setIsPendingPublish(false);
     setAuthIntentState(null);
     setCollection(null);
+
+    void AsyncStorage.multiRemove([
+      STORAGE_KEY,
+      PENDING_PUBLISH_STORAGE_KEY,
+      AUTH_INTENT_STORAGE_KEY,
+    ]);
   }
 
   const value =

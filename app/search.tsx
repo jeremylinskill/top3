@@ -1,3 +1,4 @@
+import ActionSheet from '@/components/action-sheet';
 import Chip from '@/components/chip';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
@@ -236,6 +237,10 @@ export default function SearchScreen() {
       : currentList;
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [
+    isDuplicateSelectionVisible,
+    setIsDuplicateSelectionVisible,
+  ] = useState(false);
   const [searchResults, setSearchResults] = useState<Top3Item[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -968,6 +973,18 @@ function chooseSuggestion(
       return;
     }
 
+    const existingItemRank =
+      activeCollection?.items.findIndex(
+        (existingItem, index) =>
+          existingItem?.id === item.id &&
+          index !== selectedRank - 1
+      ) ?? -1;
+
+    if (existingItemRank !== -1) {
+      setIsDuplicateSelectionVisible(true);
+      return;
+    }
+
     stopPreview();
 
     if (isOnboardingSearch) {
@@ -1334,6 +1351,23 @@ const searchTitle = selectedType
             </>
           )}
       </View>
+
+      <ActionSheet
+        visible={isDuplicateSelectionVisible}
+        title="Already in your Top 3"
+        message="Choose a different item."
+        actions={[
+          {
+            label: 'OK',
+            onPress: () => {
+              setIsDuplicateSelectionVisible(false);
+            },
+          },
+        ]}
+        onClose={() => {
+          setIsDuplicateSelectionVisible(false);
+        }}
+      />
 
       <Modal
         visible={Boolean(activeTrailerUrl)}

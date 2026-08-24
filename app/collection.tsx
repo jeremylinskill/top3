@@ -262,8 +262,8 @@ export default function CollectionScreen() {
 
 
   const draggableRows: DraggableRow[] =
-    selectedItems.map((item) => ({
-      key: item.id,
+    selectedItems.map((item, index) => ({
+      key: `${item.id}-${index}`,
       item,
     }));
 
