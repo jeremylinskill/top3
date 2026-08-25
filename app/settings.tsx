@@ -1,3 +1,4 @@
+import ActionSheet from '@/components/action-sheet';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
 import { COLORS } from '@/constants/colors';
@@ -14,7 +15,6 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -34,6 +34,24 @@ export default function SettingsScreen() {
     isDeletingAccount,
     setIsDeletingAccount,
   ] = useState(false);
+
+  const [
+    isSignOutSheetVisible,
+    setIsSignOutSheetVisible,
+  ] = useState(false);
+
+  const [
+    isDeleteAccountSheetVisible,
+    setIsDeleteAccountSheetVisible,
+  ] = useState(false);
+
+  const [
+    errorSheet,
+    setErrorSheet,
+  ] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
 
 
   const canChangePassword =
@@ -76,23 +94,7 @@ export default function SettingsScreen() {
       return;
     }
 
-    Alert.alert(
-      'Sign out?',
-      'You will need to sign in again to access your Top 3 account.',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: () => {
-            void handleSignOut();
-          },
-        },
-      ]
-    );
+    setIsSignOutSheetVisible(true);
   }
 
   async function handleSignOut() {
@@ -111,10 +113,11 @@ export default function SettingsScreen() {
         error
       );
 
-      Alert.alert(
-        'Unable to Sign Out',
-        'Something went wrong while signing you out. Please try again.'
-      );
+      setErrorSheet({
+        title: 'Unable to Sign Out',
+        message:
+          'Something went wrong while signing you out. Please try again.',
+      });
     } finally {
       setIsSigningOut(false);
     }
@@ -129,23 +132,7 @@ export default function SettingsScreen() {
       return;
     }
 
-    Alert.alert(
-      'Delete your account?',
-      'This permanently deletes your Top 3 account, profile, lists, comments, likes, follows, and other account data. This cannot be undone.',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Delete Account',
-          style: 'destructive',
-          onPress: () => {
-            void handleDeleteAccount();
-          },
-        },
-      ]
-    );
+    setIsDeleteAccountSheetVisible(true);
   }
 
   async function handleDeleteAccount() {
@@ -187,10 +174,11 @@ router.replace('/onboarding');
         error
       );
 
-      Alert.alert(
-        'Unable to Delete Account',
-        'Something went wrong while deleting your account. Please try again.'
-      );
+      setErrorSheet({
+        title: 'Unable to Delete Account',
+        message:
+          'Something went wrong while deleting your account. Please try again.',
+      });
     } finally {
       setIsDeletingAccount(false);
     }
@@ -205,6 +193,75 @@ router.replace('/onboarding');
       <PageHeader
         title="Settings"
         subtitle="Manage your account and app preferences."
+      />
+
+      <ActionSheet
+        visible={isSignOutSheetVisible}
+        title="Sign out?"
+        message="You will need to sign in again to access your Top 3 account."
+        actions={[
+          {
+            label: 'Sign Out',
+            variant: 'destructive',
+            onPress: () => {
+              setIsSignOutSheetVisible(false);
+              void handleSignOut();
+            },
+          },
+          {
+            label: 'Cancel',
+            variant: 'cancel',
+            onPress: () => {
+              setIsSignOutSheetVisible(false);
+            },
+          },
+        ]}
+        onClose={() => {
+          setIsSignOutSheetVisible(false);
+        }}
+      />
+
+      <ActionSheet
+        visible={isDeleteAccountSheetVisible}
+        title="Delete your account?"
+        message="This permanently deletes your Top 3 account, profile, lists, comments, likes, follows, and other account data. This cannot be undone."
+        actions={[
+          {
+            label: 'Delete Account',
+            variant: 'destructive',
+            onPress: () => {
+              setIsDeleteAccountSheetVisible(false);
+              void handleDeleteAccount();
+            },
+          },
+          {
+            label: 'Cancel',
+            variant: 'cancel',
+            onPress: () => {
+              setIsDeleteAccountSheetVisible(false);
+            },
+          },
+        ]}
+        onClose={() => {
+          setIsDeleteAccountSheetVisible(false);
+        }}
+      />
+
+      <ActionSheet
+        visible={errorSheet !== null}
+        title={errorSheet?.title ?? ''}
+        message={errorSheet?.message ?? ''}
+        actions={[
+          {
+            label: 'OK',
+            onPress: () => {
+              setErrorSheet(null);
+            },
+          },
+        ]}
+        onClose={() => {
+          setErrorSheet(null);
+        }}
       />
 
       <ScrollView

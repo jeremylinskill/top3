@@ -1,25 +1,25 @@
+import ActionSheet from '@/components/action-sheet';
 import AuthProviderButton from '@/components/auth-provider-button';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
 import { COLORS } from '@/constants/colors';
 import { useAuth } from '@/hooks/use-auth';
 import {
-    signInWithEmail,
-    updatePassword,
+  signInWithEmail,
+  updatePassword,
 } from '@/services/auth-service';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import {
-    useRef,
-    useState,
+  useRef,
+  useState,
 } from 'react';
 import {
-    Alert,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -59,10 +59,27 @@ export default function ChangePasswordScreen() {
     hasUpdatedPassword,
     setHasUpdatedPassword,
   ] = useState(false);
+  const [
+    actionSheet,
+    setActionSheet,
+  ] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
+
+  function showActionSheet(
+    title: string,
+    message: string
+  ) {
+    setActionSheet({
+      title,
+      message,
+    });
+  }
 
   function validateForm() {
     if (!user?.email) {
-      Alert.alert(
+      showActionSheet(
         'Unable to change password',
         'No email address is available for this account.'
       );
@@ -70,7 +87,7 @@ export default function ChangePasswordScreen() {
     }
 
     if (!currentPassword) {
-      Alert.alert(
+      showActionSheet(
         'Current password required',
         'Enter your current password.'
       );
@@ -78,7 +95,7 @@ export default function ChangePasswordScreen() {
     }
 
     if (!newPassword) {
-      Alert.alert(
+      showActionSheet(
         'New password required',
         'Enter a new password.'
       );
@@ -86,7 +103,7 @@ export default function ChangePasswordScreen() {
     }
 
     if (newPassword.length < 8) {
-      Alert.alert(
+      showActionSheet(
         'Password too short',
         'Your new password must be at least 8 characters.'
       );
@@ -94,7 +111,7 @@ export default function ChangePasswordScreen() {
     }
 
     if (!confirmPassword) {
-      Alert.alert(
+      showActionSheet(
         'Confirm your password',
         'Enter your new password again.'
       );
@@ -102,7 +119,7 @@ export default function ChangePasswordScreen() {
     }
 
     if (newPassword !== confirmPassword) {
-      Alert.alert(
+      showActionSheet(
         'Passwords do not match',
         'Make sure both new passwords are the same.'
       );
@@ -110,7 +127,7 @@ export default function ChangePasswordScreen() {
     }
 
     if (currentPassword === newPassword) {
-      Alert.alert(
+      showActionSheet(
         'Choose a different password',
         'Your new password must be different from your current password.'
       );
@@ -147,7 +164,7 @@ export default function ChangePasswordScreen() {
             );
 
         if (isInvalidCredentials) {
-          Alert.alert(
+          showActionSheet(
             'Current password is incorrect',
             'Enter your current password and try again.'
           );
@@ -174,7 +191,7 @@ export default function ChangePasswordScreen() {
         );
 
       if (isSamePasswordError) {
-        Alert.alert(
+        showActionSheet(
           'Choose a different password',
           'Your new password must be different from your current password.'
         );
@@ -184,7 +201,7 @@ export default function ChangePasswordScreen() {
           error
         );
 
-        Alert.alert(
+        showActionSheet(
           'Unable to change password',
           error instanceof Error
             ? error.message
@@ -230,9 +247,10 @@ export default function ChangePasswordScreen() {
   }
 
   return (
-    <SafeAreaView
-      style={styles.container}
-      edges={['top', 'bottom']}>
+    <>
+      <SafeAreaView
+        style={styles.container}
+        edges={['top', 'bottom']}>
       <ScreenHeader showBackButton />
 
       <PageHeader
@@ -455,9 +473,27 @@ export default function ChangePasswordScreen() {
               variant="primary"
             />
           </View>
+          </View>
         </View>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+
+      <ActionSheet
+        visible={actionSheet !== null}
+        title={actionSheet?.title ?? ''}
+        message={actionSheet?.message ?? ''}
+        actions={[
+          {
+            label: 'OK',
+            onPress: () => {
+              setActionSheet(null);
+            },
+          },
+        ]}
+        onClose={() => {
+          setActionSheet(null);
+        }}
+      />
+    </>
   );
 }
 

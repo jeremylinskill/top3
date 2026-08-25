@@ -4,6 +4,7 @@ import Card from '@/components/ui/card';
 import SecondaryActionPill from '@/components/ui/secondary-action-pill';
 import SectionHeader from '@/components/ui/section-header';
 import { COLORS } from '@/constants/colors';
+import { useBlock } from '@/context/block-context';
 import {
   EnrichedFollowRequest,
   EnrichedNotification,
@@ -11,7 +12,7 @@ import {
 } from '@/context/notification-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -117,6 +118,48 @@ export default function NotificationsScreen() {
     acceptFollowRequest,
     declineFollowRequest,
   } = useNotifications();
+
+  const { blockedUserIds } = useBlock();
+
+  const visibleNotifications = useMemo(
+    () =>
+      notifications.filter(
+        (notification) =>
+          !blockedUserIds.includes(
+            notification.actorUserId
+          )
+      ),
+    [
+      blockedUserIds,
+      notifications,
+    ]
+  );
+
+  const visiblePendingFollowRequests = useMemo(
+    () =>
+      pendingFollowRequests.filter(
+        (request) =>
+          !blockedUserIds.includes(
+            request.requesterUserId
+          )
+      ),
+    [
+      blockedUserIds,
+      pendingFollowRequests,
+    ]
+  );
+
+  const visibleUnreadCount = useMemo(
+    () =>
+      visibleNotifications.filter(
+        (notification) =>
+          !notification.isRead
+      ).length,
+    [visibleNotifications]
+  );
+
+  const visiblePendingFollowRequestCount =
+    visiblePendingFollowRequests.length;
 
   const [
     isMarkingAllRead,
@@ -233,7 +276,7 @@ export default function NotificationsScreen() {
 
   async function handleMarkAllRead() {
     if (
-      unreadCount === 0 ||
+      visibleUnreadCount === 0 ||
       isMarkingAllRead
     ) {
       return;
@@ -267,15 +310,15 @@ export default function NotificationsScreen() {
       <PageHeader
         title="Notifications"
         subtitle={
-          pendingFollowRequestCount > 0
-            ? pendingFollowRequestCount === 1
+          visiblePendingFollowRequestCount > 0
+            ? visiblePendingFollowRequestCount === 1
               ? 'You have 1 follow request.'
-              : `You have ${pendingFollowRequestCount} follow requests.`
-            : unreadCount === 0
+              : `You have ${visiblePendingFollowRequestCount} follow requests.`
+            : visibleUnreadCount === 0
               ? 'You’re all caught up.'
-              : unreadCount === 1
+              : visibleUnreadCount === 1
                 ? 'You have 1 unread notification.'
-                : `You have ${unreadCount} unread notifications.`
+                : `You have ${visibleUnreadCount} unread notifications.`
         }
       />
 
@@ -290,8 +333,8 @@ export default function NotificationsScreen() {
           />
         }>
         {isLoading &&
-        notifications.length === 0 &&
-        pendingFollowRequests.length === 0 ? (
+        visibleNotifications.length === 0 &&
+        visiblePendingFollowRequests.length === 0 ? (
           <View style={styles.messageContainer}>
             <ActivityIndicator size="large" />
 
@@ -299,8 +342,8 @@ export default function NotificationsScreen() {
               Loading notifications...
             </Text>
           </View>
-        ) : notifications.length === 0 &&
-          pendingFollowRequests.length === 0 ? (
+        ) : visibleNotifications.length === 0 &&
+          visiblePendingFollowRequests.length === 0 ? (
           <View style={styles.messageContainer}>
             <Text style={styles.messageTitle}>
               No notifications yet
@@ -313,13 +356,13 @@ export default function NotificationsScreen() {
           </View>
         ) : (
           <>
-            {pendingFollowRequests.length > 0 ? (
+            {visiblePendingFollowRequests.length > 0 ? (
               <View style={styles.followRequestsSection}>
                 <Text style={styles.sectionTitle}>
                   Follow Requests
                 </Text>
 
-                {pendingFollowRequests.map(
+                {visiblePendingFollowRequests.map(
                   (request) => {
                     const requesterName =
                       request.requester?.displayName ||
@@ -470,7 +513,7 @@ export default function NotificationsScreen() {
               </View>
             ) : null}
 
-            {notifications.length > 0 ? (
+            {visibleNotifications.length > 0 ? (
               <View style={styles.activitySection}>
                 <SectionHeader
                   title="Recent Activity"
@@ -484,14 +527,14 @@ export default function NotificationsScreen() {
                       }
                       onPress={handleMarkAllRead}
                       disabled={
-                        unreadCount === 0 ||
+                        visibleUnreadCount === 0 ||
                         isMarkingAllRead
                       }
                     />
                   }
                 />
 
-                {notifications.map((notification) => {
+                {visibleNotifications.map((notification) => {
                   const actorName =
                     notification.actor?.displayName ||
                     notification.actor?.username ||

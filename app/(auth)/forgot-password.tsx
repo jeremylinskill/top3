@@ -1,20 +1,36 @@
+import ActionSheet from '@/components/action-sheet';
+
 import AuthProviderButton from '@/components/auth-provider-button';
+
 import PageHeader from '@/components/page-header';
+
 import ScreenHeader from '@/components/screen-header';
+
 import { COLORS } from '@/constants/colors';
+
 import { requestPasswordReset } from '@/services/auth-service';
+
 import * as Linking from 'expo-linking';
+
 import { router } from 'expo-router';
+
 import { useState } from 'react';
+
 import {
-    Alert,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
+
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+type ValidationSheet = {
+  title: string;
+  message: string;
+};
 
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -22,10 +38,22 @@ function isValidEmail(value: string) {
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
+
   const [isSubmitting, setIsSubmitting] =
     useState(false);
+
   const [hasSubmitted, setHasSubmitted] =
     useState(false);
+
+  const [
+    validationSheet,
+    setValidationSheet,
+  ] = useState<ValidationSheet | null>(null);
+
+  const [
+    isNetworkErrorSheetVisible,
+    setIsNetworkErrorSheetVisible,
+  ] = useState(false);
 
   async function handleSubmit() {
     if (isSubmitting) {
@@ -37,18 +65,20 @@ export default function ForgotPasswordScreen() {
       .toLowerCase();
 
     if (!normalizedEmail) {
-      Alert.alert(
-        'Email required',
-        'Enter your email address.'
-      );
+      setValidationSheet({
+        title: 'Email required',
+        message: 'Enter your email address.',
+      });
+
       return;
     }
 
     if (!isValidEmail(normalizedEmail)) {
-      Alert.alert(
-        'Invalid email',
-        'Enter a valid email address.'
-      );
+      setValidationSheet({
+        title: 'Invalid email',
+        message: 'Enter a valid email address.',
+      });
+
       return;
     }
 
@@ -61,6 +91,24 @@ export default function ForgotPasswordScreen() {
 
       setHasSubmitted(true);
     } catch (error) {
+      const isNetworkError =
+        error instanceof Error &&
+        (
+          error.name ===
+            'AuthRetryableFetchError' ||
+          error.message
+            .toLowerCase()
+            .includes(
+              'network request failed'
+            )
+        );
+
+      if (isNetworkError) {
+        setIsNetworkErrorSheetVisible(true);
+
+        return;
+      }
+
       console.error(
         'Failed to request password reset:',
         error
@@ -96,98 +144,134 @@ export default function ForgotPasswordScreen() {
   }
 
   return (
-    <SafeAreaView
-      style={styles.container}
-      edges={['top', 'bottom']}>
-      <ScreenHeader showBackButton />
+    <>
+      <SafeAreaView
+        style={styles.container}
+        edges={['top', 'bottom']}>
+        <ScreenHeader showBackButton />
 
-      <PageHeader
-        title={
-          hasSubmitted
-            ? 'Check your email'
-            : 'Forgot password?'
-        }
-        subtitle={
-          hasSubmitted
-            ? `We sent a password reset link to\n${email
-                .trim()
-                .toLowerCase()}.`
-            : 'Enter your email and we’ll send you a link to reset your password.'
-        }
-        align="center"
+        <PageHeader
+          title={
+            hasSubmitted
+              ? 'Check your email'
+              : 'Forgot password?'
+          }
+          subtitle={
+            hasSubmitted
+              ? `We sent a password reset link to\n${email
+                  .trim()
+                  .toLowerCase()}.`
+              : 'Enter your email and we’ll send you a link to reset your password.'
+          }
+          align="center"
+        />
+
+        <View style={styles.content}>
+          {hasSubmitted ? (
+            <View style={styles.successContent}>
+              <Text style={styles.successText}>
+                Open the link in your email to choose a new password.
+              </Text>
+
+              <View style={styles.openEmailButtonContainer}>
+                <AuthProviderButton
+                  title="Open Email App"
+                  variant="primary"
+                  onPress={handleOpenEmail}
+                />
+              </View>
+
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Return to sign in"
+                hitSlop={8}
+                onPress={returnToSignIn}
+                style={({ pressed }) => [
+                  styles.signInButton,
+                  pressed && styles.pressed,
+                ]}>
+                <Text style={styles.signInButtonText}>
+                  Return to Sign In
+                </Text>
+              </Pressable>
+            </View>
+          ) : (
+            <View style={styles.form}>
+              <View style={styles.field}>
+                <Text style={styles.label}>
+                  Email
+                </Text>
+
+                <TextInput
+                  accessibilityLabel="Email"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  autoCorrect={false}
+                  editable={!isSubmitting}
+                  keyboardType="email-address"
+                  onChangeText={setEmail}
+                  onSubmitEditing={() => {
+                    void handleSubmit();
+                  }}
+                  placeholder="you@example.com"
+                  placeholderTextColor="#999999"
+                  returnKeyType="done"
+                  style={styles.input}
+                  textContentType="emailAddress"
+                  value={email}
+                />
+              </View>
+
+              <View style={styles.buttonContainer}>
+                <AuthProviderButton
+                  disabled={isSubmitting}
+                  loading={isSubmitting}
+                  onPress={() => {
+                    void handleSubmit();
+                  }}
+                  title="Send Reset Link"
+                  variant="primary"
+                />
+              </View>
+            </View>
+          )}
+        </View>
+      </SafeAreaView>
+
+      <ActionSheet
+        visible={Boolean(validationSheet)}
+        title={validationSheet?.title ?? ''}
+        message={validationSheet?.message ?? ''}
+        actions={[
+          {
+            label: 'OK',
+            onPress: () => {
+              setValidationSheet(null);
+            },
+          },
+        ]}
+        onClose={() => {
+          setValidationSheet(null);
+        }}
       />
 
-      <View style={styles.content}>
-        {hasSubmitted ? (
-          <View style={styles.successContent}>
-            <Text style={styles.successText}>
-              Open the link in your email to choose a new password.
-            </Text>
-
-            <View style={styles.openEmailButtonContainer}>
-              <AuthProviderButton
-                title="Open Email App"
-                variant="primary"
-                onPress={handleOpenEmail}
-              />
-            </View>
-
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Return to sign in"
-              hitSlop={8}
-              onPress={returnToSignIn}
-              style={({ pressed }) => [
-                styles.signInButton,
-                pressed && styles.pressed,
-              ]}>
-              <Text style={styles.signInButtonText}>
-                Return to Sign In
-              </Text>
-            </Pressable>
-          </View>
-        ) : (
-          <View style={styles.form}>
-            <View style={styles.field}>
-              <Text style={styles.label}>
-                Email
-              </Text>
-
-              <TextInput
-                accessibilityLabel="Email"
-                autoCapitalize="none"
-                autoComplete="email"
-                autoCorrect={false}
-                editable={!isSubmitting}
-                keyboardType="email-address"
-                onChangeText={setEmail}
-                onSubmitEditing={() => {
-                  void handleSubmit();
-                }}
-                placeholder="you@example.com"
-                placeholderTextColor="#999999"
-                returnKeyType="done"
-                style={styles.input}
-                textContentType="emailAddress"
-                value={email}
-              />
-            </View>
-
-            <View style={styles.buttonContainer}>
-              <AuthProviderButton
-                disabled={isSubmitting}
-                loading={isSubmitting}
-                onPress={() => {
-                  void handleSubmit();
-                }}
-                title="Send Reset Link"
-                variant="primary"
-              />
-            </View>
-          </View>
-        )}
-      </View>
-    </SafeAreaView>
+      <ActionSheet
+        visible={isNetworkErrorSheetVisible}
+        title="Connection problem"
+        message="Check your internet connection and try again."
+        actions={[
+          {
+            label: 'OK',
+            onPress: () => {
+              setIsNetworkErrorSheetVisible(false);
+            },
+          },
+        ]}
+        onClose={() => {
+          setIsNetworkErrorSheetVisible(false);
+        }}
+      />
+    </>
   );
 }
 

@@ -661,7 +661,7 @@ export default function DiscoverScreen() {
 
     const recommendationCandidates =
       getTasteRecommendations({
-  posts: allPosts,
+  posts: visiblePosts,
   profilesByUserId,
   currentUserId: profile.id,
   limit: 5,

@@ -11,6 +11,9 @@ const AVATARS_BUCKET = "avatars";
 const APPLE_REVOKE_URL =
   "https://appleid.apple.com/auth/revoke";
 
+const AMPLITUDE_PRIVACY_URL =
+  "https://amplitude.com/api/2/deletions/users";
+
 type AppleAuthTokenRow = {
   refresh_token: string;
 };
@@ -123,6 +126,55 @@ async function revokeAppleAuthorization(
 
     throw new Error(
       `Apple token revocation failed with status ${response.status}: ${responseText}`
+    );
+  }
+}
+
+async function requestAmplitudeUserDeletion(
+  userId: string
+) {
+  const apiKey =
+    getRequiredSecret(
+      "AMPLITUDE_API_KEY"
+    );
+
+  const secretKey =
+    getRequiredSecret(
+      "AMPLITUDE_SECRET_KEY"
+    );
+
+  const credentials =
+    btoa(
+      `${apiKey}:${secretKey}`
+    );
+
+  const response =
+    await fetch(
+      AMPLITUDE_PRIVACY_URL,
+      {
+        method: "POST",
+        headers: {
+          Authorization:
+            `Basic ${credentials}`,
+          "Content-Type":
+            "application/json",
+          Accept:
+            "application/json",
+        },
+        body: JSON.stringify({
+          user_ids: [userId],
+          delete_from_org: "True",
+          ignore_invalid_ids: "True",
+        }),
+      }
+    );
+
+  if (!response.ok) {
+    const responseText =
+      await response.text();
+
+    throw new Error(
+      `Amplitude deletion request failed with status ${response.status}: ${responseText}`
     );
   }
 }
@@ -243,6 +295,27 @@ export default {
           },
           {
             status: 500,
+          }
+        );
+      }
+
+      try {
+        await requestAmplitudeUserDeletion(
+          userId
+        );
+      } catch (error) {
+        console.error(
+          "Failed to request Amplitude user deletion:",
+          error
+        );
+
+        return Response.json(
+          {
+            error:
+              "Failed to delete analytics data.",
+          },
+          {
+            status: 502,
           }
         );
       }

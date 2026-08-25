@@ -116,6 +116,7 @@ export default function FeedScreen() {
   const { profile } = useProfile();
 
   const {
+    blockedUserIds,
     isBlocked,
     blockUser,
     unblockUser,
@@ -237,16 +238,30 @@ export default function FeedScreen() {
     profile.id,
   ]);
 
+  const visibleFeedPosts = useMemo(
+    () =>
+      feedPosts.filter(
+        (post) =>
+          post.authorId === profile.id ||
+          !blockedUserIds.includes(post.authorId)
+      ),
+    [
+      feedPosts,
+      blockedUserIds,
+      profile.id,
+    ]
+  );
+
   const personalizedFeed = useMemo(
   () =>
     buildPersonalizedFeed({
-      posts: feedPosts,
+      posts: visibleFeedPosts,
       profilesByUserId: feedAuthors,
       currentUserId: profile.id,
       followedUserIds,
     }),
     [
-      feedPosts,
+      visibleFeedPosts,
       feedAuthors,
       followedUserIds,
       profile.id,

@@ -1,10 +1,21 @@
+import ActionSheet from '@/components/action-sheet';
+
 import AuthProviderButton from '@/components/auth-provider-button';
+
 import { signUpWithEmail } from '@/services/auth-service';
+
+import {
+  setAwaitingEmailVerification,
+  setAwaitingEmailVerificationEmail,
+} from '@/services/onboarding-service';
+
 import { Ionicons } from '@expo/vector-icons';
+
 import {
   useRef,
   useState,
 } from 'react';
+
 import {
   Alert,
   Pressable,
@@ -18,6 +29,11 @@ interface EmailSignUpFormProps {
   onSuccess: () => void;
 }
 
+type ValidationSheet = {
+  title: string;
+  message: string;
+};
+
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
@@ -27,75 +43,93 @@ export default function EmailSignUpForm({
 }: EmailSignUpFormProps) {
   const passwordInputRef =
     useRef<TextInput>(null);
+
   const confirmPasswordInputRef =
     useRef<TextInput>(null);
 
   const [email, setEmail] = useState('');
+
   const [password, setPassword] = useState('');
+
   const [confirmPassword, setConfirmPassword] =
     useState('');
+
   const [showPassword, setShowPassword] =
     useState(false);
+
   const [
     showConfirmPassword,
     setShowConfirmPassword,
   ] = useState(false);
+
   const [isSubmitting, setIsSubmitting] =
     useState(false);
+
+  const [
+    validationSheet,
+    setValidationSheet,
+  ] = useState<ValidationSheet | null>(null);
+
+  const [
+    isNetworkErrorSheetVisible,
+    setIsNetworkErrorSheetVisible,
+  ] = useState(false);
 
   function validateForm() {
     const normalizedEmail = email.trim();
 
     if (!normalizedEmail) {
-      Alert.alert(
-        'Email required',
-        'Enter your email address.'
-      );
+      setValidationSheet({
+        title: 'Email required',
+        message: 'Enter your email address.',
+      });
 
       return false;
     }
 
     if (!isValidEmail(normalizedEmail)) {
-      Alert.alert(
-        'Invalid email',
-        'Enter a valid email address.'
-      );
+      setValidationSheet({
+        title: 'Invalid email',
+        message: 'Enter a valid email address.',
+      });
 
       return false;
     }
 
     if (!password) {
-      Alert.alert(
-        'Password required',
-        'Enter a password.'
-      );
+      setValidationSheet({
+        title: 'Password required',
+        message: 'Enter a password.',
+      });
 
       return false;
     }
 
     if (password.length < 8) {
-      Alert.alert(
-        'Password too short',
-        'Your password must be at least 8 characters.'
-      );
+      setValidationSheet({
+        title: 'Password too short',
+        message:
+          'Your password must be at least 8 characters.',
+      });
 
       return false;
     }
 
     if (!confirmPassword) {
-      Alert.alert(
-        'Confirm your password',
-        'Enter your password again.'
-      );
+      setValidationSheet({
+        title: 'Confirm your password',
+        message: 'Enter your password again.',
+      });
 
       return false;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert(
-        'Passwords do not match',
-        'Make sure both passwords are the same.'
-      );
+      setValidationSheet({
+        title: 'Passwords do not match',
+        message:
+          'Make sure both passwords are the same.',
+      });
 
       return false;
     }
@@ -120,8 +154,34 @@ export default function EmailSignUpForm({
         password,
       });
 
+      await setAwaitingEmailVerification(
+        true
+      );
+
+      await setAwaitingEmailVerificationEmail(
+        normalizedEmail
+      );
+
       onSuccess();
     } catch (error) {
+      const isNetworkError =
+        error instanceof Error &&
+        (
+          error.name ===
+            'AuthRetryableFetchError' ||
+          error.message
+            .toLowerCase()
+            .includes(
+              'network request failed'
+            )
+        );
+
+      if (isNetworkError) {
+        setIsNetworkErrorSheetVisible(true);
+
+        return;
+      }
+
       console.error(
         'Failed to create account:',
         error
@@ -139,156 +199,192 @@ export default function EmailSignUpForm({
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.field}>
-        <Text style={styles.label}>Email</Text>
+    <>
+      <View style={styles.container}>
+        <View style={styles.field}>
+          <Text style={styles.label}>Email</Text>
 
-        <TextInput
-          accessibilityLabel="Email"
-          autoCapitalize="none"
-          autoComplete="email"
-          autoCorrect={false}
-          editable={!isSubmitting}
-          keyboardType="email-address"
-          onChangeText={setEmail}
-          onSubmitEditing={() =>
-            passwordInputRef.current?.focus()
-          }
-          placeholder="you@example.com"
-          placeholderTextColor="#999999"
-          returnKeyType="next"
-          style={styles.input}
-          textContentType="emailAddress"
-          value={email}
-        />
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>Password</Text>
-
-        <View style={styles.passwordInputContainer}>
           <TextInput
-            ref={passwordInputRef}
-            accessibilityLabel="Password"
+            accessibilityLabel="Email"
             autoCapitalize="none"
-            autoComplete="new-password"
+            autoComplete="email"
             autoCorrect={false}
             editable={!isSubmitting}
-            onChangeText={setPassword}
+            keyboardType="email-address"
+            onChangeText={setEmail}
             onSubmitEditing={() =>
-              confirmPasswordInputRef.current?.focus()
+              passwordInputRef.current?.focus()
             }
-            placeholder="At least 8 characters"
+            placeholder="you@example.com"
             placeholderTextColor="#999999"
             returnKeyType="next"
-            secureTextEntry={!showPassword}
-            style={styles.passwordInput}
-            textContentType="newPassword"
-            value={password}
+            style={styles.input}
+            textContentType="emailAddress"
+            value={email}
           />
+        </View>
 
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={
-              showPassword
-                ? 'Hide password'
-                : 'Show password'
-            }
-            disabled={isSubmitting}
-            hitSlop={8}
-            onPress={() =>
-              setShowPassword(
-                (currentValue) =>
-                  !currentValue
-              )
-            }
-            style={({ pressed }) => [
-              styles.visibilityButton,
-              pressed &&
-                !isSubmitting &&
-                styles.visibilityButtonPressed,
-            ]}>
-            <Ionicons
-              name={
+        <View style={styles.field}>
+          <Text style={styles.label}>Password</Text>
+
+          <View style={styles.passwordInputContainer}>
+            <TextInput
+              ref={passwordInputRef}
+              accessibilityLabel="Password"
+              autoCapitalize="none"
+              autoComplete="new-password"
+              autoCorrect={false}
+              editable={!isSubmitting}
+              onChangeText={setPassword}
+              onSubmitEditing={() =>
+                confirmPasswordInputRef.current?.focus()
+              }
+              placeholder="At least 8 characters"
+              placeholderTextColor="#999999"
+              returnKeyType="next"
+              secureTextEntry={!showPassword}
+              style={styles.passwordInput}
+              textContentType="newPassword"
+              value={password}
+            />
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={
                 showPassword
-                  ? 'eye-off-outline'
-                  : 'eye-outline'
+                  ? 'Hide password'
+                  : 'Show password'
               }
-              size={22}
-              color="#666666"
-            />
-          </Pressable>
+              disabled={isSubmitting}
+              hitSlop={8}
+              onPress={() =>
+                setShowPassword(
+                  (currentValue) =>
+                    !currentValue
+                )
+              }
+              style={({ pressed }) => [
+                styles.visibilityButton,
+                pressed &&
+                  !isSubmitting &&
+                  styles.visibilityButtonPressed,
+              ]}>
+              <Ionicons
+                name={
+                  showPassword
+                    ? 'eye-off-outline'
+                    : 'eye-outline'
+                }
+                size={22}
+                color="#666666"
+              />
+            </Pressable>
+          </View>
         </View>
-      </View>
 
-      <View style={styles.field}>
-        <Text style={styles.label}>
-          Confirm password
-        </Text>
+        <View style={styles.field}>
+          <Text style={styles.label}>
+            Confirm password
+          </Text>
 
-        <View style={styles.passwordInputContainer}>
-          <TextInput
-            ref={confirmPasswordInputRef}
-            accessibilityLabel="Confirm password"
-            autoCapitalize="none"
-            autoComplete="new-password"
-            autoCorrect={false}
-            editable={!isSubmitting}
-            onChangeText={setConfirmPassword}
-            onSubmitEditing={handleSubmit}
-            placeholder="Enter your password again"
-            placeholderTextColor="#999999"
-            returnKeyType="done"
-            secureTextEntry={!showConfirmPassword}
-            style={styles.passwordInput}
-            textContentType="newPassword"
-            value={confirmPassword}
-          />
+          <View style={styles.passwordInputContainer}>
+            <TextInput
+              ref={confirmPasswordInputRef}
+              accessibilityLabel="Confirm password"
+              autoCapitalize="none"
+              autoComplete="new-password"
+              autoCorrect={false}
+              editable={!isSubmitting}
+              onChangeText={setConfirmPassword}
+              onSubmitEditing={handleSubmit}
+              placeholder="Enter your password again"
+              placeholderTextColor="#999999"
+              returnKeyType="done"
+              secureTextEntry={!showConfirmPassword}
+              style={styles.passwordInput}
+              textContentType="newPassword"
+              value={confirmPassword}
+            />
 
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={
-              showConfirmPassword
-                ? 'Hide confirmed password'
-                : 'Show confirmed password'
-            }
-            disabled={isSubmitting}
-            hitSlop={8}
-            onPress={() =>
-              setShowConfirmPassword(
-                (currentValue) =>
-                  !currentValue
-              )
-            }
-            style={({ pressed }) => [
-              styles.visibilityButton,
-              pressed &&
-                !isSubmitting &&
-                styles.visibilityButtonPressed,
-            ]}>
-            <Ionicons
-              name={
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={
                 showConfirmPassword
-                  ? 'eye-off-outline'
-                  : 'eye-outline'
+                  ? 'Hide confirmed password'
+                  : 'Show confirmed password'
               }
-              size={22}
-              color="#666666"
-            />
-          </Pressable>
+              disabled={isSubmitting}
+              hitSlop={8}
+              onPress={() =>
+                setShowConfirmPassword(
+                  (currentValue) =>
+                    !currentValue
+                )
+              }
+              style={({ pressed }) => [
+                styles.visibilityButton,
+                pressed &&
+                  !isSubmitting &&
+                  styles.visibilityButtonPressed,
+              ]}>
+              <Ionicons
+                name={
+                  showConfirmPassword
+                    ? 'eye-off-outline'
+                    : 'eye-outline'
+                }
+                size={22}
+                color="#666666"
+              />
+            </Pressable>
+          </View>
+        </View>
+
+        <View style={styles.buttonContainer}>
+          <AuthProviderButton
+            disabled={isSubmitting}
+            loading={isSubmitting}
+            onPress={handleSubmit}
+            title="Create Account"
+            variant="primary"
+          />
         </View>
       </View>
 
-      <View style={styles.buttonContainer}>
-        <AuthProviderButton
-          disabled={isSubmitting}
-          loading={isSubmitting}
-          onPress={handleSubmit}
-          title="Create Account"
-          variant="primary"
-        />
-      </View>
-    </View>
+      <ActionSheet
+        visible={Boolean(validationSheet)}
+        title={validationSheet?.title ?? ''}
+        message={validationSheet?.message ?? ''}
+        actions={[
+          {
+            label: 'OK',
+            onPress: () => {
+              setValidationSheet(null);
+            },
+          },
+        ]}
+        onClose={() => {
+          setValidationSheet(null);
+        }}
+      />
+
+      <ActionSheet
+        visible={isNetworkErrorSheetVisible}
+        title="Connection problem"
+        message="We couldn't connect to Top3. Check your internet connection and try again."
+        actions={[
+          {
+            label: 'OK',
+            onPress: () => {
+              setIsNetworkErrorSheetVisible(false);
+            },
+          },
+        ]}
+        onClose={() => {
+          setIsNetworkErrorSheetVisible(false);
+        }}
+      />
+    </>
   );
 }
 

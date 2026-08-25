@@ -1,5 +1,6 @@
 import {
   init,
+  reset,
   setUserId,
   track,
 } from '@amplitude/analytics-react-native';
@@ -48,14 +49,19 @@ export function initializeAnalytics() {
     return;
   }
 
- init(apiKey, undefined, {
-  trackingOptions: {
-    adid: false,
-    carrier: false,
-    deviceManufacturer: false,
-    deviceModel: false,
-  },
-});
+  init(apiKey, undefined, {
+    trackingOptions: {
+      adid: false,
+      carrier: false,
+      deviceManufacturer: false,
+      deviceModel: false,
+      ipAddress: false,
+      language: false,
+      osName: false,
+      osVersion: false,
+      platform: false,
+    },
+  });
 
   isInitialized = true;
 }
@@ -64,6 +70,18 @@ export function identifyAnalyticsUser(
   userId?: string
 ) {
   setUserId(userId);
+}
+
+export function resetAnalyticsUser() {
+  if (!isInitialized) {
+    initializeAnalytics();
+  }
+
+  if (!isInitialized) {
+    return;
+  }
+
+  reset();
 }
 
 export function trackAnalyticsEvent(

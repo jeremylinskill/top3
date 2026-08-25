@@ -1,11 +1,23 @@
+import ActionSheet from '@/components/action-sheet';
+
 import AuthProviderButton from '@/components/auth-provider-button';
+
 import { signInWithEmail } from '@/services/auth-service';
+
+import {
+  setAwaitingEmailVerification,
+  setAwaitingEmailVerificationEmail,
+} from '@/services/onboarding-service';
+
 import { Ionicons } from '@expo/vector-icons';
+
 import { router } from 'expo-router';
+
 import {
   useRef,
   useState,
 } from 'react';
+
 import {
   Alert,
   Pressable,
@@ -18,6 +30,11 @@ import {
 interface EmailSignInFormProps {
   onSuccess: () => void;
 }
+
+type ValidationSheet = {
+  title: string;
+  message: string;
+};
 
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -43,39 +60,57 @@ export default function EmailSignInForm({
     useRef<TextInput>(null);
 
   const [email, setEmail] = useState('');
+
   const [password, setPassword] =
     useState('');
+
   const [showPassword, setShowPassword] =
     useState(false);
+
   const [isSubmitting, setIsSubmitting] =
     useState(false);
+
+  const [
+    validationSheet,
+    setValidationSheet,
+  ] = useState<ValidationSheet | null>(null);
+
+  const [
+    isNetworkErrorSheetVisible,
+    setIsNetworkErrorSheetVisible,
+  ] = useState(false);
+
+  const [
+    isInvalidCredentialsSheetVisible,
+    setIsInvalidCredentialsSheetVisible,
+  ] = useState(false);
 
   function validateForm() {
     const normalizedEmail = email.trim();
 
     if (!normalizedEmail) {
-      Alert.alert(
-        'Email required',
-        'Enter your email address.'
-      );
+      setValidationSheet({
+        title: 'Email required',
+        message: 'Enter your email address.',
+      });
 
       return false;
     }
 
     if (!isValidEmail(normalizedEmail)) {
-      Alert.alert(
-        'Invalid email',
-        'Enter a valid email address.'
-      );
+      setValidationSheet({
+        title: 'Invalid email',
+        message: 'Enter a valid email address.',
+      });
 
       return false;
     }
 
     if (!password) {
-      Alert.alert(
-        'Password required',
-        'Enter your password.'
-      );
+      setValidationSheet({
+        title: 'Password required',
+        message: 'Enter your password.',
+      });
 
       return false;
     }
@@ -102,24 +137,67 @@ export default function EmailSignInForm({
 
       onSuccess();
     } catch (error) {
-      const message =
-        getSignInErrorMessage(error);
+      const isEmailNotConfirmed =
+        error instanceof Error &&
+        error.message
+          .toLowerCase()
+          .includes('email not confirmed');
 
-      if (
-        !(
-          error instanceof Error &&
+      if (isEmailNotConfirmed) {
+        await setAwaitingEmailVerification(
+          true
+        );
+
+        await setAwaitingEmailVerificationEmail(
+          normalizedEmail
+        );
+
+        router.replace('/check-email');
+
+        return;
+      }
+
+      const isNetworkError =
+        error instanceof Error &&
+        (
+          error.name ===
+            'AuthRetryableFetchError' ||
           error.message
             .toLowerCase()
             .includes(
-              'invalid login credentials'
+              'network request failed'
             )
-        )
-      ) {
-        console.error(
-          'Failed to sign in:',
-          error
         );
+
+      if (isNetworkError) {
+        setIsNetworkErrorSheetVisible(true);
+
+        return;
       }
+
+      const isInvalidCredentials =
+        error instanceof Error &&
+        error.message
+          .toLowerCase()
+          .includes(
+            'invalid login credentials'
+          );
+
+      if (isInvalidCredentials) {
+        setIsInvalidCredentialsSheetVisible(
+          true
+        );
+
+        return;
+      }
+
+      const message =
+        getSignInErrorMessage(error);
+
+      console.error(
+        'Failed to sign in:',
+        error
+      );
 
       Alert.alert(
         'Unable to sign in',
@@ -131,125 +209,182 @@ export default function EmailSignInForm({
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.field}>
-        <Text style={styles.label}>
-          Email
-        </Text>
+    <>
+      <View style={styles.container}>
+        <View style={styles.field}>
+          <Text style={styles.label}>
+            Email
+          </Text>
 
-        <TextInput
-          accessibilityLabel="Email"
-          autoCapitalize="none"
-          autoComplete="email"
-          autoCorrect={false}
-          editable={!isSubmitting}
-          importantForAutofill="yes"
-          keyboardType="email-address"
-          onChangeText={setEmail}
-          onSubmitEditing={() =>
-            passwordInputRef.current?.focus()
-          }
-          placeholder="you@example.com"
-          placeholderTextColor="#999999"
-          returnKeyType="next"
-          style={styles.input}
-          textContentType="emailAddress"
-          value={email}
-        />
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>
-          Password
-        </Text>
-
-        <View style={styles.passwordInputContainer}>
           <TextInput
-            ref={passwordInputRef}
-            accessibilityLabel="Password"
+            accessibilityLabel="Email"
             autoCapitalize="none"
-            autoComplete="password"
+            autoComplete="email"
             autoCorrect={false}
             editable={!isSubmitting}
-            onChangeText={setPassword}
-            onSubmitEditing={() => {
-              void handleSubmit();
-            }}
-            placeholder="Enter your password"
+            importantForAutofill="yes"
+            keyboardType="email-address"
+            onChangeText={setEmail}
+            onSubmitEditing={() =>
+              passwordInputRef.current?.focus()
+            }
+            placeholder="you@example.com"
             placeholderTextColor="#999999"
-            returnKeyType="done"
-            secureTextEntry={!showPassword}
-            style={styles.passwordInput}
-            textContentType="password"
-            value={password}
+            returnKeyType="next"
+            style={styles.input}
+            textContentType="emailAddress"
+            value={email}
           />
+        </View>
+
+        <View style={styles.field}>
+          <Text style={styles.label}>
+            Password
+          </Text>
+
+          <View style={styles.passwordInputContainer}>
+            <TextInput
+              ref={passwordInputRef}
+              accessibilityLabel="Password"
+              autoCapitalize="none"
+              autoComplete="password"
+              autoCorrect={false}
+              editable={!isSubmitting}
+              onChangeText={setPassword}
+              onSubmitEditing={() => {
+                void handleSubmit();
+              }}
+              placeholder="Enter your password"
+              placeholderTextColor="#999999"
+              returnKeyType="done"
+              secureTextEntry={!showPassword}
+              style={styles.passwordInput}
+              textContentType="password"
+              value={password}
+            />
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={
+                showPassword
+                  ? 'Hide password'
+                  : 'Show password'
+              }
+              disabled={isSubmitting}
+              hitSlop={8}
+              onPress={() =>
+                setShowPassword(
+                  (currentValue) =>
+                    !currentValue
+                )
+              }
+              style={({ pressed }) => [
+                styles.visibilityButton,
+                pressed &&
+                  !isSubmitting &&
+                  styles.visibilityButtonPressed,
+              ]}>
+              <Ionicons
+                name={
+                  showPassword
+                    ? 'eye-off-outline'
+                    : 'eye-outline'
+                }
+                size={22}
+                color="#666666"
+              />
+            </Pressable>
+          </View>
 
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={
-              showPassword
-                ? 'Hide password'
-                : 'Show password'
-            }
+            accessibilityLabel="Forgot password"
             disabled={isSubmitting}
             hitSlop={8}
             onPress={() =>
-              setShowPassword(
-                (currentValue) =>
-                  !currentValue
-              )
+              router.push('/forgot-password')
             }
             style={({ pressed }) => [
-              styles.visibilityButton,
+              styles.forgotPasswordButton,
               pressed &&
                 !isSubmitting &&
-                styles.visibilityButtonPressed,
+                styles.forgotPasswordButtonPressed,
             ]}>
-            <Ionicons
-              name={
-                showPassword
-                  ? 'eye-off-outline'
-                  : 'eye-outline'
-              }
-              size={22}
-              color="#666666"
-            />
+            <Text
+              style={styles.forgotPasswordText}>
+              Forgot password?
+            </Text>
           </Pressable>
         </View>
 
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Forgot password"
-          disabled={isSubmitting}
-          hitSlop={8}
-          onPress={() =>
-            router.push('/forgot-password')
-          }
-          style={({ pressed }) => [
-            styles.forgotPasswordButton,
-            pressed &&
-              !isSubmitting &&
-              styles.forgotPasswordButtonPressed,
-          ]}>
-          <Text
-            style={styles.forgotPasswordText}>
-            Forgot password?
-          </Text>
-        </Pressable>
+        <View style={styles.buttonContainer}>
+          <AuthProviderButton
+            disabled={isSubmitting}
+            loading={isSubmitting}
+            onPress={() => {
+              void handleSubmit();
+            }}
+            title="Sign In"
+            variant="primary"
+          />
+        </View>
       </View>
 
-      <View style={styles.buttonContainer}>
-        <AuthProviderButton
-          disabled={isSubmitting}
-          loading={isSubmitting}
-          onPress={() => {
-            void handleSubmit();
-          }}
-          title="Sign In"
-          variant="primary"
-        />
-      </View>
-    </View>
+      <ActionSheet
+        visible={Boolean(validationSheet)}
+        title={validationSheet?.title ?? ''}
+        message={validationSheet?.message ?? ''}
+        actions={[
+          {
+            label: 'OK',
+            onPress: () => {
+              setValidationSheet(null);
+            },
+          },
+        ]}
+        onClose={() => {
+          setValidationSheet(null);
+        }}
+      />
+
+      <ActionSheet
+        visible={isNetworkErrorSheetVisible}
+        title="Connection problem"
+        message="We couldn't connect to Top3. Check your internet connection and try again."
+        actions={[
+          {
+            label: 'OK',
+            onPress: () => {
+              setIsNetworkErrorSheetVisible(false);
+            },
+          },
+        ]}
+        onClose={() => {
+          setIsNetworkErrorSheetVisible(false);
+        }}
+      />
+
+      <ActionSheet
+        visible={isInvalidCredentialsSheetVisible}
+        title="Unable to sign in"
+        message="The email or password you entered is incorrect."
+        actions={[
+          {
+            label: 'OK',
+            onPress: () => {
+              setIsInvalidCredentialsSheetVisible(
+                false
+              );
+            },
+          },
+        ]}
+        onClose={() => {
+          setIsInvalidCredentialsSheetVisible(
+            false
+          );
+        }}
+      />
+    </>
   );
 }
 

@@ -1,4 +1,7 @@
 import { setSessionFromUrl } from '@/services/auth-service';
+import {
+  setAwaitingEmailVerification,
+} from '@/services/onboarding-service';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import {
@@ -37,6 +40,10 @@ export default function AuthCallbackScreen() {
             'The confirmation link did not contain a valid session.'
           );
         }
+
+        await setAwaitingEmailVerification(
+          false
+        );
 
         if (isMounted) {
           router.replace('/');

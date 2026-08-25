@@ -4,6 +4,7 @@ import { COLORS } from '@/constants/colors';
 import { SPACING } from '@/constants/spacing';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { TYPOGRAPHY } from '@/constants/typography';
+import { useBlock } from '@/context/block-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
 import { trackAnalyticsEvent } from '@/lib/analytics';
@@ -225,7 +226,12 @@ export default function TasteMatchScreen() {
     : params.userId;
 
   const { profile } = useProfile();
+  const { blockedUserIds } = useBlock();
   useTop3();
+
+  const isViewedUserBlocked =
+    Boolean(userId) &&
+    blockedUserIds.includes(userId!);
 
   const [allPosts, setAllPosts] = useState<
     Post[]
@@ -250,7 +256,11 @@ export default function TasteMatchScreen() {
   let isMounted = true;
 
   async function loadViewedUser() {
-    if (!userId || userId === profile.id) {
+    if (
+      !userId ||
+      userId === profile.id ||
+      isViewedUserBlocked
+    ) {
       if (isMounted) {
         setViewedUser(null);
       }
@@ -271,13 +281,26 @@ export default function TasteMatchScreen() {
   return () => {
     isMounted = false;
   };
-}, [profile.id, userId]);
+}, [
+  isViewedUserBlocked,
+  profile.id,
+  userId,
+]);
 
   useEffect(() => {
     let isMounted = true;
 
     async function loadPosts() {
       setIsLoading(true);
+
+      if (isViewedUserBlocked) {
+        if (isMounted) {
+          setAllPosts([]);
+          setIsLoading(false);
+        }
+
+        return;
+      }
 
       try {
         const publishedPostsPromise =
@@ -330,10 +353,17 @@ export default function TasteMatchScreen() {
     return () => {
       isMounted = false;
     };
-  }, [userId]);
+  }, [
+    isViewedUserBlocked,
+    userId,
+  ]);
 
   const tasteMatch = useMemo(() => {
-    if (!viewedUser || isLoading) {
+    if (
+      !viewedUser ||
+      isLoading ||
+      isViewedUserBlocked
+    ) {
       return null;
     }
 
@@ -348,6 +378,7 @@ return getTasteRecommendationForUser({
   }, [
     allPosts,
     isLoading,
+    isViewedUserBlocked,
     profile.id,
     viewedUser,
   ]);

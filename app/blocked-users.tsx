@@ -1,3 +1,4 @@
+import ActionSheet from '@/components/action-sheet';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
 import { COLORS } from '@/constants/colors';
@@ -9,20 +10,19 @@ import { getProfilesByIds } from '@/lib/supabase/profiles';
 import { UserProfile } from '@/types/user-profile';
 import { Ionicons } from '@expo/vector-icons';
 import {
-    useCallback,
-    useEffect,
-    useMemo,
-    useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
 } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -43,6 +43,19 @@ export default function BlockedUsersScreen() {
     unblockingUserId,
     setUnblockingUserId,
   ] = useState<string | null>(null);
+
+  const [
+    pendingUnblockProfile,
+    setPendingUnblockProfile,
+  ] = useState<UserProfile | null>(null);
+
+  const [
+    errorSheet,
+    setErrorSheet,
+  ] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
 
   const loadBlockedProfiles =
     useCallback(async () => {
@@ -104,22 +117,7 @@ export default function BlockedUsersScreen() {
       return;
     }
 
-    Alert.alert(
-      `Unblock ${profile.displayName}?`,
-      'They may appear in your Feed, Discover, search, and recommendations again.',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Unblock',
-          onPress: () => {
-            void handleUnblock(profile);
-          },
-        },
-      ]
-    );
+    setPendingUnblockProfile(profile);
   }
 
   async function handleUnblock(
@@ -148,19 +146,21 @@ export default function BlockedUsersScreen() {
         error
       );
 
-      Alert.alert(
-        'Unable to Unblock User',
-        'Something went wrong while unblocking this user. Please try again.'
-      );
+      setErrorSheet({
+        title: 'Unable to Unblock User',
+        message:
+          'Something went wrong while unblocking this user. Please try again.',
+      });
     } finally {
       setUnblockingUserId(null);
     }
   }
 
   return (
-    <SafeAreaView
-      style={styles.container}
-      edges={['top', 'left', 'right']}>
+    <>
+      <SafeAreaView
+        style={styles.container}
+        edges={['top', 'left', 'right']}>
       <ScreenHeader showBackButton />
 
       <PageHeader
@@ -312,8 +312,60 @@ export default function BlockedUsersScreen() {
             )}
           </View>
         )}
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+
+      <ActionSheet
+        visible={pendingUnblockProfile !== null}
+        title={
+          pendingUnblockProfile
+            ? `Unblock ${pendingUnblockProfile.displayName}?`
+            : ''
+        }
+        message="They may appear in your Feed, Discover, search, and recommendations again."
+        actions={[
+          {
+            label: 'Unblock',
+            onPress: () => {
+              const profile = pendingUnblockProfile;
+
+              setPendingUnblockProfile(null);
+
+              if (profile) {
+                void handleUnblock(profile);
+              }
+            },
+          },
+          {
+            label: 'Cancel',
+            variant: 'cancel',
+            onPress: () => {
+              setPendingUnblockProfile(null);
+            },
+          },
+        ]}
+        onClose={() => {
+          setPendingUnblockProfile(null);
+        }}
+      />
+
+      <ActionSheet
+        visible={errorSheet !== null}
+        title={errorSheet?.title ?? ''}
+        message={errorSheet?.message ?? ''}
+        actions={[
+          {
+            label: 'OK',
+            onPress: () => {
+              setErrorSheet(null);
+            },
+          },
+        ]}
+        onClose={() => {
+          setErrorSheet(null);
+        }}
+      />
+    </>
   );
 }
 

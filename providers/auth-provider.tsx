@@ -1,5 +1,6 @@
 import {
   identifyAnalyticsUser,
+  resetAnalyticsUser,
 } from '@/lib/analytics';
 import {
   getCurrentUser,
@@ -7,6 +8,9 @@ import {
   onAuthStateChange,
   signOut as signOutFromService,
 } from '@/services/auth-service';
+import {
+  markWelcomeAsSeen,
+} from '@/services/onboarding-service';
 import {
   Session,
   User,
@@ -95,10 +99,28 @@ export function AuthProvider({
     await signOutFromService();
   }, []);
 
-  const user = getCurrentUser(session);
+  const sessionUser =
+    getCurrentUser(session);
+
+  const user =
+    sessionUser &&
+    (
+      sessionUser.app_metadata.provider !==
+        'email' ||
+      Boolean(
+        sessionUser.email_confirmed_at
+      )
+    )
+      ? sessionUser
+      : null;
 
   useEffect(() => {
-    identifyAnalyticsUser(user?.id);
+    if (user?.id) {
+      identifyAnalyticsUser(user.id);
+      void markWelcomeAsSeen();
+    } else {
+      resetAnalyticsUser();
+    }
   }, [user?.id]);
 
   const value =
@@ -108,7 +130,7 @@ export function AuthProvider({
         session,
         isLoading,
         isAuthenticated:
-          Boolean(session),
+          Boolean(user),
         signOut,
       }),
       [

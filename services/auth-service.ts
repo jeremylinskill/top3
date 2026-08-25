@@ -62,6 +62,28 @@ export async function signUpWithEmail({
   return data;
 }
 
+export async function resendConfirmationEmail(
+  email: string
+) {
+  const emailRedirectTo =
+    Linking.createURL('/auth-callback');
+
+  const { data, error } =
+    await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: {
+        emailRedirectTo,
+      },
+    });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
 export async function setSessionFromUrl(
   url: string
 ): Promise<Session | null> {

@@ -33,7 +33,6 @@ import {
 } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -70,6 +69,9 @@ type ModerationSheet =
       reason: ReportReason;
       reasonLabel: string;
     }
+  | { type: 'block-error' }
+  | { type: 'unblock-success' }
+  | { type: 'unblock-error' }
   | { type: 'report-success' }
   | { type: 'report-error' }
   | null;
@@ -559,10 +561,9 @@ export default function ProfileScreen({
         error
       );
 
-      Alert.alert(
-        'Unable to block user',
-        'Please try again.'
-      );
+      setModerationSheet({
+        type: 'block-error',
+      });
     }
   }
 
@@ -577,20 +578,18 @@ export default function ProfileScreen({
     try {
       await unblockUser(viewedUserId);
 
-      Alert.alert(
-        'User unblocked',
-        `${viewedUser.displayName} has been unblocked.`
-      );
+      setModerationSheet({
+        type: 'unblock-success',
+      });
     } catch (error) {
       console.error(
         'Failed to unblock user:',
         error
       );
 
-      Alert.alert(
-        'Unable to unblock user',
-        'Please try again.'
-      );
+      setModerationSheet({
+        type: 'unblock-error',
+      });
     }
   }
 
@@ -1171,6 +1170,51 @@ export default function ProfileScreen({
           },
           {
             label: 'Cancel',
+            variant: 'cancel',
+            onPress: closeModerationSheet,
+          },
+        ];
+        break;
+
+      case 'block-error':
+        moderationSheetTitle =
+          'Unable to block user';
+        moderationSheetMessage =
+          'Please try again.';
+
+        moderationSheetActions = [
+          {
+            label: 'OK',
+            variant: 'cancel',
+            onPress: closeModerationSheet,
+          },
+        ];
+        break;
+
+      case 'unblock-success':
+        moderationSheetTitle =
+          'User unblocked';
+        moderationSheetMessage =
+          `${viewedUser.displayName} has been unblocked.`;
+
+        moderationSheetActions = [
+          {
+            label: 'OK',
+            variant: 'cancel',
+            onPress: closeModerationSheet,
+          },
+        ];
+        break;
+
+      case 'unblock-error':
+        moderationSheetTitle =
+          'Unable to unblock user';
+        moderationSheetMessage =
+          'Please try again.';
+
+        moderationSheetActions = [
+          {
+            label: 'OK',
             variant: 'cancel',
             onPress: closeModerationSheet,
           },

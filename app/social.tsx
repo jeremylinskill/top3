@@ -2,6 +2,7 @@ import ScreenHeader from '@/components/screen-header';
 import SearchInput from '@/components/search-input';
 import SegmentedControl from '@/components/segmented-control';
 import TasteMatchBadge from '@/components/taste-match-badge';
+import { useBlock } from '@/context/block-context';
 import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
@@ -70,6 +71,8 @@ export default function SocialScreen() {
     initialTabParam === 'followers'
       ? 'followers'
       : 'following';
+
+  const { blockedUserIds } = useBlock();
 
   const {
     followedUserIds,
@@ -255,7 +258,8 @@ export default function SocialScreen() {
       )
       .filter(
         (user): user is UserProfile =>
-          user !== undefined
+          user !== undefined &&
+          !blockedUserIds.includes(user.id)
       )
       .sort((first, second) =>
         first.displayName.localeCompare(
@@ -264,6 +268,7 @@ export default function SocialScreen() {
       );
   }, [
     followedUserIds,
+    blockedUserIds,
     socialProfilesById,
   ]);
 
@@ -277,7 +282,8 @@ export default function SocialScreen() {
       )
       .filter(
         (user): user is UserProfile =>
-          user !== undefined
+          user !== undefined &&
+          !blockedUserIds.includes(user.id)
       )
       .sort((first, second) =>
         first.displayName.localeCompare(
@@ -286,6 +292,7 @@ export default function SocialScreen() {
       );
   }, [
     followerUserIds,
+    blockedUserIds,
     socialProfilesById,
   ]);
 

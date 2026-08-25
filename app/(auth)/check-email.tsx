@@ -1,17 +1,35 @@
+import ActionSheet from '@/components/action-sheet';
 import AuthProviderButton from '@/components/auth-provider-button';
+import {
+  resendConfirmationEmail,
+} from '@/services/auth-service';
+import {
+  getAwaitingEmailVerificationEmail,
+} from '@/services/onboarding-service';
 import { Ionicons } from '@expo/vector-icons';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
+import { useState } from 'react';
 import {
-    Alert,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CheckEmailScreen() {
+  const [
+    isEmailSentSheetVisible,
+    setIsEmailSentSheetVisible,
+  ] = useState(false);
+
+  const [
+    resendRateLimitMessage,
+    setResendRateLimitMessage,
+  ] = useState<string | null>(null);
+
   async function handleOpenEmail() {
     try {
       await Linking.openURL('message://');
@@ -28,11 +46,53 @@ export default function CheckEmailScreen() {
     }
   }
 
-  function handleResendEmail() {
-    Alert.alert(
-      'Resend confirmation email',
-      'We will connect email resending to Supabase in the next step.'
-    );
+  async function handleResendEmail() {
+    try {
+      const email =
+        await getAwaitingEmailVerificationEmail();
+
+      if (!email) {
+        Alert.alert(
+          'Unable to resend email',
+          'We could not determine which email address is waiting for verification. Please use a different email address and try again.'
+        );
+
+        return;
+      }
+
+      await resendConfirmationEmail(email);
+
+      setIsEmailSentSheetVisible(true);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : '';
+
+      const isRateLimited =
+        message
+          .toLowerCase()
+          .includes(
+            'you can only request this after'
+          );
+
+      if (isRateLimited) {
+        setResendRateLimitMessage(message);
+        return;
+      }
+
+      console.error(
+        'Unable to resend confirmation email:',
+        error
+      );
+
+      Alert.alert(
+        'Unable to resend email',
+        error instanceof Error
+          ? error.message
+          : 'Please try again.'
+      );
+    }
   }
 
   function handleDifferentEmail() {
@@ -40,101 +100,137 @@ export default function CheckEmailScreen() {
   }
 
   return (
-    <SafeAreaView
-      style={styles.container}
-      edges={['top', 'bottom']}>
-      <View style={styles.content}>
-        <View style={styles.mainContent}>
-          <View style={styles.iconContainer}>
-            <Ionicons
-              name="mail-outline"
-              size={48}
-              color="#1573DD"
+    <>
+      <SafeAreaView
+        style={styles.container}
+        edges={['top', 'bottom']}>
+        <View style={styles.content}>
+          <View style={styles.mainContent}>
+            <View style={styles.iconContainer}>
+              <Ionicons
+                name="mail-outline"
+                size={48}
+                color="#1573DD"
+              />
+            </View>
+
+            <View style={styles.header}>
+              <Text style={styles.title}>
+                Check your email
+              </Text>
+
+              <Text style={styles.description}>
+                We sent you a confirmation link. Open the
+                email and tap the link to verify your
+                account.
+              </Text>
+            </View>
+
+            <View style={styles.instructions}>
+              <View style={styles.instruction}>
+                <View style={styles.stepNumber}>
+                  <Text style={styles.stepNumberText}>
+                    1
+                  </Text>
+                </View>
+
+                <Text style={styles.instructionText}>
+                  Open the confirmation email from Top3.
+                </Text>
+              </View>
+
+              <View style={styles.instruction}>
+                <View style={styles.stepNumber}>
+                  <Text style={styles.stepNumberText}>
+                    2
+                  </Text>
+                </View>
+
+                <Text style={styles.instructionText}>
+                  Tap the confirmation link in the email.
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.actions}>
+            <AuthProviderButton
+              title="Open Email App"
+              variant="primary"
+              onPress={handleOpenEmail}
             />
-          </View>
 
-          <View style={styles.header}>
-            <Text style={styles.title}>
-              Check your email
-            </Text>
-
-            <Text style={styles.description}>
-              We sent you a confirmation link. Open the
-              email and tap the link to verify your
-              account.
-            </Text>
-          </View>
-
-          <View style={styles.instructions}>
-            <View style={styles.instruction}>
-              <View style={styles.stepNumber}>
-                <Text style={styles.stepNumberText}>
-                  1
-                </Text>
-              </View>
-
-              <Text style={styles.instructionText}>
-                Open the confirmation email from Top3.
+            <View style={styles.resendContainer}>
+              <Text style={styles.resendPrompt}>
+                Didn&apos;t receive it?
               </Text>
-            </View>
 
-            <View style={styles.instruction}>
-              <View style={styles.stepNumber}>
-                <Text style={styles.stepNumberText}>
-                  2
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Resend confirmation email"
+                hitSlop={8}
+                onPress={handleResendEmail}
+                style={({ pressed }) => [
+                  styles.inlineButton,
+                  pressed && styles.pressed,
+                ]}>
+                <Text style={styles.inlineButtonText}>
+                  Resend Email
                 </Text>
-              </View>
-
-              <Text style={styles.instructionText}>
-                Tap the confirmation link in the email.
-              </Text>
+              </Pressable>
             </View>
-          </View>
-        </View>
-
-        <View style={styles.actions}>
-          <AuthProviderButton
-            title="Open Email App"
-            variant="primary"
-            onPress={handleOpenEmail}
-          />
-
-          <View style={styles.resendContainer}>
-            <Text style={styles.resendPrompt}>
-              Didn&apos;t receive it?
-            </Text>
 
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Resend confirmation email"
+              accessibilityLabel="Use a different email address"
               hitSlop={8}
-              onPress={handleResendEmail}
+              onPress={handleDifferentEmail}
               style={({ pressed }) => [
-                styles.inlineButton,
+                styles.differentEmailButton,
                 pressed && styles.pressed,
               ]}>
-              <Text style={styles.inlineButtonText}>
-                Resend Email
+              <Text style={styles.differentEmailText}>
+                Use a different email address
               </Text>
             </Pressable>
           </View>
-
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Use a different email address"
-            hitSlop={8}
-            onPress={handleDifferentEmail}
-            style={({ pressed }) => [
-              styles.differentEmailButton,
-              pressed && styles.pressed,
-            ]}>
-            <Text style={styles.differentEmailText}>
-              Use a different email address
-            </Text>
-          </Pressable>
         </View>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+
+      <ActionSheet
+        visible={isEmailSentSheetVisible}
+        title="Email sent"
+        message="We sent you a new confirmation email."
+        actions={[
+          {
+            label: 'OK',
+            onPress: () => {
+              setIsEmailSentSheetVisible(false);
+            },
+          },
+        ]}
+        onClose={() => {
+          setIsEmailSentSheetVisible(false);
+        }}
+      />
+
+      <ActionSheet
+        visible={Boolean(resendRateLimitMessage)}
+        title="Unable to resend email"
+        message={resendRateLimitMessage ?? ''}
+        actions={[
+          {
+            label: 'OK',
+            onPress: () => {
+              setResendRateLimitMessage(null);
+            },
+          },
+        ]}
+        onClose={() => {
+          setResendRateLimitMessage(null);
+        }}
+      />
+    </>
   );
 }
 

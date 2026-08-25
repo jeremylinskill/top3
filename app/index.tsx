@@ -1,13 +1,17 @@
 import { useOnboardingCollection } from '@/context/onboarding-collection-context';
 import { useProfile } from '@/context/profile-context';
 import { useAuth } from '@/hooks/use-auth';
+import { supabase } from '@/lib/supabase';
 import {
   createCollection,
   getCollections,
   publishCollection,
   updateCollection,
 } from '@/lib/supabase/collections';
-import { hasSeenWelcome } from '@/services/onboarding-service';
+import {
+  hasSeenWelcome,
+  isAwaitingEmailVerification,
+} from '@/services/onboarding-service';
 import { router } from 'expo-router';
 import {
   useEffect,
@@ -183,6 +187,23 @@ export default function IndexScreen() {
         );
 
 
+        const {
+          error: onboardingCompleteError,
+        } = await supabase
+          .from('profiles')
+          .update({
+            has_completed_onboarding: true,
+            updated_at:
+              new Date().toISOString(),
+          })
+          .eq('id', authenticatedUserId);
+
+
+        if (onboardingCompleteError) {
+          throw onboardingCompleteError;
+        }
+
+
         if (!isMounted) {
           return true;
         }
@@ -262,6 +283,21 @@ export default function IndexScreen() {
           }
 
 
+          return;
+        }
+
+
+        const awaitingEmailVerification =
+          await isAwaitingEmailVerification();
+
+
+        if (!isMounted) {
+          return;
+        }
+
+
+        if (awaitingEmailVerification) {
+          router.replace('/check-email');
           return;
         }
 

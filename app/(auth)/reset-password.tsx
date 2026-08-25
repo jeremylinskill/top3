@@ -1,28 +1,28 @@
+import ActionSheet from '@/components/action-sheet';
 import AuthProviderButton from '@/components/auth-provider-button';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
 import { COLORS } from '@/constants/colors';
 import {
-    setSessionFromUrl,
-    signOut,
-    updatePassword,
+  setSessionFromUrl,
+  signOut,
+  updatePassword,
 } from '@/services/auth-service';
 import { Ionicons } from '@expo/vector-icons';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import {
-    useEffect,
-    useRef,
-    useState,
+  useEffect,
+  useRef,
+  useState,
 } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -63,6 +63,22 @@ export default function ResetPasswordScreen() {
     setErrorMessage,
   ] = useState<string | null>(null);
 
+  const [
+    validationSheet,
+    setValidationSheet,
+  ] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
+
+  const [
+    updateErrorSheet,
+    setUpdateErrorSheet,
+  ] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
+
   useEffect(() => {
     if (!url) {
       return;
@@ -86,16 +102,30 @@ export default function ResetPasswordScreen() {
           setIsPreparingRecovery(false);
         }
       } catch (error) {
-        console.error(
-          'Failed to prepare password recovery session:',
-          error
-        );
+        const recoveryErrorMessage =
+          error instanceof Error
+            ? error.message.trim().toLowerCase()
+            : '';
+
+        const isInvalidRecoveryLink =
+          recoveryErrorMessage.includes(
+            'password reset link did not contain a valid session'
+          );
+
+        if (!isInvalidRecoveryLink) {
+          console.error(
+            'Failed to prepare password recovery session:',
+            error
+          );
+        }
 
         if (isMounted) {
           setErrorMessage(
-            error instanceof Error
-              ? error.message
-              : 'The password reset link could not be completed.'
+            isInvalidRecoveryLink
+              ? 'This password reset link is invalid or has expired. Request a new link and try again.'
+              : error instanceof Error
+                ? error.message
+                : 'The password reset link could not be completed.'
           );
           setIsPreparingRecovery(false);
         }
@@ -111,34 +141,40 @@ export default function ResetPasswordScreen() {
 
   function validateForm() {
     if (!password) {
-      Alert.alert(
-        'Password required',
-        'Enter a new password.'
-      );
+      setValidationSheet({
+        title: 'Password required',
+        message: 'Enter a new password.',
+      });
+
       return false;
     }
 
     if (password.length < 8) {
-      Alert.alert(
-        'Password too short',
-        'Your password must be at least 8 characters.'
-      );
+      setValidationSheet({
+        title: 'Password too short',
+        message:
+          'Your password must be at least 8 characters.',
+      });
+
       return false;
     }
 
     if (!confirmPassword) {
-      Alert.alert(
-        'Confirm your password',
-        'Enter your new password again.'
-      );
+      setValidationSheet({
+        title: 'Confirm your password',
+        message: 'Enter your new password again.',
+      });
+
       return false;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert(
-        'Passwords do not match',
-        'Make sure both passwords are the same.'
-      );
+      setValidationSheet({
+        title: 'Passwords do not match',
+        message:
+          'Make sure both passwords are the same.',
+      });
+
       return false;
     }
 
@@ -173,22 +209,24 @@ export default function ResetPasswordScreen() {
         );
 
       if (isSamePasswordError) {
-        Alert.alert(
-          'Choose a different password',
-          'Your new password must be different from your current password.'
-        );
+        setUpdateErrorSheet({
+          title: 'Choose a different password',
+          message:
+            'Your new password must be different from your current password.',
+        });
       } else {
         console.error(
           'Failed to update password:',
           error
         );
 
-        Alert.alert(
-          'Unable to update password',
-          error instanceof Error
-            ? error.message
-            : 'Please try again.'
-        );
+        setUpdateErrorSheet({
+          title: 'Unable to update password',
+          message:
+            error instanceof Error
+              ? error.message
+              : 'Please try again.',
+        });
       }
     } finally {
       setIsSubmitting(false);
@@ -247,16 +285,16 @@ export default function ResetPasswordScreen() {
 
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Return to sign in"
+            accessibilityLabel="Request a new password reset link"
             onPress={() =>
-              router.replace('/sign-in-email')
+              router.replace('/forgot-password')
             }
             style={({ pressed }) => [
               styles.returnButton,
               pressed && styles.pressed,
             ]}>
             <Text style={styles.returnButtonText}>
-              Return to Sign In
+              Request a New Link
             </Text>
           </Pressable>
         </View>
@@ -298,19 +336,20 @@ export default function ResetPasswordScreen() {
   }
 
   return (
-    <SafeAreaView
-      style={styles.container}
-      edges={['top', 'bottom']}>
-      <ScreenHeader />
+    <>
+      <SafeAreaView
+        style={styles.container}
+        edges={['top', 'bottom']}>
+        <ScreenHeader />
 
-      <PageHeader
-        title="Choose a new password"
-        subtitle="Enter a new password for your Top 3 account."
-        align="center"
-      />
+        <PageHeader
+          title="Choose a new password"
+          subtitle="Enter a new password for your Top 3 account."
+          align="center"
+        />
 
-      <View style={styles.content}>
-        <View style={styles.form}>
+        <View style={styles.content}>
+          <View style={styles.form}>
           <View style={styles.field}>
             <Text style={styles.label}>
               New password
@@ -453,9 +492,44 @@ export default function ResetPasswordScreen() {
               variant="primary"
             />
           </View>
+          </View>
         </View>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+
+      <ActionSheet
+        visible={Boolean(validationSheet)}
+        title={validationSheet?.title ?? ''}
+        message={validationSheet?.message ?? ''}
+        actions={[
+          {
+            label: 'OK',
+            onPress: () => {
+              setValidationSheet(null);
+            },
+          },
+        ]}
+        onClose={() => {
+          setValidationSheet(null);
+        }}
+      />
+
+      <ActionSheet
+        visible={Boolean(updateErrorSheet)}
+        title={updateErrorSheet?.title ?? ''}
+        message={updateErrorSheet?.message ?? ''}
+        actions={[
+          {
+            label: 'OK',
+            onPress: () => {
+              setUpdateErrorSheet(null);
+            },
+          },
+        ]}
+        onClose={() => {
+          setUpdateErrorSheet(null);
+        }}
+      />
+    </>
   );
 }
 

@@ -237,6 +237,7 @@ export default function CategoryFeedScreen() {
   const { profile } = useProfile();
 
   const {
+    blockedUserIds,
     isBlocked,
     blockUser,
     unblockUser,
@@ -391,6 +392,13 @@ if (isMounted) {
 
     return allPosts
       .filter((post) => {
+        if (
+          post.authorId !== profile.id &&
+          blockedUserIds.includes(post.authorId)
+        ) {
+          return false;
+        }
+
         const postCategory =
           normalizeValue(
             post.collection.category
@@ -450,9 +458,11 @@ if (isMounted) {
       );
   }, [
     allPosts,
+    blockedUserIds,
     categoryId,
     normalizedTopic,
     normalizedItemQuery,
+    profile.id,
   ]);
 
   const overallResult = useMemo<
