@@ -9,7 +9,6 @@ import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import {
-  Alert,
   Image,
   Keyboard,
   KeyboardAvoidingView,
@@ -30,6 +29,9 @@ type ProfileActionSheet =
   | { type: 'display-name-blocked' }
   | { type: 'username-blocked' }
   | { type: 'bio-blocked' }
+  | { type: 'photo-access-needed' }
+  | { type: 'image-too-large' }
+  | { type: 'save-error' }
   | null;
 
 export default function EditProfileScreen() {
@@ -80,10 +82,9 @@ export default function EditProfileScreen() {
       await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (!permission.granted) {
-      Alert.alert(
-        'Photo access needed',
-        'Allow photo library access to choose a profile picture.'
-      );
+      setProfileActionSheet({
+        type: 'photo-access-needed',
+      });
 
       return;
     }
@@ -110,10 +111,9 @@ export default function EditProfileScreen() {
       asset.fileSize >
         MAX_AVATAR_FILE_SIZE
     ) {
-      Alert.alert(
-        'Image too large',
-        'Please choose an image smaller than 5 MB.'
-      );
+      setProfileActionSheet({
+        type: 'image-too-large',
+      });
 
       return;
     }
@@ -196,10 +196,9 @@ export default function EditProfileScreen() {
         error
       );
 
-      Alert.alert(
-        'Unable to save profile',
-        'Please try again.'
-      );
+      setProfileActionSheet({
+        type: 'save-error',
+      });
     } finally {
       setIsSaving(false);
     }
@@ -228,6 +227,27 @@ export default function EditProfileScreen() {
         'Bio not allowed';
       actionSheetMessage =
         "Your bio contains language that isn't allowed on Top3. Please revise it and try again.";
+      break;
+
+    case 'photo-access-needed':
+      actionSheetTitle =
+        'Photo access needed';
+      actionSheetMessage =
+        'Allow photo library access to choose a profile picture.';
+      break;
+
+    case 'image-too-large':
+      actionSheetTitle =
+        'Image too large';
+      actionSheetMessage =
+        'Please choose an image smaller than 5 MB.';
+      break;
+
+    case 'save-error':
+      actionSheetTitle =
+        'Unable to save profile';
+      actionSheetMessage =
+        'Please try again.';
       break;
   }
 

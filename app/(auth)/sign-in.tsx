@@ -1,3 +1,4 @@
+import ActionSheet from '@/components/action-sheet';
 import EmailAuthButton from '@/components/email-auth-button';
 import GoogleAuthButton from '@/components/google-auth-button';
 import PageHeader from '@/components/page-header';
@@ -13,8 +14,8 @@ import {
   router,
   useLocalSearchParams,
 } from 'expo-router';
+import { useState } from 'react';
 import {
-  Alert,
   Pressable,
   StyleSheet,
   Text,
@@ -22,6 +23,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+type SignInProvider = 'Apple' | 'Google';
 
 export default function SignInScreen() {
   const {
@@ -30,22 +32,23 @@ export default function SignInScreen() {
     source?: string;
   }>();
 
-
   const {
     setAuthIntent,
   } = useOnboardingCollection();
 
+  const [
+    failedSignInProvider,
+    setFailedSignInProvider,
+  ] = useState<SignInProvider | null>(null);
 
   const isReturningFromOnboarding =
     source === 'onboarding-publish';
-
 
   function prepareSignInIntent() {
     if (isReturningFromOnboarding) {
       setAuthIntent('sign-in');
     }
   }
-
 
   async function handleAppleSignIn() {
     try {
@@ -63,20 +66,14 @@ export default function SignInScreen() {
         return;
       }
 
-
       console.error(
         'Apple sign-in failed:',
         error
       );
 
-
-      Alert.alert(
-        'Unable to continue with Apple',
-        'Please try again.'
-      );
+      setFailedSignInProvider('Apple');
     }
   }
-
 
   async function handleGoogleSignIn() {
     try {
@@ -84,11 +81,9 @@ export default function SignInScreen() {
 
       const result = await signInWithGoogle();
 
-
       if (!result) {
         return;
       }
-
 
       router.replace('/');
     } catch (error) {
@@ -103,20 +98,14 @@ export default function SignInScreen() {
         return;
       }
 
-
       console.error(
         'Google sign-in failed:',
         error
       );
 
-
-      Alert.alert(
-        'Unable to continue with Google',
-        'Please try again.'
-      );
+      setFailedSignInProvider('Google');
     }
   }
-
 
   function handleEmailSignIn() {
     prepareSignInIntent();
@@ -131,10 +120,8 @@ export default function SignInScreen() {
       return;
     }
 
-
     router.push('/sign-in-email');
   }
-
 
   function handleBottomAction() {
     if (isReturningFromOnboarding) {
@@ -142,99 +129,110 @@ export default function SignInScreen() {
       return;
     }
 
-
     router.replace('/onboarding');
   }
 
-
   return (
-    <SafeAreaView
-      style={styles.container}
-      edges={['top', 'bottom']}>
-      <ScreenHeader />
+    <>
+      <SafeAreaView
+        style={styles.container}
+        edges={['top', 'bottom']}>
+        <ScreenHeader />
 
+        <PageHeader
+          title="Welcome back"
+          subtitle="Sign in to continue discovering people who share your favorite things."
+          align="center"
+        />
 
-      <PageHeader
-        title="Welcome back"
-        subtitle="Sign in to continue discovering people who share your favorite things."
-        align="center"
-      />
+        <View style={styles.content}>
+          <View style={styles.options}>
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={
+                AppleAuthentication
+                  .AppleAuthenticationButtonType.CONTINUE
+              }
+              buttonStyle={
+                AppleAuthentication
+                  .AppleAuthenticationButtonStyle.WHITE_OUTLINE
+              }
+              cornerRadius={12}
+              style={styles.appleButton}
+              onPress={handleAppleSignIn}
+            />
 
+            <GoogleAuthButton
+              onPress={handleGoogleSignIn}
+            />
 
-      <View style={styles.content}>
-        <View style={styles.options}>
-          <AppleAuthentication.AppleAuthenticationButton
-            buttonType={
-              AppleAuthentication
-                .AppleAuthenticationButtonType.CONTINUE
-            }
-            buttonStyle={
-              AppleAuthentication
-                .AppleAuthenticationButtonStyle.WHITE_OUTLINE
-            }
-            cornerRadius={12}
-            style={styles.appleButton}
-            onPress={handleAppleSignIn}
-          />
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
 
+              <Text style={styles.dividerText}>
+                OR
+              </Text>
 
-          <GoogleAuthButton
-            onPress={handleGoogleSignIn}
-          />
+              <View style={styles.dividerLine} />
+            </View>
 
-
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-
-
-            <Text style={styles.dividerText}>
-              OR
-            </Text>
-
-
-            <View style={styles.dividerLine} />
+            <EmailAuthButton
+              onPress={handleEmailSignIn}
+            />
           </View>
 
-
-          <EmailAuthButton
-            onPress={handleEmailSignIn}
-          />
-        </View>
-
-
-        <View style={styles.signUpContainer}>
-          <Text style={styles.signUpPrompt}>
-            {isReturningFromOnboarding
-              ? "Don't have an account?"
-              : 'New to Top 3?'}
-          </Text>
-
-
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={
-              isReturningFromOnboarding
-                ? 'Create account'
-                : 'Get started'
-            }
-            hitSlop={8}
-            onPress={handleBottomAction}
-            style={({ pressed }) => [
-              styles.signUpButton,
-              pressed && styles.pressed,
-            ]}>
-            <Text style={styles.signUpButtonText}>
+          <View style={styles.signUpContainer}>
+            <Text style={styles.signUpPrompt}>
               {isReturningFromOnboarding
-                ? 'Create one'
-                : 'Get Started'}
+                ? "Don't have an account?"
+                : 'New to Top 3?'}
             </Text>
-          </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={
+                isReturningFromOnboarding
+                  ? 'Create account'
+                  : 'Get started'
+              }
+              hitSlop={8}
+              onPress={handleBottomAction}
+              style={({ pressed }) => [
+                styles.signUpButton,
+                pressed && styles.pressed,
+              ]}>
+              <Text style={styles.signUpButtonText}>
+                {isReturningFromOnboarding
+                  ? 'Create one'
+                  : 'Get Started'}
+              </Text>
+            </Pressable>
+          </View>
         </View>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+
+      <ActionSheet
+        visible={failedSignInProvider !== null}
+        title={
+          failedSignInProvider
+            ? `Unable to continue with ${failedSignInProvider}`
+            : ''
+        }
+        message="Please try again."
+        actions={[
+          {
+            label: 'OK',
+            onPress: () => {
+              setFailedSignInProvider(null);
+            },
+          },
+        ]}
+        onClose={() => {
+          setFailedSignInProvider(null);
+        }}
+      />
+    </>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
@@ -242,25 +240,21 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
 
-
   content: {
     flex: 1,
     paddingHorizontal: 24,
     paddingBottom: 24,
   },
 
-
   options: {
     marginTop: 28,
     gap: 14,
   },
 
-
   appleButton: {
     width: '100%',
     height: 54,
   },
-
 
   divider: {
     flexDirection: 'row',
@@ -268,13 +262,11 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
 
-
   dividerLine: {
     flex: 1,
     height: 1,
     backgroundColor: COLORS.border,
   },
-
 
   dividerText: {
     marginHorizontal: 14,
@@ -284,7 +276,6 @@ const styles = StyleSheet.create({
     color: COLORS.tertiaryText,
   },
 
-
   signUpContainer: {
     marginTop: 'auto',
     flexDirection: 'row',
@@ -292,18 +283,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-
   signUpPrompt: {
     fontSize: 16,
     lineHeight: 22,
     color: COLORS.tertiaryText,
   },
 
-
   signUpButton: {
     marginLeft: 5,
   },
-
 
   signUpButtonText: {
     fontSize: 16,
@@ -311,7 +299,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1573DD',
   },
-
 
   pressed: {
     opacity: 0.6,

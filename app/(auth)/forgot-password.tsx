@@ -17,7 +17,6 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 
 import {
-  Alert,
   Pressable,
   StyleSheet,
   Text,
@@ -54,6 +53,11 @@ export default function ForgotPasswordScreen() {
     isNetworkErrorSheetVisible,
     setIsNetworkErrorSheetVisible,
   ] = useState(false);
+
+  const [
+    errorSheet,
+    setErrorSheet,
+  ] = useState<ValidationSheet | null>(null);
 
   async function handleSubmit() {
     if (isSubmitting) {
@@ -114,10 +118,10 @@ export default function ForgotPasswordScreen() {
         error
       );
 
-      Alert.alert(
-        'Unable to send reset link',
-        'Please try again.'
-      );
+      setErrorSheet({
+        title: 'Unable to send reset link',
+        message: 'Please try again.',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -132,10 +136,11 @@ export default function ForgotPasswordScreen() {
         error
       );
 
-      Alert.alert(
-        'Unable to open email',
-        'Open your email app and look for the password reset message from Top3.'
-      );
+      setErrorSheet({
+        title: 'Unable to open email',
+        message:
+          'Open your email app and look for the password reset message from Top3.',
+      });
     }
   }
 
@@ -269,6 +274,23 @@ export default function ForgotPasswordScreen() {
         ]}
         onClose={() => {
           setIsNetworkErrorSheetVisible(false);
+        }}
+      />
+
+      <ActionSheet
+        visible={Boolean(errorSheet)}
+        title={errorSheet?.title ?? ''}
+        message={errorSheet?.message ?? ''}
+        actions={[
+          {
+            label: 'OK',
+            onPress: () => {
+              setErrorSheet(null);
+            },
+          },
+        ]}
+        onClose={() => {
+          setErrorSheet(null);
         }}
       />
     </>

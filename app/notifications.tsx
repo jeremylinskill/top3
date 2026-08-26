@@ -1,3 +1,4 @@
+import ActionSheet from '@/components/action-sheet';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
 import Card from '@/components/ui/card';
@@ -15,7 +16,6 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Pressable,
   RefreshControl,
@@ -171,6 +171,14 @@ export default function NotificationsScreen() {
     setActiveFollowRequestId,
   ] = useState<string | null>(null);
 
+  const [
+    notificationError,
+    setNotificationError,
+  ] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
+
   async function handleNotificationPress(
     notification: EnrichedNotification
   ) {
@@ -239,10 +247,10 @@ export default function NotificationsScreen() {
         error
       );
 
-      Alert.alert(
-        'Unable to accept request',
-        'Please try again.'
-      );
+      setNotificationError({
+        title: 'Unable to accept request',
+        message: 'Please try again.',
+      });
     } finally {
       setActiveFollowRequestId(null);
     }
@@ -265,10 +273,10 @@ export default function NotificationsScreen() {
         error
       );
 
-      Alert.alert(
-        'Unable to decline request',
-        'Please try again.'
-      );
+      setNotificationError({
+        title: 'Unable to decline request',
+        message: 'Please try again.',
+      });
     } finally {
       setActiveFollowRequestId(null);
     }
@@ -292,17 +300,18 @@ export default function NotificationsScreen() {
         error
       );
 
-      Alert.alert(
-        'Unable to update notifications',
-        'Please try again.'
-      );
+      setNotificationError({
+        title: 'Unable to update notifications',
+        message: 'Please try again.',
+      });
     } finally {
       setIsMarkingAllRead(false);
     }
   }
 
   return (
-    <SafeAreaView
+    <>
+      <SafeAreaView
       style={styles.container}
       edges={['top', 'left', 'right']}>
       <ScreenHeader />
@@ -641,8 +650,26 @@ export default function NotificationsScreen() {
             ) : null}
           </>
         )}
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+
+      <ActionSheet
+        visible={notificationError !== null}
+        title={notificationError?.title ?? ''}
+        message={notificationError?.message}
+        actions={[
+          {
+            label: 'OK',
+            onPress: () => {
+              setNotificationError(null);
+            },
+          },
+        ]}
+        onClose={() => {
+          setNotificationError(null);
+        }}
+      />
+    </>
   );
 }
 

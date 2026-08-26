@@ -11,7 +11,6 @@ import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
-  Alert,
   Pressable,
   StyleSheet,
   Text,
@@ -30,6 +29,16 @@ export default function CheckEmailScreen() {
     setResendRateLimitMessage,
   ] = useState<string | null>(null);
 
+  const [
+    isOpenEmailErrorSheetVisible,
+    setIsOpenEmailErrorSheetVisible,
+  ] = useState(false);
+
+  const [
+    resendErrorMessage,
+    setResendErrorMessage,
+  ] = useState<string | null>(null);
+
   async function handleOpenEmail() {
     try {
       await Linking.openURL('message://');
@@ -39,10 +48,7 @@ export default function CheckEmailScreen() {
         error
       );
 
-      Alert.alert(
-        'Unable to open email',
-        'Open your email app and look for the confirmation message from Top3.'
-      );
+      setIsOpenEmailErrorSheetVisible(true);
     }
   }
 
@@ -52,8 +58,7 @@ export default function CheckEmailScreen() {
         await getAwaitingEmailVerificationEmail();
 
       if (!email) {
-        Alert.alert(
-          'Unable to resend email',
+        setResendErrorMessage(
           'We could not determine which email address is waiting for verification. Please use a different email address and try again.'
         );
 
@@ -86,8 +91,7 @@ export default function CheckEmailScreen() {
         error
       );
 
-      Alert.alert(
-        'Unable to resend email',
+      setResendErrorMessage(
         error instanceof Error
           ? error.message
           : 'Please try again.'
@@ -228,6 +232,40 @@ export default function CheckEmailScreen() {
         ]}
         onClose={() => {
           setResendRateLimitMessage(null);
+        }}
+      />
+
+      <ActionSheet
+        visible={isOpenEmailErrorSheetVisible}
+        title="Unable to open email"
+        message="Open your email app and look for the confirmation message from Top3."
+        actions={[
+          {
+            label: 'OK',
+            onPress: () => {
+              setIsOpenEmailErrorSheetVisible(false);
+            },
+          },
+        ]}
+        onClose={() => {
+          setIsOpenEmailErrorSheetVisible(false);
+        }}
+      />
+
+      <ActionSheet
+        visible={resendErrorMessage !== null}
+        title="Unable to resend email"
+        message={resendErrorMessage ?? ''}
+        actions={[
+          {
+            label: 'OK',
+            onPress: () => {
+              setResendErrorMessage(null);
+            },
+          },
+        ]}
+        onClose={() => {
+          setResendErrorMessage(null);
         }}
       />
     </>

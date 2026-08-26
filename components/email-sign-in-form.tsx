@@ -19,7 +19,6 @@ import {
 } from 'react';
 
 import {
-  Alert,
   Pressable,
   StyleSheet,
   Text,
@@ -84,6 +83,11 @@ export default function EmailSignInForm({
     isInvalidCredentialsSheetVisible,
     setIsInvalidCredentialsSheetVisible,
   ] = useState(false);
+
+  const [
+    signInErrorMessage,
+    setSignInErrorMessage,
+  ] = useState<string | null>(null);
 
   function validateForm() {
     const normalizedEmail = email.trim();
@@ -199,10 +203,7 @@ export default function EmailSignInForm({
         error
       );
 
-      Alert.alert(
-        'Unable to sign in',
-        message
-      );
+      setSignInErrorMessage(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -382,6 +383,23 @@ export default function EmailSignInForm({
           setIsInvalidCredentialsSheetVisible(
             false
           );
+        }}
+      />
+
+      <ActionSheet
+        visible={signInErrorMessage !== null}
+        title="Unable to sign in"
+        message={signInErrorMessage ?? ''}
+        actions={[
+          {
+            label: 'OK',
+            onPress: () => {
+              setSignInErrorMessage(null);
+            },
+          },
+        ]}
+        onClose={() => {
+          setSignInErrorMessage(null);
         }}
       />
     </>

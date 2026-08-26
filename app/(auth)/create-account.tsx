@@ -1,3 +1,4 @@
+import ActionSheet from '@/components/action-sheet';
 import EmailAuthButton from '@/components/email-auth-button';
 import GoogleAuthButton from '@/components/google-auth-button';
 import PageHeader from '@/components/page-header';
@@ -10,8 +11,8 @@ import {
 } from '@/services/auth-service';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { router } from 'expo-router';
+import { useState } from 'react';
 import {
-  Alert,
   Pressable,
   StyleSheet,
   Text,
@@ -20,11 +21,23 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 
+type ErrorSheet = {
+  title: string;
+  message: string;
+};
+
+
 export default function CreateAccountScreen() {
   const {
     collection: onboardingCollection,
     prepareAuthHandoff,
   } = useOnboardingCollection();
+
+
+  const [
+    errorSheet,
+    setErrorSheet,
+  ] = useState<ErrorSheet | null>(null);
 
 
   const isSavingOnboardingCollection =
@@ -61,10 +74,10 @@ export default function CreateAccountScreen() {
       );
 
 
-      Alert.alert(
-        'Unable to continue with Apple',
-        'Please try again.'
-      );
+      setErrorSheet({
+        title: 'Unable to continue with Apple',
+        message: 'Please try again.',
+      });
     }
   }
 
@@ -101,10 +114,10 @@ export default function CreateAccountScreen() {
       );
 
 
-      Alert.alert(
-        'Unable to continue with Google',
-        'Please try again.'
-      );
+      setErrorSheet({
+        title: 'Unable to continue with Google',
+        message: 'Please try again.',
+      });
     }
   }
 
@@ -120,10 +133,10 @@ export default function CreateAccountScreen() {
       );
 
 
-      Alert.alert(
-        'Unable to continue',
-        'Please try again.'
-      );
+      setErrorSheet({
+        title: 'Unable to continue',
+        message: 'Please try again.',
+      });
     }
   }
 
@@ -145,9 +158,10 @@ export default function CreateAccountScreen() {
 
 
   return (
-    <SafeAreaView
-      style={styles.container}
-      edges={['top', 'bottom']}>
+    <>
+      <SafeAreaView
+        style={styles.container}
+        edges={['top', 'bottom']}>
       <ScreenHeader />
 
 
@@ -228,8 +242,26 @@ export default function CreateAccountScreen() {
             </Text>
           </Pressable>
         </View>
-      </View>
-    </SafeAreaView>
+        </View>
+      </SafeAreaView>
+
+      <ActionSheet
+        visible={Boolean(errorSheet)}
+        title={errorSheet?.title ?? ''}
+        message={errorSheet?.message ?? ''}
+        actions={[
+          {
+            label: 'OK',
+            onPress: () => {
+              setErrorSheet(null);
+            },
+          },
+        ]}
+        onClose={() => {
+          setErrorSheet(null);
+        }}
+      />
+    </>
   );
 }
 

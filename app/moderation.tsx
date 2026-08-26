@@ -1,3 +1,4 @@
+import ActionSheet from '@/components/action-sheet';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
 import { COLORS } from '@/constants/colors';
@@ -5,21 +6,20 @@ import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
 import { TYPOGRAPHY } from '@/constants/typography';
 import {
-    dismissReport,
-    getPendingReports,
-    ModerationReport,
-    removeReportedContent,
+  dismissReport,
+  getPendingReports,
+  ModerationReport,
+  removeReportedContent,
 } from '@/lib/supabase/moderation';
 import { useCallback, useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Pressable,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -112,6 +112,31 @@ function getReportedContentLabel(
 
   return 'Reported list';
 }
+
+type ModerationActionSheet =
+  | {
+      type: 'dismiss-confirmation';
+      report: ModerationReport;
+    }
+  | {
+      type: 'dismiss-success';
+    }
+  | {
+      type: 'dismiss-error';
+    }
+  | {
+      type: 'remove-confirmation';
+      report: ModerationReport;
+      targetLabel: 'comment' | 'list';
+    }
+  | {
+      type: 'remove-success';
+      targetLabel: 'comment' | 'list';
+    }
+  | {
+      type: 'remove-error';
+    }
+  | null;
 
 type ReportCardProps = {
   report: ModerationReport;
@@ -365,6 +390,11 @@ export default function ModerationScreen() {
     setRemovingContentReportId,
   ] = useState<string | null>(null);
 
+  const [
+    moderationActionSheet,
+    setModerationActionSheet,
+  ] = useState<ModerationActionSheet>(null);
+
   const loadReports = useCallback(
     async ({
       refreshing = false,
@@ -408,6 +438,39 @@ export default function ModerationScreen() {
     void loadReports();
   }, [loadReports]);
 
+  const performDismissReport = useCallback(
+    async (report: ModerationReport) => {
+      setDismissingReportId(report.id);
+
+      try {
+        await dismissReport(report.id);
+
+        setReports((currentReports) =>
+          currentReports.filter(
+            (currentReport) =>
+              currentReport.id !== report.id
+          )
+        );
+
+        setModerationActionSheet({
+          type: 'dismiss-success',
+        });
+      } catch (error) {
+        console.error(
+          'Failed to dismiss moderation report:',
+          error
+        );
+
+        setModerationActionSheet({
+          type: 'dismiss-error',
+        });
+      } finally {
+        setDismissingReportId(null);
+      }
+    },
+    []
+  );
+
   const handleDismissReport = useCallback(
     (report: ModerationReport) => {
       if (
@@ -417,65 +480,47 @@ export default function ModerationScreen() {
         return;
       }
 
-      Alert.alert(
-        'Dismiss report?',
-        'This will mark the report as dismissed. The reported user and content will not be changed.',
-        [
-          {
-            text: 'Cancel',
-            style: 'cancel',
-          },
-          {
-            text: 'Dismiss Report',
-            onPress: () => {
-              void (async () => {
-                setDismissingReportId(
-                  report.id
-                );
-
-                try {
-                  await dismissReport(
-                    report.id
-                  );
-
-                  setReports(
-                    (currentReports) =>
-                      currentReports.filter(
-                        (currentReport) =>
-                          currentReport.id !==
-                          report.id
-                      )
-                  );
-
-                  Alert.alert(
-                    'Report dismissed',
-                    'The report has been dismissed.'
-                  );
-                } catch (error) {
-                  console.error(
-                    'Failed to dismiss moderation report:',
-                    error
-                  );
-
-                  Alert.alert(
-                    'Unable to dismiss report',
-                    'Please try again.'
-                  );
-                } finally {
-                  setDismissingReportId(
-                    null
-                  );
-                }
-              })();
-            },
-          },
-        ]
-      );
+      setModerationActionSheet({
+        type: 'dismiss-confirmation',
+        report,
+      });
     },
     [
       dismissingReportId,
       removingContentReportId,
     ]
+  );
+
+  const performRemoveContent = useCallback(
+    async (
+      report: ModerationReport,
+      targetLabel: 'comment' | 'list'
+    ) => {
+      setRemovingContentReportId(report.id);
+
+      try {
+        await removeReportedContent(report.id);
+
+        await loadReports();
+
+        setModerationActionSheet({
+          type: 'remove-success',
+          targetLabel,
+        });
+      } catch (error) {
+        console.error(
+          'Failed to remove reported content:',
+          error
+        );
+
+        setModerationActionSheet({
+          type: 'remove-error',
+        });
+      } finally {
+        setRemovingContentReportId(null);
+      }
+    },
+    [loadReports]
   );
 
   const handleRemoveContent = useCallback(
@@ -493,66 +538,139 @@ export default function ModerationScreen() {
           ? 'comment'
           : 'list';
 
-      Alert.alert(
-        'Remove content?',
-        `This will remove the reported ${targetLabel} from Top 3 and resolve the report. The content will be retained for moderation records.`,
-        [
-          {
-            text: 'Cancel',
-            style: 'cancel',
-          },
-          {
-            text: 'Remove Content',
-            style: 'destructive',
-            onPress: () => {
-              void (async () => {
-                setRemovingContentReportId(
-                  report.id
-                );
-
-                try {
-                  await removeReportedContent(
-                    report.id
-                  );
-
-                  await loadReports();
-
-                  Alert.alert(
-                    'Content removed',
-                    `The reported ${targetLabel} has been removed and the report has been resolved.`
-                  );
-                } catch (error) {
-                  console.error(
-                    'Failed to remove reported content:',
-                    error
-                  );
-
-                  Alert.alert(
-                    'Unable to remove content',
-                    'Please try again.'
-                  );
-                } finally {
-                  setRemovingContentReportId(
-                    null
-                  );
-                }
-              })();
-            },
-          },
-        ]
-      );
+      setModerationActionSheet({
+        type: 'remove-confirmation',
+        report,
+        targetLabel,
+      });
     },
     [
       dismissingReportId,
       removingContentReportId,
-      loadReports,
     ]
   );
 
+  function closeModerationActionSheet() {
+    setModerationActionSheet(null);
+  }
+
+  let moderationSheetTitle = '';
+  let moderationSheetMessage = '';
+  let moderationSheetActions: {
+    label: string;
+    variant?: 'default' | 'destructive' | 'cancel';
+    onPress: () => void;
+  }[] = [];
+
+  if (moderationActionSheet) {
+    switch (moderationActionSheet.type) {
+      case 'dismiss-confirmation': {
+        const { report } = moderationActionSheet;
+
+        moderationSheetTitle = 'Dismiss report?';
+        moderationSheetMessage =
+          'This will mark the report as dismissed. The reported user and content will not be changed.';
+        moderationSheetActions = [
+          {
+            label: 'Cancel',
+            variant: 'cancel',
+            onPress: closeModerationActionSheet,
+          },
+          {
+            label: 'Dismiss Report',
+            onPress: () => {
+              closeModerationActionSheet();
+              void performDismissReport(report);
+            },
+          },
+        ];
+        break;
+      }
+
+      case 'dismiss-success':
+        moderationSheetTitle = 'Report dismissed';
+        moderationSheetMessage =
+          'The report has been dismissed.';
+        moderationSheetActions = [
+          {
+            label: 'OK',
+            onPress: closeModerationActionSheet,
+          },
+        ];
+        break;
+
+      case 'dismiss-error':
+        moderationSheetTitle =
+          'Unable to dismiss report';
+        moderationSheetMessage = 'Please try again.';
+        moderationSheetActions = [
+          {
+            label: 'OK',
+            onPress: closeModerationActionSheet,
+          },
+        ];
+        break;
+
+      case 'remove-confirmation': {
+        const { report, targetLabel } =
+          moderationActionSheet;
+
+        moderationSheetTitle = 'Remove content?';
+        moderationSheetMessage =
+          `This will remove the reported ${targetLabel} from Top 3 and resolve the report. The content will be retained for moderation records.`;
+        moderationSheetActions = [
+          {
+            label: 'Cancel',
+            variant: 'cancel',
+            onPress: closeModerationActionSheet,
+          },
+          {
+            label: 'Remove Content',
+            variant: 'destructive',
+            onPress: () => {
+              closeModerationActionSheet();
+              void performRemoveContent(
+                report,
+                targetLabel
+              );
+            },
+          },
+        ];
+        break;
+      }
+
+      case 'remove-success':
+        moderationSheetTitle = 'Content removed';
+        moderationSheetMessage =
+          `The reported ${moderationActionSheet.targetLabel} has been removed and the report has been resolved.`;
+        moderationSheetActions = [
+          {
+            label: 'OK',
+            onPress: closeModerationActionSheet,
+          },
+        ];
+        break;
+
+      case 'remove-error':
+        moderationSheetTitle =
+          'Unable to remove content';
+        moderationSheetMessage = 'Please try again.';
+        moderationSheetActions = [
+          {
+            label: 'OK',
+            onPress: closeModerationActionSheet,
+          },
+        ];
+        break;
+    }
+  }
+
+
   return (
-    <SafeAreaView
-      style={styles.container}
-      edges={['top', 'left', 'right']}>
+    <>
+      <SafeAreaView
+        style={styles.container}
+        edges={['top', 'left', 'right']}>
       <ScreenHeader showBackButton />
 
       <PageHeader
@@ -633,8 +751,17 @@ export default function ModerationScreen() {
             ))
           )}
         </View>
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+
+      <ActionSheet
+        visible={moderationActionSheet !== null}
+        title={moderationSheetTitle}
+        message={moderationSheetMessage}
+        actions={moderationSheetActions}
+        onClose={closeModerationActionSheet}
+      />
+    </>
   );
 }
 

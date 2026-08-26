@@ -24,7 +24,6 @@ import {
   useState,
 } from 'react';
 import {
-  Alert,
   Animated,
   Easing,
   Image,
@@ -74,6 +73,9 @@ type CommentActionSheet =
     }
   | {
       type: 'comment-blocked';
+    }
+  | {
+      type: 'post-error';
     }
   | null;
 
@@ -373,10 +375,9 @@ export default function CommentsSheet({
         error
       );
 
-      Alert.alert(
-        'Unable to post comment',
-        'Something went wrong while posting your comment. Please try again.'
-      );
+      setCommentActionSheet({
+        type: 'post-error',
+      });
     }
   }
 
@@ -671,6 +672,21 @@ export default function CommentsSheet({
           'Comment not posted';
         commentActionSheetMessage =
           "This comment contains language that isn't allowed on Top3. Please revise it and try again.";
+
+        commentActionSheetActions = [
+          {
+            label: 'OK',
+            variant: 'cancel',
+            onPress: closeCommentActionSheet,
+          },
+        ];
+        break;
+
+      case 'post-error':
+        commentActionSheetTitle =
+          'Unable to post comment';
+        commentActionSheetMessage =
+          'Something went wrong while posting your comment. Please try again.';
 
         commentActionSheetActions = [
           {

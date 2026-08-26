@@ -28,7 +28,6 @@ import {
   useState,
 } from 'react';
 import {
-  Alert,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -104,6 +103,20 @@ type FeedReportSheet =
     }
   | {
       type: 'report-error';
+    }
+  | {
+      type: 'block-success';
+      displayName: string;
+    }
+  | {
+      type: 'block-error';
+    }
+  | {
+      type: 'unblock-success';
+      displayName: string;
+    }
+  | {
+      type: 'unblock-error';
     }
   | null;
 
@@ -540,20 +553,20 @@ export default function FeedScreen() {
       const author =
         getPostAuthor(post.authorId);
 
-      Alert.alert(
-        'User blocked',
-        `${author?.displayName ?? 'This user'} has been blocked.`
-      );
+      setReportSheet({
+        type: 'block-success',
+        displayName:
+          author?.displayName ?? 'This user',
+      });
     } catch (error) {
       console.error(
         'Failed to block user from feed:',
         error
       );
 
-      Alert.alert(
-        'Unable to block user',
-        'Please try again.'
-      );
+      setReportSheet({
+        type: 'block-error',
+      });
     }
   }
 
@@ -568,20 +581,20 @@ export default function FeedScreen() {
       const author =
         getPostAuthor(post.authorId);
 
-      Alert.alert(
-        'User unblocked',
-        `${author?.displayName ?? 'This user'} has been unblocked.`
-      );
+      setReportSheet({
+        type: 'unblock-success',
+        displayName:
+          author?.displayName ?? 'This user',
+      });
     } catch (error) {
       console.error(
         'Failed to unblock user from feed:',
         error
       );
 
-      Alert.alert(
-        'Unable to unblock user',
-        'Please try again.'
-      );
+      setReportSheet({
+        type: 'unblock-error',
+      });
     }
   }
 
@@ -928,6 +941,64 @@ export default function FeedScreen() {
       case 'report-error':
         reportSheetTitle =
           'Unable to submit report';
+        reportSheetMessage =
+          'Please try again.';
+
+        reportSheetActions = [
+          {
+            label: 'OK',
+            variant: 'cancel',
+            onPress: closeReportSheet,
+          },
+        ];
+        break;
+
+      case 'block-success':
+        reportSheetTitle = 'User blocked';
+        reportSheetMessage =
+          `${reportSheet.displayName} has been blocked.`;
+
+        reportSheetActions = [
+          {
+            label: 'OK',
+            variant: 'cancel',
+            onPress: closeReportSheet,
+          },
+        ];
+        break;
+
+      case 'block-error':
+        reportSheetTitle =
+          'Unable to block user';
+        reportSheetMessage =
+          'Please try again.';
+
+        reportSheetActions = [
+          {
+            label: 'OK',
+            variant: 'cancel',
+            onPress: closeReportSheet,
+          },
+        ];
+        break;
+
+      case 'unblock-success':
+        reportSheetTitle = 'User unblocked';
+        reportSheetMessage =
+          `${reportSheet.displayName} has been unblocked.`;
+
+        reportSheetActions = [
+          {
+            label: 'OK',
+            variant: 'cancel',
+            onPress: closeReportSheet,
+          },
+        ];
+        break;
+
+      case 'unblock-error':
+        reportSheetTitle =
+          'Unable to unblock user';
         reportSheetMessage =
           'Please try again.';
 

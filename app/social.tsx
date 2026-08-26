@@ -1,3 +1,4 @@
+import ActionSheet from '@/components/action-sheet';
 import ScreenHeader from '@/components/screen-header';
 import SearchInput from '@/components/search-input';
 import SegmentedControl from '@/components/segmented-control';
@@ -23,7 +24,6 @@ import {
   useState,
 } from 'react';
 import {
-  Alert,
   Image,
   Keyboard,
   Platform,
@@ -92,6 +92,11 @@ export default function SocialScreen() {
 
   const [searchQuery, setSearchQuery] =
     useState('');
+
+  const [
+    followerToRemove,
+    setFollowerToRemove,
+  ] = useState<UserProfile | null>(null);
 
   const [allPosts, setAllPosts] = useState<Post[]>([]);
 
@@ -417,22 +422,7 @@ export default function SocialScreen() {
   function confirmRemoveFollower(
     user: UserProfile
   ) {
-    Alert.alert(
-      'Remove follower?',
-      `${user.displayName} will no longer follow you. They can request to follow you again in the future.`,
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: () =>
-            removeFollower(user.id),
-        },
-      ]
-    );
+    setFollowerToRemove(user);
   }
 
   function getEmptyTitle() {
@@ -479,7 +469,8 @@ export default function SocialScreen() {
   }
 
   return (
-    <SafeAreaView
+    <>
+      <SafeAreaView
       style={styles.container}
       edges={['top', 'left', 'right']}>
       <ScreenHeader showBackButton />
@@ -724,8 +715,42 @@ export default function SocialScreen() {
             })}
           </View>
         )}
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+
+      <ActionSheet
+        visible={followerToRemove !== null}
+        title="Remove follower?"
+        message={
+          followerToRemove
+            ? `${followerToRemove.displayName} will no longer follow you. They can request to follow you again in the future.`
+            : ''
+        }
+        actions={[
+          {
+            label: 'Remove',
+            variant: 'destructive',
+            onPress: () => {
+              if (followerToRemove) {
+                removeFollower(followerToRemove.id);
+              }
+
+              setFollowerToRemove(null);
+            },
+          },
+          {
+            label: 'Cancel',
+            variant: 'cancel',
+            onPress: () => {
+              setFollowerToRemove(null);
+            },
+          },
+        ]}
+        onClose={() => {
+          setFollowerToRemove(null);
+        }}
+      />
+    </>
   );
 }
 

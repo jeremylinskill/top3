@@ -1,3 +1,4 @@
+import ActionSheet from '@/components/action-sheet';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
 import { COLORS } from '@/constants/colors';
@@ -8,7 +9,6 @@ import { useProfile } from '@/context/profile-context';
 import { useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -119,6 +119,11 @@ export default function PrivacyScreen() {
   const [isSaving, setIsSaving] =
     useState(false);
 
+  const [
+    isUpdateErrorSheetVisible,
+    setIsUpdateErrorSheetVisible,
+  ] = useState(false);
+
   async function updateVisibility(
     visibility: VisibilityOption
   ) {
@@ -149,81 +154,99 @@ export default function PrivacyScreen() {
         previousVisibility
       );
 
-      Alert.alert(
-        'Unable to update privacy',
-        'Please try again.'
-      );
+      setIsUpdateErrorSheetVisible(true);
     } finally {
       setIsSaving(false);
     }
   }
 
   return (
-    <SafeAreaView
-      style={styles.container}
-      edges={['top', 'left', 'right']}>
-      <ScreenHeader showBackButton />
+    <>
+      <SafeAreaView
+        style={styles.container}
+        edges={['top', 'left', 'right']}>
+        <ScreenHeader showBackButton />
 
-      <PageHeader
-        title="Privacy"
-        subtitle="Choose who can see your lists."
-      />
+        <PageHeader
+          title="Privacy"
+          subtitle="Choose who can see your lists."
+        />
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            Account visibility
-          </Text>
-
-          <View
-            accessibilityRole="radiogroup">
-            <VisibilityCard
-              value="public"
-              selectedValue={
-                selectedVisibility
-              }
-              title="Public account"
-              description="Anyone can view your profile and published lists."
-              disabled={isSaving}
-              onSelect={updateVisibility}
-            />
-
-            <VisibilityCard
-              value="private"
-              selectedValue={
-                selectedVisibility
-              }
-              title="Private account"
-              description="Only approved followers can view your published lists."
-              details={[
-                'People must request to follow you.',
-                'You can approve or decline each request.',
-                'Your lists remain hidden from non-followers.',
-                'Your profile can still appear in search.',
-              ]}
-              disabled={isSaving}
-              onSelect={updateVisibility}
-            />
-          </View>
-        </View>
-
-        {isSaving ? (
-          <View style={styles.savingState}>
-            <ActivityIndicator
-              size="small"
-              color={COLORS.text}
-            />
-
-            <Text style={styles.savingText}>
-              Updating privacy…
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>
+              Account visibility
             </Text>
+
+            <View
+              accessibilityRole="radiogroup">
+              <VisibilityCard
+                value="public"
+                selectedValue={
+                  selectedVisibility
+                }
+                title="Public account"
+                description="Anyone can view your profile and published lists."
+                disabled={isSaving}
+                onSelect={updateVisibility}
+              />
+
+              <VisibilityCard
+                value="private"
+                selectedValue={
+                  selectedVisibility
+                }
+                title="Private account"
+                description="Only approved followers can view your published lists."
+                details={[
+                  'People must request to follow you.',
+                  'You can approve or decline each request.',
+                  'Your lists remain hidden from non-followers.',
+                  'Your profile can still appear in search.',
+                ]}
+                disabled={isSaving}
+                onSelect={updateVisibility}
+              />
+            </View>
           </View>
-        ) : null}
-      </ScrollView>
-    </SafeAreaView>
+
+          {isSaving ? (
+            <View style={styles.savingState}>
+              <ActivityIndicator
+                size="small"
+                color={COLORS.text}
+              />
+
+              <Text style={styles.savingText}>
+                Updating privacy…
+              </Text>
+            </View>
+          ) : null}
+        </ScrollView>
+      </SafeAreaView>
+
+      <ActionSheet
+        visible={isUpdateErrorSheetVisible}
+        title="Unable to update privacy"
+        message="Please try again."
+        actions={[
+          {
+            label: 'OK',
+            onPress: () => {
+              setIsUpdateErrorSheetVisible(
+                false
+              );
+            },
+          },
+        ]}
+        onClose={() => {
+          setIsUpdateErrorSheetVisible(false);
+        }}
+      />
+    </>
   );
 }
 

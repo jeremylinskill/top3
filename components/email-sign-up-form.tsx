@@ -17,7 +17,6 @@ import {
 } from 'react';
 
 import {
-  Alert,
   Pressable,
   StyleSheet,
   Text,
@@ -74,6 +73,11 @@ export default function EmailSignUpForm({
     isNetworkErrorSheetVisible,
     setIsNetworkErrorSheetVisible,
   ] = useState(false);
+
+  const [
+    createAccountErrorMessage,
+    setCreateAccountErrorMessage,
+  ] = useState<string | null>(null);
 
   function validateForm() {
     const normalizedEmail = email.trim();
@@ -187,8 +191,7 @@ export default function EmailSignUpForm({
         error
       );
 
-      Alert.alert(
-        'Unable to create account',
+      setCreateAccountErrorMessage(
         error instanceof Error
           ? error.message
           : 'Please try again.'
@@ -382,6 +385,23 @@ export default function EmailSignUpForm({
         ]}
         onClose={() => {
           setIsNetworkErrorSheetVisible(false);
+        }}
+      />
+
+      <ActionSheet
+        visible={createAccountErrorMessage !== null}
+        title="Unable to create account"
+        message={createAccountErrorMessage ?? ''}
+        actions={[
+          {
+            label: 'OK',
+            onPress: () => {
+              setCreateAccountErrorMessage(null);
+            },
+          },
+        ]}
+        onClose={() => {
+          setCreateAccountErrorMessage(null);
         }}
       />
     </>

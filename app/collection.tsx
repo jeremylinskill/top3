@@ -1,3 +1,4 @@
+import ActionSheet from '@/components/action-sheet';
 import PageHeader from '@/components/page-header';
 import PrimaryButton from '@/components/primary-button';
 import RankedItemCard from '@/components/ranked-item-card';
@@ -22,7 +23,6 @@ import {
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   StyleSheet,
   Text,
@@ -38,6 +38,18 @@ type DraggableRow = {
   key: string;
   item: Top3Item;
 };
+
+
+type CollectionActionSheet =
+  | { type: 'drag-instruction' }
+  | {
+      type: 'item-actions';
+      rank: number;
+      itemTitle: string;
+    }
+  | { type: 'delete-error' }
+  | { type: 'delete-confirmation' }
+  | null;
 
 
 const DRAG_INSTRUCTION_KEY =
@@ -132,6 +144,11 @@ export default function CollectionScreen() {
   const [isDeleting, setIsDeleting] =
     useState(false);
 
+  const [
+    collectionActionSheet,
+    setCollectionActionSheet,
+  ] = useState<CollectionActionSheet>(null);
+
 
   const selectedItems =
     activeCollection?.items.filter(
@@ -180,28 +197,9 @@ export default function CollectionScreen() {
         }
 
 
-        Alert.alert(
-          'Reorder your Top 3',
-          'Press and hold the grip, then drag a selection into its new position.',
-          [
-            {
-              text: 'Got it',
-              onPress: async () => {
-                try {
-                  await AsyncStorage.setItem(
-                    DRAG_INSTRUCTION_KEY,
-                    'true'
-                  );
-                } catch (error) {
-                  console.error(
-                    'Failed to save drag instruction status:',
-                    error
-                  );
-                }
-              },
-            },
-          ]
-        );
+        setCollectionActionSheet({
+          type: 'drag-instruction',
+        });
       } catch (error) {
         console.error(
           'Failed to load drag instruction status:',
@@ -367,37 +365,11 @@ function openSearch(rank: number) {
     rank: number,
     itemTitle: string
   ) {
-    Alert.alert(
+    setCollectionActionSheet({
+      type: 'item-actions',
+      rank,
       itemTitle,
-      'What would you like to do?',
-      [
-        {
-          text: 'Replace',
-          onPress: () => openSearch(rank),
-        },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: () => {
-            if (isOnboardingCollection) {
-              removeOnboardingItemAtRank(
-                rank
-              );
-              return;
-            }
-
-
-            removeCurrentListItemAtRank(
-              rank
-            );
-          },
-        },
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-      ]
-    );
+    });
   }
 
 
@@ -445,10 +417,9 @@ function openSearch(rank: number) {
         error
       );
 
-      Alert.alert(
-        'Could not delete list',
-        'Please try again.'
-      );
+      setCollectionActionSheet({
+        type: 'delete-error',
+      });
     } finally {
       setIsDeleting(false);
     }
@@ -464,23 +435,126 @@ function openSearch(rank: number) {
       return;
     }
 
-    Alert.alert(
-      'Delete this Top 3?',
-      'This will permanently delete this list and remove it from your profile, feed, and rankings.',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            void deleteCollection();
+    setCollectionActionSheet({
+      type: 'delete-confirmation',
+    });
+  }
+
+
+  function closeCollectionActionSheet() {
+    setCollectionActionSheet(null);
+  }
+
+  let collectionActionSheetTitle = '';
+  let collectionActionSheetMessage = '';
+  let collectionActionSheetActions: {
+    label: string;
+    variant?: 'default' | 'destructive' | 'cancel';
+    onPress: () => void | Promise<void>;
+  }[] = [];
+
+  if (collectionActionSheet) {
+    switch (collectionActionSheet.type) {
+      case 'drag-instruction':
+        collectionActionSheetTitle =
+          'Reorder your Top 3';
+        collectionActionSheetMessage =
+          'Press and hold the grip, then drag a selection into its new position.';
+        collectionActionSheetActions = [
+          {
+            label: 'Got it',
+            onPress: async () => {
+              closeCollectionActionSheet();
+
+              try {
+                await AsyncStorage.setItem(
+                  DRAG_INSTRUCTION_KEY,
+                  'true'
+                );
+              } catch (error) {
+                console.error(
+                  'Failed to save drag instruction status:',
+                  error
+                );
+              }
+            },
           },
-        },
-      ]
-    );
+        ];
+        break;
+
+      case 'item-actions': {
+        const { rank, itemTitle } =
+          collectionActionSheet;
+
+        collectionActionSheetTitle = itemTitle;
+        collectionActionSheetMessage =
+          'What would you like to do?';
+        collectionActionSheetActions = [
+          {
+            label: 'Replace',
+            onPress: () => {
+              closeCollectionActionSheet();
+              openSearch(rank);
+            },
+          },
+          {
+            label: 'Remove',
+            variant: 'destructive',
+            onPress: () => {
+              closeCollectionActionSheet();
+
+              if (isOnboardingCollection) {
+                removeOnboardingItemAtRank(rank);
+                return;
+              }
+
+              removeCurrentListItemAtRank(rank);
+            },
+          },
+          {
+            label: 'Cancel',
+            variant: 'cancel',
+            onPress: closeCollectionActionSheet,
+          },
+        ];
+        break;
+      }
+
+      case 'delete-error':
+        collectionActionSheetTitle =
+          'Could not delete list';
+        collectionActionSheetMessage =
+          'Please try again.';
+        collectionActionSheetActions = [
+          {
+            label: 'OK',
+            onPress: closeCollectionActionSheet,
+          },
+        ];
+        break;
+
+      case 'delete-confirmation':
+        collectionActionSheetTitle =
+          'Delete this Top 3?';
+        collectionActionSheetMessage =
+          'This will permanently delete this list and remove it from your profile, feed, and rankings.';
+        collectionActionSheetActions = [
+          {
+            label: 'Cancel',
+            variant: 'cancel',
+            onPress: closeCollectionActionSheet,
+          },
+          {
+            label: 'Delete',
+            variant: 'destructive',
+            onPress: () => {
+              closeCollectionActionSheet();
+              void deleteCollection();
+            },
+          },
+        ];
+        break;
+    }
   }
 
 
@@ -615,8 +689,9 @@ function openSearch(rank: number) {
 
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScreenHeader showBackButton />
+    <>
+      <SafeAreaView style={styles.container}>
+        <ScreenHeader showBackButton />
 
 
       <PageHeader
@@ -688,8 +763,17 @@ function openSearch(rank: number) {
             </Text>
           </Pressable>
         ) : null}
-      </View>
-    </SafeAreaView>
+        </View>
+      </SafeAreaView>
+
+      <ActionSheet
+        visible={collectionActionSheet !== null}
+        title={collectionActionSheetTitle}
+        message={collectionActionSheetMessage}
+        actions={collectionActionSheetActions}
+        onClose={closeCollectionActionSheet}
+      />
+    </>
   );
 }
 

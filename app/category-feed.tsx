@@ -51,7 +51,6 @@ import {
 } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Animated,
   Image,
   Modal,
@@ -104,6 +103,20 @@ type CategoryFeedModerationSheet =
     }
   | {
       type: 'report-error';
+    }
+  | {
+      type: 'block-success';
+      displayName: string;
+    }
+  | {
+      type: 'block-error';
+    }
+  | {
+      type: 'unblock-success';
+      displayName: string;
+    }
+  | {
+      type: 'unblock-error';
     }
   | null;
 
@@ -807,20 +820,20 @@ if (isMounted) {
       const author =
         getPostAuthor(post.authorId);
 
-      Alert.alert(
-        'User blocked',
-        `${author?.displayName ?? 'This user'} has been blocked.`
-      );
+      setModerationSheet({
+        type: 'block-success',
+        displayName:
+          author?.displayName ?? 'This user',
+      });
     } catch (error) {
       console.error(
         'Failed to block user from category feed:',
         error
       );
 
-      Alert.alert(
-        'Unable to block user',
-        'Please try again.'
-      );
+      setModerationSheet({
+        type: 'block-error',
+      });
     }
   }
 
@@ -835,20 +848,20 @@ if (isMounted) {
       const author =
         getPostAuthor(post.authorId);
 
-      Alert.alert(
-        'User unblocked',
-        `${author?.displayName ?? 'This user'} has been unblocked.`
-      );
+      setModerationSheet({
+        type: 'unblock-success',
+        displayName:
+          author?.displayName ?? 'This user',
+      });
     } catch (error) {
       console.error(
         'Failed to unblock user from category feed:',
         error
       );
 
-      Alert.alert(
-        'Unable to unblock user',
-        'Please try again.'
-      );
+      setModerationSheet({
+        type: 'unblock-error',
+      });
     }
   }
 
@@ -1197,6 +1210,64 @@ if (isMounted) {
       case 'report-error':
         moderationSheetTitle =
           'Unable to submit report';
+        moderationSheetMessage =
+          'Please try again.';
+
+        moderationSheetActions = [
+          {
+            label: 'OK',
+            variant: 'cancel',
+            onPress: closeModerationSheet,
+          },
+        ];
+        break;
+
+      case 'block-success':
+        moderationSheetTitle = 'User blocked';
+        moderationSheetMessage =
+          `${moderationSheet.displayName} has been blocked.`;
+
+        moderationSheetActions = [
+          {
+            label: 'OK',
+            variant: 'cancel',
+            onPress: closeModerationSheet,
+          },
+        ];
+        break;
+
+      case 'block-error':
+        moderationSheetTitle =
+          'Unable to block user';
+        moderationSheetMessage =
+          'Please try again.';
+
+        moderationSheetActions = [
+          {
+            label: 'OK',
+            variant: 'cancel',
+            onPress: closeModerationSheet,
+          },
+        ];
+        break;
+
+      case 'unblock-success':
+        moderationSheetTitle = 'User unblocked';
+        moderationSheetMessage =
+          `${moderationSheet.displayName} has been unblocked.`;
+
+        moderationSheetActions = [
+          {
+            label: 'OK',
+            variant: 'cancel',
+            onPress: closeModerationSheet,
+          },
+        ];
+        break;
+
+      case 'unblock-error':
+        moderationSheetTitle =
+          'Unable to unblock user';
         moderationSheetMessage =
           'Please try again.';
 
