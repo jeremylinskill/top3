@@ -53,7 +53,6 @@ export default function SettingsScreen() {
     message: string;
   } | null>(null);
 
-
   const canChangePassword =
     user?.identities?.some(
       (identity) =>
@@ -72,7 +71,6 @@ export default function SettingsScreen() {
     router.push('/blocked-users');
   }
 
-
   function openChangePassword() {
     router.push('/change-password');
   }
@@ -83,6 +81,10 @@ export default function SettingsScreen() {
 
   function openSupport() {
     router.push('/support');
+  }
+
+  function openPrivacyPolicy() {
+    router.push('/privacy-policy');
   }
 
   function openModeration() {
@@ -122,7 +124,6 @@ export default function SettingsScreen() {
       setIsSigningOut(false);
     }
   }
-
 
   function confirmDeleteAccount() {
     if (
@@ -167,7 +168,7 @@ export default function SettingsScreen() {
         );
       }
 
-router.replace('/onboarding');
+      router.replace('/onboarding');
     } catch (error) {
       console.error(
         'Failed to delete account:',
@@ -492,6 +493,41 @@ router.replace('/onboarding');
               />
             </Pressable>
 
+            <View style={styles.divider} />
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.row,
+                pressed && styles.pressed,
+              ]}
+              onPress={openPrivacyPolicy}
+              accessibilityRole="button"
+              accessibilityLabel="Open Privacy Policy">
+              <View style={styles.iconContainer}>
+                <Ionicons
+                  name="document-text-outline"
+                  size={23}
+                  color={COLORS.text}
+                />
+              </View>
+
+              <View style={styles.rowDetails}>
+                <Text style={styles.rowTitle}>
+                  Privacy Policy
+                </Text>
+
+                <Text style={styles.rowSubtitle}>
+                  Learn how Top3 handles your information
+                </Text>
+              </View>
+
+              <Ionicons
+                name="chevron-forward"
+                size={21}
+                color={COLORS.tertiaryText}
+              />
+            </Pressable>
+
             {profile.isAdmin ? (
               <>
                 <View style={styles.divider} />
@@ -530,7 +566,6 @@ router.replace('/onboarding');
                 </Pressable>
               </>
             ) : null}
-
           </View>
         </View>
 
@@ -644,9 +679,9 @@ const styles = StyleSheet.create({
   },
 
   signOutSection: {
-  marginTop: SPACING.xl,
-  paddingTop: 8,
-},
+    marginTop: SPACING.xl,
+    paddingTop: 8,
+  },
 
   card: {
     backgroundColor: COLORS.surface,
