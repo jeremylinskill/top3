@@ -464,7 +464,7 @@ export default function PrivacyPolicyScreen() {
           <BulletList
             items={[
               'Precise or approximate device location.',
-              'Contacts or address-book information.',
+              'Device contacts or address-book information.',
               'Health or fitness information.',
               'Microphone recordings.',
               'Images or video captured through your device camera by Top3.',

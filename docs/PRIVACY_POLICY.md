@@ -175,7 +175,7 @@ This may include authentication/session information, locally cached application 
 Based on the features currently offered in Top3, Top3 does not intentionally collect:
 
 - precise or approximate device location;
-- contacts or address-book information;
+- device contacts or address-book information;
 - health or fitness information;
 - microphone recordings;
 - images or video captured through your device camera by Top3;
