@@ -2,6 +2,65 @@ CHANGELOG.md
 
 This document records significant milestones in the evolution of Top3.
 
+v2.9 --- Blocked-User Filtering & Popup Standardization
+
+Released: August 25, 2026
+
+This release completes two V1 launch-readiness workstreams: consistent
+blocked-user filtering across Top3 and the application-wide popup
+review. Blocked relationships are now respected across relevant product
+surfaces, and reviewed native alerts have been standardized on the
+shared Top3 ActionSheet experience.
+
+Added
+
+Blocked-User Filtering
+
+Applied blocked-user filtering across Top3 so blocked relationships are
+respected consistently across relevant content, list / ranking, social
+discovery, Taste Match, notification, and profile surfaces.
+
+Improved
+
+Popup Standardization
+
+Completed the V1 popup review across app, components, context, and
+services.
+
+Converted reviewed confirmation, destructive, success, error,
+validation, authentication, collection, reporting, and moderation popup
+flows to the shared Top3 ActionSheet pattern.
+
+Removed remaining native Alert.alert usage from the audited application
+directories.
+
+Verified
+
+Verified npm run typecheck passes after blocked-user filtering.
+
+Verified npm run typecheck passes after the completed popup
+standardization.
+
+Verified the final project-wide Alert.alert audit returns zero matches
+across app, components, context, and services.
+
+Checkpoint
+
+Committed and pushed 61ef627 --- Apply blocked user filtering across
+Top3.
+
+Committed and pushed c3d3b7f --- Standardize popups with Top3 action
+sheets.
+
+Documentation
+
+Updated CURRENT_STATE.md to version 2.8.
+
+Updated ROADMAP.md to version 2.6.
+
+Recorded blocked-user filtering and popup standardization as completed
+V1 launch-readiness foundations.
+
 Unlike CURRENT_STATE.md, which describes the application's current
 implementation, this document captures the major architectural and
 product milestones that shaped the application over time.
@@ -10,11 +69,11 @@ v2.8 --- Apple Account Lifecycle & Authorization Revocation
 
 Released: August 24, 2026
 
-This release completes Top3's Sign in with Apple account-lifecycle support.
-Apple authorization codes are now exchanged server-side for refresh tokens,
-the tokens are stored in protected Supabase infrastructure, and Apple
-authorization is revoked before an Apple-authenticated Top3 account is
-permanently deleted.
+This release completes Top3's Sign in with Apple account-lifecycle
+support. Apple authorization codes are now exchanged server-side for
+refresh tokens, the tokens are stored in protected Supabase
+infrastructure, and Apple authorization is revoked before an
+Apple-authenticated Top3 account is permanently deleted.
 
 Added
 
@@ -22,18 +81,18 @@ Apple Authorization Token Capture
 
 Added the authenticated apple-auth-token Supabase Edge Function.
 
-After successful native Sign in with Apple, Top3 sends the Apple authorization
-code to the Edge Function.
+After successful native Sign in with Apple, Top3 sends the Apple
+authorization code to the Edge Function.
 
-The Edge Function generates the Apple client secret server-side and exchanges
-the authorization code with Apple for a refresh token.
+The Edge Function generates the Apple client secret server-side and
+exchanges the authorization code with Apple for a refresh token.
 
 Added protected apple_auth_tokens persistence keyed by the authenticated
 Supabase user ID.
 
-Apple credentials required for the exchange — Team ID, Key ID, Client ID, and
-private signing key — are stored only as Supabase Edge Function secrets and
-are not exposed to the mobile client.
+Apple credentials required for the exchange --- Team ID, Key ID, Client
+ID, and private signing key --- are stored only as Supabase Edge
+Function secrets and are not exposed to the mobile client.
 
 Apple Authorization Revocation
 
@@ -41,39 +100,39 @@ Extended the permanent delete-account Supabase Edge Function to detect a
 stored Apple refresh token for the authenticated user.
 
 Before deleting the Supabase Auth user, delete-account now generates the
-required Apple client secret and submits the stored refresh token to Apple's
-authorization revocation endpoint.
+required Apple client secret and submits the stored refresh token to
+Apple's authorization revocation endpoint.
 
-Apple revocation failure stops account deletion rather than silently deleting
-the Top3 account while leaving the Apple authorization active.
+Apple revocation failure stops account deletion rather than silently
+deleting the Top3 account while leaving the Apple authorization active.
 
 Improved
 
 Sign in with Apple
 
-Updated the Apple authentication flow so the authorization code returned by
-the native Apple credential is captured and sent to the server-side
+Updated the Apple authentication flow so the authorization code returned
+by the native Apple credential is captured and sent to the server-side
 apple-auth-token function after successful Supabase sign-in.
 
-Preserved the existing native Apple identity-token exchange, session handling,
-name-metadata preservation, and onboarding behavior.
+Preserved the existing native Apple identity-token exchange, session
+handling, name-metadata preservation, and onboarding behavior.
 
 Account Deletion
 
-Preserved the existing Settings → delete-account flow and local onboarding /
-welcome reset after successful deletion.
+Preserved the existing Settings → delete-account flow and local
+onboarding / welcome reset after successful deletion.
 
-Apple-authenticated accounts now complete Apple authorization revocation as
-part of the permanent deletion transaction before the Supabase Auth user is
-removed.
+Apple-authenticated accounts now complete Apple authorization revocation
+as part of the permanent deletion transaction before the Supabase Auth
+user is removed.
 
 Security
 
 Kept Apple private-key material and client-secret generation entirely
 server-side.
 
-Stored Apple refresh tokens in protected Supabase data rather than client
-storage.
+Stored Apple refresh tokens in protected Supabase data rather than
+client storage.
 
 Temporary Verification Infrastructure
 
@@ -85,22 +144,22 @@ function folder, and Settings test UI after successful verification.
 
 Verified
 
-Verified Apple authorization-code exchange produces a valid Apple refresh
-token.
+Verified Apple authorization-code exchange produces a valid Apple
+refresh token.
 
-Verified the Apple refresh token is stored successfully for the authenticated
-Supabase user.
+Verified the Apple refresh token is stored successfully for the
+authenticated Supabase user.
 
 Verified Apple authorization revocation succeeds end-to-end.
 
-Verified the permanent delete-account implementation uses the same verified
-Apple revocation path.
+Verified the permanent delete-account implementation uses the same
+verified Apple revocation path.
 
 Verified the temporary revocation test infrastructure was removed after
 validation.
 
-Re-authorized the admin Apple account after revocation testing and confirmed a
-fresh Apple refresh token was stored successfully.
+Re-authorized the admin Apple account after revocation testing and
+confirmed a fresh Apple refresh token was stored successfully.
 
 Verified deno check passes for apple-auth-token.
 
@@ -110,8 +169,8 @@ Verified npm run typecheck passes.
 
 Checkpoint
 
-Committed and pushed e285efc containing the completed Apple account-lifecycle
-implementation and verification cleanup.
+Committed and pushed e285efc containing the completed Apple
+account-lifecycle implementation and verification cleanup.
 
 Committed and pushed f8c62c3 --- Ignore local privacy audit artifacts.
 
@@ -121,21 +180,22 @@ Documentation
 
 Updated CURRENT_STATE.md to version 2.7.
 
-Recorded Apple authorization-code capture, protected refresh-token storage,
-server-side Apple credential handling, and authorization revocation before
-account deletion as completed authentication foundations.
+Recorded Apple authorization-code capture, protected refresh-token
+storage, server-side Apple credential handling, and authorization
+revocation before account deletion as completed authentication
+foundations.
 
-Recorded the temporary revocation verification infrastructure as removed after
-successful end-to-end testing.
+Recorded the temporary revocation verification infrastructure as removed
+after successful end-to-end testing.
 
 v2.7 --- Sharing, Deep Links & V1 Analytics
 
 Released: August 22, 2026
 
 This release completes Top3's current V1 sharing and product-analytics
-foundation. Users can share individual published Lists and community Overall
-rankings, shared public content can be opened while signed out, and Amplitude
-now records successful shares with source attribution.
+foundation. Users can share individual published Lists and community
+Overall rankings, shared public content can be opened while signed out,
+and Amplitude now records successful shares with source attribution.
 
 Added
 
@@ -153,17 +213,17 @@ Overall Ranking Sharing
 
 Added native sharing for community Overall rankings from Category Feed.
 
-Added deep-link parameters that identify the category, topic, and Overall
-view so a shared Overall link opens the intended ranking rather than only
-landing on the Lists tab.
+Added deep-link parameters that identify the category, topic, and
+Overall view so a shared Overall link opens the intended ranking rather
+than only landing on the Lists tab.
 
 Signed-Out Shared Content
 
-Added restricted Supabase anonymous SELECT access for collections that are
-published and not removed.
+Added restricted Supabase anonymous SELECT access for collections that
+are published and not removed.
 
-This allows recipients with Top3 installed to open shared public published
-content without first signing into a Top3 account.
+This allows recipients with Top3 installed to open shared public
+published content without first signing into a Top3 account.
 
 Drafts, removed collections, and authenticated write operations remain
 protected.
@@ -200,15 +260,15 @@ Deep-Link Behaviour
 Verified published List links continue to route to the Published Top 3
 destination.
 
-Verified Overall ranking links route to Category Feed with the Overall view
-active.
+Verified Overall ranking links route to Category Feed with the Overall
+view active.
 
 Known Limitation
 
 Top3 sharing currently uses the custom top3:// URL scheme.
 
-Universal Links / HTTPS web fallback remains deferred until the production
-Top3 domain is confirmed.
+Universal Links / HTTPS web fallback remains deferred until the
+production Top3 domain is confirmed.
 
 Recipients without Top3 installed therefore do not yet have the intended
 public web fallback experience.
@@ -232,11 +292,11 @@ Events.
 Verified dismissing the iOS Share Sheet does not produce a false
 collection_shared event.
 
-Verified source attribution in Amplitude for feed, profile, category_feed,
-published_detail, and overall.
+Verified source attribution in Amplitude for feed, profile,
+category_feed, published_detail, and overall.
 
-Verified npm run typecheck passes after each sharing and analytics source
-change.
+Verified npm run typecheck passes after each sharing and analytics
+source change.
 
 Documentation
 
@@ -256,9 +316,9 @@ Released: August 21, 2026
 
 This release adds Top3's V1 automated prohibited-content filtering layer
 for comments and free-form profile fields. Enforcement is server-side in
-Supabase, uses a deliberately conservative production hard-block list, and
-preserves the established Top3 user experience for expected moderation
-rejections.
+Supabase, uses a deliberately conservative production hard-block list,
+and preserves the established Top3 user experience for expected
+moderation rejections.
 
 Added
 
@@ -266,29 +326,30 @@ Prohibited-Content Filtering
 
 Added server-side prohibited-content enforcement for comments.
 
-Added server-side prohibited-content enforcement for profile display name,
-username, and bio.
+Added server-side prohibited-content enforcement for profile display
+name, username, and bio.
 
 Added the shared content_filter_terms table as the production source of
 truth for hard-blocked terms and phrases.
 
 Loaded a conservative 49-term V1 production hard-block list focused on
-high-confidence severe content while avoiding ordinary profanity and broad,
-context-dependent language that could create unnecessary false positives.
+high-confidence severe content while avoiding ordinary profanity and
+broad, context-dependent language that could create unnecessary false
+positives.
 
-Added contains_blocked_content(text) to normalize user-generated text and
-perform whole-term / phrase matching.
+Added contains_blocked_content(text) to normalize user-generated text
+and perform whole-term / phrase matching.
 
 Improved
 
 Normalization & Matching
 
-Prohibited-content checks normalize case and punctuation before matching so
-straightforward formatting variations do not bypass the filter.
+Prohibited-content checks normalize case and punctuation before matching
+so straightforward formatting variations do not bypass the filter.
 
-Matching avoids unsafe raw-substring behaviour so legitimate entertainment
-titles and words are not rejected merely because they contain a shorter
-blocked sequence.
+Matching avoids unsafe raw-substring behaviour so legitimate
+entertainment titles and words are not rejected merely because they
+contain a shorter blocked sequence.
 
 Moderation Error Handling
 
@@ -303,8 +364,8 @@ Published Top 3 Comments
 
 Consolidated Published Top 3 onto the shared CommentsSheet experience.
 
-Removed the separate inline comments section and bottom composer from the
-Published Top 3 screen.
+Removed the separate inline comments section and bottom composer from
+the Published Top 3 screen.
 
 The comment icon now opens CommentsSheet consistently with other list
 surfaces.
@@ -327,18 +388,19 @@ normalization.
 
 Verified prohibited phrases embedded in surrounding text are rejected.
 
-Verified the legitimate entertainment title “Kill Bill” remains accepted.
+Verified the legitimate entertainment title "Kill Bill" remains
+accepted.
 
 Verified on iPhone that a prohibited comment is not published.
 
-Verified the Top3-styled “Comment not posted” ActionSheet appears for a
+Verified the Top3-styled "Comment not posted" ActionSheet appears for a
 rejected comment.
 
 Verified the typed comment remains in the composer for correction after
 rejection.
 
-Verified no native alert or Expo development error overlay appears for the
-expected moderation rejection.
+Verified no native alert or Expo development error overlay appears for
+the expected moderation rejection.
 
 Verified prohibited-content rejection for profile display name.
 
@@ -356,11 +418,11 @@ Updated CURRENT_STATE.md to version 2.5.
 Recorded V1 prohibited-content filtering as implemented and verified for
 comments and free-form profile fields.
 
-Recorded the 49-term production hard-block list and normalized whole-term /
-phrase matching architecture.
+Recorded the 49-term production hard-block list and normalized
+whole-term / phrase matching architecture.
 
-Recorded the shared Top3-styled rejection experience and input-preservation
-behaviour.
+Recorded the shared Top3-styled rejection experience and
+input-preservation behaviour.
 
 Recorded Published Top 3's use of the shared CommentsSheet.
 

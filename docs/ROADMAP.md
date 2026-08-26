@@ -1,8 +1,8 @@
 Top3 Product Roadmap
 
-Version: 2.5Status: Active DevelopmentOwner: Jeremy LinskillLast
-Updated: August 24, 2026Last Verified Commit: f8c62c3 --- Ignore local privacy
-audit artifacts
+Version: 2.6Status: Active DevelopmentOwner: Jeremy LinskillLast
+Updated: August 25, 2026Last Verified Commit: c3d3b7f --- Standardize
+popups with Top3 action sheets
 
 Purpose
 
@@ -50,13 +50,14 @@ onboarding and account lifecycle, including email password recovery,
 provide a stable foundation for the next stage of the product.
 
 Recent work has also completed important moderation-removal foundations,
-published-list and Overall ranking sharing, deep-link access to shared public
-content, the current V1 product-analytics instrumentation, and the Sign in
-with Apple account-lifecycle path required for reliable account deletion.
-Apple authorization codes are exchanged server-side for refresh tokens, and
-Apple authorization is revoked before an Apple-authenticated Top3 account is
-deleted. The architectural changes required for Top3's Feed to scale well
-beyond the initial launch population have also been identified.
+published-list and Overall ranking sharing, deep-link access to shared
+public content, the current V1 product-analytics instrumentation, and
+the Sign in with Apple account-lifecycle path required for reliable
+account deletion. Apple authorization codes are exchanged server-side
+for refresh tokens, and Apple authorization is revoked before an
+Apple-authenticated Top3 account is deleted. The architectural changes
+required for Top3's Feed to scale well beyond the initial launch
+population have also been identified.
 
 The current milestone is to prepare a stable, safe, polished V1 for App
 Store release and begin gathering real-user behaviour before investing
@@ -73,47 +74,56 @@ Foundation Completed
 • Signed-out first-list onboarding• Lists → Overall onboarding
 education• Taste Match onboarding education• Account deletion• Email
 confirmation callback and pending-list publishing• Email authentication•
-Forgot-password and password-reset recovery• Sign in with Apple• Server-side
-Apple authorization-code exchange and protected refresh-token storage• Apple
-authorization revocation before account deletion• Sign in with Google• Persistent Supabase sessions• Stable authentication
-initialization• User profiles• Profile avatars• Profile editing• Privacy
-settings• Public and private accounts• Follow requests• Following /
-Followers• List persistence• Shared Likes• Shared Comments• In-app
-notifications• Settings• About• Supabase Realtime for Notifications,
-Likes, Comments, and Following• Feed• Discover• Community Top3• Overall
-Top3• Taste Match• Personalized Feed recommendations• Taste Match
-recommendation explanations• Shared search-provider architecture• TMDb
-search for Movies and TV Shows• TMDb Movie / TV trailer playback inside
-Top3• Availability-aware Movie / TV trailer controls• Google Books
-search with Open Library fallback• IGDB search for Video Games through a
-Supabase Edge Function• Apple Music search for Songs, Albums, and
-Artists through a Supabase Edge Function• Apple Music audio previews for
-Songs, Albums, and Artists• Genre-aware and evergreen Apple Music
-suggestions• Feed pull-to-refresh• Reported-list and reported-comment
-moderation workflow• Moderator Remove Content action• Removed-content
-filtering through removed_at• Creator-scoped moderation removal Realtime
-propagation• collections_published_feed_idx for the future published
-Feed path• Published List sharing from Feed, Profile, Category Feed, and
-Published Top 3• Overall ranking sharing• Deep-link routing to published
-Lists and Overall rankings• Logged-out read access to shared published,
-non-removed collections• V1 Amplitude product analytics• Successful-share
-tracking with source attribution
+Forgot-password and password-reset recovery• Sign in with Apple•
+Server-side Apple authorization-code exchange and protected
+refresh-token storage• Apple authorization revocation before account
+deletion• Sign in with Google• Persistent Supabase sessions• Stable
+authentication initialization• User profiles• Profile avatars• Profile
+editing• Privacy settings• Public and private accounts• Follow requests•
+Following / Followers• List persistence• Shared Likes• Shared Comments•
+In-app notifications• Settings• About• Supabase Realtime for
+Notifications, Likes, Comments, and Following• Feed• Discover• Community
+Top3• Overall Top3• Taste Match• Personalized Feed recommendations•
+Taste Match recommendation explanations• Shared search-provider
+architecture• TMDb search for Movies and TV Shows• TMDb Movie / TV
+trailer playback inside Top3• Availability-aware Movie / TV trailer
+controls• Google Books search with Open Library fallback• IGDB search
+for Video Games through a Supabase Edge Function• Apple Music search for
+Songs, Albums, and Artists through a Supabase Edge Function• Apple Music
+audio previews for Songs, Albums, and Artists• Genre-aware and evergreen
+Apple Music suggestions• Feed pull-to-refresh• Reported-list and
+reported-comment moderation workflow• Moderator Remove Content action•
+Removed-content filtering through removed_at• Creator-scoped moderation
+removal Realtime propagation• collections_published_feed_idx for the
+future published Feed path• Published List sharing from Feed, Profile,
+Category Feed, and Published Top 3• Overall ranking sharing• Deep-link
+routing to published Lists and Overall rankings• Logged-out read access
+to shared published, non-removed collections• V1 Amplitude product
+analytics• Successful-share tracking with source attribution•
+Blocked-user filtering across relevant Top3 content, ranking, social
+discovery, Taste Match, notification, and profile surfaces• Shared Top3
+ActionSheet popup pattern across reviewed confirmation, destructive,
+success, error, validation, authentication, collection, reporting, and
+moderation flows• Zero remaining Alert.alert matches across app,
+components, context, and services
 
 Current Priorities
 
 • Complete a V1 launch-readiness audit• Fix App Store launch blockers
 before adding major new product scope• Continue validating onboarding
-completion and authentication reliability• Treat the verified Sign in with
-Apple revocation path as the production account-deletion foundation• Verify
-remaining reporting, moderation, blocking, privacy, security, and
-account-deletion requirements• Continue performance and stability optimization where it
-affects launch quality• Preserve the current Feed and Taste Match
-experience for initial real-user validation• Defer cursor-paginated Feed
-migration, server-side recommendation candidate generation, and other
-large-scale Feed infrastructure until post-launch• Continue
-search-quality and provider-resiliency improvements when they affect
-launch reliability• Prepare architecture for push notifications without
-making push a V1 launch dependency unless product requirements change
+completion and authentication reliability• Treat the verified Sign in
+with Apple revocation path as the production account-deletion
+foundation• Verify remaining reporting, moderation, privacy, security,
+and account-deletion requirements• Treat blocked-user filtering and
+popup standardization as completed V1 launch-readiness foundations•
+Continue performance and stability optimization where it affects launch
+quality• Preserve the current Feed and Taste Match experience for
+initial real-user validation• Defer cursor-paginated Feed migration,
+server-side recommendation candidate generation, and other large-scale
+Feed infrastructure until post-launch• Continue search-quality and
+provider-resiliency improvements when they affect launch reliability•
+Prepare architecture for push notifications without making push a V1
+launch dependency unless product requirements change
 
 V1 Launch Readiness
 
@@ -131,16 +141,17 @@ Before Launch
 • Complete an App Store readiness audit• Resolve crash, data-loss,
 security, privacy, authentication, account-lifecycle, and moderation
 blockers• Verify user-generated-content safety requirements, including
-reporting, moderation, and blocking• Preserve the verified Apple authorization
-revocation path and complete final account-deletion regression testing for the
-release candidate•
-Verify core onboarding, Create, publish, Feed, Profile, Discover,
-Search, Likes, Comments, Following, notifications, Taste Match, and
-media-preview flows on device• Confirm production configuration and
-provider credentials• Review App Store metadata, privacy disclosures,
-permissions, and required support / policy surfaces• Perform final
-performance and reliability testing• Update project documentation to
-match the release candidate
+reporting, moderation, and blocking, with the blocking implementation
+now completed across relevant Top3 surfaces• Preserve the verified Apple
+authorization revocation path and complete final account-deletion
+regression testing for the release candidate• Verify core onboarding,
+Create, publish, Feed, Profile, Discover, Search, Likes, Comments,
+Following, notifications, Taste Match, and media-preview flows on
+device• Confirm production configuration and provider credentials•
+Review App Store metadata, privacy disclosures, permissions, and
+required support / policy surfaces• Perform final performance and
+reliability testing• Update project documentation to match the release
+candidate
 
 Launch Decision --- Feed Scalability
 
@@ -265,7 +276,8 @@ without turning profiles into overly complex social-media pages.
 Opportunities
 
 • Profile customization• Featured lists• Pinned lists• List history•
-Richer sharing / web presentation• User achievements• Activity summaries• Taste summaries
+Richer sharing / web presentation• User achievements• Activity
+summaries• Taste summaries
 
 Success Looks Like
 
@@ -282,8 +294,8 @@ to encourage meaningful interaction around shared interests.
 Opportunities
 
 • Richer comment experiences• Conversation prompts around shared picks•
-Recommendation-driven discussion• Improved social activity context• Friend
-invitations• Push notifications• Re-engagement experiences
+Recommendation-driven discussion• Improved social activity context•
+Friend invitations• Push notifications• Re-engagement experiences
 
 Guiding Principle
 
@@ -302,43 +314,44 @@ Opportunities
 
 • Broader activity experiences• Collaborative lists• Creator tools•
 Expanded moderation and safety tooling beyond the V1 reporting / removal
-foundation• Admin dashboard enhancements• Community
-events• Additional content categories• Additional entertainment
-providers• Large-scale Feed and recommendation infrastructure as usage
-requires
+foundation• Admin dashboard enhancements• Community events• Additional
+content categories• Additional entertainment providers• Large-scale Feed
+and recommendation infrastructure as usage requires
 
 Authentication & Account Lifecycle
 
 Status: V1 Foundation Complete
 
-Top3 supports Email, native Sign in with Apple, and native Google Sign-In
-through the shared Supabase authentication architecture.
+Top3 supports Email, native Sign in with Apple, and native Google
+Sign-In through the shared Supabase authentication architecture.
 
-For Sign in with Apple, the authorization code returned by the native Apple
-credential is sent to the authenticated apple-auth-token Supabase Edge
-Function. The function generates Apple's client secret server-side, exchanges
-the authorization code for a refresh token, and stores that refresh token in
-the protected apple_auth_tokens table keyed by Supabase user ID.
+For Sign in with Apple, the authorization code returned by the native
+Apple credential is sent to the authenticated apple-auth-token Supabase
+Edge Function. The function generates Apple's client secret server-side,
+exchanges the authorization code for a refresh token, and stores that
+refresh token in the protected apple_auth_tokens table keyed by Supabase
+user ID.
 
-Apple Team ID, Key ID, Client ID, and private signing key remain server-side
-as Supabase Edge Function secrets.
+Apple Team ID, Key ID, Client ID, and private signing key remain
+server-side as Supabase Edge Function secrets.
 
-The permanent delete-account Edge Function checks for a stored Apple refresh
-token and revokes the user's Apple authorization before deleting the Supabase
-Auth user. If Apple revocation fails, account deletion stops rather than
-leaving an active Apple authorization behind.
+The permanent delete-account Edge Function checks for a stored Apple
+refresh token and revokes the user's Apple authorization before deleting
+the Supabase Auth user. If Apple revocation fails, account deletion
+stops rather than leaving an active Apple authorization behind.
 
-The Apple refresh-token acquisition, persistence, and revocation paths have
-been verified end-to-end. Temporary revocation-test infrastructure was removed
-after validation, and the test admin account was re-authorized successfully.
+The Apple refresh-token acquisition, persistence, and revocation paths
+have been verified end-to-end. Temporary revocation-test infrastructure
+was removed after validation, and the test admin account was
+re-authorized successfully.
 
 Launch Direction
 
-• Preserve the current server-side Apple token architecture• Do not expose
-Apple signing credentials or refresh tokens to the mobile client• Include
-account deletion in final release-candidate regression testing• Re-check
-App Store account-deletion and Sign in with Apple requirements if Apple's
-review guidance changes before submission
+• Preserve the current server-side Apple token architecture• Do not
+expose Apple signing credentials or refresh tokens to the mobile client•
+Include account deletion in final release-candidate regression testing•
+Re-check App Store account-deletion and Sign in with Apple requirements
+if Apple's review guidance changes before submission
 
 Sharing & Product Analytics
 
@@ -348,29 +361,29 @@ Top3 supports native sharing of individual published Lists and community
 Overall rankings.
 
 Published Lists can be shared from Feed, Profile, Category Feed, and the
-Published Top 3 detail screen. Overall rankings can be shared directly from
-Category Feed.
+Published Top 3 detail screen. Overall rankings can be shared directly
+from Category Feed.
 
 Shared links deep-link back to the appropriate Top3 destination. Public
 published, non-removed collections can be read while signed out through
-restricted Supabase anonymous access so a recipient with Top3 installed does
-not need an account merely to view shared public content.
+restricted Supabase anonymous access so a recipient with Top3 installed
+does not need an account merely to view shared public content.
 
-Amplitude provides the current V1 product-analytics foundation. The scoped
-core events are implemented, including collection_shared. Share events are
-recorded only after the native share action completes successfully and carry
-source attribution for feed, profile, category_feed, published_detail, and
-overall.
+Amplitude provides the current V1 product-analytics foundation. The
+scoped core events are implemented, including collection_shared. Share
+events are recorded only after the native share action completes
+successfully and carry source attribution for feed, profile,
+category_feed, published_detail, and overall.
 
 Future Sharing Work
 
 Universal Links / HTTPS web fallback should be implemented once the
-production Top3 domain is confirmed. This will allow recipients without the
-app installed to receive a useful web destination instead of relying only on
-the custom top3:// scheme.
+production Top3 domain is confirmed. This will allow recipients without
+the app installed to receive a useful web destination instead of relying
+only on the custom top3:// scheme.
 
-Analytics should now be driven by real product questions and observed usage
-rather than adding events speculatively before launch.
+Analytics should now be driven by real product questions and observed
+usage rather than adding events speculatively before launch.
 
 Push Notifications
 
@@ -579,44 +592,61 @@ engagement, but to create meaningful connections through shared taste.
 
 Revision History
 
+Version 2.6 --- August 25, 2026
+
+Updated the roadmap to reflect completion of blocked-user filtering
+across Top3 and completion of the V1 popup standardization review.
+
+Key changes:
+
+• Recorded blocked-user filtering as a completed V1 safety foundation
+across relevant content, ranking, social discovery, Taste Match,
+notification, and profile surfaces.• Recorded the shared Top3
+ActionSheet pattern as the standard for reviewed popup flows.• Recorded
+zero remaining Alert.alert matches across app, components, context, and
+services.• Updated the last verified repository checkpoint to c3d3b7f.•
+Preserved V1 Launch Readiness as the current product milestone.
+
 Version 2.5 --- August 24, 2026
 
-Updated the roadmap to reflect completion and end-to-end verification of the
-Sign in with Apple account-lifecycle architecture required for reliable
-account deletion.
+Updated the roadmap to reflect completion and end-to-end verification of
+the Sign in with Apple account-lifecycle architecture required for
+reliable account deletion.
 
 Key changes:
 
 • Recorded server-side Apple authorization-code exchange through the
 apple-auth-token Edge Function.• Recorded protected Apple refresh-token
-storage keyed by Supabase user ID.• Recorded Apple authorization revocation
-before permanent deletion of Apple-authenticated Top3 accounts.• Recorded the
-fail-safe that stops account deletion when Apple revocation fails.• Recorded
-Apple signing credentials as server-side Supabase Edge Function secrets.•
-Recorded successful end-to-end refresh-token acquisition, persistence, and
-revocation verification.• Recorded removal of the temporary revocation-test
-infrastructure after verification.• Updated the last verified repository
-checkpoint to f8c62c3.• Preserved V1 Launch Readiness as the current product
+storage keyed by Supabase user ID.• Recorded Apple authorization
+revocation before permanent deletion of Apple-authenticated Top3
+accounts.• Recorded the fail-safe that stops account deletion when Apple
+revocation fails.• Recorded Apple signing credentials as server-side
+Supabase Edge Function secrets.• Recorded successful end-to-end
+refresh-token acquisition, persistence, and revocation verification.•
+Recorded removal of the temporary revocation-test infrastructure after
+verification.• Updated the last verified repository checkpoint to
+f8c62c3.• Preserved V1 Launch Readiness as the current product
 milestone.
 
 Version 2.4 --- August 22, 2026
 
-Updated the roadmap to reflect completion of the current sharing, deep-link,
-signed-out public-viewing, and V1 analytics milestone.
+Updated the roadmap to reflect completion of the current sharing,
+deep-link, signed-out public-viewing, and V1 analytics milestone.
 
 Key changes:
 
-• Recorded native sharing for published Lists across Feed, Profile, Category
-Feed, and Published Top 3.• Recorded direct sharing of Overall rankings.•
-Recorded deep-link routing for published Lists and Overall rankings.•
-Recorded restricted anonymous read access for published, non-removed
-collections so shared public content can be viewed while signed out.•
-Recorded the current V1 Amplitude analytics scope as complete.•
-Recorded collection_shared as a successful-share event with source
-attribution for feed, profile, category_feed, published_detail, and overall.•
-Removed basic List sharing and Product analytics from future-opportunity
-lists because their V1 foundations now exist.• Deferred Universal Links /
-HTTPS web fallback until the production Top3 domain is confirmed.
+• Recorded native sharing for published Lists across Feed, Profile,
+Category Feed, and Published Top 3.• Recorded direct sharing of Overall
+rankings.• Recorded deep-link routing for published Lists and Overall
+rankings.• Recorded restricted anonymous read access for published,
+non-removed collections so shared public content can be viewed while
+signed out.• Recorded the current V1 Amplitude analytics scope as
+complete.• Recorded collection_shared as a successful-share event with
+source attribution for feed, profile, category_feed, published_detail,
+and overall.• Removed basic List sharing and Product analytics from
+future-opportunity lists because their V1 foundations now exist.•
+Deferred Universal Links / HTTPS web fallback until the production Top3
+domain is confirmed.
 
 Version 2.3 --- August 20, 2026
 

@@ -1,13 +1,13 @@
 CURRENT_STATE.md
 
-Project: Top3Version: 2.7Status: Active DevelopmentLast Updated: August
-24, 2026Current Branch: main
+Project: Top3Version: 2.8Status: Active DevelopmentLast Updated: August
+25, 2026Current Branch: main
 
 Last Verified Commit
 
-f8c62c3
+c3d3b7f
 
-Ignore local privacy audit artifacts
+Standardize popups with Top3 action sheets
 
 Dashboard
 
@@ -28,10 +28,11 @@ Overall rankings, and Taste Match.
 Account deletion is implemented through a Supabase Edge Function and
 resets local onboarding / welcome state so a deleted user returns to the
 beginning of the onboarding experience. Sign in with Apple accounts also
-capture the Apple authorization code during sign-in, exchange it server-side
-for an Apple refresh token, and store that token in the protected
-apple_auth_tokens table. The permanent delete-account Edge Function revokes
-the stored Apple authorization with Apple before deleting the Top3 account.
+capture the Apple authorization code during sign-in, exchange it
+server-side for an Apple refresh token, and store that token in the
+protected apple_auth_tokens table. The permanent delete-account Edge
+Function revokes the stored Apple authorization with Apple before
+deleting the Top3 account.
 
 User-generated-content moderation is implemented for reported lists and
 comments. Moderators can review reports and remove reported content
@@ -40,8 +41,8 @@ normal collection / published-post queries through removed_at filtering.
 
 V1 prohibited-content filtering is implemented and verified for comments
 and the free-form profile fields display name, username, and bio.
-Enforcement is server-side in Supabase. A shared content_filter_terms table
-contains a conservative 49-term production hard-block list, and
+Enforcement is server-side in Supabase. A shared content_filter_terms
+table contains a conservative 49-term production hard-block list, and
 contains_blocked_content(text) normalizes case and punctuation before
 whole-term / phrase matching. Expected content rejections use the
 established Top3-styled ActionSheet experience and preserve entered text
@@ -55,6 +56,19 @@ is removed by moderation, Top3Provider evicts that collection and its
 corresponding post from local state and clears currentListId when
 necessary, preventing removed content from being reopened through stale
 Create state.
+
+Blocked-user filtering is now applied across the Top3 experience.
+Content and people associated with blocked relationships are excluded
+from the relevant Feed, list / ranking, social discovery, Taste Match,
+notification, and profile surfaces so blocking behaves consistently
+rather than only at the point where the block action is initiated.
+
+The V1 popup review is complete. Native Alert.alert usage has been
+removed from app, components, context, and services and the reviewed
+confirmation, destructive, success, error, validation, authentication,
+collection, reporting, and moderation flows now use the shared Top3
+ActionSheet pattern. The final project-wide Alert.alert audit returned
+zero matches and npm run typecheck passes.
 
 Current Priority
 
@@ -585,26 +599,28 @@ Official native Apple authentication button
 
 Apple account-lifecycle support:
 
-The native Apple credential's authorization code is sent to the authenticated
-apple-auth-token Supabase Edge Function after successful sign-in. The Edge
-Function generates the Apple client secret server-side, exchanges the
-authorization code with Apple, and stores the resulting refresh token in the
-protected apple_auth_tokens table keyed by Supabase user ID.
+The native Apple credential's authorization code is sent to the
+authenticated apple-auth-token Supabase Edge Function after successful
+sign-in. The Edge Function generates the Apple client secret
+server-side, exchanges the authorization code with Apple, and stores the
+resulting refresh token in the protected apple_auth_tokens table keyed
+by Supabase user ID.
 
-Apple Team ID, Key ID, Client ID, and private signing key are stored only as
-Supabase Edge Function secrets. The private key is never exposed to the
-mobile client.
+Apple Team ID, Key ID, Client ID, and private signing key are stored
+only as Supabase Edge Function secrets. The private key is never exposed
+to the mobile client.
 
-When an Apple-authenticated user deletes their Top3 account, the permanent
-delete-account Edge Function loads the stored refresh token and calls Apple's
-token revocation endpoint before deleting the Supabase Auth user. Revocation
-failure stops account deletion rather than silently leaving the Apple
-authorization active.
+When an Apple-authenticated user deletes their Top3 account, the
+permanent delete-account Edge Function loads the stored refresh token
+and calls Apple's token revocation endpoint before deleting the Supabase
+Auth user. Revocation failure stops account deletion rather than
+silently leaving the Apple authorization active.
 
 The Apple revocation flow was verified end-to-end using a temporary
-verification Edge Function. That temporary function and its Settings test UI
-were removed after verification. The admin account was subsequently
-re-authorized and a fresh stored Apple refresh token was confirmed.
+verification Edge Function. That temporary function and its Settings
+test UI were removed after verification. The admin account was
+subsequently re-authorized and a fresh stored Apple refresh token was
+confirmed.
 
 Google Sign In
 
@@ -870,9 +886,10 @@ animated percentage that begins counting as the card fades in.
 
 Account deletion removes the authenticated account through the
 delete-account Supabase Edge Function, signs the user out, and resets
-local welcome state so a deleted user returns to onboarding. For accounts
-with a stored Apple refresh token, the Edge Function revokes the user's
-Sign in with Apple authorization before deleting the Supabase Auth user.
+local welcome state so a deleted user returns to onboarding. For
+accounts with a stored Apple refresh token, the Edge Function revokes
+the user's Sign in with Apple authorization before deleting the Supabase
+Auth user.
 
 The obsolete standalone Welcome screen has been removed.
 
@@ -1010,27 +1027,40 @@ Sharing & Analytics
 
 Status: ✅ Complete for current V1 scope
 
-Published individual Lists can be shared through the native iOS Share Sheet from Feed, Profile, Category Feed list cards, and Published Top 3 detail.
+Published individual Lists can be shared through the native iOS Share
+Sheet from Feed, Profile, Category Feed list cards, and Published Top 3
+detail.
 
-Overall community rankings can also be shared from Category Feed. Shared Overall deep links preserve category, topic, and view=overall so recipients land directly on the Overall ranking.
+Overall community rankings can also be shared from Category Feed. Shared
+Overall deep links preserve category, topic, and view=overall so
+recipients land directly on the Overall ranking.
 
-Deep links currently use the Top3 custom URL scheme. Logged-out recipients who already have Top3 installed can open shared published Lists and Overall rankings.
+Deep links currently use the Top3 custom URL scheme. Logged-out
+recipients who already have Top3 installed can open shared published
+Lists and Overall rankings.
 
-Supabase anonymous access to collections is deliberately limited to SELECT access for published, non-removed collections through table grants plus Row Level Security. Drafts remain inaccessible to anonymous users.
+Supabase anonymous access to collections is deliberately limited to
+SELECT access for published, non-removed collections through table
+grants plus Row Level Security. Drafts remain inaccessible to anonymous
+users.
 
-Universal Links and a public web fallback for recipients who do not have Top3 installed are deferred until the production Top3 domain is confirmed.
+Universal Links and a public web fallback for recipients who do not have
+Top3 installed are deferred until the production Top3 domain is
+confirmed.
 
-Amplitude analytics is implemented for the current V1 event scope. The collection_shared event is recorded only when the native Share Sheet reports a completed share; dismissing the Share Sheet does not record collection_shared.
+Amplitude analytics is implemented for the current V1 event scope. The
+collection_shared event is recorded only when the native Share Sheet
+reports a completed share; dismissing the Share Sheet does not record
+collection_shared.
 
 collection_shared includes source attribution for:
 
-• feed
-• profile
-• category_feed
-• published_detail
-• overall
+• feed • profile • category_feed • published_detail • overall
 
-The current analytics event set covers account creation and onboarding, collection lifecycle actions, search and item activity, discovery and profile activity, follows, likes, comments, Taste Match, collection views, notification opens, and successful collection shares.
+The current analytics event set covers account creation and onboarding,
+collection lifecycle actions, search and item activity, discovery and
+profile activity, follows, likes, comments, Taste Match, collection
+views, notification opens, and successful collection shares.
 
 Feed Architecture & Scalability
 
@@ -1113,9 +1143,11 @@ Onboarding & account lifecycle
 
 ✅ Account deletion
 
-✅ Sign in with Apple authorization-code capture and server-side refresh-token storage
+✅ Sign in with Apple authorization-code capture and server-side
+refresh-token storage
 
-✅ Apple authorization revocation before deletion for Apple-authenticated accounts
+✅ Apple authorization revocation before deletion for
+Apple-authenticated accounts
 
 ✅ Local onboarding reset after account deletion
 
@@ -1169,13 +1201,15 @@ Sharing & analytics
 
 ✅ Deep-link routing to shared Lists and Overall rankings
 
-✅ Logged-out access to published, non-removed shared content for installed-app recipients
+✅ Logged-out access to published, non-removed shared content for
+installed-app recipients
 
 ✅ Amplitude analytics implemented for current V1 scope
 
 ✅ Successful-share tracking with source attribution
 
-➡️ Universal Links / public web fallback deferred until the production domain is confirmed
+➡️ Universal Links / public web fallback deferred until the production
+domain is confirmed
 
 Moderation
 
@@ -1197,10 +1231,23 @@ and bio
 ✅ Server-side Supabase enforcement using content_filter_terms and
 contains_blocked_content(text)
 
-✅ Conservative 49-term production hard-block list installed and verified
+✅ Conservative 49-term production hard-block list installed and
+verified
 
 ✅ Top3-styled rejection messaging with entered text preserved for
 correction
+
+✅ Blocked-user filtering applied across relevant Top3 content,
+discovery, social, Taste Match, notification, and profile surfaces
+
+✅ V1 popup review complete
+
+✅ Native Alert.alert usage removed from app, components, context, and
+services
+
+✅ Shared Top3 ActionSheet pattern used for reviewed confirmation,
+destructive, success, error, validation, authentication, collection,
+reporting, and moderation flows
 
 Feed scalability
 
@@ -1215,13 +1262,37 @@ post-launch and classified as a high-priority scalability initiative
 
 Recent Milestones
 
+August 25, 2026
+
+Blocked-User Filtering & Popup Standardization
+
+Applied blocked-user filtering across Top3 so blocked relationships are
+respected consistently across relevant content, ranking, social
+discovery, Taste Match, notification, and profile experiences.
+
+Committed and pushed 61ef627 --- Apply blocked user filtering across
+Top3.
+
+Completed the V1 popup review and standardized reviewed popup flows on
+the shared Top3 ActionSheet pattern.
+
+Removed remaining native Alert.alert calls from app, components,
+context, and services.
+
+Verified npm run typecheck passes after the completed popup conversion.
+
+Verified the final project-wide Alert.alert grep returns zero matches.
+
+Committed and pushed c3d3b7f --- Standardize popups with Top3 action
+sheets.
+
 August 24, 2026
 
 Apple Account Deletion & Authorization Revocation
 
-Added the authenticated apple-auth-token Supabase Edge Function to exchange
-the authorization code returned by native Sign in with Apple for an Apple
-refresh token.
+Added the authenticated apple-auth-token Supabase Edge Function to
+exchange the authorization code returned by native Sign in with Apple
+for an Apple refresh token.
 
 Added protected server-side persistence of Apple refresh tokens in
 apple_auth_tokens, keyed by the authenticated Supabase user ID.
@@ -1229,21 +1300,22 @@ apple_auth_tokens, keyed by the authenticated Supabase user ID.
 Configured Apple Team ID, Key ID, Client ID, and private signing key as
 Supabase Edge Function secrets.
 
-Extended the permanent delete-account Edge Function so Apple authorization is
-revoked through Apple's /auth/revoke endpoint before the Supabase Auth user is
-deleted.
+Extended the permanent delete-account Edge Function so Apple
+authorization is revoked through Apple's /auth/revoke endpoint before
+the Supabase Auth user is deleted.
 
-Made Apple revocation failure stop account deletion so Top3 does not silently
-delete the local account while leaving the Apple authorization active.
+Made Apple revocation failure stop account deletion so Top3 does not
+silently delete the local account while leaving the Apple authorization
+active.
 
 Verified Apple refresh-token acquisition and persistence end-to-end.
 
 Verified Apple authorization revocation end-to-end with a temporary
-apple-auth-revoke-test Edge Function, then removed the temporary deployed
-function, local function folder, and Settings test UI.
+apple-auth-revoke-test Edge Function, then removed the temporary
+deployed function, local function folder, and Settings test UI.
 
-Re-authorized the admin Apple account after testing and confirmed a fresh
-refresh token was stored successfully.
+Re-authorized the admin Apple account after testing and confirmed a
+fresh refresh token was stored successfully.
 
 Verified deno check passes for apple-auth-token and delete-account.
 
@@ -1256,57 +1328,70 @@ August 22, 2026
 
 Sharing, Deep Links & Analytics
 
-Added native iOS sharing for published individual Lists across Feed, Profile, Category Feed list cards, and Published Top 3 detail.
+Added native iOS sharing for published individual Lists across Feed,
+Profile, Category Feed list cards, and Published Top 3 detail.
 
 Added sharing for Overall community rankings from Category Feed.
 
-Added deep-link routing for Overall rankings using category, topic, and view=overall parameters and verified shared Overall links land on the Overall view.
+Added deep-link routing for Overall rankings using category, topic, and
+view=overall parameters and verified shared Overall links land on the
+Overall view.
 
-Enabled logged-out recipients with Top3 installed to load shared public content by adding deliberately restricted anonymous SELECT access for published, non-removed collections. Drafts remain protected by Row Level Security.
+Enabled logged-out recipients with Top3 installed to load shared public
+content by adding deliberately restricted anonymous SELECT access for
+published, non-removed collections. Drafts remain protected by Row Level
+Security.
 
 Completed the current V1 Amplitude analytics instrumentation.
 
-Added collection_shared tracking that fires only after a completed native Share Sheet action and does not fire when the Share Sheet is dismissed.
+Added collection_shared tracking that fires only after a completed
+native Share Sheet action and does not fire when the Share Sheet is
+dismissed.
 
-Added collection_shared source attribution for feed, profile, category_feed, published_detail, and overall.
+Added collection_shared source attribution for feed, profile,
+category_feed, published_detail, and overall.
 
-Verified the share events and source properties in Amplitude Live Events.
+Verified the share events and source properties in Amplitude Live
+Events.
 
 Verified npm run typecheck passes after the sharing analytics rollout.
 
-Universal Links / public web fallback remain deferred until the production Top3 domain is confirmed.
+Universal Links / public web fallback remain deferred until the
+production Top3 domain is confirmed.
 
 August 21, 2026
 
 V1 Prohibited-Content Filtering
 
-Completed and verified the V1 automated prohibited-content filtering layer
-for comments and the free-form profile fields display name, username, and
-bio.
+Completed and verified the V1 automated prohibited-content filtering
+layer for comments and the free-form profile fields display name,
+username, and bio.
 
-Added server-side Supabase enforcement and the shared content_filter_terms
-table with a conservative 49-term production hard-block list.
+Added server-side Supabase enforcement and the shared
+content_filter_terms table with a conservative 49-term production
+hard-block list.
 
-Verified contains_blocked_content(text) normalizes case and punctuation and
-matches normalized whole terms / phrases rather than unsafe raw substrings.
+Verified contains_blocked_content(text) normalizes case and punctuation
+and matches normalized whole terms / phrases rather than unsafe raw
+substrings.
 
-Removed the temporary top3filtertest proof-of-concept term after production
-verification.
+Removed the temporary top3filtertest proof-of-concept term after
+production verification.
 
 Verified database acceptance tests for normal text, direct threats, case
-and punctuation variations, embedded prohibited phrases, and the legitimate
-title “Kill Bill.”
+and punctuation variations, embedded prohibited phrases, and the
+legitimate title "Kill Bill."
 
-Verified end-to-end on iPhone that prohibited comments are not published,
-the Top3-styled “Comment not posted” ActionSheet appears, and entered text
-remains available for correction.
+Verified end-to-end on iPhone that prohibited comments are not
+published, the Top3-styled "Comment not posted" ActionSheet appears, and
+entered text remains available for correction.
 
-Verified prohibited-content rejection for profile display name, username,
-and bio.
+Verified prohibited-content rejection for profile display name,
+username, and bio.
 
 Consolidated Published Top 3 comments onto the shared CommentsSheet:
-removed the inline comments section / bottom composer and made the comment
-icon open CommentsSheet consistently with other list surfaces.
+removed the inline comments section / bottom composer and made the
+comment icon open CommentsSheet consistently with other list surfaces.
 
 August 20, 2026
 
@@ -2009,7 +2094,9 @@ collection-item metadata wherever practical.
 
 Medium Priority
 
-Add Universal Links and a public web fallback for shared Lists / Overall rankings after the production Top3 domain is confirmed, so recipients without the app installed have a useful destination.
+Add Universal Links and a public web fallback for shared Lists / Overall
+rankings after the production Top3 domain is confirmed, so recipients
+without the app installed have a useful destination.
 
 Scope AsyncStorage keys by authenticated user where appropriate.
 
@@ -2150,10 +2237,11 @@ Remember that Create List intentionally keeps all supported topics
 visible even when a matching topic list has already been published.
 
 Remember that V1 prohibited-content filtering is implemented server-side
-for comments, display name, username, and bio. content_filter_terms stores
-the production hard-block vocabulary and contains_blocked_content(text)
-performs normalized whole-term / phrase matching. Do not replace this with
-a second client-only filtering architecture.
+for comments, display name, username, and bio. content_filter_terms
+stores the production hard-block vocabulary and
+contains_blocked_content(text) performs normalized whole-term / phrase
+matching. Do not replace this with a second client-only filtering
+architecture.
 
 Remember that the production hard-block list currently contains 49
 deliberately conservative terms / phrases. Ordinary profanity and
@@ -2166,8 +2254,9 @@ Top3-styled ActionSheet experience and preserves entered text for
 correction. Do not introduce native Alert.alert() for these moderation
 rejections.
 
-Remember that Published Top 3 uses the shared CommentsSheet opened from the
-comment icon rather than a separate inline comments section / composer.
+Remember that Published Top 3 uses the shared CommentsSheet opened from
+the comment icon rather than a separate inline comments section /
+composer.
 
 Remember that moderation removal uses moderation_content_removals as a
 user-scoped Realtime event source. Authenticated users may select only
@@ -2225,22 +2314,29 @@ validation is shown as a friendly alert rather than a development error.
 
 Remember that Sign in with Apple now has a server-side account-lifecycle
 path. services/auth-service.ts sends Apple's authorization code to the
-apple-auth-token Edge Function after successful Apple sign-in. The function
-exchanges it for an Apple refresh token and stores that token in
-apple_auth_tokens. Do not move Apple private-key or client-secret generation
-into the mobile application.
+apple-auth-token Edge Function after successful Apple sign-in. The
+function exchanges it for an Apple refresh token and stores that token
+in apple_auth_tokens. Do not move Apple private-key or client-secret
+generation into the mobile application.
 
-Remember that delete-account revokes a stored Apple refresh token with Apple
-before deleting the Supabase Auth user. If Apple revocation fails, deletion
-stops. The temporary apple-auth-revoke-test function and Settings test UI
-were removed after successful verification; do not recreate them as
-production functionality.
+Remember that delete-account revokes a stored Apple refresh token with
+Apple before deleting the Supabase Auth user. If Apple revocation fails,
+deletion stops. The temporary apple-auth-revoke-test function and
+Settings test UI were removed after successful verification; do not
+recreate them as production functionality.
 
 Remember that account deletion is implemented through
 lib/supabase/account.ts and the delete-account Supabase Edge Function,
 and Settings resets local welcome state after successful deletion.
 
-Remember that sharing uses the native iOS Share Sheet and custom Top3 deep links. Published Lists are shareable from Feed, Profile, Category Feed, and Published Top 3; Overall rankings are shareable from Category Feed. Anonymous collection reads are restricted to published, non-removed rows. collection_shared is tracked only for completed shares and includes feed, profile, category_feed, published_detail, or overall source attribution. Universal Links / public web fallback remain deferred until the production domain is confirmed.
+Remember that sharing uses the native iOS Share Sheet and custom Top3
+deep links. Published Lists are shareable from Feed, Profile, Category
+Feed, and Published Top 3; Overall rankings are shareable from Category
+Feed. Anonymous collection reads are restricted to published,
+non-removed rows. collection_shared is tracked only for completed shares
+and includes feed, profile, category_feed, published_detail, or overall
+source attribution. Universal Links / public web fallback remain
+deferred until the production domain is confirmed.
 
 Do not recommend migrating Following again---it has already been
 completed.
