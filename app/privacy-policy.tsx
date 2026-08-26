@@ -86,7 +86,7 @@ export default function PrivacyPolicyScreen() {
             Effective Date: August 25, 2026
           </Text>
           <Text style={styles.metaText}>
-            Last Updated: August 25, 2026
+            Last Updated: August 26, 2026
           </Text>
         </View>
 
@@ -414,6 +414,13 @@ export default function PrivacyPolicyScreen() {
             <Paragraph>
               Top3 currently uses Amplitude to provide
               product analytics.
+            </Paragraph>
+
+            <Paragraph>
+              Amplitude may process a pseudonymous device
+              identifier generated for analytics purposes. When
+              you are signed in, Top3 also associates analytics
+              activity with your Top3 user identifier.
             </Paragraph>
 
             <Paragraph>
