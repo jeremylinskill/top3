@@ -1,7 +1,7 @@
 # Top3 Privacy Policy
 
 **Effective Date:** August 25, 2026  
-**Last Updated:** August 25, 2026
+**Last Updated:** August 26, 2026
 
 Top3 is a social discovery app that lets people create and share ranked Top 3 lists, discover people with similar tastes, and interact with other members of the Top3 community.
 
@@ -155,6 +155,8 @@ Analytics events may include limited contextual information such as the relevant
 When you are signed in, analytics activity may be associated with your Top3 user identifier so that we can understand how the service is being used.
 
 Top3 currently uses **Amplitude** to provide product analytics.
+
+Amplitude may process a pseudonymous device identifier generated for analytics purposes. When you are signed in, Top3 also associates analytics activity with your Top3 user identifier.
 
 Top3 configures the Amplitude SDK not to collect advertising ID, IP address, carrier, device manufacturer, device model, language, operating-system name or version, or platform information through Amplitude's tracking options.
 
