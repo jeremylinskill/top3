@@ -534,23 +534,63 @@ implementation.
 
 Privacy, Legal & Data Handling
 
-🟡 3.1 Privacy policy --- VERIFY
+🟡 3.1 Privacy policy --- PUBLICATION PENDING
 
-Verify
+Status: Policy content and in-app access are implemented, audited, and
+tested. Public-web publication and App Store Connect configuration remain
+submission tasks.
 
-A publicly accessible privacy policy exists.
+Completed
 
-The privacy-policy URL is entered correctly in App Store Connect.
+The V1 Privacy Policy has been drafted against Top3's audited
+implementation and committed at docs/PRIVACY_POLICY.md.
 
-The policy accurately describes the data Top3 actually collects and
-processes.
+The policy describes the current V1 account/authentication, profile,
+social/UGC, search, media, analytics, moderation, retention, and account
+deletion practices.
 
-Supabase/auth/profile/social data practices are represented accurately.
+Supabase/auth/profile/social data practices are represented based on the
+audited implementation.
 
-Any third-party APIs/SDKs that receive user or device data are accounted
-for where required.
+Relevant third-party services are accounted for, including Supabase,
+Amplitude, Apple, Google, TMDb, Google Books, Open Library, Apple Music,
+IGDB/Twitch, and YouTube where applicable to the current V1 experience.
 
-Account deletion/data-retention behaviour matches the policy.
+The policy reflects the implemented account-deletion flow, including
+server-side account/data deletion, profile-image removal where applicable,
+Amplitude deletion requests, Sign in with Apple authorization revocation
+where applicable, and clearing the deleted account's locally stored recent
+searches on the device used for deletion.
+
+A native Privacy Policy screen is implemented at app/privacy-policy.tsx.
+
+Settings includes a Privacy Policy row in the App section and opens the
+native policy screen.
+
+The complete Settings → Privacy Policy flow was tested successfully on
+iPhone, including row visibility, navigation, scrolling, back navigation,
+and visual presentation.
+
+npm run typecheck passes after the Privacy Policy implementation.
+
+Remaining submission tasks
+
+Confirm Top3's final public website/domain.
+
+Replace the temporary [TOP3 WEBSITE URL] placeholder in the policy once the
+final website is confirmed.
+
+Publish the Privacy Policy at a stable, publicly accessible URL.
+
+Confirm the public policy content matches the approved repository version.
+
+Enter the live Privacy Policy URL correctly in App Store Connect.
+
+V1 conclusion
+
+The Privacy Policy is implementation-complete and aligned with the audited
+V1 codebase. It remains 🟡 until the public-web URL and App Store Connect
+configuration are complete.
 
 🟡 3.2 App Privacy disclosures --- VERIFY
 
@@ -920,9 +960,11 @@ verified; reviewer/demo credentials remain a 6.2 submission task
 
 Privacy policy
 
-🟡 VERIFY
+🟡 PUBLICATION PENDING
 
-Audit against actual V1 data practices
+Policy content audited against V1 implementation; docs/PRIVACY_POLICY.md
+committed; native Settings → Privacy Policy flow implemented and verified
+on iPhone; public URL and App Store Connect configuration remain
 
 App Privacy disclosures
 
@@ -997,16 +1039,30 @@ Final verification: npm run typecheck passes and the project-wide
 Alert.alert audit returns zero matches across app, components, context,
 and services.
 
+V1 Privacy Policy implementation completed and verified.
+
+Commit 5d9f1d4 --- Add V1 privacy policy.
+
+Commit cbb9925 --- Add in-app privacy policy.
+
+docs/PRIVACY_POLICY.md contains the implementation-audited V1 policy.
+
+Settings → Privacy Policy was tested successfully on iPhone, including
+navigation, full-policy scrolling, back navigation, and visual presentation.
+
+npm run typecheck passes after the in-app Privacy Policy implementation.
+
 Immediate Next Step
 
-Audit and prepare Top3's V1 Privacy Policy against the app's actual data
-practices.
+Proceed to 3.2 App Privacy disclosures.
 
-Document the personal/profile/social/UGC data Top3 collects and
-processes, account and deletion behaviour, Supabase usage, applicable
-third-party APIs/SDKs, retention/deletion practices, and user
-contact/support information. Then publish the policy at a stable public
-URL for use in-app and in App Store Connect.
+Audit the App Store Connect App Privacy questionnaire against the actual
+Top3 V1 release implementation, including account/profile/social/UGC data,
+Amplitude analytics, authentication providers, and any applicable
+third-party SDK or service data practices. Keep 3.1 Privacy Policy open as
+publication pending until the final Top3 public website/domain is confirmed,
+the policy is published at a stable public URL, and that URL is entered in
+App Store Connect.
 
 Definition of V1 Launch-Ready
 
