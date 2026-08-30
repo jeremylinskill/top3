@@ -1,8 +1,6 @@
 Top3 Product Roadmap
 
-Version: 2.6Status: Active DevelopmentOwner: Jeremy LinskillLast
-Updated: August 25, 2026Last Verified Commit: c3d3b7f --- Standardize
-popups with Top3 action sheets
+Version: 2.7Status: Active DevelopmentOwner: Jeremy LinskillLast Updated: August 30, 2026Last Verified Commit: 900bc0b --- Standardize UI system and refine onboarding
 
 Purpose
 
@@ -591,6 +589,16 @@ The long-term goal is not to maximize content creation or passive
 engagement, but to create meaningful connections through shared taste.
 
 Revision History
+
+Version 2.7 --- August 30, 2026
+
+Updated the roadmap to reflect completion of the current active-UI design-system consistency pass and startup / onboarding polish.
+
+Key changes:
+
+• Recorded the active-UI typography audit and semantic typography standardization as completed V1 polish foundations.• Recorded semantic primary / accent colour roles and continued shared-control consistency.• Recorded shared UserAvatar presentation as the standard reviewed avatar treatment.• Recorded the refined native splash → onboarding handoff and aligned production splash icon / wordmark assets.• Updated the last verified repository checkpoint to 900bc0b.• Preserved V1 Launch Readiness as the current product milestone.
+
+
 
 Version 2.6 --- August 25, 2026
 

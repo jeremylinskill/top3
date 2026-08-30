@@ -1,13 +1,12 @@
 CURRENT_STATE.md
 
-Project: Top3Version: 2.8Status: Active DevelopmentLast Updated: August
-25, 2026Current Branch: main
+Project: Top3Version: 2.9Status: Active DevelopmentLast Updated: August 30, 2026Current Branch: main
 
 Last Verified Commit
 
-c3d3b7f
+900bc0b
 
-Standardize popups with Top3 action sheets
+Standardize UI system and refine onboarding
 
 Dashboard
 
@@ -69,6 +68,16 @@ confirmation, destructive, success, error, validation, authentication,
 collection, reporting, and moderation flows now use the shared Top3
 ActionSheet pattern. The final project-wide Alert.alert audit returned
 zero matches and npm run typecheck passes.
+
+Design System & Startup Polish
+
+Status: ✅ Complete for the current active UI audit
+
+The reviewed active application UI now uses shared semantic typography roles from constants/typography.ts for major headings, section titles, card titles, body copy, labels, form labels, metadata, captions, actions, and badges. Intentional exceptions such as emoji / icon glyph sizing and specialized typography without a true shared-token match remain local.
+
+Semantic colour usage distinguishes the main action colour from the Top3 brand / secondary-interaction accent. Shared controls continue to reuse the established design tokens, and profile-avatar presentation is centralized through the shared UserAvatar component while preserving uploaded profile photos.
+
+The native splash → onboarding handoff has been refined so the branded onboarding state is already present behind the splash, avoiding an intermediate white flash or generic loading treatment. Production splash icon and wordmark assets are aligned with the first onboarding presentation, while onboarding copy and actions use staged fade-in behaviour.
 
 Current Priority
 
@@ -1261,6 +1270,14 @@ query
 post-launch and classified as a high-priority scalability initiative
 
 Recent Milestones
+
+August 30, 2026
+
+Design System & Onboarding Polish
+
+Completed the active-UI typography audit and standardized matching text roles on shared semantic typography tokens. Refined semantic colour usage and shared controls, centralized avatar presentation through UserAvatar, and polished the native splash → onboarding handoff with aligned production icon and wordmark assets and staged fade-in behaviour.
+
+Verified npm run typecheck passes. Committed and pushed 900bc0b --- Standardize UI system and refine onboarding.
 
 August 25, 2026
 

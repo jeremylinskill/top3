@@ -2,6 +2,68 @@ CHANGELOG.md
 
 This document records significant milestones in the evolution of Top3.
 
+v3.0 --- UI System & Onboarding Polish
+
+Released: August 30, 2026
+
+This release completes a broad visual-consistency pass across the active Top3 UI and refines the startup / first-use presentation. Shared semantic typography and colour roles are applied across the reviewed screens and components, avatar presentation is centralized, and the native splash now hands off cleanly into the branded onboarding experience.
+
+Added
+
+Shared Avatar Presentation
+
+Added the shared UserAvatar component as the standard Top3 avatar presentation for reviewed profile, social, feed, and related surfaces.
+
+Added the production splash wordmark asset used by the refined startup / onboarding presentation.
+
+Added the shared loading-screen presentation used during the branded startup handoff.
+
+Improved
+
+Typography Standardization
+
+Completed an application-wide audit of active text styles across app and components.
+
+Expanded and applied constants/typography.ts as the semantic source of truth for major headings, section titles, card titles, body copy, labels, form labels, metadata, captions, actions, and badge text.
+
+Preserved intentionally specialized typography and glyph sizing where no shared semantic token is an appropriate visual match.
+
+Colour & Control Consistency
+
+Clarified semantic colour usage so the main action colour and Top3 accent colour have distinct roles.
+
+Continued standardization of shared controls, including buttons, chips, segmented controls, headers, search inputs, cards, comments, profile controls, and secondary actions.
+
+Onboarding & Startup Polish
+
+Refined the native splash → onboarding transition so the branded onboarding state is already present behind the splash and the previous white-flash / generic-loading interruption is avoided.
+
+Aligned the splash icon and wordmark production assets with the first onboarding presentation.
+
+Refined staged fade-in timing for onboarding copy and actions while keeping the Top3 wordmark visually stable.
+
+Authentication Presentation
+
+Standardized reviewed authentication screens and forms on the shared typography and control system while preserving provider-specific requirements.
+
+Verified
+
+Verified npm run typecheck passes after the completed UI-system and onboarding standardization.
+
+Completed a final active-UI typography audit and reviewed the remaining intentional local font sizes.
+
+Checkpoint
+
+Committed and pushed 900bc0b --- Standardize UI system and refine onboarding.
+
+Documentation
+
+Updated CURRENT_STATE.md to version 2.9.
+
+Updated ROADMAP.md to version 2.7.
+
+Recorded the completed active-UI typography audit, semantic colour / control consistency, shared avatar presentation, and refined splash / onboarding handoff as completed V1 polish foundations.
+
 v2.9 --- Blocked-User Filtering & Popup Standardization
 
 Released: August 25, 2026
