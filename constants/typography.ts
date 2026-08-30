@@ -1,17 +1,27 @@
 import { TextStyle } from 'react-native';
 import { COLORS } from './colors';
 
-export const TYPOGRAPHY: Record<
+type TypographyKey =
   | 'display'
+  | 'heroTitle'
   | 'pageTitle'
   | 'sectionTitle'
   | 'headline'
+  | 'cardTitle'
+  | 'bodyLarge'
   | 'body'
   | 'bodyBold'
+  | 'subtitle'
   | 'label'
+  | 'formLabel'
+  | 'metadata'
   | 'caption'
+  | 'action'
   | 'badgeTitle'
-  | 'badgeSubtitle',
+  | 'badgeSubtitle';
+
+export const TYPOGRAPHY: Record<
+  TypographyKey,
   TextStyle
 > = {
   display: {
@@ -21,25 +31,46 @@ export const TYPOGRAPHY: Record<
     color: COLORS.text,
   },
 
+  heroTitle: {
+    fontSize: 32,
+    lineHeight: 38,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+
   pageTitle: {
-    fontSize: 24,
-    lineHeight: 30,
+    fontSize: 28,
+    lineHeight: 34,
     fontWeight: '700',
     color: COLORS.text,
   },
 
   sectionTitle: {
-    fontSize: 18,
-    lineHeight: 24,
+    fontSize: 20,
+    lineHeight: 26,
     fontWeight: '700',
     color: COLORS.text,
   },
 
   headline: {
     fontSize: 17,
-    lineHeight: 21,
+    lineHeight: 23,
     fontWeight: '700',
     color: COLORS.text,
+  },
+
+  cardTitle: {
+    fontSize: 17,
+    lineHeight: 23,
+    fontWeight: '600',
+    color: COLORS.text,
+  },
+
+  bodyLarge: {
+    fontSize: 16,
+    lineHeight: 22,
+    fontWeight: '400',
+    color: COLORS.secondaryText,
   },
 
   body: {
@@ -56,18 +87,46 @@ export const TYPOGRAPHY: Record<
     color: COLORS.secondaryText,
   },
 
+  subtitle: {
+    fontSize: 14,
+    lineHeight: 19,
+    fontWeight: '400',
+    color: COLORS.tertiaryText,
+  },
+
   label: {
     fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '600',
+    color: COLORS.tertiaryText,
+  },
+
+  formLabel: {
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: '600',
+    color: COLORS.text,
+  },
+
+  metadata: {
+    fontSize: 13,
     lineHeight: 18,
-    fontWeight: '700',
+    fontWeight: '400',
     color: COLORS.tertiaryText,
   },
 
   caption: {
     fontSize: 13,
-    lineHeight: 17,
+    lineHeight: 18,
     fontWeight: '600',
     color: COLORS.secondaryText,
+  },
+
+  action: {
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: '600',
+    color: COLORS.accent,
   },
 
   badgeTitle: {

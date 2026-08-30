@@ -1,5 +1,7 @@
 import ScreenHeader from '@/components/screen-header';
+import { COLORS } from '@/constants/colors';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
+import { TYPOGRAPHY } from '@/constants/typography';
 import { useTop3 } from '@/context/top3-context';
 import { getPublishedPosts } from '@/services/post-service';
 import { Post } from '@/types/post';
@@ -388,10 +390,9 @@ const styles = StyleSheet.create({
   },
 
   subtitle: {
+    ...TYPOGRAPHY.bodyLarge,
     marginTop: 7,
-    fontSize: 16,
-    lineHeight: 22,
-    color: '#777777',
+    color: COLORS.tertiaryText,
   },
 
   topicList: {
@@ -399,11 +400,9 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
+    ...TYPOGRAPHY.sectionTitle,
     marginTop: 8,
     marginBottom: -2,
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#222222',
   },
 
   topicCard: {
@@ -439,10 +438,10 @@ const styles = StyleSheet.create({
   },
 
   topicDescription: {
+    ...TYPOGRAPHY.label,
     marginTop: 4,
-    fontSize: 14,
-    lineHeight: 20,
-    color: '#777777',
+    fontWeight: '400',
+    color: COLORS.tertiaryText,
   },
 
   arrow: {
@@ -469,10 +468,9 @@ const styles = StyleSheet.create({
   },
 
   emptyText: {
+    ...TYPOGRAPHY.body,
     marginTop: 8,
-    fontSize: 15,
-    lineHeight: 21,
-    color: '#777777',
+    color: COLORS.tertiaryText,
     textAlign: 'center',
   },
 
@@ -483,9 +481,9 @@ const styles = StyleSheet.create({
   },
 
   loadingText: {
+    ...TYPOGRAPHY.bodyLarge,
     marginTop: 10,
-    fontSize: 16,
-    color: '#777777',
+    color: COLORS.tertiaryText,
   },
 
   messageState: {
@@ -503,10 +501,9 @@ const styles = StyleSheet.create({
   },
 
   messageText: {
+    ...TYPOGRAPHY.bodyLarge,
     marginTop: 8,
-    fontSize: 16,
-    lineHeight: 22,
-    color: '#777777',
+    color: COLORS.tertiaryText,
     textAlign: 'center',
   },
 

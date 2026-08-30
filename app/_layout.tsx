@@ -16,16 +16,54 @@ import {
   DefaultTheme,
   ThemeProvider,
 } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import {
+  Stack,
+  usePathname,
+} from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import {
+  useEffect,
+  useRef,
+} from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import 'react-native-reanimated';
 
+void SplashScreen.preventAutoHideAsync();
+
 export const unstable_settings = {
   anchor: '(tabs)',
 };
+
+function StartupSplashController() {
+  const pathname = usePathname();
+
+  const hasHiddenSplash =
+    useRef(false);
+
+  useEffect(() => {
+    if (
+      hasHiddenSplash.current ||
+      pathname === '/' ||
+      pathname === '/onboarding'
+    ) {
+      return;
+    }
+
+    hasHiddenSplash.current = true;
+
+    const frame = requestAnimationFrame(() => {
+      void SplashScreen.hideAsync();
+    });
+
+    return () => {
+      cancelAnimationFrame(frame);
+    };
+  }, [pathname]);
+
+  return null;
+}
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -54,40 +92,32 @@ export default function RootLayout() {
                                     ? DarkTheme
                                     : DefaultTheme
                                 }>
+                                <StartupSplashController />
+
                                 <Stack
                                   screenOptions={{
                                     headerShown: false,
                                   }}>
                                   <Stack.Screen name="index" />
-
-                                  <Stack.Screen name="onboarding" />
-
+                                  <Stack.Screen
+                                    name="onboarding"
+                                    options={{
+                                      animation: 'none',
+                                    }}
+                                  />
                                   <Stack.Screen name="onboarding-published" />
-
                                   <Stack.Screen name="onboarding-overall-top3" />
-
                                   <Stack.Screen name="onboarding-taste-match" />
-
                                   <Stack.Screen name="(tabs)" />
-
                                   <Stack.Screen name="collections" />
-
                                   <Stack.Screen name="collection" />
-
                                   <Stack.Screen name="search" />
-
                                   <Stack.Screen name="edit-profile" />
-
                                   <Stack.Screen name="notifications" />
-
                                   <Stack.Screen name="public-profile" />
-
                                   <Stack.Screen name="published-top3" />
-
                                   <Stack.Screen name="community-top3" />
-
                                   <Stack.Screen name="overall-top3-topics" />
-
                                   <Stack.Screen
                                     name="modal"
                                     options={{

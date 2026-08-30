@@ -272,7 +272,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     ...TYPOGRAPHY.sectionTitle,
     marginBottom: SPACING.md,
-    fontSize: 18,
   },
 
   optionCard: {
@@ -307,9 +306,9 @@ const styles = StyleSheet.create({
   },
 
   optionDescription: {
+    ...TYPOGRAPHY.label,
     marginTop: 4,
-    fontSize: 14,
-    lineHeight: 20,
+    fontWeight: '400',
     color: COLORS.tertiaryText,
   },
 
@@ -361,9 +360,9 @@ const styles = StyleSheet.create({
   },
 
   detailText: {
+    ...TYPOGRAPHY.label,
     flex: 1,
-    fontSize: 14,
-    lineHeight: 20,
+    fontWeight: '400',
     color: COLORS.secondaryText,
   },
 
@@ -375,8 +374,9 @@ const styles = StyleSheet.create({
   },
 
   savingText: {
+    ...TYPOGRAPHY.label,
     marginLeft: SPACING.sm,
-    fontSize: 14,
+    fontWeight: '400',
     color: COLORS.tertiaryText,
   },
 

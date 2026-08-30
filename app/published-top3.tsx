@@ -4,6 +4,8 @@ import ActionSheet, {
 import CommentsSheet from '@/components/comments-sheet';
 import ScreenHeader from '@/components/screen-header';
 import Top3Card from '@/components/top3-card';
+import UserAvatar from '@/components/user-avatar';
+import { TYPOGRAPHY } from '@/constants/typography';
 import { useProfile } from '@/context/profile-context';
 import { trackAnalyticsEvent } from '@/lib/analytics';
 import { sharePublishedCollection } from '@/lib/share';
@@ -26,7 +28,6 @@ import {
 } from 'react';
 import {
   ActivityIndicator,
-  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -543,28 +544,12 @@ export default function PublishedTop3Screen() {
               onPress={openAuthorProfile}
               accessibilityRole="button"
               accessibilityLabel={`Open ${author.displayName}'s profile`}>
-              <View style={styles.authorAvatar}>
-                {author.avatarUrl ? (
-                  <Image
-                    source={{
-                      uri: author.avatarUrl,
-                    }}
-                    style={
-                      styles.authorAvatarImage
-                    }
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <Text
-                    style={
-                      styles.authorAvatarText
-                    }>
-                    {author.displayName
-                      .charAt(0)
-                      .toUpperCase()}
-                  </Text>
-                )}
-              </View>
+              <UserAvatar
+                displayName={author.displayName}
+                avatarUrl={author.avatarUrl}
+                size={48}
+                fontSize={20}
+              />
 
               <View
                 style={styles.authorDetails}>
@@ -654,41 +639,18 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
 
-  authorAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#222222',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-
-  authorAvatarImage: {
-    width: '100%',
-    height: '100%',
-  },
-
-  authorAvatarText: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '700',
-  },
-
   authorDetails: {
     flex: 1,
     marginLeft: 12,
   },
 
   authorName: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#222222',
+    ...TYPOGRAPHY.headline,
   },
 
   username: {
+    ...TYPOGRAPHY.subtitle,
     marginTop: 2,
-    fontSize: 14,
     color: '#777777',
   },
 
@@ -704,8 +666,8 @@ const styles = StyleSheet.create({
   },
 
   loadingText: {
+    ...TYPOGRAPHY.bodyLarge,
     marginTop: 10,
-    fontSize: 16,
     color: '#777777',
   },
 
@@ -724,9 +686,8 @@ const styles = StyleSheet.create({
   },
 
   messageText: {
+    ...TYPOGRAPHY.bodyLarge,
     marginTop: 8,
-    fontSize: 16,
-    lineHeight: 22,
     color: '#777777',
     textAlign: 'center',
   },

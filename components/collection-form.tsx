@@ -1,5 +1,6 @@
 import Chip from '@/components/chip';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
+import { TYPOGRAPHY } from '@/constants/typography';
 import { Top3List } from '@/types/top3-list';
 import { buildCollectionTitle } from '@/utils/build-collection-title';
 import { useMemo } from 'react';
@@ -286,11 +287,8 @@ export default function CollectionForm({
 
 const styles = StyleSheet.create({
   sectionTitle: {
+    ...TYPOGRAPHY.sectionTitle,
     marginBottom: 12,
-    fontSize: 20,
-    lineHeight: 26,
-    fontWeight: '700',
-    color: '#222222',
   },
 
   optionalLabel: {
@@ -307,10 +305,9 @@ const styles = StyleSheet.create({
   },
 
   topicHelper: {
+    ...TYPOGRAPHY.body,
     marginTop: -4,
     marginBottom: 14,
-    fontSize: 15,
-    lineHeight: 21,
     color: '#777777',
   },
 
@@ -330,8 +327,7 @@ const styles = StyleSheet.create({
   },
 
   emptyMessage: {
-    fontSize: 15,
-    lineHeight: 21,
+    ...TYPOGRAPHY.body,
     color: '#777777',
     textAlign: 'center',
   },

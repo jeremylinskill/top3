@@ -2,6 +2,9 @@ import ActionSheet from '@/components/action-sheet';
 
 import AuthProviderButton from '@/components/auth-provider-button';
 
+import { COLORS } from '@/constants/colors';
+import { TYPOGRAPHY } from '@/constants/typography';
+
 import { signInWithEmail } from '@/services/auth-service';
 
 import {
@@ -320,7 +323,11 @@ export default function EmailSignInForm({
 
         <View style={styles.buttonContainer}>
           <AuthProviderButton
-            disabled={isSubmitting}
+            disabled={
+              !email.trim() ||
+              !password ||
+              isSubmitting
+            }
             loading={isSubmitting}
             onPress={() => {
               void handleSubmit();
@@ -416,11 +423,8 @@ const styles = StyleSheet.create({
   },
 
   label: {
+    ...TYPOGRAPHY.formLabel,
     marginBottom: 8,
-    fontSize: 15,
-    lineHeight: 20,
-    fontWeight: '600',
-    color: '#222222',
   },
 
   input: {
@@ -431,9 +435,8 @@ const styles = StyleSheet.create({
     borderColor: '#D9D9D9',
     borderRadius: 12,
     backgroundColor: '#FFFFFF',
-    fontSize: 16,
-    lineHeight: 22,
-    color: '#222222',
+    ...TYPOGRAPHY.bodyLarge,
+    color: COLORS.text,
   },
 
   passwordInputContainer: {
@@ -452,9 +455,8 @@ const styles = StyleSheet.create({
     minHeight: 54,
     paddingLeft: 16,
     paddingRight: 8,
-    fontSize: 16,
-    lineHeight: 22,
-    color: '#222222',
+    ...TYPOGRAPHY.bodyLarge,
+    color: COLORS.text,
   },
 
   visibilityButton: {
@@ -478,10 +480,7 @@ const styles = StyleSheet.create({
   },
 
   forgotPasswordText: {
-    fontSize: 15,
-    lineHeight: 20,
-    fontWeight: '600',
-    color: '#1573DD',
+    ...TYPOGRAPHY.action,
   },
 
   buttonContainer: {

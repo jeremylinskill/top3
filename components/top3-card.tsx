@@ -1,10 +1,15 @@
 import FollowButton from '@/components/follow-button';
 import TasteMatchBadge from '@/components/taste-match-badge';
+import UserAvatar from '@/components/user-avatar';
 import {
   getCategoryArtworkRule,
 } from '@/constants/category-artwork-rules';
-import { COLORS } from '@/constants/colors';
+import {
+  COLORS,
+  TASTE_MATCH_RANK_COLORS,
+} from '@/constants/colors';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
+import { TYPOGRAPHY } from '@/constants/typography';
 import { useAudioPreview } from '@/context/audio-preview-context';
 import { useComments } from '@/context/comment-context';
 import { useLike } from '@/context/like-context';
@@ -544,23 +549,12 @@ export default function Top3Card({
                   ? `Open ${author.displayName}'s profile`
                   : undefined
               }>
-              <View style={styles.avatar}>
-                {author.avatarUrl ? (
-                  <Image
-                    source={{
-                      uri: author.avatarUrl,
-                    }}
-                    style={styles.avatarImage}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <Text style={styles.avatarText}>
-                    {author.displayName
-                      .charAt(0)
-                      .toUpperCase()}
-                  </Text>
-                )}
-              </View>
+              <UserAvatar
+                displayName={author.displayName}
+                avatarUrl={author.avatarUrl}
+                size={46}
+                fontSize={19}
+              />
 
               <View style={styles.authorDetails}>
                 <Text style={styles.authorName}>
@@ -731,6 +725,13 @@ export default function Top3Card({
                       styles.standardRankRow,
                     isHighlighted &&
                       styles.highlightedRankRow,
+                    isTasteMatch && {
+                      backgroundColor:
+                        TASTE_MATCH_RANK_COLORS[
+                          index
+                        ] ??
+                        COLORS.tasteMatchBackground,
+                    },
                   ]}>
                   <Text
                     style={styles.rankNumber}>
@@ -1138,15 +1139,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 19,
     fontWeight: '700',
-    color: '#5928ed',
+    color: COLORS.accent,
   },
 
   recommendationReason: {
+    ...TYPOGRAPHY.metadata,
     marginTop: 1,
     marginLeft: 0,
-    fontSize: 13,
-    lineHeight: 18,
-    color: '#5928ed',
+    color: COLORS.accent,
   },
 
 
@@ -1175,27 +1175,6 @@ const styles = StyleSheet.create({
 
 
 
-
-  avatar: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: '#222222',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-
-  avatarImage: {
-    width: '100%',
-    height: '100%',
-  },
-
-  avatarText: {
-    color: '#FFFFFF',
-    fontSize: 19,
-    fontWeight: '700',
-  },
 
   authorDetails: {
     flex: 1,
@@ -1294,6 +1273,8 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '700',
     color: '#222222',
+      textAlign: 'center',
+        transform: [{ translateX: -5 }],
   },
 
   artworkContainer: {
@@ -1338,10 +1319,7 @@ const styles = StyleSheet.create({
   },
 
   itemTitle: {
-    fontSize: 17,
-    lineHeight: 23,
-    fontWeight: '600',
-    color: '#222222',
+    ...TYPOGRAPHY.cardTitle,
   },
 
   highlightedItemTitle: {
@@ -1349,10 +1327,9 @@ const styles = StyleSheet.create({
   },
 
   itemSubtitle: {
+    ...TYPOGRAPHY.subtitle,
     marginTop: 4,
-    fontSize: 14,
-    lineHeight: 19,
-    color: '#888888',
+    color: COLORS.text,
   },
 
   ratingRow: {
@@ -1365,7 +1342,7 @@ const styles = StyleSheet.create({
     marginRight: 4,
     fontSize: 13,
     fontWeight: '600',
-    color: '#555555',
+    color: '#222222',
   },
 
   footer: {

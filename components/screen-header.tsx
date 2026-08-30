@@ -1,5 +1,6 @@
 import { COLORS } from '@/constants/colors';
 import { SPACING } from '@/constants/spacing';
+import { TYPOGRAPHY } from '@/constants/typography';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import type { ComponentProps } from 'react';
@@ -186,10 +187,8 @@ const styles = StyleSheet.create({
   },
 
   subtitle: {
+    ...TYPOGRAPHY.subtitle,
     marginTop: SPACING.xs,
-    fontSize: 14,
-    color: COLORS.tertiaryText,
-    lineHeight: 18,
   },
 
   pressed: {

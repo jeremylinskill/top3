@@ -3,6 +3,7 @@ import ScreenHeader from '@/components/screen-header';
 import SearchInput from '@/components/search-input';
 import SegmentedControl from '@/components/segmented-control';
 import TasteMatchBadge from '@/components/taste-match-badge';
+import UserAvatar from '@/components/user-avatar';
 import {
   FEATURED_DISCOVER_CATEGORY_IDS,
   FEATURED_DISCOVER_TOPICS,
@@ -10,6 +11,7 @@ import {
   MIN_TRENDING_TOPICS,
 } from '@/constants/discover-featured';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
+import { TYPOGRAPHY } from '@/constants/typography';
 import { useBlock } from '@/context/block-context';
 import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
@@ -40,7 +42,6 @@ import {
 } from 'react';
 import {
   ActivityIndicator,
-  Image,
   Keyboard,
   Platform,
   Pressable,
@@ -1704,31 +1705,12 @@ export default function DiscoverScreen() {
                         }
                         accessibilityRole="button"
                         accessibilityLabel={`Open ${person.displayName}'s profile`}>
-                        <View
-                          style={styles.personAvatar}>
-                          {person.avatarUrl ? (
-                            <Image
-                              source={{
-                                uri: person.avatarUrl,
-                              }}
-                              style={
-                                styles
-                                  .personAvatarImage
-                              }
-                              resizeMode="cover"
-                            />
-                          ) : (
-                            <Text
-                              style={
-                                styles
-                                  .personAvatarText
-                              }>
-                              {person.displayName
-                                .charAt(0)
-                                .toUpperCase()}
-                            </Text>
-                          )}
-                        </View>
+                        <UserAvatar
+                          displayName={person.displayName}
+                          avatarUrl={person.avatarUrl}
+                          size={50}
+                          fontSize={20}
+                        />
 
                         <View
                           style={
@@ -1811,29 +1793,12 @@ export default function DiscoverScreen() {
                               }
                               accessibilityRole="button"
                               accessibilityLabel={`Open ${user.displayName}'s profile`}>
-                              <View
-                                style={styles.personAvatar}>
-                                {user.avatarUrl ? (
-                                  <Image
-                                    source={{
-                                      uri: user.avatarUrl,
-                                    }}
-                                    style={
-                                      styles.personAvatarImage
-                                    }
-                                    resizeMode="cover"
-                                  />
-                                ) : (
-                                  <Text
-                                    style={
-                                      styles.personAvatarText
-                                    }>
-                                    {user.displayName
-                                      .charAt(0)
-                                      .toUpperCase()}
-                                  </Text>
-                                )}
-                              </View>
+                              <UserAvatar
+                                displayName={user.displayName}
+                                avatarUrl={user.avatarUrl}
+                                size={50}
+                                fontSize={20}
+                              />
 
                               <View
                                 style={styles.tasteDetails}>
@@ -1940,29 +1905,12 @@ export default function DiscoverScreen() {
                             }
                             accessibilityRole="button"
                             accessibilityLabel={`Open ${user.displayName}'s profile`}>
-                            <View
-                              style={styles.personAvatar}>
-                              {user.avatarUrl ? (
-                                <Image
-                                  source={{
-                                    uri: user.avatarUrl,
-                                  }}
-                                  style={
-                                    styles.personAvatarImage
-                                  }
-                                  resizeMode="cover"
-                                />
-                              ) : (
-                                <Text
-                                  style={
-                                    styles.personAvatarText
-                                  }>
-                                  {user.displayName
-                                    .charAt(0)
-                                    .toUpperCase()}
-                                </Text>
-                              )}
-                            </View>
+                            <UserAvatar
+                                displayName={user.displayName}
+                                avatarUrl={user.avatarUrl}
+                                size={50}
+                                fontSize={20}
+                              />
 
                             <View
                               style={styles.tasteDetails}>
@@ -2282,11 +2230,8 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
+    ...TYPOGRAPHY.sectionTitle,
     marginBottom: 12,
-    fontSize: 20,
-    lineHeight: 26,
-    fontWeight: '700',
-    color: '#222222',
   },
 
   categoryList: {
@@ -2337,8 +2282,7 @@ const styles = StyleSheet.create({
   },
 
   categoryMeta: {
-    fontSize: 13,
-    color: '#888888',
+    ...TYPOGRAPHY.metadata,
   },
 
   trendingCategoryMeta: {
@@ -2467,9 +2411,8 @@ const styles = StyleSheet.create({
   },
 
   topicMeta: {
+    ...TYPOGRAPHY.metadata,
     marginTop: 4,
-    fontSize: 13,
-    color: '#888888',
   },
 
   collectionList: {
@@ -2515,9 +2458,8 @@ const styles = StyleSheet.create({
   },
 
   collectionMeta: {
+    ...TYPOGRAPHY.metadata,
     marginTop: 4,
-    fontSize: 13,
-    color: '#888888',
   },
 
   peopleList: {
@@ -2536,26 +2478,6 @@ const styles = StyleSheet.create({
     borderRadius: 18,
   },
 
-  personAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#222222',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-
-  personAvatarImage: {
-    width: '100%',
-    height: '100%',
-  },
-
-  personAvatarText: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
 
   personDetails: {
     flex: 1,
@@ -2609,9 +2531,8 @@ const styles = StyleSheet.create({
   },
 
   emptyTopicsText: {
+    ...TYPOGRAPHY.body,
     marginTop: 7,
-    fontSize: 15,
-    lineHeight: 21,
     color: '#777777',
     textAlign: 'center',
   },
@@ -2634,9 +2555,8 @@ const styles = StyleSheet.create({
   },
 
   searchPlaceholderText: {
+    ...TYPOGRAPHY.body,
     marginTop: 7,
-    fontSize: 15,
-    lineHeight: 21,
     color: '#777777',
     textAlign: 'center',
   },

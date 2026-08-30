@@ -1,3 +1,5 @@
+import { COLORS } from '@/constants/colors';
+import { TYPOGRAPHY } from '@/constants/typography';
 import { setSessionFromUrl } from '@/services/auth-service';
 import {
   setAwaitingEmailVerification,
@@ -138,20 +140,15 @@ const styles = StyleSheet.create({
   },
 
   title: {
+    ...TYPOGRAPHY.pageTitle,
     marginTop: 24,
-    fontSize: 28,
-    lineHeight: 34,
-    fontWeight: '700',
-    color: '#222222',
     textAlign: 'center',
   },
 
   description: {
+    ...TYPOGRAPHY.bodyLarge,
     marginTop: 12,
     maxWidth: 340,
-    fontSize: 16,
-    lineHeight: 24,
-    color: '#666666',
     textAlign: 'center',
   },
 
@@ -162,7 +159,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 12,
-    backgroundColor: '#1573DD',
+    backgroundColor: COLORS.primary,
   },
 
   buttonPressed: {

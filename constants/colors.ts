@@ -1,3 +1,12 @@
+const BRAND_ACCENT = '#5928ED';
+const PRIMARY = '#111111';
+
+export const TASTE_MATCH_RANK_COLORS = [
+  '#00D898',
+  '#00D5CC',
+  '#00D2FF',
+] as const;
+
 export const COLORS = {
   // Brand
   background: '#FAFAFA',
@@ -6,11 +15,12 @@ export const COLORS = {
   secondaryText: '#666666',
   tertiaryText: '#888888',
 
-  // Accent
-  accent: '#007AFF',
+  // Actions
+  primary: PRIMARY,
+  accent: BRAND_ACCENT,
 
   // Taste Match
-  tasteMatchAccent: '#5928ed',
+  tasteMatchAccent: BRAND_ACCENT,
   tasteMatchBackground: '#FFFC00',
   tasteMatchBorder: '#FFFC00',
 

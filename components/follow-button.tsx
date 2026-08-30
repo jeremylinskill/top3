@@ -4,11 +4,11 @@ import { SPACING } from '@/constants/spacing';
 import { TYPOGRAPHY } from '@/constants/typography';
 import { useFollow } from '@/context/follow-context';
 import {
-    ActivityIndicator,
-    Pressable,
-    StyleSheet,
-    Text,
-    ViewStyle,
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  ViewStyle,
 } from 'react-native';
 
 type FollowButtonSize =
@@ -130,7 +130,6 @@ export default function FollowButton({
       ) : (
         <Text
           style={[
-            styles.buttonText,
             size === 'small'
               ? styles.smallButtonText
               : styles.largeButtonText,
@@ -171,18 +170,18 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
   },
 
-  buttonText: {
-    ...TYPOGRAPHY.headline,
+  smallButtonText: {
+    ...TYPOGRAPHY.label,
+    fontWeight: '700',
     color: COLORS.white,
     textAlign: 'center',
   },
 
-  smallButtonText: {
-    fontSize: 14,
-  },
-
   largeButtonText: {
-    fontSize: 16,
+    ...TYPOGRAPHY.bodyLarge,
+    fontWeight: '700',
+    color: COLORS.white,
+    textAlign: 'center',
   },
 
   secondaryButtonText: {

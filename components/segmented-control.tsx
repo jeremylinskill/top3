@@ -1,8 +1,10 @@
+import { COLORS } from '@/constants/colors';
+import { TYPOGRAPHY } from '@/constants/typography';
 import {
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 
 export type SegmentedControlOption<T extends string> = {
@@ -102,19 +104,17 @@ const styles = StyleSheet.create({
   },
 
   label: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#777777',
+    ...TYPOGRAPHY.bodyBold,
+    color: COLORS.tertiaryText,
   },
 
   activeLabel: {
-    color: '#222222',
+    color: COLORS.text,
     fontWeight: '700',
   },
 
   count: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...TYPOGRAPHY.label,
     color: '#999999',
   },
 

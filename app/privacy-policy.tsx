@@ -1158,8 +1158,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     ...TYPOGRAPHY.sectionTitle,
     marginBottom: SPACING.md,
-    fontSize: 18,
-    lineHeight: 24,
     color: COLORS.text,
   },
 

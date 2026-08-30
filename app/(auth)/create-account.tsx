@@ -4,6 +4,7 @@ import GoogleAuthButton from '@/components/google-auth-button';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
 import { COLORS } from '@/constants/colors';
+import { TYPOGRAPHY } from '@/constants/typography';
 import { useOnboardingCollection } from '@/context/onboarding-collection-context';
 import {
   signInWithApple,
@@ -20,12 +21,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-
 type ErrorSheet = {
   title: string;
   message: string;
 };
-
 
 export default function CreateAccountScreen() {
   const {
@@ -33,23 +32,19 @@ export default function CreateAccountScreen() {
     prepareAuthHandoff,
   } = useOnboardingCollection();
 
-
   const [
     errorSheet,
     setErrorSheet,
   ] = useState<ErrorSheet | null>(null);
 
-
   const isSavingOnboardingCollection =
     Boolean(onboardingCollection);
-
 
   async function prepareSignUpIntent() {
     if (isSavingOnboardingCollection) {
       await prepareAuthHandoff('sign-up');
     }
   }
-
 
   async function handleAppleSignUp() {
     try {
@@ -67,12 +62,10 @@ export default function CreateAccountScreen() {
         return;
       }
 
-
       console.error(
         'Apple sign-in failed:',
         error
       );
-
 
       setErrorSheet({
         title: 'Unable to continue with Apple',
@@ -81,18 +74,15 @@ export default function CreateAccountScreen() {
     }
   }
 
-
   async function handleGoogleSignUp() {
     try {
       await prepareSignUpIntent();
 
       const result = await signInWithGoogle();
 
-
       if (!result) {
         return;
       }
-
 
       router.replace('/');
     } catch (error) {
@@ -107,12 +97,10 @@ export default function CreateAccountScreen() {
         return;
       }
 
-
       console.error(
         'Google sign-in failed:',
         error
       );
-
 
       setErrorSheet({
         title: 'Unable to continue with Google',
@@ -120,7 +108,6 @@ export default function CreateAccountScreen() {
       });
     }
   }
-
 
   async function handleEmailSignUp() {
     try {
@@ -132,14 +119,12 @@ export default function CreateAccountScreen() {
         error
       );
 
-
       setErrorSheet({
         title: 'Unable to continue',
         message: 'Please try again.',
       });
     }
   }
-
 
   function handleSignIn() {
     if (isSavingOnboardingCollection) {
@@ -152,96 +137,84 @@ export default function CreateAccountScreen() {
       return;
     }
 
-
     router.push('/sign-in');
   }
-
 
   return (
     <>
       <SafeAreaView
         style={styles.container}
         edges={['top', 'bottom']}>
-      <ScreenHeader />
+        <ScreenHeader />
 
+        <PageHeader
+          title="Save your Top 3"
+          subtitle={
+            'Create your account to publish your list\nand start building your taste profile.'
+          }
+          align="center"
+        />
 
-      <PageHeader
-        title="Save your Top 3"
-        subtitle={
-          'Create your account to publish your list\nand start building your taste profile.'
-        }
-        align="center"
-      />
+        <View style={styles.content}>
+          <View style={styles.options}>
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={
+                AppleAuthentication
+                  .AppleAuthenticationButtonType.CONTINUE
+              }
+              buttonStyle={
+                AppleAuthentication
+                  .AppleAuthenticationButtonStyle.WHITE_OUTLINE
+              }
+              cornerRadius={12}
+              style={styles.appleButton}
+              onPress={handleAppleSignUp}
+            />
 
+            <GoogleAuthButton
+              onPress={handleGoogleSignUp}
+            />
 
-      <View style={styles.content}>
-        <View style={styles.options}>
-          <AppleAuthentication.AppleAuthenticationButton
-            buttonType={
-              AppleAuthentication
-                .AppleAuthenticationButtonType.CONTINUE
-            }
-            buttonStyle={
-              AppleAuthentication
-                .AppleAuthenticationButtonStyle.WHITE_OUTLINE
-            }
-            cornerRadius={12}
-            style={styles.appleButton}
-            onPress={handleAppleSignUp}
-          />
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
 
+              <Text style={styles.dividerText}>
+                OR
+              </Text>
 
-          <GoogleAuthButton
-            onPress={handleGoogleSignUp}
-          />
+              <View style={styles.dividerLine} />
+            </View>
 
+            <EmailAuthButton
+              onPress={handleEmailSignUp}
+            />
 
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-
-
-            <Text style={styles.dividerText}>
-              OR
+            <Text style={styles.ageNotice}>
+              {
+                'By continuing, you confirm that you’re\nat least 13 years old.'
+              }
             </Text>
-
-
-            <View style={styles.dividerLine} />
           </View>
 
-
-          <EmailAuthButton
-            onPress={handleEmailSignUp}
-          />
-
-
-          <Text style={styles.ageNotice}>
-            {
-              'By continuing, you confirm that you’re\nat least 13 years old.'
-            }
-          </Text>
-        </View>
-
-
-        <View style={styles.signInContainer}>
-          <Text style={styles.signInPrompt}>
-            Already have an account?
-          </Text>
-
-
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Sign in"
-            hitSlop={8}
-            onPress={handleSignIn}
-            style={({ pressed }) => [
-              styles.signInButton,
-              pressed && styles.pressed,
-            ]}>
-            <Text style={styles.signInButtonText}>
-              Sign In
+          <View style={styles.signInContainer}>
+            <Text style={styles.signInPrompt}>
+              Already have an account?
             </Text>
-          </Pressable>
-        </View>
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Sign in"
+              hitSlop={8}
+              onPress={handleSignIn}
+              style={({ pressed }) => [
+                styles.signInButton,
+                pressed && styles.pressed,
+              ]}>
+              <Text style={styles.signInButtonText}>
+                Sign In
+              </Text>
+            </Pressable>
+          </View>
         </View>
       </SafeAreaView>
 
@@ -265,13 +238,11 @@ export default function CreateAccountScreen() {
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
   },
-
 
   content: {
     flex: 1,
@@ -279,18 +250,15 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
 
-
   options: {
     marginTop: 28,
     gap: 14,
   },
 
-
   appleButton: {
     width: '100%',
     height: 54,
   },
-
 
   divider: {
     flexDirection: 'row',
@@ -298,13 +266,11 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
 
-
   dividerLine: {
     flex: 1,
     height: 1,
     backgroundColor: COLORS.border,
   },
-
 
   dividerText: {
     marginHorizontal: 14,
@@ -314,16 +280,13 @@ const styles = StyleSheet.create({
     color: COLORS.tertiaryText,
   },
 
-
   ageNotice: {
+    ...TYPOGRAPHY.bodyLarge,
     marginTop: 2,
     paddingHorizontal: 12,
-    fontSize: 16,
-    lineHeight: 22,
     color: COLORS.tertiaryText,
     textAlign: 'center',
   },
-
 
   signInContainer: {
     marginTop: 'auto',
@@ -332,26 +295,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-
   signInPrompt: {
-    fontSize: 16,
-    lineHeight: 22,
+    ...TYPOGRAPHY.bodyLarge,
     color: COLORS.tertiaryText,
   },
-
 
   signInButton: {
     marginLeft: 5,
   },
 
-
   signInButtonText: {
-    fontSize: 16,
-    lineHeight: 22,
-    fontWeight: '700',
-    color: '#1573DD',
+    ...TYPOGRAPHY.action,
   },
-
 
   pressed: {
     opacity: 0.6,

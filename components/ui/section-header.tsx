@@ -1,8 +1,9 @@
+import { TYPOGRAPHY } from '@/constants/typography';
 import { ReactNode } from 'react';
 import {
-    StyleSheet,
-    Text,
-    View,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 
 type SectionHeaderProps = {
@@ -35,9 +36,6 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 20,
-    lineHeight: 26,
-    fontWeight: '700',
-    color: '#222222',
+    ...TYPOGRAPHY.sectionTitle,
   },
 });

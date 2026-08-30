@@ -1,6 +1,8 @@
 import ActionSheet from '@/components/action-sheet';
 
 import AuthProviderButton from '@/components/auth-provider-button';
+import { COLORS } from '@/constants/colors';
+import { TYPOGRAPHY } from '@/constants/typography';
 
 import { signUpWithEmail } from '@/services/auth-service';
 
@@ -63,6 +65,12 @@ export default function EmailSignUpForm({
 
   const [isSubmitting, setIsSubmitting] =
     useState(false);
+
+  const isFormValid =
+    email.trim().length > 0 &&
+    password.length >= 8 &&
+    confirmPassword.length > 0 &&
+    password === confirmPassword;
 
   const [
     validationSheet,
@@ -345,7 +353,7 @@ export default function EmailSignUpForm({
 
         <View style={styles.buttonContainer}>
           <AuthProviderButton
-            disabled={isSubmitting}
+            disabled={!isFormValid || isSubmitting}
             loading={isSubmitting}
             onPress={handleSubmit}
             title="Create Account"
@@ -418,11 +426,8 @@ const styles = StyleSheet.create({
   },
 
   label: {
+    ...TYPOGRAPHY.formLabel,
     marginBottom: 8,
-    fontSize: 15,
-    lineHeight: 20,
-    fontWeight: '600',
-    color: '#222222',
   },
 
   input: {
@@ -433,9 +438,8 @@ const styles = StyleSheet.create({
     borderColor: '#D9D9D9',
     borderRadius: 12,
     backgroundColor: '#FFFFFF',
-    fontSize: 16,
-    lineHeight: 22,
-    color: '#222222',
+    ...TYPOGRAPHY.bodyLarge,
+    color: COLORS.text,
   },
 
   passwordInputContainer: {
@@ -454,9 +458,8 @@ const styles = StyleSheet.create({
     minHeight: 54,
     paddingLeft: 16,
     paddingRight: 8,
-    fontSize: 16,
-    lineHeight: 22,
-    color: '#222222',
+    ...TYPOGRAPHY.bodyLarge,
+    color: COLORS.text,
   },
 
   visibilityButton: {

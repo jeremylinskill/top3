@@ -1,6 +1,7 @@
 import ActionSheet from '@/components/action-sheet';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
+import UserAvatar from '@/components/user-avatar';
 import { COLORS } from '@/constants/colors';
 import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
@@ -17,7 +18,6 @@ import {
 } from 'react';
 import {
   ActivityIndicator,
-  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -220,30 +220,16 @@ export default function BlockedUsersScreen() {
                     ) : null}
 
                     <View style={styles.row}>
-                      <View
-                        style={
-                          styles.avatarContainer
-                        }>
-                        {blockedProfile.avatarUrl ? (
-                          <Image
-                            source={{
-                              uri:
-                                blockedProfile.avatarUrl,
-                            }}
-                            style={styles.avatar}
-                            resizeMode="cover"
-                          />
-                        ) : (
-                          <Text
-                            style={
-                              styles.avatarText
-                            }>
-                            {blockedProfile.displayName
-                              .charAt(0)
-                              .toUpperCase()}
-                          </Text>
-                        )}
-                      </View>
+                      <UserAvatar
+                        displayName={
+                          blockedProfile.displayName
+                        }
+                        avatarUrl={
+                          blockedProfile.avatarUrl
+                        }
+                        size={48}
+                        fontSize={18}
+                      />
 
                       <View
                         style={
@@ -380,7 +366,6 @@ const styles = StyleSheet.create({
   },
 
   content: {
-    flexGrow: 1,
     paddingHorizontal: SPACING.xl,
     paddingBottom: 40,
   },
@@ -393,40 +378,40 @@ const styles = StyleSheet.create({
   },
 
   loadingText: {
-    fontSize: 14,
-    lineHeight: 20,
+    ...TYPOGRAPHY.label,
+    fontWeight: '400',
     color: COLORS.tertiaryText,
   },
 
   emptyState: {
-    minHeight: 260,
     alignItems: 'center',
-    justifyContent: 'center',
     paddingHorizontal: SPACING.xl,
-  },
-
-  emptyIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: RADIUS.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingVertical: 28,
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
+    borderRadius: RADIUS.xl,
+  },
+
+  emptyIcon: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.background,
   },
 
   emptyTitle: {
-    ...TYPOGRAPHY.headline,
-    marginTop: SPACING.md,
+    ...TYPOGRAPHY.sectionTitle,
+    marginTop: SPACING.lg,
     color: COLORS.text,
     textAlign: 'center',
   },
 
   emptyText: {
+    ...TYPOGRAPHY.body,
     marginTop: SPACING.sm,
-    fontSize: 14,
-    lineHeight: 20,
     color: COLORS.tertiaryText,
     textAlign: 'center',
   },
@@ -454,27 +439,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.border,
   },
 
-  avatarContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    backgroundColor: COLORS.background,
-  },
-
-  avatar: {
-    width: '100%',
-    height: '100%',
-  },
-
-  avatarText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.text,
-  },
-
   profileDetails: {
     flex: 1,
     minWidth: 0,
@@ -488,9 +452,9 @@ const styles = StyleSheet.create({
   },
 
   username: {
+    ...TYPOGRAPHY.label,
     marginTop: 3,
-    fontSize: 14,
-    lineHeight: 20,
+    fontWeight: '400',
     color: COLORS.tertiaryText,
   },
 
@@ -507,8 +471,7 @@ const styles = StyleSheet.create({
   },
 
   unblockButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...TYPOGRAPHY.label,
     color: COLORS.text,
   },
 

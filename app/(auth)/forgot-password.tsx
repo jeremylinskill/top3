@@ -1,21 +1,13 @@
 import ActionSheet from '@/components/action-sheet';
-
 import AuthProviderButton from '@/components/auth-provider-button';
-
 import PageHeader from '@/components/page-header';
-
 import ScreenHeader from '@/components/screen-header';
-
 import { COLORS } from '@/constants/colors';
-
+import { TYPOGRAPHY } from '@/constants/typography';
 import { requestPasswordReset } from '@/services/auth-service';
-
 import * as Linking from 'expo-linking';
-
 import { router } from 'expo-router';
-
 import { useState } from 'react';
-
 import {
   Pressable,
   StyleSheet,
@@ -23,7 +15,6 @@ import {
   TextInput,
   View,
 } from 'react-native';
-
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type ValidationSheet = {
@@ -37,12 +28,13 @@ function isValidEmail(value: string) {
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
-
   const [isSubmitting, setIsSubmitting] =
     useState(false);
-
   const [hasSubmitted, setHasSubmitted] =
     useState(false);
+
+  const isFormValid =
+    email.trim().length > 0;
 
   const [
     validationSheet,
@@ -73,7 +65,6 @@ export default function ForgotPasswordScreen() {
         title: 'Email required',
         message: 'Enter your email address.',
       });
-
       return;
     }
 
@@ -82,7 +73,6 @@ export default function ForgotPasswordScreen() {
         title: 'Invalid email',
         message: 'Enter a valid email address.',
       });
-
       return;
     }
 
@@ -109,7 +99,6 @@ export default function ForgotPasswordScreen() {
 
       if (isNetworkError) {
         setIsNetworkErrorSheetVisible(true);
-
         return;
       }
 
@@ -229,7 +218,7 @@ export default function ForgotPasswordScreen() {
 
               <View style={styles.buttonContainer}>
                 <AuthProviderButton
-                  disabled={isSubmitting}
+                  disabled={!isFormValid || isSubmitting}
                   loading={isSubmitting}
                   onPress={() => {
                     void handleSubmit();
@@ -318,11 +307,8 @@ const styles = StyleSheet.create({
   },
 
   label: {
+    ...TYPOGRAPHY.formLabel,
     marginBottom: 8,
-    fontSize: 15,
-    lineHeight: 20,
-    fontWeight: '600',
-    color: '#222222',
   },
 
   input: {
@@ -333,9 +319,8 @@ const styles = StyleSheet.create({
     borderColor: '#D9D9D9',
     borderRadius: 12,
     backgroundColor: '#FFFFFF',
-    fontSize: 16,
-    lineHeight: 22,
-    color: '#222222',
+    ...TYPOGRAPHY.bodyLarge,
+    color: COLORS.text,
   },
 
   buttonContainer: {
@@ -348,9 +333,8 @@ const styles = StyleSheet.create({
   },
 
   successText: {
+    ...TYPOGRAPHY.bodyLarge,
     maxWidth: 340,
-    fontSize: 16,
-    lineHeight: 24,
     color: COLORS.tertiaryText,
     textAlign: 'center',
   },
@@ -366,10 +350,7 @@ const styles = StyleSheet.create({
   },
 
   signInButtonText: {
-    fontSize: 16,
-    lineHeight: 22,
-    fontWeight: '700',
-    color: '#1573DD',
+    ...TYPOGRAPHY.action,
   },
 
   pressed: {

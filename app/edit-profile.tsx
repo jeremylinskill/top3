@@ -2,14 +2,15 @@ import ActionSheet from '@/components/action-sheet';
 import PageHeader from '@/components/page-header';
 import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
+import UserAvatar from '@/components/user-avatar';
 import { COLORS } from '@/constants/colors';
+import { TYPOGRAPHY } from '@/constants/typography';
 import { useProfile } from '@/context/profile-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import {
-  Image,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -72,7 +73,15 @@ export default function EditProfileScreen() {
     .trim()
     .replace(/^@+/, '');
 
+  const hasChanges =
+    trimmedDisplayName !== profile.displayName.trim() ||
+    trimmedUsername !==
+      profile.username.trim().replace(/^@+/, '') ||
+    bio.trim() !== (profile.bio ?? '').trim() ||
+    avatarUrl !== (profile.avatarUrl ?? '');
+
   const canSave =
+    hasChanges &&
     trimmedDisplayName.length > 0 &&
     trimmedUsername.length > 0 &&
     !isSaving;
@@ -296,19 +305,12 @@ export default function EditProfileScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="Change profile photo"
                 accessibilityHint="Opens your photo library">
-                {avatarUrl ? (
-                  <Image
-                    source={{ uri: avatarUrl }}
-                    style={styles.avatarImage}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <Text style={styles.avatarInitial}>
-                    {trimmedDisplayName
-                      .charAt(0)
-                      .toUpperCase() || '?'}
-                  </Text>
-                )}
+                <UserAvatar
+                  displayName={trimmedDisplayName}
+                  avatarUrl={avatarUrl || undefined}
+                  size={96}
+                  fontSize={40}
+                />
 
                 <View style={styles.cameraBadge}>
                   <Ionicons
@@ -504,18 +506,6 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
 
-  avatarImage: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-  },
-
-  avatarInitial: {
-    color: '#FFFFFF',
-    fontSize: 40,
-    fontWeight: '700',
-  },
-
   cameraBadge: {
     position: 'absolute',
     right: -2,
@@ -523,7 +513,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: COLORS.text,
+    backgroundColor: COLORS.accent,
     borderWidth: 3,
     borderColor: COLORS.background,
     alignItems: 'center',
@@ -539,8 +529,8 @@ const styles = StyleSheet.create({
   },
 
   avatarHelpText: {
-    fontSize: 14,
-    lineHeight: 20,
+    ...TYPOGRAPHY.label,
+    fontWeight: '400',
     color: COLORS.tertiaryText,
     textAlign: 'center',
   },
@@ -550,9 +540,8 @@ const styles = StyleSheet.create({
   },
 
   label: {
+    ...TYPOGRAPHY.formLabel,
     marginBottom: 8,
-    fontSize: 16,
-    fontWeight: '600',
     color: COLORS.text,
   },
 
@@ -563,7 +552,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 14,
     paddingVertical: 14,
-    fontSize: 17,
+    ...TYPOGRAPHY.bodyLarge,
     color: COLORS.text,
   },
 
@@ -578,14 +567,14 @@ const styles = StyleSheet.create({
   },
 
   atSymbol: {
-    fontSize: 17,
+    ...TYPOGRAPHY.bodyLarge,
     color: COLORS.tertiaryText,
   },
 
   usernameTextInput: {
+    ...TYPOGRAPHY.bodyLarge,
     flex: 1,
     paddingVertical: 14,
-    fontSize: 17,
     color: COLORS.text,
   },
 
@@ -594,9 +583,9 @@ const styles = StyleSheet.create({
   },
 
   characterCount: {
+    ...TYPOGRAPHY.metadata,
     marginTop: 6,
     textAlign: 'right',
-    fontSize: 13,
     color: COLORS.tertiaryText,
   },
 

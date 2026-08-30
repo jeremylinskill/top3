@@ -1,5 +1,9 @@
 import PrimaryButton from '@/components/primary-button';
+import {
+  TASTE_MATCH_RANK_COLORS,
+} from '@/constants/colors';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
+import { TYPOGRAPHY } from '@/constants/typography';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
 import { useAuth } from '@/hooks/use-auth';
@@ -435,8 +439,12 @@ export default function OnboardingTasteMatchScreen() {
                   <View
                     style={[
                       styles.rankCell,
-                      isShared &&
-                        styles.sharedRankCell,
+                      isShared && {
+                        backgroundColor:
+                          TASTE_MATCH_RANK_COLORS[
+                            index
+                          ],
+                      },
                     ]}>
                     <Text
                       style={styles.rankNumber}>
@@ -455,8 +463,12 @@ export default function OnboardingTasteMatchScreen() {
                   <View
                     style={[
                       styles.rankCell,
-                      isShared &&
-                        styles.sharedRankCell,
+                      isShared && {
+                        backgroundColor:
+                          TASTE_MATCH_RANK_COLORS[
+                            index
+                          ],
+                      },
                     ]}>
                     <Text
                       style={styles.rankNumber}>
@@ -513,11 +525,8 @@ const styles = StyleSheet.create({
 
 
   title: {
+    ...TYPOGRAPHY.pageTitle,
     paddingHorizontal: 8,
-    fontSize: 28,
-    lineHeight: 34,
-    fontWeight: '700',
-    color: '#222222',
     textAlign: 'center',
   },
 
@@ -564,9 +573,8 @@ const styles = StyleSheet.create({
 
 
   sharedText: {
+    ...TYPOGRAPHY.bodyLarge,
     marginTop: 6,
-    fontSize: 16,
-    lineHeight: 22,
     color: '#777777',
     textAlign: 'center',
   },
@@ -593,10 +601,7 @@ const styles = StyleSheet.create({
 
 
   collectionTitle: {
-    fontSize: 20,
-    lineHeight: 26,
-    fontWeight: '700',
-    color: '#222222',
+    ...TYPOGRAPHY.sectionTitle,
   },
 
 
@@ -633,11 +638,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-  },
-
-
-  sharedRankCell: {
-    backgroundColor: '#FFFC04',
   },
 
 

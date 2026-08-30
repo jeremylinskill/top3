@@ -108,9 +108,8 @@ const styles = StyleSheet.create({
   },
 
   message: {
+    ...TYPOGRAPHY.body,
     marginTop: SPACING.sm,
-    fontSize: 15,
-    lineHeight: 22,
     color: COLORS.tertiaryText,
     textAlign: 'center',
   },
@@ -121,9 +120,8 @@ const styles = StyleSheet.create({
   },
 
   email: {
+    ...TYPOGRAPHY.metadata,
     marginTop: SPACING.md,
-    fontSize: 13,
-    lineHeight: 18,
     color: COLORS.tertiaryText,
     textAlign: 'center',
   },

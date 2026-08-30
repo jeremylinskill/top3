@@ -1,9 +1,11 @@
 import ActionSheet, {
   ActionSheetAction,
 } from '@/components/action-sheet';
+import UserAvatar from '@/components/user-avatar';
 import { AVATAR } from '@/constants/avatar';
 import { COLORS } from '@/constants/colors';
 import { RADIUS } from '@/constants/radius';
+import { TYPOGRAPHY } from '@/constants/typography';
 
 import {
   Comment,
@@ -26,7 +28,6 @@ import {
 import {
   Animated,
   Easing,
-  Image,
   Keyboard,
   Modal,
   Platform,
@@ -852,25 +853,13 @@ export default function CommentsSheet({
             </ScrollView>
 
             <View style={styles.composer}>
-              <View style={styles.avatar}>
-                {profile.avatarUrl ? (
-                  <Image
-                    source={{
-                      uri: profile.avatarUrl,
-                    }}
-                    style={
-                      styles.avatarImage
-                    }
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <Text
-                    style={styles.avatarText}>
-                    {profile.displayName
-                      .charAt(0)
-                      .toUpperCase()}
-                  </Text>
-                )}
+              <View style={styles.composerAvatar}>
+                <UserAvatar
+                  displayName={profile.displayName}
+                  avatarUrl={profile.avatarUrl}
+                  size={AVATAR.sm + 2}
+                  fontSize={15}
+                />
               </View>
 
               <View
@@ -967,28 +956,12 @@ function CommentRow({
 
   return (
     <View style={styles.commentRow}>
-      <View style={styles.commentAvatar}>
-        {comment.authorAvatarUrl ? (
-          <Image
-            source={{
-              uri: comment.authorAvatarUrl,
-            }}
-            style={
-              styles.commentAvatarImage
-            }
-            resizeMode="cover"
-          />
-        ) : (
-          <Text
-            style={
-              styles.commentAvatarText
-            }>
-            {comment.authorDisplayName
-              .charAt(0)
-              .toUpperCase()}
-          </Text>
-        )}
-      </View>
+      <UserAvatar
+        displayName={comment.authorDisplayName}
+        avatarUrl={comment.authorAvatarUrl}
+        size={40}
+        fontSize={16}
+      />
 
       <View style={styles.commentBody}>
         <View
@@ -1141,27 +1114,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
 
-  commentAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.text,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-
-  commentAvatarImage: {
-    width: '100%',
-    height: '100%',
-  },
-
-  commentAvatarText: {
-    color: COLORS.white,
-    fontSize: 16,
-    fontWeight: '700',
-  },
-
   commentBody: {
     flex: 1,
     marginLeft: 12,
@@ -1188,8 +1140,8 @@ const styles = StyleSheet.create({
   },
 
   commentAuthor: {
+    ...TYPOGRAPHY.bodyBold,
     flexShrink: 1,
-    fontSize: 15,
     fontWeight: '700',
     color: '#222222',
   },
@@ -1211,15 +1163,14 @@ const styles = StyleSheet.create({
   },
 
   commentUsername: {
+    ...TYPOGRAPHY.metadata,
     marginTop: 1,
-    fontSize: 13,
     color: '#888888',
   },
 
   commentText: {
+    ...TYPOGRAPHY.body,
     marginTop: 7,
-    fontSize: 15,
-    lineHeight: 21,
     color: '#333333',
   },
 
@@ -1236,9 +1187,8 @@ const styles = StyleSheet.create({
   },
 
   emptyStateText: {
+    ...TYPOGRAPHY.body,
     marginTop: 7,
-    fontSize: 15,
-    lineHeight: 21,
     color: '#777777',
     textAlign: 'center',
   },
@@ -1256,28 +1206,9 @@ const styles = StyleSheet.create({
       COLORS.border,
   },
 
-  avatar: {
-    width: AVATAR.sm + 2,
-    height: AVATAR.sm + 2,
-    borderRadius:
-      (AVATAR.sm + 2) / 2,
+  composerAvatar: {
     marginRight: 10,
     marginBottom: 3,
-    backgroundColor: COLORS.text,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-
-  avatarImage: {
-    width: '100%',
-    height: '100%',
-  },
-
-  avatarText: {
-    color: COLORS.white,
-    fontSize: 15,
-    fontWeight: '700',
   },
 
   inputContainer: {

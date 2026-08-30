@@ -1,11 +1,12 @@
+import { TYPOGRAPHY } from '@/constants/typography';
 import { Ionicons } from '@expo/vector-icons';
 import {
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    TextInputProps,
-    View,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  TextInputProps,
+  View,
 } from 'react-native';
 
 type SearchInputProps = Omit<
@@ -94,11 +95,11 @@ const styles = StyleSheet.create({
   },
 
   input: {
+    ...TYPOGRAPHY.bodyLarge,
     flex: 1,
     minHeight: 54,
     paddingVertical: 0,
     paddingHorizontal: 0,
-    fontSize: 16,
     color: '#222222',
   },
 

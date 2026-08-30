@@ -1,8 +1,11 @@
 import PrimaryButton from '@/components/primary-button';
+import { COLORS } from '@/constants/colors';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
+import { TYPOGRAPHY } from '@/constants/typography';
 import { useOnboardingCollection } from '@/context/onboarding-collection-context';
 import { buildCollectionTitle } from '@/utils/build-collection-title';
 import { router } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import {
   useEffect,
   useMemo,
@@ -16,9 +19,13 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 
 
 type OnboardingStep =
@@ -27,13 +34,13 @@ type OnboardingStep =
   | 'category';
 
 
+const SPLASH_ICON_SIZE = 200;
 const BRAND_HEIGHT = 40;
 
 // These values are intentionally different because the two headline
 // compositions have different visual font-box spacing. The result is
 // a matching perceived gap between Top 3 and the first headline.
-const INTRO_BRAND_GAP = 8;
-const CATEGORY_BRAND_GAP = -28;
+const CATEGORY_BRAND_GAP = 16;
 
 
 const ONBOARDING_CATEGORY_ORDER = [
@@ -70,6 +77,11 @@ export default function OnboardingScreen() {
     isLoading: isOnboardingCollectionLoading,
   } = useOnboardingCollection();
 
+  const { height: windowHeight } =
+    useWindowDimensions();
+
+  const insets = useSafeAreaInsets();
+
 
   const [step, setStep] =
     useState<OnboardingStep>('intro');
@@ -96,6 +108,15 @@ export default function OnboardingScreen() {
 
 
   const introOpacity =
+    useRef(new Animated.Value(1)).current;
+
+  const introTitleOpacity =
+    useRef(new Animated.Value(0)).current;
+
+  const introFirstLineOpacity =
+    useRef(new Animated.Value(0)).current;
+
+  const introSecondLineOpacity =
     useRef(new Animated.Value(0)).current;
 
   const categoryTitleOpacity =
@@ -114,8 +135,14 @@ export default function OnboardingScreen() {
   const introActionsOpacity =
     useRef(new Animated.Value(0)).current;
 
+  const introFooterOpacity =
+    useRef(new Animated.Value(0)).current;
+
 
   const hasPositionedInitialLayout =
+    useRef(false);
+
+  const hasRequestedSplashHide =
     useRef(false);
 
 
@@ -131,29 +158,6 @@ export default function OnboardingScreen() {
       ),
     []
   );
-
-
-  const introBrandY =
-    stageHeight > 0 &&
-    introHeight > 0
-      ? Math.max(
-          0,
-          (
-            stageHeight -
-            (
-              BRAND_HEIGHT +
-              INTRO_BRAND_GAP +
-              introHeight
-            )
-          ) / 2
-        )
-      : 0;
-
-
-  const introContentY =
-    introBrandY +
-    BRAND_HEIGHT +
-    INTRO_BRAND_GAP;
 
 
   const categoryBrandY =
@@ -179,6 +183,34 @@ export default function OnboardingScreen() {
     CATEGORY_BRAND_GAP;
 
 
+
+  /*
+   * Keep the welcome-screen type locked to the same vertical positions
+   * used by the category-selection screen so Top 3, the headline, and
+   * the supporting copy do not jump when Get Started is tapped.
+   */
+  const introBrandY =
+    categoryBrandY;
+
+  const introContentY =
+    introBrandY +
+    BRAND_HEIGHT +
+    CATEGORY_BRAND_GAP;
+
+  /*
+   * Match the native Expo splash exactly.
+   *
+   * The native splash icon is centred in the full device window.
+   * This stage begins below the top safe-area inset, so subtracting
+   * that inset places the React Native icon's centre at the exact
+   * physical centre of the screen.
+   */
+  const introIconY =
+    windowHeight / 2 -
+    insets.top -
+    SPLASH_ICON_SIZE / 2;
+
+
   useEffect(() => {
     if (
       hasPositionedInitialLayout.current ||
@@ -200,25 +232,68 @@ export default function OnboardingScreen() {
       categoryContentY
     );
 
+    if (!hasRequestedSplashHide.current) {
+      hasRequestedSplashHide.current = true;
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          void SplashScreen.hideAsync();
+        });
+      });
+    }
+
 
     Animated.sequence([
-      Animated.delay(80),
+      Animated.delay(400),
+      Animated.timing(
+        introTitleOpacity,
+        {
+          toValue: 1,
+          duration: 320,
+          easing:
+            Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }
+      ),
+      Animated.delay(70),
+      Animated.timing(
+        introFirstLineOpacity,
+        {
+          toValue: 1,
+          duration: 340,
+          easing:
+            Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }
+      ),
+      Animated.delay(70),
+      Animated.timing(
+        introSecondLineOpacity,
+        {
+          toValue: 1,
+          duration: 360,
+          easing:
+            Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }
+      ),
+      Animated.delay(90),
       Animated.parallel([
         Animated.timing(
-          introOpacity,
+          introActionsOpacity,
           {
             toValue: 1,
-            duration: 520,
+            duration: 420,
             easing:
               Easing.out(Easing.cubic),
             useNativeDriver: true,
           }
         ),
         Animated.timing(
-          introActionsOpacity,
+          introFooterOpacity,
           {
             toValue: 1,
-            duration: 460,
+            duration: 420,
             easing:
               Easing.out(Easing.cubic),
             useNativeDriver: true,
@@ -232,10 +307,14 @@ export default function OnboardingScreen() {
     categoryHeight,
     categoryY,
     introActionsOpacity,
+    introFirstLineOpacity,
+    introFooterOpacity,
     introBrandY,
     introContentY,
     introHeight,
     introOpacity,
+    introSecondLineOpacity,
+    introTitleOpacity,
     introY,
     stageHeight,
   ]);
@@ -282,16 +361,6 @@ export default function OnboardingScreen() {
 
     Animated.sequence([
       Animated.parallel([
-        Animated.timing(
-          brandY,
-          {
-            toValue: categoryBrandY,
-            duration: 620,
-            easing:
-              Easing.inOut(Easing.cubic),
-            useNativeDriver: true,
-          }
-        ),
         Animated.timing(
           introOpacity,
           {
@@ -402,7 +471,11 @@ export default function OnboardingScreen() {
 
   return (
     <SafeAreaView
-      style={styles.container}
+      style={[
+        styles.container,
+        step !== 'category' &&
+          styles.introContainer,
+      ]}
       edges={[
         'top',
         'left',
@@ -451,33 +524,71 @@ export default function OnboardingScreen() {
                 ],
               },
             ]}>
-            <Text
-              style={styles.headline}
+            <Animated.Text
+              style={[
+                styles.headline,
+                {
+                  opacity:
+                    introTitleOpacity,
+                },
+              ]}
               numberOfLines={1}
               adjustsFontSizeToFit
               minimumFontScale={0.88}>
               Your taste says a lot about you.
-            </Text>
+            </Animated.Text>
 
 
-            <Text
-              style={styles.supportingLine}
+            <Animated.Text
+              style={[
+                styles.supportingLine,
+                {
+                  opacity:
+                    introFirstLineOpacity,
+                },
+              ]}
               numberOfLines={1}
               adjustsFontSizeToFit
               minimumFontScale={0.9}>
               Share your favourites.
-            </Text>
+            </Animated.Text>
 
 
-            <Text
-              style={styles.supportingLine}
+            <Animated.Text
+              style={[
+                styles.supportingLine,
+                {
+                  opacity:
+                    introSecondLineOpacity,
+                },
+              ]}
               numberOfLines={1}
               adjustsFontSizeToFit
               minimumFontScale={0.86}>
               Discover people who love the same things.
-            </Text>
+            </Animated.Text>
           </Animated.View>
         ) : null}
+
+
+        {step === 'intro' ? (
+          <Animated.Image
+            source={require('@/assets/images/splash-icon.png')}
+            style={[
+              styles.splashIcon,
+              {
+                transform: [
+                  {
+                    translateY: introIconY,
+                  },
+                ],
+              },
+            ]}
+            resizeMode="contain"
+            accessibilityIgnoresInvertColors
+          />
+        ) : null}
+
 
 
         <Animated.View
@@ -593,7 +704,25 @@ export default function OnboardingScreen() {
       </View>
 
 
-      <View style={styles.bottomArea}>
+      <View
+        style={[
+          styles.bottomArea,
+          step !== 'category' &&
+            styles.introBottomArea,
+        ]}>
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.bottomRule,
+            {
+              opacity:
+                step === 'category'
+                  ? 1
+                  : introFooterOpacity,
+            },
+          ]}
+        />
+
         {step !== 'category' ? (
           <Animated.View
             pointerEvents={
@@ -613,7 +742,16 @@ export default function OnboardingScreen() {
         ) : null}
 
 
-        <View style={styles.signInContainer}>
+        <Animated.View
+          style={[
+            styles.signInContainer,
+            {
+              opacity:
+                step === 'category'
+                  ? 1
+                  : introFooterOpacity,
+            },
+          ]}>
           <Text style={styles.signInPrompt}>
             Already have an account?
           </Text>
@@ -632,7 +770,7 @@ export default function OnboardingScreen() {
               Sign In
             </Text>
           </Pressable>
-        </View>
+        </Animated.View>
       </View>
     </SafeAreaView>
   );
@@ -646,10 +784,26 @@ const styles = StyleSheet.create({
   },
 
 
+  introContainer: {
+    backgroundColor: '#FFFFFF',
+  },
+
+
   stage: {
     flex: 1,
     position: 'relative',
     overflow: 'hidden',
+  },
+
+
+  splashIcon: {
+    position: 'absolute',
+    top: 0,
+    left: '50%',
+    width: SPLASH_ICON_SIZE,
+    height: SPLASH_ICON_SIZE,
+    marginLeft: -(SPLASH_ICON_SIZE / 2),
+    zIndex: 10,
   },
 
 
@@ -678,11 +832,8 @@ const styles = StyleSheet.create({
 
 
   headline: {
+    ...TYPOGRAPHY.pageTitle,
     width: '100%',
-    fontSize: 28,
-    lineHeight: 34,
-    fontWeight: '700',
-    color: '#222222',
     textAlign: 'center',
   },
 
@@ -692,7 +843,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 17,
     lineHeight: 23,
-    color: '#777777',
+    color: '#222222',
     textAlign: 'center',
   },
 
@@ -746,9 +897,8 @@ const styles = StyleSheet.create({
 
 
   categoryLabel: {
+    ...TYPOGRAPHY.bodyLarge,
     marginTop: 8,
-    fontSize: 16,
-    lineHeight: 22,
     fontWeight: '600',
     color: '#222222',
     textAlign: 'center',
@@ -760,9 +910,21 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 24,
     backgroundColor: '#F8F8F8',
-    borderTopWidth:
-      StyleSheet.hairlineWidth,
-    borderTopColor: '#EAEAEA',
+  },
+
+
+  bottomRule: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: '#EAEAEA',
+  },
+
+
+  introBottomArea: {
+    backgroundColor: '#FFFFFF',
   },
 
 
@@ -775,8 +937,7 @@ const styles = StyleSheet.create({
 
 
   signInPrompt: {
-    fontSize: 16,
-    lineHeight: 22,
+    ...TYPOGRAPHY.bodyLarge,
     color: '#777777',
   },
 
@@ -790,7 +951,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 22,
     fontWeight: '700',
-    color: '#1573DD',
+    color: COLORS.accent,
   },
 
 

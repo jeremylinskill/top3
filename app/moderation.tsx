@@ -787,7 +787,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     ...TYPOGRAPHY.sectionTitle,
     marginBottom: SPACING.md,
-    fontSize: 18,
   },
 
   reportCard: {
@@ -819,9 +818,9 @@ const styles = StyleSheet.create({
   },
 
   reportDate: {
+    ...TYPOGRAPHY.label,
     marginTop: 3,
-    fontSize: 14,
-    lineHeight: 20,
+    fontWeight: '400',
     color: COLORS.tertiaryText,
   },
 
@@ -857,23 +856,22 @@ const styles = StyleSheet.create({
   },
 
   reportSecondaryText: {
+    ...TYPOGRAPHY.label,
     marginTop: 2,
-    fontSize: 14,
-    lineHeight: 20,
+    fontWeight: '400',
     color: COLORS.tertiaryText,
   },
 
   reportContentText: {
+    ...TYPOGRAPHY.body,
     marginTop: SPACING.sm,
-    fontSize: 15,
-    lineHeight: 22,
     color: COLORS.text,
   },
 
   reportDetails: {
+    ...TYPOGRAPHY.label,
     marginTop: SPACING.sm,
-    fontSize: 14,
-    lineHeight: 20,
+    fontWeight: '400',
     color: COLORS.secondaryText,
   },
 
@@ -898,7 +896,7 @@ const styles = StyleSheet.create({
   },
 
   removeContentButtonText: {
-    fontSize: 15,
+    ...TYPOGRAPHY.action,
     fontWeight: '700',
     color: '#FF3B30',
   },
@@ -921,7 +919,7 @@ const styles = StyleSheet.create({
   },
 
   dismissButtonText: {
-    fontSize: 15,
+    ...TYPOGRAPHY.action,
     fontWeight: '700',
     color: COLORS.text,
   },
@@ -956,9 +954,9 @@ const styles = StyleSheet.create({
   },
 
   stateText: {
+    ...TYPOGRAPHY.label,
     marginTop: SPACING.sm,
-    fontSize: 14,
-    lineHeight: 20,
+    fontWeight: '400',
     color: COLORS.tertiaryText,
     textAlign: 'center',
   },

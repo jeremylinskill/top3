@@ -1,3 +1,5 @@
+import { COLORS } from '@/constants/colors';
+import { TYPOGRAPHY } from '@/constants/typography';
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
@@ -32,7 +34,7 @@ export default function SecondaryActionPill({
         color={
           disabled
             ? '#9B9B9B'
-            : '#5928ed'
+            : COLORS.accent
         }
       />
 
@@ -60,10 +62,8 @@ const styles = StyleSheet.create({
   },
 
   label: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: '600',
-    color: '#5928ed',
+    ...TYPOGRAPHY.label,
+    color: COLORS.accent,
   },
 
   disabledLabel: {

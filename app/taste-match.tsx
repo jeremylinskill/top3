@@ -1,6 +1,9 @@
 import FollowButton from '@/components/follow-button';
 import ScreenHeader from '@/components/screen-header';
-import { COLORS } from '@/constants/colors';
+import {
+  COLORS,
+  TASTE_MATCH_RANK_COLORS,
+} from '@/constants/colors';
 import { SPACING } from '@/constants/spacing';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { TYPOGRAPHY } from '@/constants/typography';
@@ -511,7 +514,13 @@ return getTasteRecommendationForUser({
       <View
         style={[
           styles.rankItem,
-          isShared && styles.sharedRankItem,
+          isShared && {
+            backgroundColor:
+              TASTE_MATCH_RANK_COLORS[
+                rank - 1
+              ] ??
+              COLORS.tasteMatchBackground,
+          },
         ]}>
         <Text style={styles.rankNumber}>
           {rank}
@@ -869,7 +878,7 @@ const styles = StyleSheet.create({
   },
 
   comparisonTitle: {
-    ...TYPOGRAPHY.pageTitle,
+    ...TYPOGRAPHY.sectionTitle,
     flex: 1,
     minWidth: 0,
   },
@@ -907,10 +916,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     backgroundColor: COLORS.background,
     borderRadius: 10,
-  },
-
-  sharedRankItem: {
-    backgroundColor: COLORS.tasteMatchBackground,
   },
 
   rankNumber: {

@@ -3,6 +3,7 @@ import AuthProviderButton from '@/components/auth-provider-button';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
 import { COLORS } from '@/constants/colors';
+import { TYPOGRAPHY } from '@/constants/typography';
 import {
   setSessionFromUrl,
   signOut,
@@ -78,6 +79,11 @@ export default function ResetPasswordScreen() {
     title: string;
     message: string;
   } | null>(null);
+
+  const isFormValid =
+    password.length >= 8 &&
+    confirmPassword.length > 0 &&
+    password === confirmPassword;
 
   useEffect(() => {
     if (!url) {
@@ -369,7 +375,7 @@ export default function ResetPasswordScreen() {
                 onSubmitEditing={() =>
                   confirmPasswordInputRef.current?.focus()
                 }
-                placeholder="At least 8 characters"
+                placeholder="Enter a new password"
                 placeholderTextColor="#999999"
                 returnKeyType="next"
                 secureTextEntry={!showPassword}
@@ -411,6 +417,10 @@ export default function ResetPasswordScreen() {
                 />
               </Pressable>
             </View>
+
+            <Text style={styles.helperText}>
+              Must be at least 8 characters.
+            </Text>
           </View>
 
           <View style={styles.field}>
@@ -483,7 +493,7 @@ export default function ResetPasswordScreen() {
 
           <View style={styles.buttonContainer}>
             <AuthProviderButton
-              disabled={isSubmitting}
+              disabled={!isFormValid || isSubmitting}
               loading={isSubmitting}
               onPress={() => {
                 void handleSubmit();
@@ -554,11 +564,8 @@ const styles = StyleSheet.create({
   },
 
   label: {
+    ...TYPOGRAPHY.formLabel,
     marginBottom: 8,
-    fontSize: 15,
-    lineHeight: 20,
-    fontWeight: '600',
-    color: '#222222',
   },
 
   passwordInputContainer: {
@@ -577,9 +584,14 @@ const styles = StyleSheet.create({
     minHeight: 54,
     paddingLeft: 16,
     paddingRight: 8,
-    fontSize: 16,
-    lineHeight: 22,
-    color: '#222222',
+    ...TYPOGRAPHY.bodyLarge,
+    color: COLORS.text,
+  },
+
+  helperText: {
+    ...TYPOGRAPHY.metadata,
+    marginTop: 8,
+    color: COLORS.secondaryText,
   },
 
   visibilityButton: {
@@ -605,20 +617,15 @@ const styles = StyleSheet.create({
   },
 
   loadingTitle: {
+    ...TYPOGRAPHY.pageTitle,
     marginTop: 24,
-    fontSize: 28,
-    lineHeight: 34,
-    fontWeight: '700',
-    color: '#222222',
     textAlign: 'center',
   },
 
   loadingDescription: {
+    ...TYPOGRAPHY.bodyLarge,
     marginTop: 12,
     maxWidth: 340,
-    fontSize: 16,
-    lineHeight: 24,
-    color: '#666666',
     textAlign: 'center',
   },
 
@@ -629,7 +636,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 12,
-    backgroundColor: '#1573DD',
+    backgroundColor: COLORS.primary,
   },
 
   returnButtonText: {

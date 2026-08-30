@@ -3,6 +3,7 @@ import ScreenHeader from '@/components/screen-header';
 import {
   getCategoryArtworkRule,
 } from '@/constants/category-artwork-rules';
+import { TYPOGRAPHY } from '@/constants/typography';
 import { useAudioPreview } from '@/context/audio-preview-context';
 import { useComments } from '@/context/comment-context';
 import { useLike } from '@/context/like-context';
@@ -1108,9 +1109,8 @@ const styles = StyleSheet.create({
   },
 
   itemSubtitle: {
+    ...TYPOGRAPHY.subtitle,
     marginTop: 4,
-    fontSize: 14,
-    lineHeight: 19,
     color: '#777777',
   },
 
@@ -1255,9 +1255,8 @@ const styles = StyleSheet.create({
   },
 
   messageText: {
+    ...TYPOGRAPHY.bodyLarge,
     marginTop: 8,
-    fontSize: 16,
-    lineHeight: 22,
     color: '#777777',
     textAlign: 'center',
   },
@@ -1279,9 +1278,8 @@ const styles = StyleSheet.create({
   },
 
   emptyText: {
+    ...TYPOGRAPHY.body,
     marginTop: 8,
-    fontSize: 15,
-    lineHeight: 21,
     color: '#777777',
     textAlign: 'center',
   },

@@ -4,6 +4,7 @@ import GoogleAuthButton from '@/components/google-auth-button';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
 import { COLORS } from '@/constants/colors';
+import { TYPOGRAPHY } from '@/constants/typography';
 import { useOnboardingCollection } from '@/context/onboarding-collection-context';
 import {
   signInWithApple,
@@ -284,8 +285,7 @@ const styles = StyleSheet.create({
   },
 
   signUpPrompt: {
-    fontSize: 16,
-    lineHeight: 22,
+    ...TYPOGRAPHY.bodyLarge,
     color: COLORS.tertiaryText,
   },
 
@@ -294,10 +294,7 @@ const styles = StyleSheet.create({
   },
 
   signUpButtonText: {
-    fontSize: 16,
-    lineHeight: 22,
-    fontWeight: '700',
-    color: '#1573DD',
+    ...TYPOGRAPHY.action,
   },
 
   pressed: {

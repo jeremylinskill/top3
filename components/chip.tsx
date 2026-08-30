@@ -1,7 +1,8 @@
+import { TYPOGRAPHY } from '@/constants/typography';
 import {
-    Pressable,
-    StyleSheet,
-    Text,
+  Pressable,
+  StyleSheet,
+  Text,
 } from 'react-native';
 
 type ChipProps = {
@@ -63,8 +64,7 @@ const styles = StyleSheet.create({
   },
 
   label: {
-    fontSize: 16,
-    lineHeight: 22,
+    ...TYPOGRAPHY.bodyLarge,
     color: '#222222',
   },
 

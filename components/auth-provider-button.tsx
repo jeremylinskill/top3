@@ -1,10 +1,14 @@
+import { COLORS } from '@/constants/colors';
+import { TYPOGRAPHY } from '@/constants/typography';
 import { Ionicons } from '@expo/vector-icons';
 import {
-    ActivityIndicator,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Pressable,
+  StyleProp,
+  StyleSheet,
+  Text,
+  View,
+  ViewStyle,
 } from 'react-native';
 
 type IoniconName = React.ComponentProps<
@@ -18,6 +22,7 @@ interface AuthProviderButtonProps {
   variant?: 'primary' | 'secondary';
   disabled?: boolean;
   loading?: boolean;
+  style?: StyleProp<ViewStyle>;
 }
 
 export default function AuthProviderButton({
@@ -27,8 +32,16 @@ export default function AuthProviderButton({
   variant = 'secondary',
   disabled = false,
   loading = false,
+  style,
 }: AuthProviderButtonProps) {
   const isDisabled = disabled || loading;
+  const isPrimary = variant === 'primary';
+
+  const foregroundColor = isPrimary
+    ? isDisabled
+      ? COLORS.tertiaryText
+      : COLORS.white
+    : COLORS.text;
 
   return (
     <Pressable
@@ -38,21 +51,21 @@ export default function AuthProviderButton({
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
-        variant === 'primary'
+        isPrimary
           ? styles.primaryButton
           : styles.secondaryButton,
+        style,
+        isDisabled &&
+          (isPrimary
+            ? styles.primaryButtonDisabled
+            : styles.secondaryButtonDisabled),
         pressed && !isDisabled && styles.pressed,
-        isDisabled && styles.disabled,
       ]}>
       <View style={styles.content}>
         {loading ? (
           <ActivityIndicator
             size="small"
-            color={
-              variant === 'primary'
-                ? '#FFFFFF'
-                : '#222222'
-            }
+            color={foregroundColor}
           />
         ) : (
           <>
@@ -60,11 +73,7 @@ export default function AuthProviderButton({
               <Ionicons
                 name={icon}
                 size={22}
-                color={
-                  variant === 'primary'
-                    ? '#FFFFFF'
-                    : '#222222'
-                }
+                color={foregroundColor}
                 style={styles.icon}
               />
             ) : null}
@@ -72,9 +81,12 @@ export default function AuthProviderButton({
             <Text
               style={[
                 styles.title,
-                variant === 'primary'
+                isPrimary
                   ? styles.primaryTitle
                   : styles.secondaryTitle,
+                isPrimary &&
+                  isDisabled &&
+                  styles.primaryTitleDisabled,
               ]}>
               {title}
             </Text>
@@ -96,13 +108,21 @@ const styles = StyleSheet.create({
   },
 
   primaryButton: {
-    backgroundColor: '#1573DD',
+    backgroundColor: COLORS.primary,
+  },
+
+  primaryButtonDisabled: {
+    backgroundColor: COLORS.border,
   },
 
   secondaryButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderWidth: 1,
     borderColor: '#D9D9D9',
+  },
+
+  secondaryButtonDisabled: {
+    opacity: 0.5,
   },
 
   content: {
@@ -117,25 +137,24 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 16,
-    lineHeight: 22,
+    ...TYPOGRAPHY.bodyLarge,
     fontWeight: '600',
     textAlign: 'center',
   },
 
   primaryTitle: {
-    color: '#FFFFFF',
+    color: COLORS.white,
+  },
+
+  primaryTitleDisabled: {
+    color: COLORS.tertiaryText,
   },
 
   secondaryTitle: {
-    color: '#222222',
+    color: COLORS.text,
   },
 
   pressed: {
     opacity: 0.75,
-  },
-
-  disabled: {
-    opacity: 0.5,
   },
 });

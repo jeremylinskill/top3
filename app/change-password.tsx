@@ -3,6 +3,7 @@ import AuthProviderButton from '@/components/auth-provider-button';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
 import { COLORS } from '@/constants/colors';
+import { TYPOGRAPHY } from '@/constants/typography';
 import { useAuth } from '@/hooks/use-auth';
 import {
   signInWithEmail,
@@ -15,7 +16,11 @@ import {
   useState,
 } from 'react';
 import {
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -66,6 +71,14 @@ export default function ChangePasswordScreen() {
     title: string;
     message: string;
   } | null>(null);
+
+  const isFormValid =
+    Boolean(user?.email) &&
+    currentPassword.length > 0 &&
+    newPassword.length >= 8 &&
+    confirmPassword.length > 0 &&
+    newPassword === confirmPassword &&
+    currentPassword !== newPassword;
 
   function showActionSheet(
     title: string,
@@ -251,220 +264,248 @@ export default function ChangePasswordScreen() {
       <SafeAreaView
         style={styles.container}
         edges={['top', 'bottom']}>
-      <ScreenHeader showBackButton />
+        <ScreenHeader showBackButton />
 
-      <PageHeader
-        title="Change password"
-        subtitle="Enter your current password, then choose a new one."
-        align="center"
-      />
+        <PageHeader
+          title="Change password"
+          subtitle={"Enter your current password,\nthen choose a new one."}
+          align="center"
+        />
 
-      <View style={styles.content}>
-        <View style={styles.form}>
-          <View style={styles.field}>
-            <Text style={styles.label}>
-              Current password
-            </Text>
+        <KeyboardAvoidingView
+          style={styles.keyboardContainer}
+          behavior={
+            Platform.OS === 'ios'
+              ? 'padding'
+              : 'height'
+          }>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode={
+              Platform.OS === 'ios'
+                ? 'interactive'
+                : 'on-drag'
+            }
+            showsVerticalScrollIndicator={false}>
+            <Pressable
+              onPress={Keyboard.dismiss}
+              accessible={false}>
+              <View style={styles.form}>
+                <View style={styles.field}>
+                  <Text style={styles.label}>
+                    Current password
+                  </Text>
 
-            <View
-              style={
-                styles.passwordInputContainer
-              }>
-              <TextInput
-                accessibilityLabel="Current password"
-                autoCapitalize="none"
-                autoComplete="password"
-                autoCorrect={false}
-                editable={!isSubmitting}
-                onChangeText={
-                  setCurrentPassword
-                }
-                onSubmitEditing={() =>
-                  newPasswordInputRef.current?.focus()
-                }
-                placeholder="Enter your current password"
-                placeholderTextColor="#999999"
-                returnKeyType="next"
-                secureTextEntry={
-                  !showCurrentPassword
-                }
-                style={styles.passwordInput}
-                textContentType="password"
-                value={currentPassword}
-              />
+                  <View
+                    style={
+                      styles.passwordInputContainer
+                    }>
+                    <TextInput
+                      accessibilityLabel="Current password"
+                      autoCapitalize="none"
+                      autoComplete="password"
+                      autoCorrect={false}
+                      editable={!isSubmitting}
+                      onChangeText={
+                        setCurrentPassword
+                      }
+                      onSubmitEditing={() =>
+                        newPasswordInputRef.current?.focus()
+                      }
+                      placeholder="Enter your current password"
+                      placeholderTextColor="#999999"
+                      returnKeyType="next"
+                      secureTextEntry={
+                        !showCurrentPassword
+                      }
+                      style={styles.passwordInput}
+                      textContentType="password"
+                      value={currentPassword}
+                    />
 
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={
-                  showCurrentPassword
-                    ? 'Hide current password'
-                    : 'Show current password'
-                }
-                disabled={isSubmitting}
-                hitSlop={8}
-                onPress={() =>
-                  setShowCurrentPassword(
-                    (currentValue) =>
-                      !currentValue
-                  )
-                }
-                style={({ pressed }) => [
-                  styles.visibilityButton,
-                  pressed &&
-                    !isSubmitting &&
-                    styles
-                      .visibilityButtonPressed,
-                ]}>
-                <Ionicons
-                  name={
-                    showCurrentPassword
-                      ? 'eye-off-outline'
-                      : 'eye-outline'
-                  }
-                  size={22}
-                  color="#666666"
-                />
-              </Pressable>
-            </View>
-          </View>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        showCurrentPassword
+                          ? 'Hide current password'
+                          : 'Show current password'
+                      }
+                      disabled={isSubmitting}
+                      hitSlop={8}
+                      onPress={() =>
+                        setShowCurrentPassword(
+                          (currentValue) =>
+                            !currentValue
+                        )
+                      }
+                      style={({ pressed }) => [
+                        styles.visibilityButton,
+                        pressed &&
+                          !isSubmitting &&
+                          styles
+                            .visibilityButtonPressed,
+                      ]}>
+                      <Ionicons
+                        name={
+                          showCurrentPassword
+                            ? 'eye-off-outline'
+                            : 'eye-outline'
+                        }
+                        size={22}
+                        color="#666666"
+                      />
+                    </Pressable>
+                  </View>
+                </View>
 
-          <View style={styles.field}>
-            <Text style={styles.label}>
-              New password
-            </Text>
+                <View style={styles.field}>
+                  <Text style={styles.label}>
+                    New password
+                  </Text>
 
-            <View
-              style={
-                styles.passwordInputContainer
-              }>
-              <TextInput
-                ref={newPasswordInputRef}
-                accessibilityLabel="New password"
-                autoCapitalize="none"
-                autoComplete="new-password"
-                autoCorrect={false}
-                editable={!isSubmitting}
-                onChangeText={setNewPassword}
-                onSubmitEditing={() =>
-                  confirmPasswordInputRef.current?.focus()
-                }
-                placeholder="At least 8 characters"
-                placeholderTextColor="#999999"
-                returnKeyType="next"
-                secureTextEntry={
-                  !showNewPassword
-                }
-                style={styles.passwordInput}
-                textContentType="newPassword"
-                value={newPassword}
-              />
+                  <View
+                    style={
+                      styles.passwordInputContainer
+                    }>
+                    <TextInput
+                      ref={newPasswordInputRef}
+                      accessibilityLabel="New password"
+                      autoCapitalize="none"
+                      autoComplete="new-password"
+                      autoCorrect={false}
+                      editable={!isSubmitting}
+                      onChangeText={setNewPassword}
+                      onSubmitEditing={() =>
+                        confirmPasswordInputRef.current?.focus()
+                      }
+                      placeholder="Enter a new password"
+                      placeholderTextColor="#999999"
+                      returnKeyType="next"
+                      secureTextEntry={
+                        !showNewPassword
+                      }
+                      style={styles.passwordInput}
+                      textContentType="newPassword"
+                      value={newPassword}
+                    />
 
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={
-                  showNewPassword
-                    ? 'Hide new password'
-                    : 'Show new password'
-                }
-                disabled={isSubmitting}
-                hitSlop={8}
-                onPress={() =>
-                  setShowNewPassword(
-                    (currentValue) =>
-                      !currentValue
-                  )
-                }
-                style={({ pressed }) => [
-                  styles.visibilityButton,
-                  pressed &&
-                    !isSubmitting &&
-                    styles
-                      .visibilityButtonPressed,
-                ]}>
-                <Ionicons
-                  name={
-                    showNewPassword
-                      ? 'eye-off-outline'
-                      : 'eye-outline'
-                  }
-                  size={22}
-                  color="#666666"
-                />
-              </Pressable>
-            </View>
-          </View>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        showNewPassword
+                          ? 'Hide new password'
+                          : 'Show new password'
+                      }
+                      disabled={isSubmitting}
+                      hitSlop={8}
+                      onPress={() =>
+                        setShowNewPassword(
+                          (currentValue) =>
+                            !currentValue
+                        )
+                      }
+                      style={({ pressed }) => [
+                        styles.visibilityButton,
+                        pressed &&
+                          !isSubmitting &&
+                          styles
+                            .visibilityButtonPressed,
+                      ]}>
+                      <Ionicons
+                        name={
+                          showNewPassword
+                            ? 'eye-off-outline'
+                            : 'eye-outline'
+                        }
+                        size={22}
+                        color="#666666"
+                      />
+                    </Pressable>
+                  </View>
 
-          <View style={styles.field}>
-            <Text style={styles.label}>
-              Confirm new password
-            </Text>
+                  <Text style={styles.helperText}>
+                    Must be at least 8 characters.
+                  </Text>
+                </View>
 
-            <View
-              style={
-                styles.passwordInputContainer
-              }>
-              <TextInput
-                ref={confirmPasswordInputRef}
-                accessibilityLabel="Confirm new password"
-                autoCapitalize="none"
-                autoComplete="new-password"
-                autoCorrect={false}
-                editable={!isSubmitting}
-                onChangeText={
-                  setConfirmPassword
-                }
-                onSubmitEditing={() => {
-                  void handleSubmit();
-                }}
-                placeholder="Enter your new password again"
-                placeholderTextColor="#999999"
-                returnKeyType="done"
-                secureTextEntry={
-                  !showConfirmPassword
-                }
-                style={styles.passwordInput}
-                textContentType="newPassword"
-                value={confirmPassword}
-              />
+                <View style={styles.field}>
+                  <Text style={styles.label}>
+                    Confirm new password
+                  </Text>
 
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={
-                  showConfirmPassword
-                    ? 'Hide confirmed password'
-                    : 'Show confirmed password'
-                }
-                disabled={isSubmitting}
-                hitSlop={8}
-                onPress={() =>
-                  setShowConfirmPassword(
-                    (currentValue) =>
-                      !currentValue
-                  )
-                }
-                style={({ pressed }) => [
-                  styles.visibilityButton,
-                  pressed &&
-                    !isSubmitting &&
-                    styles
-                      .visibilityButtonPressed,
-                ]}>
-                <Ionicons
-                  name={
-                    showConfirmPassword
-                      ? 'eye-off-outline'
-                      : 'eye-outline'
-                  }
-                  size={22}
-                  color="#666666"
-                />
-              </Pressable>
-            </View>
-          </View>
+                  <View
+                    style={
+                      styles.passwordInputContainer
+                    }>
+                    <TextInput
+                      ref={confirmPasswordInputRef}
+                      accessibilityLabel="Confirm new password"
+                      autoCapitalize="none"
+                      autoComplete="new-password"
+                      autoCorrect={false}
+                      editable={!isSubmitting}
+                      onChangeText={
+                        setConfirmPassword
+                      }
+                      onSubmitEditing={() => {
+                        if (isFormValid && !isSubmitting) {
+                          void handleSubmit();
+                        }
+                      }}
+                      placeholder="Enter your new password again"
+                      placeholderTextColor="#999999"
+                      returnKeyType="done"
+                      secureTextEntry={
+                        !showConfirmPassword
+                      }
+                      style={styles.passwordInput}
+                      textContentType="newPassword"
+                      value={confirmPassword}
+                    />
 
-          <View style={styles.buttonContainer}>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        showConfirmPassword
+                          ? 'Hide confirmed password'
+                          : 'Show confirmed password'
+                      }
+                      disabled={isSubmitting}
+                      hitSlop={8}
+                      onPress={() =>
+                        setShowConfirmPassword(
+                          (currentValue) =>
+                            !currentValue
+                        )
+                      }
+                      style={({ pressed }) => [
+                        styles.visibilityButton,
+                        pressed &&
+                          !isSubmitting &&
+                          styles
+                            .visibilityButtonPressed,
+                      ]}>
+                      <Ionicons
+                        name={
+                          showConfirmPassword
+                            ? 'eye-off-outline'
+                            : 'eye-outline'
+                        }
+                        size={22}
+                        color="#666666"
+                      />
+                    </Pressable>
+                  </View>
+                </View>
+              </View>
+            </Pressable>
+          </ScrollView>
+
+          <View style={styles.bottomBar}>
             <AuthProviderButton
-              disabled={isSubmitting}
+              disabled={!isFormValid || isSubmitting}
               loading={isSubmitting}
               onPress={() => {
                 void handleSubmit();
@@ -473,8 +514,7 @@ export default function ChangePasswordScreen() {
               variant="primary"
             />
           </View>
-          </View>
-        </View>
+        </KeyboardAvoidingView>
       </SafeAreaView>
 
       <ActionSheet
@@ -503,10 +543,18 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
 
-  content: {
+  keyboardContainer: {
     flex: 1,
+  },
+
+  scrollView: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+
+  content: {
     paddingHorizontal: 24,
-    paddingBottom: 24,
+    paddingBottom: 48,
   },
 
   form: {
@@ -518,11 +566,8 @@ const styles = StyleSheet.create({
   },
 
   label: {
+    ...TYPOGRAPHY.formLabel,
     marginBottom: 8,
-    fontSize: 15,
-    lineHeight: 20,
-    fontWeight: '600',
-    color: '#222222',
   },
 
   passwordInputContainer: {
@@ -541,9 +586,14 @@ const styles = StyleSheet.create({
     minHeight: 54,
     paddingLeft: 16,
     paddingRight: 8,
-    fontSize: 16,
-    lineHeight: 22,
-    color: '#222222',
+    ...TYPOGRAPHY.bodyLarge,
+    color: COLORS.text,
+  },
+
+  helperText: {
+    ...TYPOGRAPHY.metadata,
+    marginTop: 8,
+    color: COLORS.secondaryText,
   },
 
   visibilityButton: {
@@ -557,8 +607,14 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
 
-  buttonContainer: {
-    marginTop: 8,
+  bottomBar: {
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 16,
+    backgroundColor: COLORS.background,
+    borderTopWidth:
+      StyleSheet.hairlineWidth,
+    borderTopColor: COLORS.border,
   },
 
   successContent: {
@@ -569,19 +625,14 @@ const styles = StyleSheet.create({
   },
 
   successTitle: {
-    fontSize: 28,
-    lineHeight: 34,
-    fontWeight: '700',
-    color: '#222222',
+    ...TYPOGRAPHY.pageTitle,
     textAlign: 'center',
   },
 
   successDescription: {
+    ...TYPOGRAPHY.bodyLarge,
     marginTop: 12,
     maxWidth: 340,
-    fontSize: 16,
-    lineHeight: 24,
-    color: '#666666',
     textAlign: 'center',
   },
 
@@ -592,7 +643,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 12,
-    backgroundColor: '#1573DD',
+    backgroundColor: COLORS.primary,
   },
 
   returnButtonText: {

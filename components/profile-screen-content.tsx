@@ -1,6 +1,7 @@
 import FollowButton from '@/components/follow-button';
 import TasteMatchBadge from '@/components/taste-match-badge';
 import Top3Card from '@/components/top3-card';
+import UserAvatar from '@/components/user-avatar';
 import { AVATAR } from '@/constants/avatar';
 import { COLORS } from '@/constants/colors';
 import { RADIUS } from '@/constants/radius';
@@ -9,7 +10,6 @@ import { TYPOGRAPHY } from '@/constants/typography';
 import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
 import {
-  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -91,23 +91,12 @@ export default function ProfileScreenContent({
   return (
     <>
       <View style={styles.identitySection}>
-        <View style={styles.avatar}>
-          {user.avatarUrl ? (
-            <Image
-              source={{
-                uri: user.avatarUrl,
-              }}
-              style={styles.avatarImage}
-              resizeMode="cover"
-            />
-          ) : (
-            <Text style={styles.avatarText}>
-              {user.displayName
-                .charAt(0)
-                .toUpperCase()}
-            </Text>
-          )}
-        </View>
+        <UserAvatar
+          displayName={user.displayName}
+          avatarUrl={user.avatarUrl}
+          size={AVATAR.xl}
+          fontSize={30}
+        />
 
         <View style={styles.identityDetails}>
           <Text style={styles.displayName}>
@@ -314,27 +303,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  avatar: {
-    width: AVATAR.xl,
-    height: AVATAR.xl,
-    borderRadius: AVATAR.xl / 2,
-    backgroundColor: COLORS.text,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-
-  avatarImage: {
-    width: '100%',
-    height: '100%',
-  },
-
-  avatarText: {
-    color: COLORS.white,
-    fontSize: 30,
-    fontWeight: '700',
-  },
-
   identityDetails: {
     flex: 1,
     marginLeft: SPACING.lg,
@@ -345,8 +313,8 @@ const styles = StyleSheet.create({
   },
 
   username: {
+    ...TYPOGRAPHY.bodyLarge,
     marginTop: 2,
-    fontSize: 16,
     color: COLORS.tertiaryText,
   },
 
@@ -357,9 +325,9 @@ const styles = StyleSheet.create({
   },
 
   emptyBio: {
+    ...TYPOGRAPHY.label,
     marginTop: SPACING.sm,
-    fontSize: 14,
-    lineHeight: 20,
+    fontWeight: '400',
     color: COLORS.tertiaryText,
   },
 
@@ -393,9 +361,8 @@ const styles = StyleSheet.create({
   },
 
   statLabel: {
+    ...TYPOGRAPHY.metadata,
     marginTop: 3,
-    fontSize: 13,
-    color: COLORS.tertiaryText,
   },
 
   statDivider: {
@@ -405,7 +372,7 @@ const styles = StyleSheet.create({
   },
 
   profileActions: {
-  marginTop: SPACING.sm,
+    marginTop: SPACING.sm,
     gap: SPACING.sm,
   },
 
@@ -423,7 +390,7 @@ const styles = StyleSheet.create({
   },
 
   loadingText: {
-    fontSize: 16,
+    ...TYPOGRAPHY.bodyLarge,
     color: COLORS.tertiaryText,
   },
 
@@ -439,7 +406,6 @@ const styles = StyleSheet.create({
 
   emptyStateTitle: {
     ...TYPOGRAPHY.sectionTitle,
-    fontSize: 19,
   },
 
   emptyStateText: {

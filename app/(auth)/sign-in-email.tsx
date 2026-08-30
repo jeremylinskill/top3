@@ -2,6 +2,7 @@ import EmailSignInForm from '@/components/email-sign-in-form';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
 import { COLORS } from '@/constants/colors';
+import { TYPOGRAPHY } from '@/constants/typography';
 import { useOnboardingCollection } from '@/context/onboarding-collection-context';
 import { router } from 'expo-router';
 import {
@@ -12,7 +13,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-
 export default function SignInEmailScreen() {
   const {
     collection: onboardingCollection,
@@ -20,13 +20,11 @@ export default function SignInEmailScreen() {
     setAuthIntent,
   } = useOnboardingCollection();
 
-
   const isReturningFromOnboarding =
     Boolean(
       onboardingCollection &&
       isPendingPublish
     );
-
 
   function handleSuccess() {
     if (isReturningFromOnboarding) {
@@ -35,10 +33,8 @@ export default function SignInEmailScreen() {
       return;
     }
 
-
     router.replace('/(tabs)');
   }
-
 
   function handleCreateAccount() {
     if (isReturningFromOnboarding) {
@@ -46,10 +42,8 @@ export default function SignInEmailScreen() {
       return;
     }
 
-
     router.replace('/onboarding');
   }
-
 
   return (
     <SafeAreaView
@@ -57,13 +51,11 @@ export default function SignInEmailScreen() {
       edges={['top', 'bottom']}>
       <ScreenHeader showBackButton />
 
-
       <PageHeader
         title="Welcome back"
         subtitle="Sign in to continue discovering people who share your favorite things."
         align="center"
       />
-
 
       <View style={styles.content}>
         <View style={styles.form}>
@@ -72,14 +64,12 @@ export default function SignInEmailScreen() {
           />
         </View>
 
-
         <View style={styles.signUpContainer}>
           <Text style={styles.signUpPrompt}>
             {isReturningFromOnboarding
               ? "Don't have an account?"
               : 'New to Top 3?'}
           </Text>
-
 
           <Pressable
             accessibilityRole="button"
@@ -106,13 +96,11 @@ export default function SignInEmailScreen() {
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
   },
-
 
   content: {
     flex: 1,
@@ -120,12 +108,10 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
 
-
   form: {
     flex: 1,
     marginTop: 28,
   },
-
 
   signUpContainer: {
     marginTop: 'auto',
@@ -134,26 +120,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-
   signUpPrompt: {
-    fontSize: 16,
-    lineHeight: 22,
+    ...TYPOGRAPHY.bodyLarge,
     color: COLORS.tertiaryText,
   },
-
 
   signUpButton: {
     marginLeft: 5,
   },
 
-
   signUpButtonText: {
-    fontSize: 16,
-    lineHeight: 22,
-    fontWeight: '700',
-    color: '#1573DD',
+    ...TYPOGRAPHY.action,
   },
-
 
   pressed: {
     opacity: 0.6,

@@ -1,5 +1,7 @@
 import ScreenHeader from '@/components/screen-header';
+import { COLORS } from '@/constants/colors';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
+import { TYPOGRAPHY } from '@/constants/typography';
 import { useTop3 } from '@/context/top3-context';
 import { router } from 'expo-router';
 import {
@@ -179,15 +181,15 @@ const styles = StyleSheet.create({
   },
 
   collectionTitle: {
+    ...TYPOGRAPHY.sectionTitle,
     flexShrink: 1,
-    fontSize: 20,
     fontWeight: '600',
   },
 
   collectionSubtitle: {
-    fontSize: 15,
-    color: '#777777',
+    ...TYPOGRAPHY.body,
     marginTop: 6,
+    color: COLORS.tertiaryText,
   },
 
   arrow: {
@@ -214,7 +216,7 @@ const styles = StyleSheet.create({
   },
 
   createButtonText: {
-    fontSize: 18,
+    ...TYPOGRAPHY.headline,
     fontWeight: '600',
   },
 });

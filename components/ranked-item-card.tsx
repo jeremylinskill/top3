@@ -5,6 +5,7 @@ import {
   CategoryId,
   TOP3_CATEGORIES,
 } from '@/constants/top3-categories';
+import { TYPOGRAPHY } from '@/constants/typography';
 import { useAudioPreview } from '@/context/audio-preview-context';
 import {
   getCachedTrailerAvailability,
@@ -674,25 +675,19 @@ const styles = StyleSheet.create({
 
 
   title: {
-    fontSize: 17,
-    lineHeight: 23,
-    fontWeight: '600',
-    color: '#222222',
+    ...TYPOGRAPHY.cardTitle,
   },
 
 
   metadata: {
+    ...TYPOGRAPHY.subtitle,
     marginTop: 4,
-    fontSize: 14,
-    lineHeight: 19,
-    color: '#888888',
   },
 
 
   placeholderText: {
+    ...TYPOGRAPHY.subtitle,
     marginTop: 4,
-    fontSize: 14,
-    lineHeight: 19,
     color: '#999999',
   },
 

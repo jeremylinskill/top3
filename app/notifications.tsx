@@ -4,7 +4,9 @@ import ScreenHeader from '@/components/screen-header';
 import Card from '@/components/ui/card';
 import SecondaryActionPill from '@/components/ui/secondary-action-pill';
 import SectionHeader from '@/components/ui/section-header';
+import UserAvatar from '@/components/user-avatar';
 import { COLORS } from '@/constants/colors';
+import { TYPOGRAPHY } from '@/constants/typography';
 import { useBlock } from '@/context/block-context';
 import {
   EnrichedFollowRequest,
@@ -16,7 +18,6 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Image,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -378,11 +379,6 @@ export default function NotificationsScreen() {
                       request.requester?.username ||
                       'Someone';
 
-                    const requesterInitial =
-                      requesterName
-                        .charAt(0)
-                        .toUpperCase();
-
                     const isRequestActive =
                       activeFollowRequestId ===
                       request.id;
@@ -406,25 +402,11 @@ export default function NotificationsScreen() {
                           }
                           accessibilityRole="button"
                           accessibilityLabel={`Open ${requesterName}'s profile`}>
-                          <View style={styles.avatar}>
-                            {request.requester?.avatarUrl ? (
-                              <Image
-                                source={{
-                                  uri: request.requester
-                                    .avatarUrl,
-                                }}
-                                style={styles.avatarImage}
-                                resizeMode="cover"
-                              />
-                            ) : (
-                              <Text
-                                style={
-                                  styles.avatarInitial
-                                }>
-                                {requesterInitial}
-                              </Text>
-                            )}
-                          </View>
+                          <UserAvatar
+                            displayName={requesterName}
+                            avatarUrl={request.requester?.avatarUrl}
+                            size={48}
+                          />
 
                           <View
                             style={
@@ -549,10 +531,6 @@ export default function NotificationsScreen() {
                     notification.actor?.username ||
                     'Someone';
 
-                  const actorInitial = actorName
-                    .charAt(0)
-                    .toUpperCase();
-
                   return (
                     <Card
                       key={notification.id}
@@ -571,23 +549,11 @@ export default function NotificationsScreen() {
                           styles.notificationPressable,
                           pressed && styles.pressed,
                         ]}>
-                        <View style={styles.avatar}>
-                          {notification.actor?.avatarUrl ? (
-                            <Image
-                              source={{
-                                uri: notification.actor
-                                  .avatarUrl,
-                              }}
-                              style={styles.avatarImage}
-                              resizeMode="cover"
-                            />
-                          ) : (
-                            <Text
-                              style={styles.avatarInitial}>
-                              {actorInitial}
-                            </Text>
-                          )}
-                        </View>
+                        <UserAvatar
+                          displayName={actorName}
+                          avatarUrl={notification.actor?.avatarUrl}
+                          size={48}
+                        />
 
                         <View style={styles.notificationBody}>
                           <Text style={styles.notificationText}>
@@ -694,17 +660,13 @@ const styles = StyleSheet.create({
   },
 
   messageTitle: {
-    fontSize: 20,
-    lineHeight: 26,
-    fontWeight: '700',
-    color: COLORS.text,
+    ...TYPOGRAPHY.sectionTitle,
     textAlign: 'center',
   },
 
   messageText: {
+    ...TYPOGRAPHY.bodyLarge,
     marginTop: 8,
-    fontSize: 16,
-    lineHeight: 22,
     color: COLORS.tertiaryText,
     textAlign: 'center',
   },
@@ -718,10 +680,7 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    fontSize: 20,
-    lineHeight: 26,
-    fontWeight: '700',
-    color: COLORS.text,
+    ...TYPOGRAPHY.sectionTitle,
   },
 
   followRequestRow: {
@@ -756,9 +715,7 @@ const styles = StyleSheet.create({
   },
 
   followRequestMessage: {
-    fontSize: 15,
-    lineHeight: 21,
-    color: COLORS.secondaryText,
+    ...TYPOGRAPHY.body,
   },
 
   followRequestActions: {
@@ -808,28 +765,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
 
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.text,
-    overflow: 'hidden',
-  },
-
-  avatarImage: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-  },
-
-  avatarInitial: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-
   notificationBody: {
     flex: 1,
     marginLeft: 12,
@@ -837,9 +772,7 @@ const styles = StyleSheet.create({
   },
 
   notificationText: {
-    fontSize: 15,
-    lineHeight: 21,
-    fontWeight: '400',
+    ...TYPOGRAPHY.body,
     color: COLORS.text,
   },
 
@@ -852,17 +785,15 @@ const styles = StyleSheet.create({
   },
 
   notificationTime: {
+    ...TYPOGRAPHY.metadata,
     marginTop: 4,
-    fontSize: 13,
-    lineHeight: 18,
-    color: COLORS.tertiaryText,
   },
 
   unreadIndicator: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#5928ed',
+    backgroundColor: COLORS.accent,
   },
 
   pressed: {

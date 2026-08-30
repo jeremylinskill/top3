@@ -3,6 +3,8 @@ import ScreenHeader from '@/components/screen-header';
 import SearchInput from '@/components/search-input';
 import SegmentedControl from '@/components/segmented-control';
 import TasteMatchBadge from '@/components/taste-match-badge';
+import UserAvatar from '@/components/user-avatar';
+import { TYPOGRAPHY } from '@/constants/typography';
 import { useBlock } from '@/context/block-context';
 import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
@@ -24,7 +26,6 @@ import {
   useState,
 } from 'react';
 import {
-  Image,
   Keyboard,
   Platform,
   Pressable,
@@ -589,24 +590,12 @@ export default function SocialScreen() {
                     }
                     accessibilityRole="button"
                     accessibilityLabel={`Open ${user.displayName}'s profile`}>
-                    <View style={styles.avatar}>
-                      {user.avatarUrl ? (
-                        <Image
-                          source={{
-                            uri: user.avatarUrl,
-                          }}
-                          style={styles.avatarImage}
-                          resizeMode="cover"
-                        />
-                      ) : (
-                        <Text
-                          style={styles.avatarText}>
-                          {user.displayName
-                            .charAt(0)
-                            .toUpperCase()}
-                        </Text>
-                      )}
-                    </View>
+                    <UserAvatar
+                      displayName={user.displayName}
+                      avatarUrl={user.avatarUrl}
+                      size={50}
+                      fontSize={20}
+                    />
 
                     <View style={styles.userDetails}>
                       <Text
@@ -785,7 +774,7 @@ const styles = StyleSheet.create({
   },
 
   stateText: {
-    fontSize: 16,
+    ...TYPOGRAPHY.bodyLarge,
     color: '#777777',
   },
 
@@ -808,9 +797,8 @@ const styles = StyleSheet.create({
   },
 
   emptyText: {
+    ...TYPOGRAPHY.body,
     marginTop: 8,
-    fontSize: 15,
-    lineHeight: 21,
     color: '#777777',
     textAlign: 'center',
   },
@@ -839,27 +827,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#222222',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-
-  avatarImage: {
-    width: '100%',
-    height: '100%',
-  },
-
-  avatarText: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-
   userDetails: {
     flex: 1,
     minWidth: 0,
@@ -867,14 +834,12 @@ const styles = StyleSheet.create({
   },
 
   displayName: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#222222',
+    ...TYPOGRAPHY.headline,
   },
 
   username: {
+    ...TYPOGRAPHY.subtitle,
     marginTop: 3,
-    fontSize: 14,
     color: '#777777',
   },
 

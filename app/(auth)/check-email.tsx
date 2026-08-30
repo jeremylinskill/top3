@@ -1,5 +1,7 @@
 import ActionSheet from '@/components/action-sheet';
 import AuthProviderButton from '@/components/auth-provider-button';
+import { COLORS } from '@/constants/colors';
+import { TYPOGRAPHY } from '@/constants/typography';
 import {
   resendConfirmationEmail,
 } from '@/services/auth-service';
@@ -114,7 +116,7 @@ export default function CheckEmailScreen() {
               <Ionicons
                 name="mail-outline"
                 size={48}
-                color="#1573DD"
+                color={COLORS.accent}
               />
             </View>
 
@@ -304,18 +306,14 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 32,
-    lineHeight: 38,
-    fontWeight: '700',
-    color: '#222222',
+    ...TYPOGRAPHY.heroTitle,
     textAlign: 'center',
   },
 
   description: {
+    ...TYPOGRAPHY.bodyLarge,
     marginTop: 14,
     maxWidth: 340,
-    fontSize: 17,
-    lineHeight: 26,
     color: '#666666',
     textAlign: 'center',
   },
@@ -341,17 +339,14 @@ const styles = StyleSheet.create({
   },
 
   stepNumberText: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-    color: '#1573DD',
+    ...TYPOGRAPHY.caption,
+    color: COLORS.accent,
   },
 
   instructionText: {
+    ...TYPOGRAPHY.bodyLarge,
     flex: 1,
     marginLeft: 14,
-    fontSize: 16,
-    lineHeight: 23,
     color: '#444444',
   },
 
@@ -368,8 +363,7 @@ const styles = StyleSheet.create({
   },
 
   resendPrompt: {
-    fontSize: 16,
-    lineHeight: 22,
+    ...TYPOGRAPHY.bodyLarge,
     color: '#666666',
   },
 
@@ -380,10 +374,9 @@ const styles = StyleSheet.create({
   },
 
   inlineButtonText: {
-    fontSize: 16,
-    lineHeight: 22,
+    ...TYPOGRAPHY.bodyLarge,
     fontWeight: '700',
-    color: '#1573DD',
+    color: COLORS.accent,
   },
 
   differentEmailButton: {
@@ -393,8 +386,7 @@ const styles = StyleSheet.create({
   },
 
   differentEmailText: {
-    fontSize: 15,
-    lineHeight: 21,
+    ...TYPOGRAPHY.body,
     fontWeight: '500',
     color: '#666666',
     textAlign: 'center',

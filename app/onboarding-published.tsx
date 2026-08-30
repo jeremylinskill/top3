@@ -2,6 +2,7 @@ import PrimaryButton from '@/components/primary-button';
 import Top3Card from '@/components/top3-card';
 import { getCategoryArtworkRule } from '@/constants/category-artwork-rules';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
+import { TYPOGRAPHY } from '@/constants/typography';
 import { useAudioPreview } from '@/context/audio-preview-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
@@ -1449,10 +1450,7 @@ const styles = StyleSheet.create({
 
 
   title: {
-    fontSize: 28,
-    lineHeight: 34,
-    fontWeight: '700',
-    color: '#222222',
+    ...TYPOGRAPHY.pageTitle,
     textAlign: 'center',
   },
 
@@ -1658,18 +1656,13 @@ const styles = StyleSheet.create({
 
 
   itemTitle: {
-    fontSize: 17,
-    lineHeight: 23,
-    fontWeight: '600',
-    color: '#222222',
+    ...TYPOGRAPHY.cardTitle,
   },
 
 
   itemSubtitle: {
+    ...TYPOGRAPHY.subtitle,
     marginTop: 4,
-    fontSize: 14,
-    lineHeight: 19,
-    color: '#888888',
   },
 
 

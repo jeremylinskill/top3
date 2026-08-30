@@ -1,3 +1,4 @@
+import { TYPOGRAPHY } from '@/constants/typography';
 import { useOnboardingCollection } from '@/context/onboarding-collection-context';
 import { useProfile } from '@/context/profile-context';
 import { useAuth } from '@/hooks/use-auth';
@@ -24,6 +25,10 @@ import {
   View,
 } from 'react-native';
 
+const FORCE_ONBOARDING_ON_LAUNCH =
+  __DEV__ && true;
+
+let hasForcedOnboardingThisLaunch = false;
 
 export default function IndexScreen() {
   const {
@@ -32,12 +37,10 @@ export default function IndexScreen() {
     user,
   } = useAuth();
 
-
   const {
     profile,
     isProfileLoading,
   } = useProfile();
-
 
   const {
     collection: onboardingCollection,
@@ -50,10 +53,8 @@ export default function IndexScreen() {
       clearOnboardingCollection,
   } = useOnboardingCollection();
 
-
   const isProcessingPendingPublish =
     useRef(false);
-
 
   useEffect(() => {
     if (
@@ -63,6 +64,14 @@ export default function IndexScreen() {
       return;
     }
 
+    if (
+      FORCE_ONBOARDING_ON_LAUNCH &&
+      !hasForcedOnboardingThisLaunch
+    ) {
+      hasForcedOnboardingThisLaunch = true;
+      router.replace('/onboarding');
+      return;
+    }
 
     if (
       isProcessingPendingPublish.current
@@ -70,9 +79,7 @@ export default function IndexScreen() {
       return;
     }
 
-
     let isMounted = true;
-
 
     async function publishPendingOnboardingCollection() {
       if (
@@ -84,16 +91,13 @@ export default function IndexScreen() {
         return false;
       }
 
-
       isProcessingPendingPublish.current = true;
-
 
       const collectionToPublish =
         onboardingCollection;
 
       const authenticatedUserId =
         user.id;
-
 
       try {
         const normalizedCategory =
@@ -111,12 +115,10 @@ export default function IndexScreen() {
             ?.trim()
             .toLowerCase() ?? 'general';
 
-
         const existingCollections =
           await getCollections(
             authenticatedUserId
           );
-
 
         const existingCollection =
           existingCollections.find(
@@ -136,7 +138,6 @@ export default function IndexScreen() {
                   ?.trim()
                   .toLowerCase() ?? 'general';
 
-
               return (
                 existingCategory ===
                   normalizedCategory &&
@@ -147,7 +148,6 @@ export default function IndexScreen() {
               );
             }
           );
-
 
         const savedCollection =
           existingCollection
@@ -181,11 +181,9 @@ export default function IndexScreen() {
                   collectionToPublish.items,
               });
 
-
         await publishCollection(
           savedCollection.id
         );
-
 
         const {
           error: onboardingCompleteError,
@@ -198,32 +196,26 @@ export default function IndexScreen() {
           })
           .eq('id', authenticatedUserId);
 
-
         if (onboardingCompleteError) {
           throw onboardingCompleteError;
         }
-
 
         if (!isMounted) {
           return true;
         }
 
-
         const shouldReturnToFeed =
           authIntent === 'sign-in';
-
 
         clearAuthIntent();
         clearPendingPublish();
         clearOnboardingCollection();
-
 
         router.replace(
           shouldReturnToFeed
             ? '/(tabs)'
             : '/onboarding-published'
         );
-
 
         return true;
       } catch (error) {
@@ -232,17 +224,14 @@ export default function IndexScreen() {
           error
         );
 
-
         if (isMounted) {
           isProcessingPendingPublish.current =
             false;
         }
 
-
         return false;
       }
     }
-
 
     async function initializeApp() {
       try {
@@ -250,7 +239,6 @@ export default function IndexScreen() {
           if (isProfileLoading) {
             return;
           }
-
 
           if (
             onboardingCollection &&
@@ -260,12 +248,10 @@ export default function IndexScreen() {
             return;
           }
 
-
           const onboardingSelectedItemCount =
             onboardingCollection?.items.filter(
               (item) => item !== null
             ).length ?? 0;
-
 
           if (
             onboardingCollection &&
@@ -275,41 +261,33 @@ export default function IndexScreen() {
             return;
           }
 
-
           if (profile.hasCompletedOnboarding) {
             router.replace('/(tabs)');
           } else {
             router.replace('/onboarding');
           }
 
-
           return;
         }
-
 
         const awaitingEmailVerification =
           await isAwaitingEmailVerification();
 
-
         if (!isMounted) {
           return;
         }
-
 
         if (awaitingEmailVerification) {
           router.replace('/check-email');
           return;
         }
 
-
         const hasSeen =
           await hasSeenWelcome();
-
 
         if (!isMounted) {
           return;
         }
-
 
         if (
           onboardingCollection &&
@@ -320,7 +298,6 @@ export default function IndexScreen() {
           router.replace('/collection');
           return;
         }
-
 
         if (hasSeen) {
           router.replace('/sign-in');
@@ -333,16 +310,13 @@ export default function IndexScreen() {
           error
         );
 
-
         if (isMounted) {
           router.replace('/onboarding');
         }
       }
     }
 
-
     void initializeApp();
-
 
     return () => {
       isMounted = false;
@@ -362,12 +336,14 @@ export default function IndexScreen() {
     user,
   ]);
 
-
   const isFinishingOnboardingAccount =
     isAuthenticated &&
     Boolean(onboardingCollection) &&
     isPendingPublish;
 
+  if (!isFinishingOnboardingAccount) {
+    return <View style={styles.container} />;
+  }
 
   return (
     <View style={styles.container}>
@@ -376,21 +352,16 @@ export default function IndexScreen() {
         color="#222222"
       />
 
-      {isFinishingOnboardingAccount ? (
-        <>
-          <Text style={styles.title}>
-            Verifying your email…
-          </Text>
+      <Text style={styles.title}>
+        Verifying your email…
+      </Text>
 
-          <Text style={styles.description}>
-            We&apos;re finishing your Top3 account.
-          </Text>
-        </>
-      ) : null}
+      <Text style={styles.description}>
+        We&apos;re finishing your Top3 account.
+      </Text>
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
@@ -401,23 +372,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
 
-
   title: {
+    ...TYPOGRAPHY.pageTitle,
     marginTop: 24,
-    fontSize: 28,
-    lineHeight: 34,
-    fontWeight: '700',
-    color: '#222222',
     textAlign: 'center',
   },
 
-
   description: {
+    ...TYPOGRAPHY.bodyLarge,
     marginTop: 12,
     maxWidth: 340,
-    fontSize: 16,
-    lineHeight: 24,
-    color: '#666666',
     textAlign: 'center',
   },
 });

@@ -1,7 +1,8 @@
+import { TYPOGRAPHY } from '@/constants/typography';
 import {
-    StyleSheet,
-    Text,
-    View,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 
 type PageHeaderProps = {
@@ -56,16 +57,15 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#222222',
+    ...TYPOGRAPHY.heroTitle,
   },
 
   subtitle: {
     marginTop: 8,
     fontSize: 18,
-    color: '#7A7A7A',
     lineHeight: 24,
+    fontWeight: '400',
+    color: '#7A7A7A',
   },
 
   textCentered: {

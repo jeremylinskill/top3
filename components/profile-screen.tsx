@@ -4,6 +4,7 @@ import ActionSheet, {
 import CommentsSheet from '@/components/comments-sheet';
 import ProfileScreenContent from '@/components/profile-screen-content';
 import ScreenHeader from '@/components/screen-header';
+import { TYPOGRAPHY } from '@/constants/typography';
 import { useBlock } from '@/context/block-context';
 import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
@@ -1433,8 +1434,8 @@ const styles = StyleSheet.create({
   },
 
   loadingText: {
+    ...TYPOGRAPHY.bodyLarge,
     marginTop: 12,
-    fontSize: 16,
     color: '#777777',
   },
 
@@ -1446,9 +1447,8 @@ const styles = StyleSheet.create({
   },
 
   messageText: {
+    ...TYPOGRAPHY.bodyLarge,
     marginTop: 8,
-    fontSize: 16,
-    lineHeight: 22,
     color: '#777777',
     textAlign: 'center',
   },

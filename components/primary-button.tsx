@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     alignItems: 'center',
     borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.text,
+    backgroundColor: COLORS.primary,
   },
 
   buttonDisabled: {

@@ -5,7 +5,9 @@ import ScreenHeader from '@/components/screen-header';
 import SearchInput from '@/components/search-input';
 import SearchResultSkeleton from '@/components/search-result-skeleton';
 import { getCategoryArtworkRule } from '@/constants/category-artwork-rules';
+import { COLORS } from '@/constants/colors';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
+import { TYPOGRAPHY } from '@/constants/typography';
 import { useAudioPreview } from '@/context/audio-preview-context';
 import { useOnboardingCollection } from '@/context/onboarding-collection-context';
 import { useTop3 } from '@/context/top3-context';
@@ -1090,7 +1092,7 @@ const searchTitle = selectedType
         <Ionicons
           name="shuffle"
           size={16}
-          color="#5928ed"
+          color={COLORS.accent}
         />
       </Animated.View>
 
@@ -1481,9 +1483,9 @@ const styles = StyleSheet.create({
   },
 
   searchHelper: {
+    ...TYPOGRAPHY.subtitle,
     marginTop: -14,
     marginBottom: 20,
-    fontSize: 14,
     color: '#777777',
   },
 
@@ -1504,8 +1506,7 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
+    ...TYPOGRAPHY.sectionTitle,
     marginBottom: 16,
   },
 
@@ -1542,10 +1543,9 @@ const styles = StyleSheet.create({
   },
 
   messageText: {
-    fontSize: 16,
+    ...TYPOGRAPHY.bodyLarge,
     color: '#777777',
     textAlign: 'center',
-    lineHeight: 22,
     marginTop: 10,
   },
 
@@ -1613,10 +1613,9 @@ const styles = StyleSheet.create({
   },
 
   metadata: {
-    fontSize: 16,
+    ...TYPOGRAPHY.bodyLarge,
     color: '#777777',
     marginTop: 6,
-    lineHeight: 22,
   },
 
   shuffleButton: {
@@ -1634,9 +1633,8 @@ const styles = StyleSheet.create({
   },
 
   shuffleText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#5928ed',
+    ...TYPOGRAPHY.label,
+    color: COLORS.accent,
   },
 
   suggestionsHeader: {

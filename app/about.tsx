@@ -5,10 +5,11 @@ import { SPACING } from '@/constants/spacing';
 import { TYPOGRAPHY } from '@/constants/typography';
 import * as Application from 'expo-application';
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -37,11 +38,12 @@ export default function AboutScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}>
         <View style={styles.hero}>
-          <View style={styles.appIcon}>
-            <Text style={styles.appIconText}>
-              3
-            </Text>
-          </View>
+          <Image
+            source={require('../assets/images/icon.png')}
+            style={styles.appIcon}
+            resizeMode="contain"
+            accessibilityLabel="Top 3 app icon"
+          />
 
           <Text style={styles.appName}>
             Top 3
@@ -129,16 +131,6 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.text,
-  },
-
-  appIconText: {
-    fontSize: 44,
-    lineHeight: 50,
-    fontWeight: '800',
-    color: COLORS.white,
   },
 
   appName: {
@@ -158,8 +150,7 @@ const styles = StyleSheet.create({
   },
 
   betaBadgeText: {
-    fontSize: 13,
-    lineHeight: 18,
+    ...TYPOGRAPHY.caption,
     fontWeight: '700',
     color: COLORS.secondaryText,
   },
@@ -188,8 +179,7 @@ const styles = StyleSheet.create({
   },
 
   infoValue: {
-    ...TYPOGRAPHY.body,
-    fontWeight: '600',
+    ...TYPOGRAPHY.bodyBold,
     color: COLORS.text,
     textAlign: 'right',
   },
@@ -207,25 +197,23 @@ const styles = StyleSheet.create({
   },
 
   attributionTitle: {
-    fontSize: 14,
-    lineHeight: 20,
+    ...TYPOGRAPHY.label,
+    fontWeight: '400',
     color: COLORS.tertiaryText,
     textAlign: 'center',
   },
 
   attributionName: {
+    ...TYPOGRAPHY.bodyLarge,
     marginTop: 4,
-    fontSize: 16,
-    lineHeight: 22,
     fontWeight: '700',
     color: COLORS.text,
     textAlign: 'center',
   },
 
   copyright: {
+    ...TYPOGRAPHY.metadata,
     marginTop: SPACING.lg,
-    fontSize: 13,
-    lineHeight: 18,
     color: COLORS.tertiaryText,
     textAlign: 'center',
   },

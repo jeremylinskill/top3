@@ -24,6 +24,8 @@ import {
   useState,
 } from 'react';
 
+const MINIMUM_LOADING_DURATION_MS = 1100;
+
 interface AuthContextValue {
   user: User | null;
   session: Session | null;
@@ -50,9 +52,21 @@ export function AuthProvider({
     let isMounted = true;
 
     async function initializeAuth() {
+      const minimumLoadingDuration =
+        new Promise<void>((resolve) => {
+          setTimeout(
+            resolve,
+            MINIMUM_LOADING_DURATION_MS
+          );
+        });
+
       try {
-        const currentSession =
-          await getSession();
+        const [
+          currentSession,
+        ] = await Promise.all([
+          getSession(),
+          minimumLoadingDuration,
+        ]);
 
         if (isMounted) {
           setSession(currentSession);
@@ -62,11 +76,10 @@ export function AuthProvider({
           'Failed to initialize authentication:',
           error
         );
+
+        await minimumLoadingDuration;
       } finally {
         if (isMounted) {
-          // AuthGate should not render the rest of
-          // the application until the initial
-          // session restore has completed.
           setIsLoading(false);
         }
       }
@@ -79,11 +92,6 @@ export function AuthProvider({
     } = onAuthStateChange(
       (_event, nextSession) => {
         if (isMounted) {
-          // Keep the current session in sync, but
-          // do not finish initialization here.
-          // During startup this callback can fire
-          // before getSession() has restored the
-          // persisted session.
           setSession(nextSession);
         }
       }

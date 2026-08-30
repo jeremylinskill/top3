@@ -4,6 +4,7 @@ import {
   TOP3_CATEGORIES,
   Top3Topic,
 } from '@/constants/top3-categories';
+import { TYPOGRAPHY } from '@/constants/typography';
 import { useTop3 } from '@/context/top3-context';
 import { Top3List } from '@/types/top3-list';
 import { buildCollectionTitle } from '@/utils/build-collection-title';
@@ -559,9 +560,8 @@ const styles =
 
 
     overallSubtitle: {
+      ...TYPOGRAPHY.subtitle,
       marginTop: 4,
-      fontSize: 14,
-      lineHeight: 19,
       color: '#777777',
     },
 
