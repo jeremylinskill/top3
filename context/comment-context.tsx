@@ -19,6 +19,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { AppState } from 'react-native';
 
 export type Comment = {
   id: string;
@@ -466,6 +467,35 @@ export function CommentProvider({
       });
 
     return unsubscribe;
+  }, [
+    user?.id,
+    refreshCommentsFromRealtime,
+    refreshCommentCountsFromRealtime,
+  ]);
+
+  useEffect(() => {
+    if (!user?.id) {
+      return;
+    }
+
+    const subscription =
+      AppState.addEventListener(
+        'change',
+        (nextAppState) => {
+          if (nextAppState !== 'active') {
+            return;
+          }
+
+          void Promise.all([
+            refreshCommentsFromRealtime(),
+            refreshCommentCountsFromRealtime(),
+          ]);
+        }
+      );
+
+    return () => {
+      subscription.remove();
+    };
   }, [
     user?.id,
     refreshCommentsFromRealtime,

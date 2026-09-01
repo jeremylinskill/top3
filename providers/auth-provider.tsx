@@ -3,6 +3,13 @@ import {
   resetAnalyticsUser,
 } from '@/lib/analytics';
 import {
+  getExistingPushToken,
+} from '@/lib/notifications';
+import {
+  deletePushToken,
+  upsertPushToken,
+} from '@/lib/supabase/push-tokens';
+import {
   getCurrentUser,
   getSession,
   onAuthStateChange,
@@ -23,6 +30,9 @@ import {
   useMemo,
   useState,
 } from 'react';
+import {
+  Platform,
+} from 'react-native';
 
 const MINIMUM_LOADING_DURATION_MS = 1100;
 
@@ -103,10 +113,6 @@ export function AuthProvider({
     };
   }, []);
 
-  const signOut = useCallback(async () => {
-    await signOutFromService();
-  }, []);
-
   const sessionUser =
     getCurrentUser(session);
 
@@ -130,6 +136,77 @@ export function AuthProvider({
       resetAnalyticsUser();
     }
   }, [user?.id]);
+
+  useEffect(() => {
+    const userId = user?.id;
+
+    if (!userId) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    async function syncPushToken(
+      authenticatedUserId: string
+    ) {
+      try {
+        const expoPushToken =
+          await getExistingPushToken();
+
+        if (
+          isCancelled ||
+          !expoPushToken
+        ) {
+          return;
+        }
+
+        if (
+          Platform.OS !== 'ios' &&
+          Platform.OS !== 'android'
+        ) {
+          return;
+        }
+
+        await upsertPushToken({
+          userId:
+            authenticatedUserId,
+          expoPushToken,
+          platform: Platform.OS,
+        });
+      } catch (error) {
+        console.error(
+          'Failed to sync push token with authenticated user:',
+          error
+        );
+      }
+    }
+
+    void syncPushToken(userId);
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [user?.id]);
+
+  const signOut = useCallback(async () => {
+    try {
+      const expoPushToken =
+        await getExistingPushToken();
+
+      if (expoPushToken) {
+        await deletePushToken(
+          expoPushToken
+        );
+      }
+    } catch (error) {
+      console.error(
+        'Failed to remove push token during sign out:',
+        error
+      );
+    }
+
+    await signOutFromService();
+  }, []);
 
   const value =
     useMemo<AuthContextValue>(

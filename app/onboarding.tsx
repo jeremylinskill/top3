@@ -814,10 +814,10 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 10,
     height: BRAND_HEIGHT,
-    fontSize: 34,
+    fontSize: 38,
     lineHeight: BRAND_HEIGHT,
     fontWeight: '800',
-    color: '#222222',
+    color: '#5928ED',
     textAlign: 'center',
   },
 

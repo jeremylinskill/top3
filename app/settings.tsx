@@ -7,19 +7,35 @@ import { SPACING } from '@/constants/spacing';
 import { TYPOGRAPHY } from '@/constants/typography';
 import { useProfile } from '@/context/profile-context';
 import { useAuth } from '@/hooks/use-auth';
+import {
+  getExistingPushToken,
+  registerForPushNotifications,
+} from '@/lib/notifications';
 import { deleteAccount } from '@/lib/supabase/account';
+import {
+  deletePushToken,
+  isPushTokenRegistered,
+  upsertPushToken,
+} from '@/lib/supabase/push-tokens';
 import { resetWelcomeStatus } from '@/services/onboarding-service';
 import { clearRecentSearches } from '@/services/recent-search-service';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
 import {
   ActivityIndicator,
+  AppState,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
-  View,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -52,6 +68,133 @@ export default function SettingsScreen() {
     title: string;
     message: string;
   } | null>(null);
+
+  const [
+    isPushEnabled,
+    setIsPushEnabled,
+  ] = useState(false);
+
+  const [
+    isPushUpdating,
+    setIsPushUpdating,
+  ] = useState(false);
+
+  const refreshPushState =
+    useCallback(async () => {
+      try {
+        const expoPushToken =
+          await getExistingPushToken();
+
+        if (!expoPushToken) {
+          setIsPushEnabled(false);
+          return;
+        }
+
+        const isRegistered =
+          await isPushTokenRegistered(
+            expoPushToken
+          );
+
+        setIsPushEnabled(isRegistered);
+      } catch (error) {
+        console.error(
+          'Failed to load push notification status:',
+          error
+        );
+      }
+    }, []);
+
+  useEffect(() => {
+    void refreshPushState();
+
+    const subscription =
+      AppState.addEventListener(
+        'change',
+        (nextState) => {
+          if (nextState === 'active') {
+            void refreshPushState();
+          }
+        }
+      );
+
+    return () => {
+      subscription.remove();
+    };
+  }, [refreshPushState]);
+
+  async function handlePushToggle(
+    enabled: boolean
+  ) {
+    if (
+      isPushUpdating ||
+      !user?.id
+    ) {
+      return;
+    }
+
+    setIsPushUpdating(true);
+
+    try {
+      if (!enabled) {
+        const expoPushToken =
+          await getExistingPushToken();
+
+        if (expoPushToken) {
+          await deletePushToken(
+            expoPushToken
+          );
+        }
+
+        setIsPushEnabled(false);
+        return;
+      }
+
+      const {
+        token: expoPushToken,
+      } =
+        await registerForPushNotifications();
+
+      if (!expoPushToken) {
+        setIsPushEnabled(false);
+
+        setErrorSheet({
+          title: 'Notifications Are Off',
+          message:
+            'Enable notifications for Top 3 in your iPhone Settings, then return here and turn notifications on.',
+        });
+
+        return;
+      }
+
+      if (
+        Platform.OS !== 'ios' &&
+        Platform.OS !== 'android'
+      ) {
+        return;
+      }
+
+      await upsertPushToken({
+        userId: user.id,
+        expoPushToken,
+        platform: Platform.OS,
+      });
+
+      setIsPushEnabled(true);
+    } catch (error) {
+      console.error(
+        'Failed to update push notifications:',
+        error
+      );
+
+      setErrorSheet({
+        title: 'Unable to Update Notifications',
+        message:
+          'Something went wrong while updating your notification settings. Please try again.',
+      });
+    } finally {
+      setIsPushUpdating(false);
+    }
+  }
 
   const canChangePassword =
     user?.identities?.some(
@@ -425,6 +568,46 @@ export default function SettingsScreen() {
           </Text>
 
           <View style={styles.card}>
+            <View style={styles.row}>
+              <View style={styles.iconContainer}>
+                <Ionicons
+                  name="notifications-outline"
+                  size={23}
+                  color={COLORS.text}
+                />
+              </View>
+
+              <View style={styles.rowDetails}>
+                <Text style={styles.rowTitle}>
+                  Notifications
+                </Text>
+
+                <Text style={styles.rowSubtitle}>
+                  Likes, comments, and new followers
+                </Text>
+              </View>
+
+              {isPushUpdating ? (
+                <ActivityIndicator
+                  size="small"
+                  color={COLORS.accent}
+                />
+              ) : (
+                <Switch
+                  value={isPushEnabled}
+                  onValueChange={(enabled) => {
+                    void handlePushToggle(
+                      enabled
+                    );
+                  }}
+                  accessibilityLabel="Push notifications"
+                  accessibilityHint="Turns Top 3 push notifications on or off"
+                />
+              )}
+            </View>
+
+            <View style={styles.divider} />
+
             <Pressable
               style={({ pressed }) => [
                 styles.row,
@@ -675,7 +858,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     ...TYPOGRAPHY.sectionTitle,
     marginBottom: SPACING.md,
-    fontSize: 18,
   },
 
   signOutSection: {

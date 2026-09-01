@@ -16,7 +16,9 @@ import {
   DefaultTheme,
   ThemeProvider,
 } from '@react-navigation/native';
+import * as Notifications from 'expo-notifications';
 import {
+  router,
   Stack,
   usePathname,
 } from 'expo-router';
@@ -35,6 +37,115 @@ void SplashScreen.preventAutoHideAsync();
 export const unstable_settings = {
   anchor: '(tabs)',
 };
+
+type NotificationRouteData = {
+  type?: unknown;
+  actorUserId?: unknown;
+  collectionId?: unknown;
+};
+
+function getStringValue(
+  value: unknown
+): string | null {
+  return typeof value === 'string' &&
+    value.trim()
+    ? value.trim()
+    : null;
+}
+
+function routeFromNotificationData(
+  data: NotificationRouteData
+) {
+  const type =
+    getStringValue(data.type);
+
+  const collectionId =
+    getStringValue(data.collectionId);
+
+  const actorUserId =
+    getStringValue(data.actorUserId);
+
+  if (
+    (type === 'like' ||
+      type === 'comment') &&
+    collectionId
+  ) {
+    router.push({
+      pathname: '/published-top3',
+      params: {
+        postId: `post-${collectionId}`,
+      },
+    });
+
+    return;
+  }
+
+  if (
+    type === 'follow' &&
+    actorUserId
+  ) {
+    router.push({
+      pathname: '/public-profile',
+      params: {
+        userId: actorUserId,
+      },
+    });
+  }
+}
+
+function NotificationResponseController() {
+  const handledResponseIdRef =
+    useRef<string | null>(null);
+
+  useEffect(() => {
+    function handleResponse(
+      response:
+        Notifications.NotificationResponse
+    ) {
+      const responseId =
+        response.notification.request.identifier;
+
+      if (
+        handledResponseIdRef.current ===
+        responseId
+      ) {
+        return;
+      }
+
+      handledResponseIdRef.current =
+        responseId;
+
+      routeFromNotificationData(
+        response.notification.request.content
+          .data as NotificationRouteData
+      );
+    }
+
+    const subscription =
+      Notifications.addNotificationResponseReceivedListener(
+        handleResponse
+      );
+
+    void Notifications.getLastNotificationResponseAsync()
+      .then((response) => {
+        if (response) {
+          handleResponse(response);
+        }
+      })
+      .catch((error) => {
+        console.error(
+          'Failed to read last notification response:',
+          error
+        );
+      });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
+  return null;
+}
 
 function StartupSplashController() {
   const pathname = usePathname();
@@ -93,6 +204,7 @@ export default function RootLayout() {
                                     : DefaultTheme
                                 }>
                                 <StartupSplashController />
+                                <NotificationResponseController />
 
                                 <Stack
                                   screenOptions={{
@@ -108,6 +220,7 @@ export default function RootLayout() {
                                   <Stack.Screen name="onboarding-published" />
                                   <Stack.Screen name="onboarding-overall-top3" />
                                   <Stack.Screen name="onboarding-taste-match" />
+                                  <Stack.Screen name="onboarding-notifications" />
                                   <Stack.Screen name="(tabs)" />
                                   <Stack.Screen name="collections" />
                                   <Stack.Screen name="collection" />

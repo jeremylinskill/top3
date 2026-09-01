@@ -16,6 +16,7 @@ import {
   useMemo,
   useState,
 } from 'react';
+import { AppState } from 'react-native';
 
 type LikeContextValue = {
   likedPostIds: string[];
@@ -168,6 +169,28 @@ export function LikeProvider({
     return unsubscribe;
   }, [userId, refreshLikes]);
 
+  useEffect(() => {
+    if (!userId) {
+      return;
+    }
+
+    const subscription =
+      AppState.addEventListener(
+        'change',
+        (nextAppState) => {
+          if (nextAppState === 'active') {
+            void refreshLikes({
+              showLoading: false,
+            });
+          }
+        }
+      );
+
+    return () => {
+      subscription.remove();
+    };
+  }, [userId, refreshLikes]);
+
   const isLiked = useCallback(
     (postId: string) =>
       likedPostIds.includes(postId),
@@ -258,7 +281,7 @@ export function LikeProvider({
         ...currentCounts,
         [postId]: Math.max(
           0,
-          (currentCounts[postId] ?? 1) - 1
+          (currentCounts[postId] ?? 1) - 1,
         ),
       }));
 

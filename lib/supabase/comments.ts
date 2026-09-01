@@ -15,6 +15,7 @@ export type CommentRecord = {
 type CommentProfileRow = {
   display_name: string | null;
   username: string | null;
+  avatar_url: string | null;
 };
 
 type CommentRow = {
@@ -44,7 +45,8 @@ const COMMENT_SELECT = `
   updated_at,
   profiles!comments_user_id_fkey (
     display_name,
-    username
+    username,
+    avatar_url
   )
 `;
 
@@ -75,7 +77,9 @@ function mapCommentRow(
     authorUsername:
       profile?.username ??
       'top3user',
-    authorAvatarUrl: undefined,
+    authorAvatarUrl:
+      profile?.avatar_url ??
+      undefined,
     content: row.content,
     createdAt: row.created_at,
     updatedAt: row.updated_at,

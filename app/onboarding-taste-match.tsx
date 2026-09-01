@@ -4,10 +4,8 @@ import {
 } from '@/constants/colors';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { TYPOGRAPHY } from '@/constants/typography';
-import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
 import { useAuth } from '@/hooks/use-auth';
-import { trackAnalyticsEvent } from '@/lib/analytics';
 import { getPublishedPostsByUser } from '@/lib/supabase/collections';
 import { Top3List } from '@/types/top3-list';
 import { router } from 'expo-router';
@@ -31,10 +29,6 @@ const DEMO_MATCH_SCORE = 84;
 
 
 export default function OnboardingTasteMatchScreen() {
-  const {
-    updateProfile,
-  } = useProfile();
-
   const {
     currentList,
   } = useTop3();
@@ -320,25 +314,8 @@ export default function OnboardingTasteMatchScreen() {
     titleOpacity,
   ]);
 
-
-  async function finishOnboarding() {
-    try {
-      await updateProfile({
-        hasCompletedOnboarding: true,
-      });
-
-      trackAnalyticsEvent(
-        'onboarding_completed'
-      );
-    } catch (error) {
-      console.error(
-        'Failed to complete onboarding:',
-        error
-      );
-    }
-
-
-    router.replace('/(tabs)');
+  function continueOnboarding() {
+    router.push('/onboarding-notifications');
   }
 
 
@@ -495,7 +472,7 @@ export default function OnboardingTasteMatchScreen() {
       <View style={styles.bottomBar}>
         <PrimaryButton
           title="Start Exploring"
-          onPress={finishOnboarding}
+          onPress={continueOnboarding}
         />
       </View>
     </SafeAreaView>
