@@ -90,7 +90,7 @@ function getPushCopy({
 export default {
   fetch: withSupabase(
     {
-      auth: "secret",
+      auth: "secret:push_notification_webhook",
     },
     async (request, ctx) => {
       if (request.method !== "POST") {
