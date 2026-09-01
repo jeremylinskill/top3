@@ -1,12 +1,13 @@
 CURRENT_STATE.md
 
-Project: Top3Version: 2.9Status: Active DevelopmentLast Updated: August 30, 2026Current Branch: main
+Project: Top3 Version: 3.0 Status: Active Development Last Updated:
+September 1, 2026 Current Branch: main
 
 Last Verified Commit
 
-900bc0b
+7759102
 
-Standardize UI system and refine onboarding
+Use dedicated webhook secret for push notifications
 
 Dashboard
 
@@ -15,6 +16,33 @@ Project Status
 🟢 Active Development
 
 Current Feature
+
+Push notifications are implemented and verified end-to-end for Likes,
+Comments, and Follows. Expo Notifications registers device push tokens,
+Supabase persists them per authenticated user, notification INSERT
+events invoke the send-push-notification Edge Function through a
+Database Webhook, and Expo Push Service delivers the notification to the
+device. Tapping Like or Comment pushes opens the relevant published
+List, while Follow pushes open the follower's public profile.
+
+Notification permission is introduced intentionally during onboarding
+and can also be managed from Settings. Push-token ownership follows the
+authenticated account across sign-in, account switching, and sign-out.
+Like and Comment state refreshes when the app becomes active so
+notification-driven navigation shows current social state. Uploaded
+comment-author avatars are also preserved in comment enrichment.
+
+Relike and refollow behavior has been verified: unlike → like and
+unfollow → follow each create a genuinely new notification and push.
+Permanent notification-level uniqueness indexes for Like and Follow were
+removed so historical notifications do not suppress later legitimate
+events; the active likes and follows relationships remain responsible
+for preventing duplicate active actions.
+
+The push Database Webhook authenticates the Edge Function with the
+dedicated named secret key push_notification_webhook. The previously
+exposed key was revoked after the replacement key was deployed and
+verified.
 
 The redesigned onboarding and account flow is implemented end-to-end.
 
@@ -73,11 +101,25 @@ Design System & Startup Polish
 
 Status: ✅ Complete for the current active UI audit
 
-The reviewed active application UI now uses shared semantic typography roles from constants/typography.ts for major headings, section titles, card titles, body copy, labels, form labels, metadata, captions, actions, and badges. Intentional exceptions such as emoji / icon glyph sizing and specialized typography without a true shared-token match remain local.
+The reviewed active application UI now uses shared semantic typography
+roles from constants/typography.ts for major headings, section titles,
+card titles, body copy, labels, form labels, metadata, captions,
+actions, and badges. Intentional exceptions such as emoji / icon glyph
+sizing and specialized typography without a true shared-token match
+remain local.
 
-Semantic colour usage distinguishes the main action colour from the Top3 brand / secondary-interaction accent. Shared controls continue to reuse the established design tokens, and profile-avatar presentation is centralized through the shared UserAvatar component while preserving uploaded profile photos.
+Semantic colour usage distinguishes the main action colour from the Top3
+brand / secondary-interaction accent. Shared controls continue to reuse
+the established design tokens, and profile-avatar presentation is
+centralized through the shared UserAvatar component while preserving
+uploaded profile photos.
 
-The native splash → onboarding handoff has been refined so the branded onboarding state is already present behind the splash, avoiding an intermediate white flash or generic loading treatment. Production splash icon and wordmark assets are aligned with the first onboarding presentation, while onboarding copy and actions use staged fade-in behaviour.
+The native splash → onboarding handoff has been refined so the branded
+onboarding state is already present behind the splash, avoiding an
+intermediate white flash or generic loading treatment. Production splash
+icon and wordmark assets are aligned with the first onboarding
+presentation, while onboarding copy and actions use staged fade-in
+behaviour.
 
 Current Priority
 
@@ -148,6 +190,8 @@ Expo FileSystem
 Expo Image Picker
 
 Expo Audio
+
+Expo Notifications
 
 React Native WebView
 
@@ -700,6 +744,44 @@ Database automation includes:
 
 • Like trigger• Comment trigger• Follow trigger
 
+Push Notifications
+
+Status: ✅ Complete
+
+Push delivery is implemented with Expo Notifications, Expo Push Service,
+Supabase, a Database Webhook, and the send-push-notification Edge
+Function.
+
+Supported push events:
+
+• Likes • Comments • Follows
+
+Implementation includes:
+
+• Intentional notification-permission request during onboarding •
+Notifications switch in Settings • Expo push-token registration •
+Supabase push_tokens persistence • Token reassignment when the same
+device signs into another account • Token deletion on sign-out /
+notification disable • Database Webhook on public.notifications INSERT •
+Dedicated send-push-notification Edge Function • Dedicated
+push_notification_webhook secret-key authentication • Like / Comment tap
+routing to Published Top 3 • Follow tap routing to the follower's public
+profile • App-resume refresh for Like and Comment state
+
+Verified behavior:
+
+• Like → push → correct List • Unlike → relike → new push • Comment →
+push → correct List with current comment state • Follow → push →
+follower public profile • Unfollow → refollow → new push • Two physical
+devices maintain independent push tokens • Account switching reassigns
+the device token correctly • Sign-out removes the device token
+
+Historical notification rows do not permanently suppress legitimate
+relikes or refollows. The notifications_unique_like_idx and
+notifications_unique_follow_idx indexes were removed; duplicate active
+Likes and Follows remain constrained by their underlying relationship
+tables.
+
 Persistence
 
 Profile Persistence
@@ -830,6 +912,8 @@ Supabase
 ✅ Following
 
 ✅ Notifications
+
+✅ Push notification tokens
 
 AsyncStorage
 
@@ -1192,6 +1276,8 @@ Shared Supabase-backed data
 
 ✅ Notifications
 
+✅ Push notification tokens and Like / Comment / Follow push delivery
+
 Real community experiences
 
 ✅ Feed
@@ -1271,13 +1357,55 @@ post-launch and classified as a high-priority scalability initiative
 
 Recent Milestones
 
+September 1, 2026
+
+Push Notifications
+
+Implemented Expo push notifications for Likes, Comments, and Follows
+using Expo Notifications, Expo Push Service, Supabase push-token
+persistence, a Database Webhook on notification INSERT events, and the
+send-push-notification Edge Function.
+
+Added intentional notification permission UX to onboarding and Settings,
+authenticated push-token registration / reassignment, and token cleanup
+on sign-out.
+
+Verified push delivery and tap routing across two physical devices. Like
+and Comment pushes open the correct published List; Follow pushes open
+the follower's public profile.
+
+Added app-resume refresh behavior for Like and Comment state so
+notification-driven navigation reflects current social state, and
+corrected comment profile enrichment so uploaded avatars display with
+comments.
+
+Removed permanent notification-level Like and Follow uniqueness indexes
+so a genuine unlike → relike or unfollow → refollow can create a new
+notification and push while active relationship tables continue to
+prevent duplicate active actions.
+
+Created and deployed the dedicated push_notification_webhook secret key
+for Database Webhook authentication, updated the Edge Function to
+require that named secret, verified delivery with the replacement key,
+and revoked the previously exposed key.
+
+Verified npm run typecheck passes. Committed and pushed 101e8cb --- Add
+push notifications and refine onboarding, followed by 7759102 --- Use
+dedicated webhook secret for push notifications.
+
 August 30, 2026
 
 Design System & Onboarding Polish
 
-Completed the active-UI typography audit and standardized matching text roles on shared semantic typography tokens. Refined semantic colour usage and shared controls, centralized avatar presentation through UserAvatar, and polished the native splash → onboarding handoff with aligned production icon and wordmark assets and staged fade-in behaviour.
+Completed the active-UI typography audit and standardized matching text
+roles on shared semantic typography tokens. Refined semantic colour
+usage and shared controls, centralized avatar presentation through
+UserAvatar, and polished the native splash → onboarding handoff with
+aligned production icon and wordmark assets and staged fade-in
+behaviour.
 
-Verified npm run typecheck passes. Committed and pushed 900bc0b --- Standardize UI system and refine onboarding.
+Verified npm run typecheck passes. Committed and pushed 900bc0b ---
+Standardize UI system and refine onboarding.
 
 August 25, 2026
 
@@ -2196,8 +2324,27 @@ Do not automatically choose the next major feature without reviewing the
 roadmap and current product state.
 
 Remember that Authentication, Profiles, Profile Avatars, Lists /
-collections, Likes, Comments, Following, and Notifications are fully
-persisted through Supabase.
+collections, Likes, Comments, Following, Notifications, and push
+notification tokens are fully persisted through Supabase.
+
+Remember that push notifications are implemented for Likes, Comments,
+and Follows. public.notifications INSERT events drive the
+send-push-notification Edge Function through a Database Webhook; do not
+add a parallel client-side push event model. Like / Comment taps route
+to the published List and Follow taps route to the actor's public
+profile.
+
+Remember that the Database Webhook uses the dedicated named secret
+push_notification_webhook and the Edge Function requires auth:
+"secret". Never store or document the secret
+key value.
+
+Remember that legitimate relikes and refollows should generate new
+notifications. notifications_unique_like_idx and
+notifications_unique_follow_idx were removed because historical
+notification rows must not permanently suppress later actions. Do not
+recreate those indexes without intentionally redesigning notification
+event semantics.
 
 Remember that RAWG has been removed from the active application. Video
 game search now uses IGDB internally through the video-game-search

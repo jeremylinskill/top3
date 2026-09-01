@@ -1,6 +1,8 @@
 Top3 Product Roadmap
 
-Version: 2.7Status: Active DevelopmentOwner: Jeremy LinskillLast Updated: August 30, 2026Last Verified Commit: 900bc0b --- Standardize UI system and refine onboarding
+Version: 2.8 Status: Active Development Owner: Jeremy Linskill Last
+Updated: September 1, 2026 Last Verified Commit: 7759102 --- Use
+dedicated webhook secret for push notifications
 
 Purpose
 
@@ -41,11 +43,12 @@ Status: Current Focus 🚧
 Top3's core community platform is now in place.
 
 Authentication, profiles, list persistence, social interactions, private
-accounts, follow requests, notifications, realtime synchronization,
-Settings, search providers, Feed, Discover, Taste Match, Apple Music
-previews, Movie / TV trailer playback, and the redesigned first-list
-onboarding and account lifecycle, including email password recovery,
-provide a stable foundation for the next stage of the product.
+accounts, follow requests, in-app and push notifications, realtime
+synchronization, Settings, search providers, Feed, Discover, Taste
+Match, Apple Music previews, Movie / TV trailer playback, and the
+redesigned first-list onboarding and account lifecycle, including email
+password recovery, provide a stable foundation for the next stage of the
+product.
 
 Recent work has also completed important moderation-removal foundations,
 published-list and Overall ranking sharing, deep-link access to shared
@@ -79,31 +82,35 @@ deletion• Sign in with Google• Persistent Supabase sessions• Stable
 authentication initialization• User profiles• Profile avatars• Profile
 editing• Privacy settings• Public and private accounts• Follow requests•
 Following / Followers• List persistence• Shared Likes• Shared Comments•
-In-app notifications• Settings• About• Supabase Realtime for
-Notifications, Likes, Comments, and Following• Feed• Discover• Community
-Top3• Overall Top3• Taste Match• Personalized Feed recommendations•
-Taste Match recommendation explanations• Shared search-provider
-architecture• TMDb search for Movies and TV Shows• TMDb Movie / TV
-trailer playback inside Top3• Availability-aware Movie / TV trailer
-controls• Google Books search with Open Library fallback• IGDB search
-for Video Games through a Supabase Edge Function• Apple Music search for
-Songs, Albums, and Artists through a Supabase Edge Function• Apple Music
-audio previews for Songs, Albums, and Artists• Genre-aware and evergreen
-Apple Music suggestions• Feed pull-to-refresh• Reported-list and
-reported-comment moderation workflow• Moderator Remove Content action•
-Removed-content filtering through removed_at• Creator-scoped moderation
-removal Realtime propagation• collections_published_feed_idx for the
-future published Feed path• Published List sharing from Feed, Profile,
-Category Feed, and Published Top 3• Overall ranking sharing• Deep-link
-routing to published Lists and Overall rankings• Logged-out read access
-to shared published, non-removed collections• V1 Amplitude product
-analytics• Successful-share tracking with source attribution•
-Blocked-user filtering across relevant Top3 content, ranking, social
-discovery, Taste Match, notification, and profile surfaces• Shared Top3
-ActionSheet popup pattern across reviewed confirmation, destructive,
-success, error, validation, authentication, collection, reporting, and
-moderation flows• Zero remaining Alert.alert matches across app,
-components, context, and services
+In-app notifications• Push notifications for Likes, Comments, and
+Follows• Intentional notification permission UX in onboarding and
+Settings• Authenticated Expo push-token persistence and lifecycle
+management• Push tap routing to published Lists and public profiles•
+Settings• About• Supabase Realtime for Notifications, Likes, Comments,
+and Following• Feed• Discover• Community Top3• Overall Top3• Taste
+Match• Personalized Feed recommendations• Taste Match recommendation
+explanations• Shared search-provider architecture• TMDb search for
+Movies and TV Shows• TMDb Movie / TV trailer playback inside Top3•
+Availability-aware Movie / TV trailer controls• Google Books search with
+Open Library fallback• IGDB search for Video Games through a Supabase
+Edge Function• Apple Music search for Songs, Albums, and Artists through
+a Supabase Edge Function• Apple Music audio previews for Songs, Albums,
+and Artists• Genre-aware and evergreen Apple Music suggestions• Feed
+pull-to-refresh• Reported-list and reported-comment moderation workflow•
+Moderator Remove Content action• Removed-content filtering through
+removed_at• Creator-scoped moderation removal Realtime propagation•
+collections_published_feed_idx for the future published Feed path•
+Published List sharing from Feed, Profile, Category Feed, and Published
+Top 3• Overall ranking sharing• Deep-link routing to published Lists and
+Overall rankings• Logged-out read access to shared published,
+non-removed collections• V1 Amplitude product analytics•
+Successful-share tracking with source attribution• Blocked-user
+filtering across relevant Top3 content, ranking, social discovery, Taste
+Match, notification, and profile surfaces• Shared Top3 ActionSheet popup
+pattern across reviewed confirmation, destructive, success, error,
+validation, authentication, collection, reporting, and moderation flows•
+Zero remaining Alert.alert matches across app, components, context, and
+services
 
 Current Priorities
 
@@ -120,8 +127,9 @@ initial real-user validation• Defer cursor-paginated Feed migration,
 server-side recommendation candidate generation, and other large-scale
 Feed infrastructure until post-launch• Continue search-quality and
 provider-resiliency improvements when they affect launch reliability•
-Prepare architecture for push notifications without making push a V1
-launch dependency unless product requirements change
+Treat the completed push-notification system as part of the V1
+social-engagement foundation and include it in release-candidate
+regression testing
 
 V1 Launch Readiness
 
@@ -144,12 +152,12 @@ now completed across relevant Top3 surfaces• Preserve the verified Apple
 authorization revocation path and complete final account-deletion
 regression testing for the release candidate• Verify core onboarding,
 Create, publish, Feed, Profile, Discover, Search, Likes, Comments,
-Following, notifications, Taste Match, and media-preview flows on
-device• Confirm production configuration and provider credentials•
-Review App Store metadata, privacy disclosures, permissions, and
-required support / policy surfaces• Perform final performance and
-reliability testing• Update project documentation to match the release
-candidate
+Following, in-app notifications, push notifications, notification tap
+routing, Taste Match, and media-preview flows on device• Confirm
+production configuration and provider credentials• Review App Store
+metadata, privacy disclosures, permissions, and required support /
+policy surfaces• Perform final performance and reliability testing•
+Update project documentation to match the release candidate
 
 Launch Decision --- Feed Scalability
 
@@ -220,8 +228,7 @@ improving search relevance across providers• Gracefully handle external
 API failures across TMDb, Google Books, Open Library, IGDB, and Apple
 Music• Continue improving trailer resiliency without introducing
 unnecessary location permissions• Expand conversation tools around
-discovered content• Continue performance optimization• Prepare
-architecture for push notifications
+discovered content• Continue performance optimization
 
 Success Looks Like
 
@@ -293,7 +300,7 @@ Opportunities
 
 • Richer comment experiences• Conversation prompts around shared picks•
 Recommendation-driven discussion• Improved social activity context•
-Friend invitations• Push notifications• Re-engagement experiences
+Friend invitations• Re-engagement experiences
 
 Guiding Principle
 
@@ -385,25 +392,57 @@ usage rather than adding events speculatively before launch.
 
 Push Notifications
 
-Status: Planned
+Status: V1 Foundation Complete
 
-Top3 already has Supabase-backed in-app notifications with realtime
-updates.
+Top3 extends its existing Supabase-backed in-app notification system
+with device push delivery rather than maintaining a separate
+notification model.
 
-Push notifications should extend that system rather than introduce a
-separate notification model.
+The current V1 push system supports Likes, Comments, and Follows.
+Existing public.notifications INSERT events remain the source of truth
+and invoke the send-push-notification Supabase Edge Function through a
+Database Webhook. The Edge Function loads authenticated device tokens
+from public.push_tokens and sends notifications through Expo Push
+Service.
 
-Potential Notifications
+Notification permission is introduced intentionally during onboarding
+and can also be managed from Settings. Push-token ownership follows the
+active authenticated account: authorized tokens are synchronized on
+sign-in, reassigned safely when the same device changes accounts, and
+removed on sign-out or when notifications are disabled.
 
-• New follower• Follow request• Follow request accepted• Like• Comment•
-Relevant social or recommendation activity where appropriate
+Like and Comment notification taps open the relevant published List.
+Follow notification taps open the actor's public profile. Like and
+Comment state refreshes when the app becomes active so
+notification-driven navigation reflects current social state.
 
-Before Implementation
+Legitimate repeat actions are preserved. Unlike → relike and unfollow →
+refollow each create a new notification and push; historical
+notification rows do not permanently suppress later events.
 
-• Define which events genuinely deserve interruption• Establish
-notification preferences• Review Expo / native push architecture•
-Determine server-side delivery architecture• Preserve the existing
-in-app notification system as the source of truth
+The Database Webhook uses the dedicated named Supabase secret
+push_notification_webhook. The Edge Function requires auth:
+"secret". The previous exposed key was revoked
+after the dedicated replacement key was deployed and verified.
+
+Verified V1 Events
+
+• Like • Comment • Follow
+
+Future Push Opportunities
+
+• Follow request • Follow request accepted • Carefully selected
+recommendation or re-engagement activity where the interruption is
+genuinely useful
+
+Future Direction
+
+• Add finer-grained notification preferences if user needs justify them
+• Evaluate delivery analytics and push-open behavior using real launch
+data • Add new push event types only when they extend the existing
+notification model and provide clear user value • Preserve
+public.notifications as the authoritative social notification event
+source
 
 Search & Provider Strategy
 
@@ -590,15 +629,45 @@ engagement, but to create meaningful connections through shared taste.
 
 Revision History
 
-Version 2.7 --- August 30, 2026
+Version 2.8 --- September 1, 2026
 
-Updated the roadmap to reflect completion of the current active-UI design-system consistency pass and startup / onboarding polish.
+Updated the roadmap to reflect completion and physical-device
+verification of Top3's V1 push-notification system.
 
 Key changes:
 
-• Recorded the active-UI typography audit and semantic typography standardization as completed V1 polish foundations.• Recorded semantic primary / accent colour roles and continued shared-control consistency.• Recorded shared UserAvatar presentation as the standard reviewed avatar treatment.• Recorded the refined native splash → onboarding handoff and aligned production splash icon / wordmark assets.• Updated the last verified repository checkpoint to 900bc0b.• Preserved V1 Launch Readiness as the current product milestone.
+• Recorded Expo push notifications for Likes, Comments, and Follows as a
+completed V1 social-engagement foundation. • Recorded
+public.notifications INSERT events as the authoritative push event
+source, delivered through a Supabase Database Webhook,
+send-push-notification Edge Function, and Expo Push Service. • Recorded
+intentional notification-permission UX in onboarding and Settings. •
+Recorded authenticated push-token persistence, account reassignment, and
+sign-out cleanup. • Recorded notification tap routing to published Lists
+and public profiles. • Recorded app-resume Like and Comment refresh
+behavior. • Recorded legitimate relike and refollow behavior after
+removal of permanent notification-level uniqueness indexes. • Recorded
+dedicated push_notification_webhook named-secret authentication and
+revocation of the previously exposed key. • Removed push-notification
+architecture from future priorities because the V1 foundation is
+complete. • Updated the last verified repository checkpoint to 7759102.
+• Preserved V1 Launch Readiness as the current product milestone.
 
+Version 2.7 --- August 30, 2026
 
+Updated the roadmap to reflect completion of the current active-UI
+design-system consistency pass and startup / onboarding polish.
+
+Key changes:
+
+• Recorded the active-UI typography audit and semantic typography
+standardization as completed V1 polish foundations.• Recorded semantic
+primary / accent colour roles and continued shared-control consistency.•
+Recorded shared UserAvatar presentation as the standard reviewed avatar
+treatment.• Recorded the refined native splash → onboarding handoff and
+aligned production splash icon / wordmark assets.• Updated the last
+verified repository checkpoint to 900bc0b.• Preserved V1 Launch
+Readiness as the current product milestone.
 
 Version 2.6 --- August 25, 2026
 

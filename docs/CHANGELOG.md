@@ -2,59 +2,248 @@ CHANGELOG.md
 
 This document records significant milestones in the evolution of Top3.
 
+v3.1 --- Push Notifications
+
+Released: September 1, 2026
+
+This release completes Top3's V1 push-notification system for Likes,
+Comments, and Follows. Existing Supabase notification events now drive
+device push delivery through a Database Webhook and Edge Function, while
+notification permission, token lifecycle, tap routing, and social-state
+refresh behavior are integrated into the application experience.
+
+Added
+
+Push Notification Delivery
+
+Added Expo Notifications and Expo Push Service integration.
+
+Added the push_tokens Supabase table for authenticated device-token
+persistence.
+
+Added server-side register_push_token handling so a device token can
+be safely reassigned when the same physical device signs into a
+different Top3 account.
+
+Added the send-push-notification Supabase Edge Function.
+
+Added a Database Webhook on public.notifications INSERT events so the
+existing notification system remains the authoritative event source for
+push delivery.
+
+Added push delivery for:
+
+Likes
+
+Comments
+
+Follows
+
+Notification Permission UX
+
+Added an intentional notification-permission step to onboarding.
+
+Added a Notifications switch in Settings.
+
+Enabling notifications requests permission when required and registers
+the device token.
+
+Disabling notifications removes the registered token.
+
+Returning to the app refreshes notification-permission state so Settings
+reflects changes made in iOS Settings.
+
+Notification Tap Routing
+
+Added notification-response handling at the application root.
+
+Like and Comment pushes open the relevant Published Top 3 List.
+
+Follow pushes open the actor's public profile.
+
+Added handling for notification responses received while the app is
+running as well as the most recent response used to launch / resume the
+app.
+
+Improved
+
+Push Token Lifecycle
+
+Authenticated sign-in synchronizes an already-authorized device token
+with the active account.
+
+Account switching safely reassigns the same Expo push token to the newly
+authenticated user.
+
+Sign-out removes the current device token.
+
+Verified independent token registration across two physical devices.
+
+Social State After Push Navigation
+
+Like state now refreshes when Top3 becomes active so a List opened from
+a push reflects the current Like state.
+
+Comment state now refreshes when Top3 becomes active so a List opened
+from a push reflects current comments and counts.
+
+Comment profile enrichment now preserves uploaded author avatars.
+
+Repeat Social Actions
+
+Removed notifications_unique_like_idx.
+
+Removed notifications_unique_follow_idx.
+
+Historical notification rows no longer permanently suppress a legitimate
+unlike → relike or unfollow → refollow event.
+
+Duplicate active Like and Follow relationships remain governed by their
+underlying relationship tables.
+
+Security
+
+Created a dedicated Supabase secret key named
+push_notification_webhook for Database Webhook authentication.
+
+Updated send-push-notification to require the named secret using:
+
+auth: "secret:push_notification_webhook"
+
+Verified push delivery using the replacement dedicated key.
+
+Revoked the previously exposed secret key after successful verification.
+
+No secret-key value is stored in application code or documentation.
+
+Verified
+
+Verified direct Expo push delivery to a physical iPhone.
+
+Verified Like push delivery end-to-end.
+
+Verified Comment push delivery end-to-end.
+
+Verified Follow push delivery end-to-end.
+
+Verified Like notification taps open the correct published List with
+current Like state.
+
+Verified Comment notification taps open the correct published List with
+current comment state and avatar presentation.
+
+Verified Follow notification taps open the correct public profile.
+
+Verified unlike → relike generates a new notification and push.
+
+Verified unfollow → refollow generates a new notification and push.
+
+Verified token reassignment between accounts on the same physical
+device.
+
+Verified sign-out removes the registered token.
+
+Verified two physical devices maintain independent push tokens.
+
+Verified the dedicated push_notification_webhook key authenticates the
+Database Webhook successfully after the previous key was revoked.
+
+Verified npm run typecheck passes.
+
+Checkpoint
+
+Committed and pushed 101e8cb --- Add push notifications and refine
+onboarding.
+
+Committed and pushed 7759102 --- Use dedicated webhook secret for push
+notifications.
+
+Documentation
+
+Updated CURRENT_STATE.md to version 3.0 and recorded 7759102 as the
+last verified application checkpoint.
+
+Recorded the completed push architecture, token lifecycle, notification
+permission UX, tap routing, relike / refollow behavior, social-state
+refreshes, and dedicated webhook authentication.
+
 v3.0 --- UI System & Onboarding Polish
 
 Released: August 30, 2026
 
-This release completes a broad visual-consistency pass across the active Top3 UI and refines the startup / first-use presentation. Shared semantic typography and colour roles are applied across the reviewed screens and components, avatar presentation is centralized, and the native splash now hands off cleanly into the branded onboarding experience.
+This release completes a broad visual-consistency pass across the active
+Top3 UI and refines the startup / first-use presentation. Shared
+semantic typography and colour roles are applied across the reviewed
+screens and components, avatar presentation is centralized, and the
+native splash now hands off cleanly into the branded onboarding
+experience.
 
 Added
 
 Shared Avatar Presentation
 
-Added the shared UserAvatar component as the standard Top3 avatar presentation for reviewed profile, social, feed, and related surfaces.
+Added the shared UserAvatar component as the standard Top3 avatar
+presentation for reviewed profile, social, feed, and related surfaces.
 
-Added the production splash wordmark asset used by the refined startup / onboarding presentation.
+Added the production splash wordmark asset used by the refined startup /
+onboarding presentation.
 
-Added the shared loading-screen presentation used during the branded startup handoff.
+Added the shared loading-screen presentation used during the branded
+startup handoff.
 
 Improved
 
 Typography Standardization
 
-Completed an application-wide audit of active text styles across app and components.
+Completed an application-wide audit of active text styles across app and
+components.
 
-Expanded and applied constants/typography.ts as the semantic source of truth for major headings, section titles, card titles, body copy, labels, form labels, metadata, captions, actions, and badge text.
+Expanded and applied constants/typography.ts as the semantic source of
+truth for major headings, section titles, card titles, body copy,
+labels, form labels, metadata, captions, actions, and badge text.
 
-Preserved intentionally specialized typography and glyph sizing where no shared semantic token is an appropriate visual match.
+Preserved intentionally specialized typography and glyph sizing where no
+shared semantic token is an appropriate visual match.
 
 Colour & Control Consistency
 
-Clarified semantic colour usage so the main action colour and Top3 accent colour have distinct roles.
+Clarified semantic colour usage so the main action colour and Top3
+accent colour have distinct roles.
 
-Continued standardization of shared controls, including buttons, chips, segmented controls, headers, search inputs, cards, comments, profile controls, and secondary actions.
+Continued standardization of shared controls, including buttons, chips,
+segmented controls, headers, search inputs, cards, comments, profile
+controls, and secondary actions.
 
 Onboarding & Startup Polish
 
-Refined the native splash → onboarding transition so the branded onboarding state is already present behind the splash and the previous white-flash / generic-loading interruption is avoided.
+Refined the native splash → onboarding transition so the branded
+onboarding state is already present behind the splash and the previous
+white-flash / generic-loading interruption is avoided.
 
-Aligned the splash icon and wordmark production assets with the first onboarding presentation.
+Aligned the splash icon and wordmark production assets with the first
+onboarding presentation.
 
-Refined staged fade-in timing for onboarding copy and actions while keeping the Top3 wordmark visually stable.
+Refined staged fade-in timing for onboarding copy and actions while
+keeping the Top3 wordmark visually stable.
 
 Authentication Presentation
 
-Standardized reviewed authentication screens and forms on the shared typography and control system while preserving provider-specific requirements.
+Standardized reviewed authentication screens and forms on the shared
+typography and control system while preserving provider-specific
+requirements.
 
 Verified
 
-Verified npm run typecheck passes after the completed UI-system and onboarding standardization.
+Verified npm run typecheck passes after the completed UI-system and
+onboarding standardization.
 
-Completed a final active-UI typography audit and reviewed the remaining intentional local font sizes.
+Completed a final active-UI typography audit and reviewed the remaining
+intentional local font sizes.
 
 Checkpoint
 
-Committed and pushed 900bc0b --- Standardize UI system and refine onboarding.
+Committed and pushed 900bc0b --- Standardize UI system and refine
+onboarding.
 
 Documentation
 
@@ -62,7 +251,9 @@ Updated CURRENT_STATE.md to version 2.9.
 
 Updated ROADMAP.md to version 2.7.
 
-Recorded the completed active-UI typography audit, semantic colour / control consistency, shared avatar presentation, and refined splash / onboarding handoff as completed V1 polish foundations.
+Recorded the completed active-UI typography audit, semantic colour /
+control consistency, shared avatar presentation, and refined splash /
+onboarding handoff as completed V1 polish foundations.
 
 v2.9 --- Blocked-User Filtering & Popup Standardization
 
