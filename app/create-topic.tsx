@@ -22,6 +22,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -117,7 +118,36 @@ function getSortedTopics(
 }
 
 
+const SCREEN_HORIZONTAL_PADDING = 20;
+const GENRE_CONTAINER_HORIZONTAL_PADDING = 18;
+const TOPIC_GAP = 12;
+const MIN_THREE_COLUMN_CARD_WIDTH = 112;
+
 export default function CreateTopicScreen() {
+  const { width: windowWidth } =
+    useWindowDimensions();
+
+  const topicGridWidth =
+    windowWidth -
+    SCREEN_HORIZONTAL_PADDING * 2 -
+    GENRE_CONTAINER_HORIZONTAL_PADDING * 2 -
+    2;
+
+  const threeColumnWidth =
+    (topicGridWidth - TOPIC_GAP * 2) / 3;
+
+  const topicColumnCount =
+    threeColumnWidth >=
+    MIN_THREE_COLUMN_CARD_WIDTH
+      ? 3
+      : 2;
+
+  const topicCardWidth =
+    (topicGridWidth -
+      TOPIC_GAP *
+        (topicColumnCount - 1)) /
+    topicColumnCount;
+
   const params =
     useLocalSearchParams<{
       categoryId?: string | string[];
@@ -428,9 +458,13 @@ export default function CreateTopicScreen() {
                   return (
                     <View
                       key={topic.id}
-                      style={
-                        styles.topicCardWrapper
-                      }>
+                      style={[
+                        styles.topicCardWrapper,
+                        {
+                          width:
+                            topicCardWidth,
+                        },
+                      ]}>
                       <Pressable
                         style={({
                           pressed,
@@ -574,9 +608,7 @@ const styles =
 },
 
 
-    topicCardWrapper: {
-  width: '31%',
-},
+    topicCardWrapper: {},
 
 
     topicCard: {
