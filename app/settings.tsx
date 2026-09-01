@@ -587,23 +587,30 @@ export default function SettingsScreen() {
                 </Text>
               </View>
 
-              {isPushUpdating ? (
-                <ActivityIndicator
-                  size="small"
-                  color={COLORS.accent}
-                />
-              ) : (
-                <Switch
-                  value={isPushEnabled}
-                  onValueChange={(enabled) => {
-                    void handlePushToggle(
-                      enabled
-                    );
-                  }}
-                  accessibilityLabel="Push notifications"
-                  accessibilityHint="Turns Top 3 push notifications on or off"
-                />
-              )}
+              <View style={styles.notificationControl}>
+                {isPushUpdating ? (
+                  <ActivityIndicator
+                    size="small"
+                    color={COLORS.accent}
+                  />
+                ) : (
+                  <Switch
+                    value={isPushEnabled}
+                    onValueChange={(enabled) => {
+                      void handlePushToggle(
+                        enabled
+                      );
+                    }}
+                    trackColor={{
+                      false: '#E5E5EA',
+                      true: COLORS.accent,
+                    }}
+                    ios_backgroundColor="#E5E5EA"
+                    accessibilityLabel="Push notifications"
+                    accessibilityHint="Turns Top 3 push notifications on or off"
+                  />
+                )}
+              </View>
             </View>
 
             <View style={styles.divider} />
@@ -901,6 +908,11 @@ const styles = StyleSheet.create({
     minWidth: 0,
     marginLeft: SPACING.md,
     marginRight: SPACING.sm,
+  },
+
+  notificationControl: {
+    alignSelf: 'center',
+    justifyContent: 'center',
   },
 
   rowTitle: {
