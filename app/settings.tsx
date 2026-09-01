@@ -17,7 +17,11 @@ import {
   isPushTokenRegistered,
   upsertPushToken,
 } from '@/lib/supabase/push-tokens';
-import { resetWelcomeStatus } from '@/services/onboarding-service';
+import {
+  getPushNotificationsEnabled,
+  resetWelcomeStatus,
+  setPushNotificationsEnabled,
+} from '@/services/onboarding-service';
 import { clearRecentSearches } from '@/services/recent-search-service';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -82,6 +86,21 @@ export default function SettingsScreen() {
   const refreshPushState =
     useCallback(async () => {
       try {
+        if (!user?.id) {
+          setIsPushEnabled(false);
+          return;
+        }
+
+        const pushNotificationsEnabled =
+          await getPushNotificationsEnabled(
+            user.id
+          );
+
+        if (!pushNotificationsEnabled) {
+          setIsPushEnabled(false);
+          return;
+        }
+
         const expoPushToken =
           await getExistingPushToken();
 
@@ -102,7 +121,7 @@ export default function SettingsScreen() {
           error
         );
       }
-    }, []);
+    }, [user?.id]);
 
   useEffect(() => {
     void refreshPushState();
@@ -145,6 +164,11 @@ export default function SettingsScreen() {
           );
         }
 
+        await setPushNotificationsEnabled(
+          user.id,
+          false
+        );
+
         setIsPushEnabled(false);
         return;
       }
@@ -155,6 +179,11 @@ export default function SettingsScreen() {
         await registerForPushNotifications();
 
       if (!expoPushToken) {
+        await setPushNotificationsEnabled(
+          user.id,
+          false
+        );
+
         setIsPushEnabled(false);
 
         setErrorSheet({
@@ -178,6 +207,11 @@ export default function SettingsScreen() {
         expoPushToken,
         platform: Platform.OS,
       });
+
+      await setPushNotificationsEnabled(
+        user.id,
+        true
+      );
 
       setIsPushEnabled(true);
     } catch (error) {

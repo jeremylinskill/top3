@@ -16,6 +16,7 @@ import {
   signOut as signOutFromService,
 } from '@/services/auth-service';
 import {
+  getPushNotificationsEnabled,
   markWelcomeAsSeen,
 } from '@/services/onboarding-service';
 import {
@@ -150,6 +151,18 @@ export function AuthProvider({
       authenticatedUserId: string
     ) {
       try {
+        const pushNotificationsEnabled =
+          await getPushNotificationsEnabled(
+            authenticatedUserId
+          );
+
+        if (
+          isCancelled ||
+          !pushNotificationsEnabled
+        ) {
+          return;
+        }
+
         const expoPushToken =
           await getExistingPushToken();
 

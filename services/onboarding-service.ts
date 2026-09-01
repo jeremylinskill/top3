@@ -9,6 +9,15 @@ const AWAITING_EMAIL_VERIFICATION_KEY =
 const AWAITING_EMAIL_VERIFICATION_EMAIL_KEY =
   'top3-awaiting-email-verification-email';
 
+const PUSH_NOTIFICATIONS_ENABLED_KEY =
+  'top3-push-notifications-enabled';
+
+function getPushNotificationsEnabledKey(
+  userId: string
+) {
+  return `${PUSH_NOTIFICATIONS_ENABLED_KEY}:${userId}`;
+}
+
 export async function hasSeenWelcome() {
   try {
     const storedValue =
@@ -127,6 +136,66 @@ export async function setAwaitingEmailVerificationEmail(
   } catch (error) {
     console.error(
       'Failed to save email verification email:',
+      error
+    );
+
+    throw error;
+  }
+}
+
+export async function getPushNotificationsEnabled(
+  userId: string
+) {
+  if (!userId) {
+    return false;
+  }
+
+  try {
+    const storedValue =
+      await AsyncStorage.getItem(
+        getPushNotificationsEnabledKey(
+          userId
+        )
+      );
+
+    return storedValue === 'true';
+  } catch (error) {
+    console.error(
+      'Failed to load push notification preference:',
+      error
+    );
+
+    return false;
+  }
+}
+
+export async function setPushNotificationsEnabled(
+  userId: string,
+  isEnabled: boolean
+) {
+  if (!userId) {
+    return;
+  }
+
+  try {
+    const key =
+      getPushNotificationsEnabledKey(
+        userId
+      );
+
+    if (isEnabled) {
+      await AsyncStorage.setItem(
+        key,
+        'true'
+      );
+    } else {
+      await AsyncStorage.removeItem(
+        key
+      );
+    }
+  } catch (error) {
+    console.error(
+      'Failed to save push notification preference:',
       error
     );
 
