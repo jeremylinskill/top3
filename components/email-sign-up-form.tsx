@@ -250,7 +250,7 @@ export default function EmailSignUpForm({
               onSubmitEditing={() =>
                 confirmPasswordInputRef.current?.focus()
               }
-              placeholder="At least 8 characters"
+              placeholder="Enter a password"
               placeholderTextColor="#999999"
               returnKeyType="next"
               secureTextEntry={!showPassword}
@@ -291,6 +291,10 @@ export default function EmailSignUpForm({
               />
             </Pressable>
           </View>
+
+          <Text style={styles.passwordHint}>
+            Must be at least 8 characters
+          </Text>
         </View>
 
         <View style={styles.field}>
@@ -460,6 +464,11 @@ const styles = StyleSheet.create({
     paddingRight: 8,
     ...TYPOGRAPHY.bodyLarge,
     color: COLORS.text,
+  },
+
+  passwordHint: {
+    ...TYPOGRAPHY.metadata,
+    marginTop: 6,
   },
 
   visibilityButton: {
