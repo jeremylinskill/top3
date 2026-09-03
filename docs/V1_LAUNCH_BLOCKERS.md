@@ -534,63 +534,57 @@ implementation.
 
 Privacy, Legal & Data Handling
 
-🟡 3.1 Privacy policy --- PUBLICATION PENDING
+🟢 3.1 Privacy policy --- VERIFIED
 
-Status: Policy content and in-app access are implemented, audited, and
-tested. Public-web publication and App Store Connect configuration remain
-submission tasks.
+Status: Policy content, public-web publication, repository copy, and in-app access are implemented, synchronized, and verified. Entering the live Privacy Policy URL in App Store Connect remains a submission task tracked under 6.1.
 
 Completed
 
-The V1 Privacy Policy has been drafted against Top3's audited
-implementation and committed at docs/PRIVACY_POLICY.md.
+The V1 Privacy Policy has been audited against Top3's current implementation and is maintained at docs/PRIVACY_POLICY.md.
 
-The policy describes the current V1 account/authentication, profile,
-social/UGC, search, media, analytics, moderation, retention, and account
-deletion practices.
+The policy describes the current V1 account/authentication, profile, social/UGC, search, media, analytics, moderation, push notification, retention, and account deletion practices.
 
-Supabase/auth/profile/social data practices are represented based on the
-audited implementation.
+Supabase/auth/profile/social data practices are represented based on the audited implementation.
 
-Relevant third-party services are accounted for, including Supabase,
-Amplitude, Apple, Google, TMDb, Google Books, Open Library, Apple Music,
-IGDB/Twitch, and YouTube where applicable to the current V1 experience.
+Relevant third-party services are accounted for, including Supabase, Amplitude, Expo, Apple, Google, TMDb, Google Books, Open Library, Apple Music, IGDB/Twitch, and YouTube where applicable to the current V1 experience.
 
-The policy reflects the implemented account-deletion flow, including
-server-side account/data deletion, profile-image removal where applicable,
-Amplitude deletion requests, Sign in with Apple authorization revocation
-where applicable, and clearing the deleted account's locally stored recent
-searches on the device used for deletion.
+The policy reflects the implemented account-deletion flow, including server-side account/data deletion, profile-image removal where applicable, push notification token removal, Amplitude deletion requests, Sign in with Apple authorization revocation where applicable, and clearing the deleted account's locally stored recent searches on the device used for deletion.
 
-A native Privacy Policy screen is implemented at app/privacy-policy.tsx.
+Push notification disclosures were added after implementation of Expo Notifications and Apple Push Notification service delivery. The policy explains the push notification token, its association with the user's device and Top3 account, notification delivery purposes, applicable service-provider processing, notification preferences, and token removal.
 
-Settings includes a Privacy Policy row in the App section and opens the
-native policy screen.
+The public Privacy Policy is live at:
 
-The complete Settings → Privacy Policy flow was tested successfully on
-iPhone, including row visibility, navigation, scrolling, back navigation,
-and visual presentation.
+https://jeremylinskill.com/top3-privacy-policy
 
-npm run typecheck passes after the Privacy Policy implementation.
+The public policy was updated to include the push-notification disclosures.
 
-Remaining submission tasks
+docs/PRIVACY_POLICY.md was updated to match the approved public policy.
 
-Confirm Top3's final public website/domain.
+The native Privacy Policy screen at app/privacy-policy.tsx was updated to match the approved policy.
 
-Replace the temporary [TOP3 WEBSITE URL] placeholder in the policy once the
-final website is confirmed.
+Settings includes a Privacy Policy row in the App section and opens the native policy screen.
 
-Publish the Privacy Policy at a stable, publicly accessible URL.
+The updated Settings → Privacy Policy flow was verified successfully on iPhone, including the September 3, 2026 Last Updated date, Push Notifications subsection, navigation, full-policy scrolling, and visual presentation.
 
-Confirm the public policy content matches the approved repository version.
+npm run typecheck passes after the updated Privacy Policy implementation.
 
-Enter the live Privacy Policy URL correctly in App Store Connect.
+Latest privacy-policy checkpoint
+
+Commit 83aafa7 --- Update privacy policy for push notifications.
+
+The commit was pushed successfully to origin/main.
+
+Remaining submission task
+
+Enter the live Privacy Policy URL in App Store Connect:
+
+https://jeremylinskill.com/top3-privacy-policy
+
+This is tracked under 6.1 Required URLs and contact details and does not represent unfinished app-side Privacy Policy implementation.
 
 V1 conclusion
 
-The Privacy Policy is implementation-complete and aligned with the audited
-V1 codebase. It remains 🟡 until the public-web URL and App Store Connect
-configuration are complete.
+Closed for the Privacy Policy implementation and publication requirement. The public, repository, and in-app policy copies are synchronized and verified. No known app-side Privacy Policy launch blocker remains.
 
 🟡 3.2 App Privacy disclosures --- VERIFY
 
@@ -960,11 +954,13 @@ verified; reviewer/demo credentials remain a 6.2 submission task
 
 Privacy policy
 
-🟡 PUBLICATION PENDING
+🟢 VERIFIED
 
-Policy content audited against V1 implementation; docs/PRIVACY_POLICY.md
-committed; native Settings → Privacy Policy flow implemented and verified
-on iPhone; public URL and App Store Connect configuration remain
+Public Privacy Policy is live at
+https://jeremylinskill.com/top3-privacy-policy; public, repository, and
+in-app copies are synchronized with push-notification disclosures; updated
+screen verified on iPhone; commit 83aafa7 pushed to origin/main; entering
+the live URL in App Store Connect remains a 6.1 submission task
 
 App Privacy disclosures
 
@@ -1052,17 +1048,33 @@ navigation, full-policy scrolling, back navigation, and visual presentation.
 
 npm run typecheck passes after the in-app Privacy Policy implementation.
 
+September 3, 2026
+
+Privacy Policy updated for push notifications and synchronized across the
+public website, docs/PRIVACY_POLICY.md, and app/privacy-policy.tsx.
+
+Public URL confirmed live:
+
+https://jeremylinskill.com/top3-privacy-policy
+
+Updated in-app Privacy Policy verified successfully on iPhone.
+
+npm run typecheck passes after the updated policy implementation.
+
+Commit 83aafa7 --- Update privacy policy for push notifications.
+
+Commit 83aafa7 pushed successfully to origin/main.
+
 Immediate Next Step
 
 Proceed to 3.2 App Privacy disclosures.
 
 Audit the App Store Connect App Privacy questionnaire against the actual
 Top3 V1 release implementation, including account/profile/social/UGC data,
-Amplitude analytics, authentication providers, and any applicable
-third-party SDK or service data practices. Keep 3.1 Privacy Policy open as
-publication pending until the final Top3 public website/domain is confirmed,
-the policy is published at a stable public URL, and that URL is entered in
-App Store Connect.
+Amplitude analytics, push notifications, authentication providers, and any
+applicable third-party SDK or service data practices. Privacy Policy item 3.1
+is closed; entering the live Privacy Policy URL in App Store Connect remains
+tracked as a 6.1 submission task.
 
 Definition of V1 Launch-Ready
 
