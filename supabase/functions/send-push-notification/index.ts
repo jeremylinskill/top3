@@ -52,6 +52,19 @@ function getActorName(
   );
 }
 
+function getPushCollectionTitle(
+  collectionTitle: string | null
+): string | null {
+  if (!collectionTitle) {
+    return null;
+  }
+
+  return collectionTitle.replace(
+    /^Top 3 All\s+/i,
+    "Top 3 "
+  );
+}
+
 function getPushCopy({
   notification,
   actorName,
@@ -62,12 +75,16 @@ function getPushCopy({
   collectionTitle: string | null;
 }) {
   const title = "Top 3";
+  const pushCollectionTitle =
+    getPushCollectionTitle(
+      collectionTitle
+    );
 
   if (notification.type === "like") {
     return {
       title,
-      body: collectionTitle
-        ? `${actorName} liked your ${collectionTitle}.`
+      body: pushCollectionTitle
+        ? `${actorName} liked your ${pushCollectionTitle}.`
         : `${actorName} liked your Top 3.`,
     };
   }
@@ -75,8 +92,8 @@ function getPushCopy({
   if (notification.type === "comment") {
     return {
       title,
-      body: collectionTitle
-        ? `${actorName} commented on your ${collectionTitle}.`
+      body: pushCollectionTitle
+        ? `${actorName} commented on your ${pushCollectionTitle}.`
         : `${actorName} commented on your Top 3.`,
     };
   }
