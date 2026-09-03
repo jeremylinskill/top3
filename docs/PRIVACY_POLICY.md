@@ -2,7 +2,7 @@ Top3 Privacy Policy
 
 Effective Date: August 25, 2026
 
-Last Updated: August 26, 2026
+Last Updated: September 3, 2026
 
 Top3 is a social discovery app that lets people create and share ranked Top 3 lists, discover people with similar tastes, and interact with other members of the Top3 community.
 
@@ -16,7 +16,7 @@ Email: jeremylinskill@gmail.com
 
 Website: https://jeremylinskill.com/
 
-1. Information We Collect and Process
+Information We Collect and Process
 
 The information Top3 collects or processes depends on how you use the service.
 
@@ -99,6 +99,14 @@ blocking relationships; and
 interactions that generate in-app notifications.
 
 We use this information to provide Top3's social features and to determine what content and people you can see or interact with.
+
+Push Notifications
+
+If you choose to enable push notifications, Top3 receives and stores a push notification token associated with your device and Top3 account. This token is used to deliver notifications about activity relevant to your account, such as likes, comments, and new followers.
+
+Top3 uses Apple Push Notification service and Expo's notification infrastructure to deliver push notifications. Information necessary to deliver a notification, including the push notification token and notification content, may be processed by these service providers.
+
+You can turn Top3 push notifications on or off through Top3's notification settings. You can also manage notification permissions through your device settings.
 
 Reports and Moderation Information
 
@@ -206,7 +214,7 @@ Top3 stores certain information locally on your device that is necessary to oper
 
 This may include authentication/session information, locally cached application data, and application preferences.
 
-2. Information We Do Not Intentionally Collect
+Information We Do Not Intentionally Collect
 
 Based on the features currently offered in Top3, Top3 does not intentionally collect:
 
@@ -232,7 +240,7 @@ Top3 does not sell your personal information.
 
 Top3 does not use your personal information to track you across apps or websites owned by other companies for advertising purposes.
 
-3. How We Use Information
+How We Use Information
 
 We use information processed through Top3 to:
 
@@ -247,6 +255,8 @@ provide search and content-discovery functionality;
 retrieve content information, previews, and trailers;
 
 operate following, likes, comments, notifications, and other social features;
+
+deliver push notifications when you choose to enable them;
 
 provide Taste Match and other discovery experiences;
 
@@ -274,7 +284,7 @@ protect the rights, safety, and security of Top3 and its users.
 
 We do not use information collected through Top3 to build profiles for third-party targeted advertising.
 
-4. Public and Private Information
+Public and Private Information
 
 Top3 is a social service. Some information you choose to provide or publish is therefore intended to be seen by other people.
 
@@ -306,7 +316,7 @@ Blocking another user further restricts visibility and interaction between the a
 
 You should avoid including sensitive personal information in your username, biography, comments, lists, or other content you choose to make visible through Top3.
 
-5. How We Share Information
+How We Share Information
 
 Top3 does not sell your personal information.
 
@@ -326,15 +336,21 @@ Amplitude
 
 Used to understand product usage and improve Top3.
 
+Expo
+
+Used for application infrastructure and delivery of push notifications where those features are enabled.
+
 Apple
 
-Used when you choose Sign in with Apple and for Apple platform or content services used by Top3.
+Used when you choose Sign in with Apple, for Apple platform or content services used by Top3, and for delivery of push notifications through Apple Push Notification service.
 
 Google
 
 Used when you choose Google Sign-In and for services such as Google Books where applicable.
 
 These providers may process information necessary to perform the services Top3 uses.
+
+Third-party service providers that process personal information on Top3's behalf are expected to provide protections for personal information consistent with applicable privacy requirements and the services they provide.
 
 Their handling of information is also subject to their applicable terms, privacy policies, and data-processing practices.
 
@@ -382,7 +398,7 @@ Business Changes
 
 If Top3 is transferred to a company or other organization in connection with a merger, acquisition, financing, reorganization, sale of assets, or similar transaction, information associated with the service may be transferred as part of that transaction, subject to applicable law.
 
-6. Analytics
+Analytics
 
 Top3 uses Amplitude to understand how users interact with the app.
 
@@ -396,9 +412,11 @@ When you delete your Top3 account, Top3 submits a request to Amplitude to delete
 
 Deletion requests processed by third-party services may not be completed instantaneously.
 
-7. Data Retention
+Data Retention
 
 Top3 generally retains account-associated information while your account remains active and as needed to provide the features of the service.
+
+Push notification tokens associated with your Top3 account may be removed when you disable Top3 push notifications and are removed as part of the applicable account-deletion process.
 
 When you delete content or your account, Top3 removes or requests deletion of information as described in this Privacy Policy and according to the application's implemented deletion processes.
 
@@ -422,7 +440,7 @@ Third-party processors, backup systems, or other technical systems may require a
 
 Top3 does not intentionally retain personal information longer than reasonably necessary for the purposes for which it is processed, subject to legitimate legal, safety, security, moderation, and operational requirements.
 
-8. Account and Data Deletion
+Account and Data Deletion
 
 You can permanently delete your Top3 account using the account-deletion controls available within the app.
 
@@ -448,6 +466,8 @@ Where applicable, Top3 also:
 
 removes your stored profile image;
 
+removes push notification tokens associated with the deleted Top3 account;
+
 submits a request to Amplitude to delete analytics information associated with your Top3 user identifier; and
 
 revokes associated Sign in with Apple authorization for Apple-authenticated accounts.
@@ -462,7 +482,7 @@ Other cached or operating-system-managed information may remain temporarily unti
 
 You may contact jeremylinskill@gmail.com if you have questions about deleting your account or personal information.
 
-9. Your Privacy Choices and Rights
+Your Privacy Choices and Rights
 
 Depending on where you live, you may have legal rights concerning your personal information.
 
@@ -482,9 +502,9 @@ object to or restrict certain uses of personal information where applicable; and
 
 make a complaint to an applicable privacy regulator.
 
-You can manage certain information directly within Top3, including profile information, account visibility, following relationships, blocks, and account deletion.
+You can manage certain information directly within Top3, including profile information, account visibility, following relationships, blocks, push notification preferences, and account deletion.
 
-You can change device permissions, such as photo-library access, through your device settings.
+You can change device permissions, such as photo-library and notification access, through your device settings.
 
 To make a privacy request, contact:
 
@@ -492,7 +512,7 @@ jeremylinskill@gmail.com
 
 We may need to verify your identity before fulfilling certain requests in order to protect your account and information.
 
-10. Security
+Security
 
 Top3 uses technical safeguards intended to help protect personal information and relies on established service providers for authentication, database infrastructure, storage, and other technical services.
 
@@ -504,7 +524,7 @@ You are responsible for protecting access to your account and device.
 
 If you believe your Top3 account or information may have been compromised, please contact jeremylinskill@gmail.com.
 
-11. International Processing
+International Processing
 
 Top3 is operated from Ontario, Canada.
 
@@ -514,7 +534,7 @@ As a result, information processed by those providers may be subject to the laws
 
 The specific processing locations used by third-party providers may change according to their infrastructure and service arrangements.
 
-12. Children and Teen Users
+Children and Teen Users
 
 Top3 is intended for users who are 13 years of age or older.
 
@@ -530,9 +550,9 @@ If you are a parent or guardian and believe that a child under 13 has provided p
 
 We recognize that teenagers may require additional care when making privacy decisions and aim to provide understandable information and privacy controls that allow users to make informed choices about their participation in Top3.
 
-13. Third-Party Services and Content
+Third-Party Services and Content
 
-Top3 uses and interacts with third-party services for authentication, infrastructure, analytics, content search, metadata, previews, trailers, and other functionality.
+Top3 uses and interacts with third-party services for authentication, infrastructure, analytics, push notifications, content search, metadata, previews, trailers, and other functionality.
 
 Third-party services operate under their own terms and privacy policies.
 
@@ -542,7 +562,7 @@ Top3 does not control the independent privacy practices of third-party services 
 
 We encourage you to review the privacy policies of third-party services you choose to interact with.
 
-14. Changes to This Privacy Policy
+Changes to This Privacy Policy
 
 We may update this Privacy Policy as Top3 evolves, its data practices change, or applicable requirements change.
 
@@ -550,7 +570,7 @@ When we update this policy, we will update the Last Updated date at the top of t
 
 If a change materially affects how personal information is collected, used, or disclosed, Top3 will provide additional notice or obtain consent where required by applicable law.
 
-15. Contact
+Contact
 
 If you have questions, concerns, complaints, or requests concerning this Privacy Policy or your personal information, contact:
 

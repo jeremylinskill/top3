@@ -86,7 +86,7 @@ export default function PrivacyPolicyScreen() {
             Effective Date: August 25, 2026
           </Text>
           <Text style={styles.metaText}>
-            Last Updated: August 26, 2026
+            Last Updated: September 3, 2026
           </Text>
         </View>
 
@@ -259,6 +259,33 @@ export default function PrivacyPolicyScreen() {
               We use this information to provide Top3&apos;s
               social features and to determine what content
               and people you can see or interact with.
+            </Paragraph>
+          </PolicySubsection>
+
+          <PolicySubsection title="Push Notifications">
+            <Paragraph>
+              If you choose to enable push notifications, Top3
+              receives and stores a push notification token
+              associated with your device and Top3 account. This
+              token is used to deliver notifications about
+              activity relevant to your account, such as likes,
+              comments, and new followers.
+            </Paragraph>
+
+            <Paragraph>
+              Top3 uses Apple Push Notification service and
+              Expo&apos;s notification infrastructure to deliver
+              push notifications. Information necessary to
+              deliver a notification, including the push
+              notification token and notification content, may
+              be processed by these service providers.
+            </Paragraph>
+
+            <Paragraph>
+              You can turn Top3 push notifications on or off
+              through Top3&apos;s notification settings. You can
+              also manage notification permissions through your
+              device settings.
             </Paragraph>
           </PolicySubsection>
 
@@ -503,6 +530,7 @@ export default function PrivacyPolicyScreen() {
               'Provide search and content-discovery functionality.',
               'Retrieve content information, previews, and trailers.',
               'Operate following, likes, comments, notifications, and other social features.',
+              'Deliver push notifications when you choose to enable them.',
               'Provide Taste Match and other discovery experiences.',
               'Apply your public or private account settings.',
               'Process follow requests for private accounts.',
@@ -622,9 +650,17 @@ export default function PrivacyPolicyScreen() {
             </Paragraph>
 
             <Paragraph>
+              Expo is used for application infrastructure and
+              delivery of push notifications where those
+              features are enabled.
+            </Paragraph>
+
+            <Paragraph>
               Apple is used when you choose Sign in with
-              Apple and for Apple platform or content
-              services used by Top3.
+              Apple, for Apple platform or content services
+              used by Top3, and for delivery of push
+              notifications through Apple Push Notification
+              service.
             </Paragraph>
 
             <Paragraph>
@@ -636,6 +672,17 @@ export default function PrivacyPolicyScreen() {
             <Paragraph>
               These providers may process information
               necessary to perform the services Top3 uses.
+            </Paragraph>
+
+            <Paragraph>
+              Third-party service providers that process
+              personal information on Top3&apos;s behalf are
+              expected to provide protections for personal
+              information consistent with applicable privacy
+              requirements and the services they provide.
+            </Paragraph>
+
+            <Paragraph>
               Their handling of information is also subject
               to their applicable terms, privacy policies,
               and data-processing practices.
@@ -764,6 +811,13 @@ export default function PrivacyPolicyScreen() {
           </Paragraph>
 
           <Paragraph>
+            Push notification tokens associated with your
+            Top3 account may be removed when you disable Top3
+            push notifications and are removed as part of the
+            applicable account-deletion process.
+          </Paragraph>
+
+          <Paragraph>
             When you delete content or your account, Top3
             removes or requests deletion of information as
             described in this Privacy Policy and according to
@@ -850,6 +904,7 @@ export default function PrivacyPolicyScreen() {
           <BulletList
             items={[
               'Removes your stored profile image.',
+              'Removes push notification tokens associated with the deleted Top3 account.',
               'Submits a request to Amplitude to delete analytics information associated with your Top3 user identifier.',
               'Revokes associated Sign in with Apple authorization for Apple-authenticated accounts.',
             ]}
@@ -914,13 +969,14 @@ export default function PrivacyPolicyScreen() {
             You can manage certain information directly
             within Top3, including profile information,
             account visibility, following relationships,
-            blocks, and account deletion.
+            blocks, push notification preferences, and account
+            deletion.
           </Paragraph>
 
           <Paragraph>
             You can change device permissions, such as
-            photo-library access, through your device
-            settings.
+            photo-library and notification access, through
+            your device settings.
           </Paragraph>
 
           <Paragraph>
@@ -1049,8 +1105,8 @@ export default function PrivacyPolicyScreen() {
           <Paragraph>
             Top3 uses and interacts with third-party services
             for authentication, infrastructure, analytics,
-            content search, metadata, previews, trailers, and
-            other functionality.
+            push notifications, content search, metadata,
+            previews, trailers, and other functionality.
           </Paragraph>
 
           <Paragraph>
