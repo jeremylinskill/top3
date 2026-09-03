@@ -11,7 +11,10 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import {
+  useEffect,
+  useState,
+} from 'react';
 import {
   Pressable,
   StyleSheet,
@@ -21,6 +24,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CheckEmailScreen() {
+  const [
+    verificationEmail,
+    setVerificationEmail,
+  ] = useState<string | null>(null);
+
   const [
     isEmailSentSheetVisible,
     setIsEmailSentSheetVisible,
@@ -41,6 +49,25 @@ export default function CheckEmailScreen() {
     setResendErrorMessage,
   ] = useState<string | null>(null);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadVerificationEmail() {
+      const email =
+        await getAwaitingEmailVerificationEmail();
+
+      if (isMounted) {
+        setVerificationEmail(email);
+      }
+    }
+
+    void loadVerificationEmail();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   async function handleOpenEmail() {
     try {
       await Linking.openURL('message://');
@@ -57,6 +84,7 @@ export default function CheckEmailScreen() {
   async function handleResendEmail() {
     try {
       const email =
+        verificationEmail ??
         await getAwaitingEmailVerificationEmail();
 
       if (!email) {
@@ -126,9 +154,17 @@ export default function CheckEmailScreen() {
               </Text>
 
               <Text style={styles.description}>
-                We sent you a confirmation link. Open the
-                email and tap the link to verify your
-                account.
+                We sent a confirmation link
+                {verificationEmail ? (
+                  <>
+                    {' to '}
+                    <Text style={styles.emailText}>
+                      {verificationEmail}
+                    </Text>
+                  </>
+                ) : null}
+                . Open the email and tap the link to verify
+                your account.
               </Text>
             </View>
 
@@ -316,6 +352,11 @@ const styles = StyleSheet.create({
     maxWidth: 340,
     color: '#666666',
     textAlign: 'center',
+  },
+
+  emailText: {
+    fontWeight: '600',
+    color: COLORS.text,
   },
 
   instructions: {
