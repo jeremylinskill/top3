@@ -136,6 +136,15 @@ export async function getCommentCounts(
     return {};
   }
 
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return {};
+  }
+
   const { data, error } = await supabase.rpc(
     'get_visible_comment_counts',
     {
