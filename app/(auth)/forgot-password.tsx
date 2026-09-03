@@ -137,6 +137,10 @@ export default function ForgotPasswordScreen() {
     router.replace('/sign-in-email');
   }
 
+  const normalizedEmail = email
+    .trim()
+    .toLowerCase();
+
   return (
     <>
       <SafeAreaView
@@ -144,21 +148,27 @@ export default function ForgotPasswordScreen() {
         edges={['top', 'bottom']}>
         <ScreenHeader showBackButton />
 
-        <PageHeader
-          title={
-            hasSubmitted
-              ? 'Check your email'
-              : 'Forgot password?'
-          }
-          subtitle={
-            hasSubmitted
-              ? `We sent a password reset link to\n${email
-                  .trim()
-                  .toLowerCase()}.`
-              : 'Enter your email and we’ll send you a link to reset your password.'
-          }
-          align="center"
-        />
+        {hasSubmitted ? (
+          <View style={styles.successHeader}>
+            <Text style={styles.successTitle}>
+              Check your email
+            </Text>
+
+            <Text style={styles.successSubtitle}>
+              We sent a password reset link to{'\n'}
+              <Text style={styles.emailText}>
+                {normalizedEmail}
+              </Text>
+              .
+            </Text>
+          </View>
+        ) : (
+          <PageHeader
+            title="Forgot password?"
+            subtitle="Enter your email and we’ll send you a link to reset your password."
+            align="center"
+          />
+        )}
 
         <View style={styles.content}>
           {hasSubmitted ? (
@@ -325,6 +335,29 @@ const styles = StyleSheet.create({
 
   buttonContainer: {
     marginTop: 8,
+  },
+
+  successHeader: {
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+
+  successTitle: {
+    ...TYPOGRAPHY.heroTitle,
+    textAlign: 'center',
+  },
+
+  successSubtitle: {
+    ...TYPOGRAPHY.bodyLarge,
+    marginTop: 14,
+    maxWidth: 340,
+    color: COLORS.tertiaryText,
+    textAlign: 'center',
+  },
+
+  emailText: {
+    fontWeight: '600',
+    color: COLORS.text,
   },
 
   successContent: {
