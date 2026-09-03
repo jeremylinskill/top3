@@ -38,9 +38,13 @@ export default function AuthCallbackScreen() {
           await setSessionFromUrl(url!);
 
         if (!session) {
-          throw new Error(
-            'The confirmation link did not contain a valid session.'
-          );
+          if (isMounted) {
+            setErrorMessage(
+              'This confirmation link has expired or has already been used. Please return to sign in and request a new confirmation email if needed.'
+            );
+          }
+
+          return;
         }
 
         await setAwaitingEmailVerification(
@@ -58,9 +62,7 @@ export default function AuthCallbackScreen() {
 
         if (isMounted) {
           setErrorMessage(
-            error instanceof Error
-              ? error.message
-              : 'The confirmation link could not be completed.'
+            'We could not verify your email. Please return to sign in and try again.'
           );
         }
       }
