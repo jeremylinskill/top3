@@ -5,9 +5,14 @@ import ScreenHeader from '@/components/screen-header';
 import { COLORS } from '@/constants/colors';
 import { TYPOGRAPHY } from '@/constants/typography';
 import { requestPasswordReset } from '@/services/auth-service';
+
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
-import { useState } from 'react';
+
+import {
+  useState,
+} from 'react';
+
 import {
   Pressable,
   StyleSheet,
@@ -15,6 +20,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type ValidationSheet = {
@@ -28,8 +34,10 @@ function isValidEmail(value: string) {
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
+
   const [isSubmitting, setIsSubmitting] =
     useState(false);
+
   const [hasSubmitted, setHasSubmitted] =
     useState(false);
 
@@ -65,6 +73,7 @@ export default function ForgotPasswordScreen() {
         title: 'Email required',
         message: 'Enter your email address.',
       });
+
       return;
     }
 
@@ -73,6 +82,7 @@ export default function ForgotPasswordScreen() {
         title: 'Invalid email',
         message: 'Enter a valid email address.',
       });
+
       return;
     }
 
@@ -99,6 +109,7 @@ export default function ForgotPasswordScreen() {
 
       if (isNetworkError) {
         setIsNetworkErrorSheetVisible(true);
+
         return;
       }
 
@@ -339,7 +350,9 @@ const styles = StyleSheet.create({
 
   successHeader: {
     alignItems: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 20,
   },
 
   successTitle: {
@@ -348,10 +361,12 @@ const styles = StyleSheet.create({
   },
 
   successSubtitle: {
-    ...TYPOGRAPHY.bodyLarge,
-    marginTop: 14,
+    marginTop: 8,
     maxWidth: 340,
-    color: COLORS.tertiaryText,
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: '400',
+    color: '#7A7A7A',
     textAlign: 'center',
   },
 
