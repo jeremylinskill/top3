@@ -33,6 +33,7 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -128,6 +129,12 @@ function shuffleItems(
 
 
 export default function OnboardingPublishedScreen() {
+  const { height: windowHeight } =
+    useWindowDimensions();
+
+  const isCompactHeight =
+    windowHeight <= 920;
+
   const { currentList, posts } = useTop3();
   const { profile } = useProfile();
   const { user } = useAuth();
@@ -876,8 +883,18 @@ export default function OnboardingPublishedScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <View style={styles.headerBlock}>
+      <View
+        style={[
+          styles.content,
+          isCompactHeight &&
+            styles.compactContent,
+        ]}>
+        <View
+          style={[
+            styles.headerBlock,
+            isCompactHeight &&
+              styles.compactHeaderBlock,
+          ]}>
           <Animated.View
             pointerEvents="none"
             style={[
@@ -925,7 +942,11 @@ export default function OnboardingPublishedScreen() {
 
 
         <View
-          style={styles.segmentedContainer}
+          style={[
+            styles.segmentedContainer,
+            isCompactHeight &&
+              styles.compactSegmentedContainer,
+          ]}
           onLayout={(event) => {
             setSegmentedWidth(
               event.nativeEvent.layout.width
@@ -1028,6 +1049,8 @@ export default function OnboardingPublishedScreen() {
         <Animated.View
           style={[
             styles.cardContainer,
+            isCompactHeight &&
+              styles.compactCardContainer,
             {
               transform: [
                 {
@@ -1070,7 +1093,12 @@ export default function OnboardingPublishedScreen() {
                   overallCardOpacity,
               },
             ]}>
-            <View style={styles.overallCard}>
+            <View
+              style={[
+                styles.overallCard,
+                isCompactHeight &&
+                  styles.compactOverallCard,
+              ]}>
               <View style={styles.titleRow}>
                 <Text style={styles.categoryIcon}>
                   {category?.icon ?? '⭐'}
@@ -1414,6 +1442,12 @@ const styles = StyleSheet.create({
   },
 
 
+  compactContent: {
+    paddingTop: 42,
+    paddingBottom: 12,
+  },
+
+
   loadingContent: {
     flex: 1,
     alignItems: 'center',
@@ -1433,6 +1467,11 @@ const styles = StyleSheet.create({
   headerBlock: {
     position: 'relative',
     minHeight: 104,
+  },
+
+
+  compactHeaderBlock: {
+    minHeight: 92,
   },
 
 
@@ -1472,6 +1511,11 @@ const styles = StyleSheet.create({
     padding: 4,
     backgroundColor: '#EEEEEE',
     borderRadius: 12,
+  },
+
+
+  compactSegmentedContainer: {
+    marginTop: 10,
   },
 
 
@@ -1526,6 +1570,11 @@ const styles = StyleSheet.create({
   },
 
 
+  compactCardContainer: {
+    marginTop: 10,
+  },
+
+
   cardLayer: {
     width: '100%',
   },
@@ -1548,11 +1597,17 @@ const styles = StyleSheet.create({
   },
 
 
+  compactOverallCard: {
+    padding: 18,
+  },
+
+
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
   },
+
 
 
   categoryIcon: {
@@ -1582,6 +1637,7 @@ const styles = StyleSheet.create({
   },
 
 
+
   lastRankRow: {
     marginBottom: 0,
   },
@@ -1593,6 +1649,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F8F8',
     borderRadius: 12,
   },
+
 
 
   rankNumber: {
@@ -1686,6 +1743,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 14,
   },
+
 
 
   footerItem: {

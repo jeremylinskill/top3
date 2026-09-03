@@ -20,6 +20,7 @@ import {
   Easing,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -29,6 +30,12 @@ const DEMO_MATCH_SCORE = 84;
 
 
 export default function OnboardingTasteMatchScreen() {
+  const { height: windowHeight } =
+    useWindowDimensions();
+
+  const isCompactHeight =
+    windowHeight <= 920;
+
   const {
     currentList,
   } = useTop3();
@@ -321,8 +328,18 @@ export default function OnboardingTasteMatchScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <View style={styles.headerBlock}>
+      <View
+        style={[
+          styles.content,
+          isCompactHeight &&
+            styles.compactContent,
+        ]}>
+        <View
+          style={[
+            styles.headerBlock,
+            isCompactHeight &&
+              styles.compactHeaderBlock,
+          ]}>
           <Animated.Text
             style={[
               styles.title,
@@ -352,6 +369,8 @@ export default function OnboardingTasteMatchScreen() {
         <Animated.View
           style={[
             styles.matchCard,
+            isCompactHeight &&
+              styles.compactMatchCard,
             {
               opacity:
                 matchOpacity,
@@ -368,18 +387,38 @@ export default function OnboardingTasteMatchScreen() {
           </Text>
 
 
-          <Text style={styles.matchScore}>
+          <Text
+            style={[
+              styles.matchScore,
+              isCompactHeight &&
+                styles.compactMatchScore,
+            ]}>
             {animatedScore}%
           </Text>
 
 
-          <Text style={styles.sharedText}>
+          <Text
+            style={[
+              styles.sharedText,
+              isCompactHeight &&
+                styles.compactSharedText,
+            ]}>
             You share 2 ranked picks.
           </Text>
 
 
-          <View style={styles.comparisonCard}>
-            <View style={styles.comparisonHeader}>
+          <View
+            style={[
+              styles.comparisonCard,
+              isCompactHeight &&
+                styles.compactComparisonCard,
+            ]}>
+            <View
+              style={[
+                styles.comparisonHeader,
+                isCompactHeight &&
+                  styles.compactComparisonHeader,
+              ]}>
               {category?.icon ? (
                 <Text style={styles.categoryIcon}>
                   {category.icon}
@@ -412,10 +451,16 @@ export default function OnboardingTasteMatchScreen() {
               return (
                 <View
                   key={index}
-                  style={styles.comparisonRow}>
+                  style={[
+                    styles.comparisonRow,
+                    isCompactHeight &&
+                      styles.compactComparisonRow,
+                  ]}>
                   <View
                     style={[
                       styles.rankCell,
+                      isCompactHeight &&
+                        styles.compactRankCell,
                       isShared && {
                         backgroundColor:
                           TASTE_MATCH_RANK_COLORS[
@@ -440,6 +485,8 @@ export default function OnboardingTasteMatchScreen() {
                   <View
                     style={[
                       styles.rankCell,
+                      isCompactHeight &&
+                        styles.compactRankCell,
                       isShared && {
                         backgroundColor:
                           TASTE_MATCH_RANK_COLORS[
@@ -471,7 +518,7 @@ export default function OnboardingTasteMatchScreen() {
 
       <View style={styles.bottomBar}>
         <PrimaryButton
-          title="Start Exploring"
+          title="Continue"
           onPress={continueOnboarding}
         />
       </View>
@@ -494,9 +541,18 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
 
+  compactContent: {
+    paddingTop: 42,
+    paddingBottom: 12,
+  },
+
 
 
   headerBlock: {
+    minHeight: 128,
+  },
+
+  compactHeaderBlock: {
     minHeight: 128,
   },
 
@@ -518,7 +574,7 @@ const styles = StyleSheet.create({
 
 
   matchCard: {
-    marginTop: 20,
+    marginTop: -4,
     paddingHorizontal: 24,
     paddingTop: 28,
     paddingBottom: 26,
@@ -527,6 +583,12 @@ const styles = StyleSheet.create({
     borderColor: '#E5E5E5',
     borderRadius: 22,
     alignItems: 'center',
+  },
+
+  compactMatchCard: {
+    marginTop: 30,
+    paddingTop: 22,
+    paddingBottom: 22,
   },
 
 
@@ -548,6 +610,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
+  compactMatchScore: {
+    marginTop: 2,
+  },
+
 
   sharedText: {
     ...TYPOGRAPHY.bodyLarge,
@@ -556,10 +622,18 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
+  compactSharedText: {
+    marginTop: 4,
+  },
+
 
   comparisonCard: {
     width: '100%',
     marginTop: 24,
+  },
+
+  compactComparisonCard: {
+    marginTop: 18,
   },
 
 
@@ -567,6 +641,10 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     flexDirection: 'row',
     alignItems: 'center',
+  },
+
+  compactComparisonHeader: {
+    marginBottom: 10,
   },
 
 
@@ -604,6 +682,10 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 
+  compactComparisonRow: {
+    marginTop: 8,
+  },
+
 
   rankCell: {
     flex: 1,
@@ -615,6 +697,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+
+  compactRankCell: {
+    minHeight: 62,
+    paddingVertical: 8,
   },
 
 
