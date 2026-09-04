@@ -1,4 +1,3 @@
-import { TYPOGRAPHY } from '@/constants/typography';
 import { useOnboardingCollection } from '@/context/onboarding-collection-context';
 import { useProfile } from '@/context/profile-context';
 import { useAuth } from '@/hooks/use-auth';
@@ -24,11 +23,6 @@ import {
   Text,
   View,
 } from 'react-native';
-
-const FORCE_ONBOARDING_ON_LAUNCH =
-  __DEV__ && true;
-
-let hasForcedOnboardingThisLaunch = false;
 
 export default function IndexScreen() {
   const {
@@ -61,15 +55,6 @@ export default function IndexScreen() {
       isAuthLoading ||
       isOnboardingCollectionLoading
     ) {
-      return;
-    }
-
-    if (
-      FORCE_ONBOARDING_ON_LAUNCH &&
-      !hasForcedOnboardingThisLaunch
-    ) {
-      hasForcedOnboardingThisLaunch = true;
-      router.replace('/onboarding');
       return;
     }
 
@@ -373,15 +358,20 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    ...TYPOGRAPHY.pageTitle,
     marginTop: 24,
+    fontSize: 28,
+    lineHeight: 34,
+    fontWeight: '700',
+    color: '#222222',
     textAlign: 'center',
   },
 
   description: {
-    ...TYPOGRAPHY.bodyLarge,
     marginTop: 12,
     maxWidth: 340,
+    fontSize: 16,
+    lineHeight: 24,
+    color: '#666666',
     textAlign: 'center',
   },
 });
