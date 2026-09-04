@@ -204,7 +204,6 @@ export default function RootLayout() {
                                     : DefaultTheme
                                 }>
                                 <StartupSplashController />
-                                <NotificationResponseController />
 
                                 <Stack
                                   screenOptions={{
