@@ -18,13 +18,9 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  useWindowDimensions,
   View,
 } from 'react-native';
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 type OnboardingStep =
@@ -75,12 +71,6 @@ export default function OnboardingScreen() {
     startCollection,
     isLoading: isOnboardingCollectionLoading,
   } = useOnboardingCollection();
-
-  const { height: windowHeight } =
-    useWindowDimensions();
-
-  const insets = useSafeAreaInsets();
-
 
   const [step, setStep] =
     useState<OnboardingStep>('intro');
@@ -189,19 +179,6 @@ export default function OnboardingScreen() {
     introBrandY +
     BRAND_HEIGHT +
     CATEGORY_BRAND_GAP;
-
-  /*
-   * Match the native Expo splash exactly.
-   *
-   * The native splash icon is centred in the full device window.
-   * This stage begins below the top safe-area inset, so subtracting
-   * that inset places the React Native icon's centre at the exact
-   * physical centre of the screen.
-   */
-  const introIconY =
-    windowHeight / 2 -
-    insets.top -
-    SPLASH_ICON_SIZE / 2;
 
 
   useEffect(() => {
@@ -441,7 +418,8 @@ export default function OnboardingScreen() {
 
 
   return (
-    <SafeAreaView
+    <View style={styles.root}>
+      <SafeAreaView
       style={[
         styles.container,
         step !== 'category' &&
@@ -537,26 +515,6 @@ export default function OnboardingScreen() {
             </Animated.Text>
           </Animated.View>
         ) : null}
-
-
-        {step === 'intro' ? (
-          <Animated.Image
-            source={require('@/assets/images/splash-icon.png')}
-            style={[
-              styles.splashIcon,
-              {
-                transform: [
-                  {
-                    translateY: introIconY,
-                  },
-                ],
-              },
-            ]}
-            resizeMode="contain"
-            accessibilityIgnoresInvertColors
-          />
-        ) : null}
-
 
 
         <Animated.View
@@ -740,12 +698,40 @@ export default function OnboardingScreen() {
           </Pressable>
         </Animated.View>
       </View>
-    </SafeAreaView>
+      </SafeAreaView>
+
+      {step === 'intro' ? (
+        <View
+          pointerEvents="none"
+          style={styles.splashOverlay}>
+          <Animated.Image
+            source={require('@/assets/images/splash-icon.png')}
+            style={styles.splashIcon}
+            resizeMode="contain"
+            accessibilityIgnoresInvertColors
+          />
+        </View>
+      ) : null}
+    </View>
   );
 }
 
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+
+
+  splashOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 20,
+  },
+
+
   container: {
     flex: 1,
     backgroundColor: '#F8F8F8',
@@ -765,13 +751,8 @@ const styles = StyleSheet.create({
 
 
   splashIcon: {
-    position: 'absolute',
-    top: 0,
-    left: '50%',
     width: SPLASH_ICON_SIZE,
     height: SPLASH_ICON_SIZE,
-    marginLeft: -(SPLASH_ICON_SIZE / 2),
-    zIndex: 10,
   },
 
 
