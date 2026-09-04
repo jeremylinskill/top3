@@ -20,9 +20,7 @@ import * as Notifications from 'expo-notifications';
 import {
   router,
   Stack,
-  usePathname,
 } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import {
   useEffect,
@@ -31,8 +29,6 @@ import {
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import 'react-native-reanimated';
-
-void SplashScreen.preventAutoHideAsync();
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -147,35 +143,6 @@ function NotificationResponseController() {
   return null;
 }
 
-function StartupSplashController() {
-  const pathname = usePathname();
-
-  const hasHiddenSplash =
-    useRef(false);
-
-  useEffect(() => {
-    if (
-      hasHiddenSplash.current ||
-      pathname === '/' ||
-      pathname === '/onboarding'
-    ) {
-      return;
-    }
-
-    hasHiddenSplash.current = true;
-
-    const frame = requestAnimationFrame(() => {
-      void SplashScreen.hideAsync();
-    });
-
-    return () => {
-      cancelAnimationFrame(frame);
-    };
-  }, [pathname]);
-
-  return null;
-}
-
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
@@ -203,7 +170,6 @@ export default function RootLayout() {
                                     ? DarkTheme
                                     : DefaultTheme
                                 }>
-                                <StartupSplashController />
                                 <NotificationResponseController />
 
                                 <Stack

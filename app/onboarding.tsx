@@ -5,7 +5,6 @@ import { TYPOGRAPHY } from '@/constants/typography';
 import { useOnboardingCollection } from '@/context/onboarding-collection-context';
 import { buildCollectionTitle } from '@/utils/build-collection-title';
 import { router } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
 import {
   useEffect,
   useMemo,
@@ -90,9 +89,6 @@ export default function OnboardingScreen() {
   const [stageHeight, setStageHeight] =
     useState(0);
 
-  const [introHeight, setIntroHeight] =
-    useState(0);
-
   const [categoryHeight, setCategoryHeight] =
     useState(0);
 
@@ -140,9 +136,6 @@ export default function OnboardingScreen() {
 
 
   const hasPositionedInitialLayout =
-    useRef(false);
-
-  const hasRequestedSplashHide =
     useRef(false);
 
 
@@ -231,17 +224,6 @@ export default function OnboardingScreen() {
       categoryContentY
     );
 
-    if (!hasRequestedSplashHide.current) {
-      hasRequestedSplashHide.current = true;
-
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          void SplashScreen.hideAsync();
-        });
-      });
-    }
-
-
     Animated.sequence([
       Animated.delay(400),
       Animated.timing(
@@ -322,15 +304,6 @@ export default function OnboardingScreen() {
     event: LayoutChangeEvent
   ) {
     setStageHeight(
-      event.nativeEvent.layout.height
-    );
-  }
-
-
-  function handleIntroLayout(
-    event: LayoutChangeEvent
-  ) {
-    setIntroHeight(
       event.nativeEvent.layout.height
     );
   }
@@ -505,9 +478,6 @@ export default function OnboardingScreen() {
               step === 'intro'
                 ? 'auto'
                 : 'none'
-            }
-            onLayout={
-              handleIntroLayout
             }
             style={[
               styles.contentGroup,

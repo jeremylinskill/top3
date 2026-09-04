@@ -19,10 +19,13 @@ import {
 } from 'react';
 import {
   ActivityIndicator,
+  Image,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+
+const SPLASH_ICON_SIZE = 200;
 
 export default function IndexScreen() {
   const {
@@ -327,7 +330,16 @@ export default function IndexScreen() {
     isPendingPublish;
 
   if (!isFinishingOnboardingAccount) {
-    return <View style={styles.container} />;
+    return (
+      <View style={styles.splashBridge}>
+        <Image
+          source={require('@/assets/images/splash-icon.png')}
+          style={styles.splashIcon}
+          resizeMode="contain"
+          accessibilityIgnoresInvertColors
+        />
+      </View>
+    );
   }
 
   return (
@@ -349,6 +361,18 @@ export default function IndexScreen() {
 }
 
 const styles = StyleSheet.create({
+  splashBridge: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  splashIcon: {
+    width: SPLASH_ICON_SIZE,
+    height: SPLASH_ICON_SIZE,
+  },
+
   container: {
     flex: 1,
     backgroundColor: '#FAFAFA',
