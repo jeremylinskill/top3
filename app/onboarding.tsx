@@ -215,7 +215,6 @@ export default function OnboardingScreen() {
     if (
       hasPositionedInitialLayout.current ||
       stageHeight === 0 ||
-      introHeight === 0 ||
       categoryHeight === 0
     ) {
       return;
@@ -311,7 +310,6 @@ export default function OnboardingScreen() {
     introFooterOpacity,
     introBrandY,
     introContentY,
-    introHeight,
     introOpacity,
     introSecondLineOpacity,
     introTitleOpacity,
