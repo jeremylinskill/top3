@@ -17,6 +17,7 @@ import {
 } from 'expo-router';
 import { useState } from 'react';
 import {
+  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -25,6 +26,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type SignInProvider = 'Apple' | 'Google';
+
+const SPLASH_ICON_SIZE = 200;
 
 export default function SignInScreen() {
   const {
@@ -42,6 +45,9 @@ export default function SignInScreen() {
     setFailedSignInProvider,
   ] = useState<SignInProvider | null>(null);
 
+  const [isSigningIn, setIsSigningIn] =
+    useState(false);
+
   const isReturningFromOnboarding =
     source === 'onboarding-publish';
 
@@ -53,11 +59,19 @@ export default function SignInScreen() {
 
   async function handleAppleSignIn() {
     try {
+      setIsSigningIn(true);
       prepareSignInIntent();
 
       await signInWithApple();
-      router.replace('/');
+
+      router.replace(
+        isReturningFromOnboarding
+          ? '/'
+          : '/(tabs)'
+      );
     } catch (error) {
+      setIsSigningIn(false);
+
       if (
         typeof error === 'object' &&
         error !== null &&
@@ -78,16 +92,24 @@ export default function SignInScreen() {
 
   async function handleGoogleSignIn() {
     try {
+      setIsSigningIn(true);
       prepareSignInIntent();
 
       const result = await signInWithGoogle();
 
       if (!result) {
+        setIsSigningIn(false);
         return;
       }
 
-      router.replace('/');
+      router.replace(
+        isReturningFromOnboarding
+          ? '/'
+          : '/(tabs)'
+      );
     } catch (error) {
+      setIsSigningIn(false);
+
       if (
         error instanceof Error &&
         (
@@ -131,6 +153,19 @@ export default function SignInScreen() {
     }
 
     router.replace('/onboarding');
+  }
+
+  if (isSigningIn) {
+    return (
+      <View style={styles.splashBridge}>
+        <Image
+          source={require('@/assets/images/splash-icon.png')}
+          style={styles.splashIcon}
+          resizeMode="contain"
+          accessibilityIgnoresInvertColors
+        />
+      </View>
+    );
   }
 
   return (
@@ -236,6 +271,18 @@ export default function SignInScreen() {
 }
 
 const styles = StyleSheet.create({
+  splashBridge: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  splashIcon: {
+    width: SPLASH_ICON_SIZE,
+    height: SPLASH_ICON_SIZE,
+  },
+
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
