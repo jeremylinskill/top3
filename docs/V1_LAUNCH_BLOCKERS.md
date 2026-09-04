@@ -1,7 +1,7 @@
-Top3 --- V1 App Store Launch-Blocker Checklist
+Top 3 --- V1 App Store Launch-Blocker Checklist
 
 Document purpose: Single source of truth for requirements that must be
-implemented, verified, or completed before submitting Top3 V1 to Apple
+implemented, verified, or completed before submitting Top 3 V1 to Apple
 App Review.
 
 Audit baseline: Apple App Review Guidelines current as of August 20,
@@ -23,7 +23,7 @@ an app-code defect.
 
 User-Generated Content & Social Safety --- Guideline 1.2
 
-Top3 is a social/UGC app. Apple requires apps with user-generated
+Top 3 is a social/UGC app. Apple requires apps with user-generated
 content or social networking services to provide objectionable-content
 filtering, reporting with timely response, abusive-user blocking, and
 published contact information.
@@ -105,7 +105,7 @@ shared notification layer.
 
 V1 conclusion
 
-Closed. The V1 blocking review is complete across the audited Top3
+Closed. The V1 blocking review is complete across the audited Top 3
 surfaces. No known user-facing blocking launch blocker remains.
 
 🟢 1.2 Prohibited-content filtering --- VERIFIED
@@ -166,7 +166,7 @@ and bios on insert/update.
 Expected moderation rejections are classified separately from unexpected
 application failures and do not produce Expo red-screen errors.
 
-Rejected comments and profile edits use the established Top3-styled
+Rejected comments and profile edits use the established Top 3-styled
 ActionSheet messaging.
 
 User-entered text remains intact after rejection so it can be corrected
@@ -181,7 +181,7 @@ The database function correctly rejected a direct threat across
 uppercase and punctuation variations.
 
 An end-to-end iPhone comment test using a production prohibited phrase
-was rejected before publication and displayed the expected Top3-styled
+was rejected before publication and displayed the expected Top 3-styled
 "Comment not posted" ActionSheet.
 
 Display name, username, and bio rejection paths were each tested
@@ -192,7 +192,7 @@ V1 moderation model
 Automated prohibited-content filtering is one layer of the broader
 moderation system. Contextual harassment or abuse that cannot be
 reliably identified by a conservative phrase list is handled through
-Top3's reporting, user-blocking, and admin-moderation workflows.
+Top 3's reporting, user-blocking, and admin-moderation workflows.
 
 V1 conclusion
 
@@ -242,14 +242,14 @@ Report state is resolved/removed appropriately after moderation action.
 
 V1 operational moderation process
 
-Top3 reports will be reviewed regularly after launch by an administrator
+Top 3 reports will be reviewed regularly after launch by an administrator
 with access to the Moderation workflow.
 
 Reports involving credible threats, severe harassment, hate, sexual
 exploitation, self-harm encouragement, or other potentially urgent
 safety concerns should be prioritized for review.
 
-When reported content clearly violates Top3's published Terms of Use or
+When reported content clearly violates Top 3's published Terms of Use or
 Community Standards, the moderator should remove the violating content
 and take any additional account-level action supported by the V1 product
 where appropriate.
@@ -260,7 +260,7 @@ Duplicate reports concerning the same underlying content should be
 treated as additional signals rather than requiring duplicate moderation
 action.
 
-Moderation decisions should be applied consistently with Top3's
+Moderation decisions should be applied consistently with Top 3's
 published community/content standards.
 
 The moderation queue should be checked frequently enough after launch to
@@ -292,12 +292,12 @@ Verified behaviour
 
 Settings includes a Support row in the App section.
 
-The Support row opens a dedicated Top3-styled Support screen.
+The Support row opens a dedicated Top 3-styled Support screen.
 
 The Support screen provides clear guidance for users who need help or
 want to report a problem.
 
-Contact Support launches the device mail app with the configured Top3
+Contact Support launches the device mail app with the configured Top 3
 support address populated.
 
 The support email is stored in a centralized SUPPORT_EMAIL constant so
@@ -316,7 +316,7 @@ support/contact blocker remains.
 Remaining submission task
 
 Before App Store submission, provide a live App Store Connect Support
-URL with an easy way to contact Top3 support and confirm that
+URL with an easy way to contact Top 3 support and confirm that
 developer/App Review contact information is current. These remain App
 Store Connect / public-web submission tasks rather than an app-side
 implementation blocker.
@@ -330,7 +330,7 @@ the production Supabase data model.
 
 Verified user-facing behaviour
 
-Account deletion can be initiated from inside Top3 through Settings.
+Account deletion can be initiated from inside Top 3 through Settings.
 
 The deletion flow clearly communicates that account deletion is
 permanent.
@@ -363,7 +363,7 @@ stored Apple refresh token and revokes the user's Apple authorization
 through Apple's revocation endpoint.
 
 If Apple authorization revocation fails, account deletion stops rather
-than deleting the Top3 account while leaving the Apple authorization
+than deleting the Top 3 account while leaving the Apple authorization
 active.
 
 The Edge Function then identifies the authenticated user and deletes the
@@ -372,7 +372,7 @@ account through Supabase Auth admin.deleteUser().
 The client treats deletion as successful only when the Edge Function
 explicitly returns success.
 
-After successful deletion, Top3 resets local welcome/onboarding state
+After successful deletion, Top 3 resets local welcome/onboarding state
 and signs the user out.
 
 Verified database deletion architecture
@@ -428,7 +428,7 @@ Release-candidate note
 Account deletion should still be included in the final release-candidate
 regression test. For an Apple-authenticated test account, confirm the
 production deletion path continues to revoke Apple authorization before
-deleting the Top3 account. No additional account-deletion implementation
+deleting the Top 3 account. No additional account-deletion implementation
 work is currently required.
 
 🟢 2.2 Sign-out/session lifecycle --- VERIFIED
@@ -492,7 +492,7 @@ Email/password sign-in works.
 
 Forgot Password successfully sends the password-reset email.
 
-The password-reset link/deep-link opens the Top3 reset-password flow and
+The password-reset link/deep-link opens the Top 3 reset-password flow and
 allows the user to choose a new password.
 
 Logged-in users can change their password through Settings.
@@ -540,7 +540,7 @@ Status: Policy content, public-web publication, repository copy, and in-app acce
 
 Completed
 
-The V1 Privacy Policy has been audited against Top3's current implementation and is maintained at docs/PRIVACY_POLICY.md.
+The V1 Privacy Policy has been audited against Top 3's current implementation and is maintained at docs/PRIVACY_POLICY.md.
 
 The policy describes the current V1 account/authentication, profile, social/UGC, search, media, analytics, moderation, push notification, retention, and account deletion practices.
 
@@ -550,7 +550,7 @@ Relevant third-party services are accounted for, including Supabase, Amplitude, 
 
 The policy reflects the implemented account-deletion flow, including server-side account/data deletion, profile-image removal where applicable, push notification token removal, Amplitude deletion requests, Sign in with Apple authorization revocation where applicable, and clearing the deleted account's locally stored recent searches on the device used for deletion.
 
-Push notification disclosures were added after implementation of Expo Notifications and Apple Push Notification service delivery. The policy explains the push notification token, its association with the user's device and Top3 account, notification delivery purposes, applicable service-provider processing, notification preferences, and token removal.
+Push notification disclosures were added after implementation of Expo Notifications and Apple Push Notification service delivery. The policy explains the push notification token, its association with the user's device and Top 3 account, notification delivery purposes, applicable service-provider processing, notification preferences, and token removal.
 
 The public Privacy Policy is live at:
 
@@ -586,41 +586,141 @@ V1 conclusion
 
 Closed for the Privacy Policy implementation and publication requirement. The public, repository, and in-app policy copies are synchronized and verified. No known app-side Privacy Policy launch blocker remains.
 
-🟡 3.2 App Privacy disclosures --- VERIFY
+🟢 3.2 App Privacy disclosures --- VERIFIED
 
-Verify in App Store Connect
+Status: The existing App Store Connect App Privacy disclosures were reviewed against the audited Top 3 V1 implementation, including account/profile/social/UGC data, Amplitude product analytics, push notifications, and installed native SDK privacy manifests.
 
-App Privacy answers accurately reflect the release build.
+Verified App Store Connect disclosures
 
-Data linked to identity is classified correctly.
+The currently published App Privacy configuration contains eight collected data types, all classified as Data Linked to You:
 
-Analytics/diagnostics disclosures match the SDKs actually shipped.
+Name --- App Functionality.
 
-Amplitude is included in the V1 application for product analytics.
-Confirm that the App Privacy questionnaire accurately reflects the
-Amplitude data and event properties actually collected by the release
-build.
+Email Address --- App Functionality.
 
-No undeclared tracking is present.
+Contacts --- Product Personalization and App Functionality. Apple's Contacts category includes a user's social graph; Top 3's following/follower relationships fit this use without implying access to the device address book.
 
-Third-party SDK privacy manifests/reason APIs are compliant where
-applicable.
+Photos or Videos --- App Functionality.
 
-🟡 3.3 Terms / community standards --- VERIFY
+Other User Content --- App Functionality and Product Personalization.
 
-Because Top3 includes social UGC and moderation, users should have
-accessible rules governing acceptable behaviour/content.
+User ID --- App Functionality, Product Personalization, and Analytics.
 
-Verify
+Device ID --- Analytics.
 
-Terms of Use are published and accessible.
+Product Interaction --- Analytics.
 
-Community/content standards are sufficiently clear to support moderation
-decisions.
+No Top 3 data type is declared as being used for tracking.
 
-Reporting/removal practices are consistent with the published rules.
+Push-notification review
 
-Links work in the production build and on the public web.
+The addition of push notifications does not require a new App Privacy data-type disclosure based on the audited V1 implementation.
+
+Top 3 stores an Expo push notification token associated with the applicable device and Top 3 account for notification delivery.
+
+The token is used for app functionality rather than advertising or cross-company tracking.
+
+Push-notification handling is disclosed in the synchronized public, repository, and in-app Privacy Policy copies under 3.1.
+
+Amplitude analytics review
+
+The installed analytics SDK is @amplitude/analytics-react-native@1.6.9.
+
+Top 3's Amplitude integration is centralized in lib/analytics.ts.
+
+The SDK is configured with trackingOptions that disable automatic collection of ad ID, carrier, device manufacturer, device model, IP address, language, OS name, OS version, and platform.
+
+No Amplitude Session Replay integration was identified.
+
+Authenticated analytics users are associated through setUserId().
+
+The audited event set is limited to defined product-interaction events such as account creation, onboarding, collection activity, search, item addition, Discover/profile views, follows, likes, comments, Taste Match, collection views/shares, and notification opens.
+
+Audited event properties are limited to category, source, rank, and rankCount.
+
+The existing User ID, Device ID, and Product Interaction analytics disclosures remain appropriate.
+
+No advertising or cross-company tracking use was identified in the audited Amplitude configuration.
+
+Privacy-manifest / Required Reason API review
+
+app.json does not contain an explicit ios.privacyManifests block.
+
+Installed native dependencies that use Apple's Required Reason APIs provide PrivacyInfo.xcprivacy manifests, including Expo Application, Expo File System, React Native, Expo Notifications, Expo Constants, Expo System UI, and AsyncStorage.
+
+The installed manifests declare applicable reasons for File Timestamp, Disk Space, System Boot Time, and UserDefaults access.
+
+The inspected manifests that explicitly declare tracking set NSPrivacyTracking to false.
+
+No additional custom ios.privacyManifests configuration was identified as necessary based on the audited V1 dependencies and configuration.
+
+V1 conclusion
+
+Closed. The existing App Store Connect App Privacy disclosures remain appropriate for the audited Top 3 V1 release implementation, including Amplitude analytics and push notifications. No undeclared tracking or known privacy-manifest launch blocker was identified. Reconfirm these disclosures against the final release-candidate dependency set if native SDKs are added or materially changed before submission.
+
+🟢 3.3 Terms / community standards --- VERIFIED
+
+Status: Terms of Use and Community Standards are implemented, published,
+accessible, and verified for the V1 social/UGC and moderation experience.
+
+Verified implementation
+
+The V1 Terms of Use are maintained in docs/TERMS_OF_USE.md.
+
+The V1 Community Standards are maintained in docs/COMMUNITY_STANDARDS.md.
+
+Native Terms of Use and Community Standards screens are available in the app.
+
+Settings includes a dedicated Legal section containing Privacy Policy,
+Terms of Use, and Community Standards.
+
+The Terms of Use and Community Standards screens were tested successfully
+on iPhone, including navigation, scrolling, and back navigation.
+
+Published public pages
+
+Privacy Policy:
+https://jeremylinskill.com/top3-privacy-policy
+
+Terms of Use:
+https://jeremylinskill.com/top3-terms-of-use
+
+Community Standards:
+https://jeremylinskill.com/top3-community-standards
+
+All three public legal pages were confirmed to load normally without
+authentication.
+
+The published legal pages use the official user-facing product name Top 3.
+
+Community Standards / moderation alignment
+
+The Community Standards define rules for the V1 user-generated-content
+surfaces, including profiles, usernames, bios, Lists, comments, and social
+interactions.
+
+The standards address harassment, hate/dehumanizing content, violence and
+threats, self-harm encouragement, sexual exploitation and minor safety,
+sexually explicit content, privacy/personal information, impersonation,
+spam/manipulation, intellectual property, and illegal or harmful activity.
+
+The standards explain reporting, blocking, moderation, context, and
+enforcement.
+
+The published rules distinguish legitimate discussion of mature or
+controversial entertainment from promotion of prohibited harmful conduct,
+which is appropriate for Top 3's movies, television, books, music, games,
+and related discovery content.
+
+The reporting/removal practices verified under 1.3 are consistent with the
+published Terms of Use and Community Standards.
+
+V1 conclusion
+
+Closed. Terms of Use and Community Standards are implemented in-app,
+published on the public web, accessible without authentication, and aligned
+with the V1 reporting, blocking, prohibited-content filtering, and
+moderation model. No known Terms/community-standards launch blocker remains.
 
 App Completeness & Reliability --- Guideline 2.1
 
@@ -717,7 +817,7 @@ services.
 
 Reviewed confirmation, destructive, success, error, validation,
 authentication, collection, reporting, blocking, and moderation popup
-flows use the shared Top3 ActionSheet pattern.
+flows use the shared Top 3 ActionSheet pattern.
 
 A project-wide audit returned zero remaining Alert.alert calls across
 app, components, context, and services.
@@ -784,7 +884,7 @@ Content, Metadata & Third-Party Services
 
 🟡 5.1 Third-party content/API compliance --- VERIFY
 
-Top3 uses external data/media providers for ranked-item metadata and
+Top 3 uses external data/media providers for ranked-item metadata and
 previews. Verify the V1 implementation complies with each provider's
 current terms and attribution requirements.
 
@@ -831,7 +931,7 @@ Age rating reflects social/UGC functionality and accessible content.
 
 Copyright/rights statements are accurate.
 
-Separate business/legal note: Top3 naming/trademark clearance remains a
+Separate business/legal note: Top 3 naming/trademark clearance remains a
 product/business consideration and should be resolved to an acceptable
 risk level before broad public launch, even though trademark clearance
 itself is not simply an App Review code requirement.
@@ -858,7 +958,7 @@ Prepare:
 
 Reviewer/demo account credentials
 
-Clear instructions for testing Top3's social functionality
+Clear instructions for testing Top 3's social functionality
 
 Notes describing any content moderation/reporting flows that are not
 immediately obvious
@@ -964,21 +1064,23 @@ the live URL in App Store Connect remains a 6.1 submission task
 
 App Privacy disclosures
 
-🟡 VERIFY
+🟢 VERIFIED
 
-Complete against release build, including Amplitude product analytics
+Existing eight App Store Connect data types verified against the V1 implementation; Amplitude analytics configuration, push notifications, tracking status, and installed native privacy manifests audited with no known disclosure or manifest blocker
 
 Terms/community standards
 
-🟡 VERIFY
+🟢 VERIFIED
 
-Confirm published and accessible
+Terms of Use and Community Standards are available in-app and on the public
+web; public pages load without authentication; rules align with the verified
+V1 reporting, blocking, prohibited-content filtering, and moderation model
 
 Popup standardization
 
 🟢 VERIFIED
 
-V1 popup review complete; shared Top3 ActionSheet used across reviewed
+V1 popup review complete; shared Top 3 ActionSheet used across reviewed
 flows; zero Alert.alert matches in app, components, context, and
 services; typecheck passes
 
@@ -1022,14 +1124,14 @@ Latest verification checkpoint
 
 August 25, 2026
 
-Blocked-user filtering review completed across the relevant audited Top3
+Blocked-user filtering review completed across the relevant audited Top 3
 surfaces.
 
-Commit 61ef627 --- Apply blocked user filtering across Top3.
+Commit 61ef627 --- Apply blocked user filtering across Top 3.
 
 V1 popup standardization review completed.
 
-Commit c3d3b7f --- Standardize popups with Top3 action sheets.
+Commit c3d3b7f --- Standardize popups with Top 3 action sheets.
 
 Final verification: npm run typecheck passes and the project-wide
 Alert.alert audit returns zero matches across app, components, context,
@@ -1065,20 +1167,45 @@ Commit 83aafa7 --- Update privacy policy for push notifications.
 
 Commit 83aafa7 pushed successfully to origin/main.
 
+September 3, 2026
+
+App Privacy disclosure review completed.
+
+The eight currently published App Store Connect data types were verified against the audited Top 3 V1 implementation.
+
+Amplitude @amplitude/analytics-react-native@1.6.9 configuration was reviewed in lib/analytics.ts, including disabled automatic tracking fields, identified-user handling, event names, and event properties.
+
+Installed PrivacyInfo.xcprivacy manifests were inspected for Expo, React Native, and AsyncStorage dependencies. Required Reason API declarations were present for the applicable audited native dependencies, and no additional custom privacy manifest was identified as necessary.
+
+Push notifications were reviewed and do not require a new App Privacy data-type disclosure for the audited V1 implementation.
+
+No undeclared tracking was identified.
+
+September 4, 2026
+
+Terms of Use and Community Standards implementation and publication review completed.
+
+Native Terms of Use and Community Standards screens and the Settings Legal
+section were verified successfully on iPhone.
+
+Public Privacy Policy, Terms of Use, and Community Standards pages were
+confirmed to load normally without authentication.
+
+The published Community Standards were confirmed to support the implemented
+V1 reporting, blocking, prohibited-content filtering, and moderation model.
+
 Immediate Next Step
 
-Proceed to 3.2 App Privacy disclosures.
+Proceed to 4.1 Release-candidate regression test.
 
-Audit the App Store Connect App Privacy questionnaire against the actual
-Top3 V1 release implementation, including account/profile/social/UGC data,
-Amplitude analytics, push notifications, authentication providers, and any
-applicable third-party SDK or service data practices. Privacy Policy item 3.1
-is closed; entering the live Privacy Policy URL in App Store Connect remains
-tracked as a 6.1 submission task.
+Run the complete final-build device regression checklist, including fresh
+install, authentication/onboarding, Lists, social features, moderation,
+sharing/deep links, account lifecycle, media previews, session persistence,
+and critical failure/network behaviour.
 
 Definition of V1 Launch-Ready
 
-Top3 is ready to enter final App Store submission preparation when:
+Top 3 is ready to enter final App Store submission preparation when:
 
 No item in this document remains 🔴 BLOCKER.
 
@@ -1095,4 +1222,4 @@ App Review can sign in and exercise the complete V1 experience using the
 supplied review credentials/instructions.
 
 This checklist should be updated as each requirement is verified. It is
-the release gate for Top3 V1, not the long-term product roadmap.
+the release gate for Top 3 V1, not the long-term product roadmap.

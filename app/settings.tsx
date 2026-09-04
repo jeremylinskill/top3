@@ -264,6 +264,14 @@ export default function SettingsScreen() {
     router.push('/privacy-policy');
   }
 
+  function openTermsOfUse() {
+    router.push('/terms-of-use');
+  }
+
+  function openCommunityStandards() {
+    router.push('/community-standards');
+  }
+
   function openModeration() {
     router.push('/moderation');
   }
@@ -706,42 +714,7 @@ export default function SettingsScreen() {
                 </Text>
 
                 <Text style={styles.rowSubtitle}>
-                  Get help or contact Top3 support
-                </Text>
-              </View>
-
-              <Ionicons
-                name="chevron-forward"
-                size={21}
-                color={COLORS.tertiaryText}
-              />
-            </Pressable>
-
-            <View style={styles.divider} />
-
-            <Pressable
-              style={({ pressed }) => [
-                styles.row,
-                pressed && styles.pressed,
-              ]}
-              onPress={openPrivacyPolicy}
-              accessibilityRole="button"
-              accessibilityLabel="Open Privacy Policy">
-              <View style={styles.iconContainer}>
-                <Ionicons
-                  name="document-text-outline"
-                  size={23}
-                  color={COLORS.text}
-                />
-              </View>
-
-              <View style={styles.rowDetails}>
-                <Text style={styles.rowTitle}>
-                  Privacy Policy
-                </Text>
-
-                <Text style={styles.rowSubtitle}>
-                  Learn how Top3 handles your information
+                  Get help or contact Top 3 support
                 </Text>
               </View>
 
@@ -790,6 +763,120 @@ export default function SettingsScreen() {
                 </Pressable>
               </>
             ) : null}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
+            Legal
+          </Text>
+
+          <View style={styles.card}>
+            <View style={styles.divider} />
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.row,
+                pressed && styles.pressed,
+              ]}
+              onPress={openPrivacyPolicy}
+              accessibilityRole="button"
+              accessibilityLabel="Open Privacy Policy">
+              <View style={styles.iconContainer}>
+                <Ionicons
+                  name="document-text-outline"
+                  size={23}
+                  color={COLORS.text}
+                />
+              </View>
+
+              <View style={styles.rowDetails}>
+                <Text style={styles.rowTitle}>
+                  Privacy Policy
+                </Text>
+
+                <Text style={styles.rowSubtitle}>
+                  Learn how Top 3 handles your information
+                </Text>
+              </View>
+
+              <Ionicons
+                name="chevron-forward"
+                size={21}
+                color={COLORS.tertiaryText}
+              />
+            </Pressable>
+
+            <View style={styles.divider} />
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.row,
+                pressed && styles.pressed,
+              ]}
+              onPress={openTermsOfUse}
+              accessibilityRole="button"
+              accessibilityLabel="Open Terms of Use">
+              <View style={styles.iconContainer}>
+                <Ionicons
+                  name="reader-outline"
+                  size={23}
+                  color={COLORS.text}
+                />
+              </View>
+
+              <View style={styles.rowDetails}>
+                <Text style={styles.rowTitle}>
+                  Terms of Use
+                </Text>
+
+                <Text style={styles.rowSubtitle}>
+                  Review the terms for using Top 3
+                </Text>
+              </View>
+
+              <Ionicons
+                name="chevron-forward"
+                size={21}
+                color={COLORS.tertiaryText}
+              />
+            </Pressable>
+
+            <View style={styles.divider} />
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.row,
+                pressed && styles.pressed,
+              ]}
+              onPress={openCommunityStandards}
+              accessibilityRole="button"
+              accessibilityLabel="Open Community Standards">
+              <View style={styles.iconContainer}>
+                <Ionicons
+                  name="people-outline"
+                  size={23}
+                  color={COLORS.text}
+                />
+              </View>
+
+              <View style={styles.rowDetails}>
+                <Text style={styles.rowTitle}>
+                  Community Standards
+                </Text>
+
+                <Text style={styles.rowSubtitle}>
+                  See the rules for content and behaviour
+                </Text>
+              </View>
+
+              <Ionicons
+                name="chevron-forward"
+                size={21}
+                color={COLORS.tertiaryText}
+              />
+            </Pressable>
+
           </View>
         </View>
 
