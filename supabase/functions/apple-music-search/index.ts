@@ -3517,22 +3517,14 @@ export default {
             results,
           });
         } catch (error) {
-          console.error(
-            "Apple Music popular suggestions failed:",
+          console.warn(
+            "Apple Music popular suggestions failed; returning an empty result set:",
             error
           );
 
-          const message =
-            error instanceof Error
-              ? error.message
-              : "Apple Music suggestions are temporarily unavailable.";
-
-          return jsonResponse(
-            {
-              error: message,
-            },
-            502
-          );
+          return jsonResponse({
+            results: [],
+          });
         }
       }
 
