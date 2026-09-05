@@ -36,6 +36,7 @@ import {
 } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import {
+  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -45,6 +46,7 @@ import {
   Keyboard,
   Platform,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -160,6 +162,9 @@ export default function DiscoverScreen() {
   const [isLoading, setIsLoading] =
     useState(true);
 
+  const [isRefreshing, setIsRefreshing] =
+    useState(false);
+
   const [searchQuery, setSearchQuery] =
     useState('');
 
@@ -197,10 +202,48 @@ export default function DiscoverScreen() {
     };
   }, [profile.id]);
 
+  const loadPosts = useCallback(async () => {
+    const publishedPosts =
+      await getPublishedPosts();
+
+    const authorIds = Array.from(
+      new Set(
+        publishedPosts.map(
+          (post) => post.authorId
+        )
+      )
+    );
+
+    const authors =
+      await getPublicProfilesByIds(authorIds);
+
+    const nextProfilesByUserId =
+      Object.fromEntries(
+        authors.map((author) => [
+          author.id,
+          author,
+        ])
+      );
+
+    setAllPosts(publishedPosts);
+    setProfilesByUserId(nextProfilesByUserId);
+  }, []);
+
+  const loadNewestProfiles =
+    useCallback(async () => {
+      const profiles =
+        await getNewestPublicProfiles(
+          profile.id,
+          5
+        );
+
+      setNewestProfiles(profiles);
+    }, [profile.id]);
+
   useEffect(() => {
     let isMounted = true;
 
-    async function loadPosts() {
+    async function loadDiscover() {
       setIsLoading(true);
 
       try {
@@ -248,7 +291,7 @@ export default function DiscoverScreen() {
       }
     }
 
-    loadPosts();
+    void loadDiscover();
 
     return () => {
       isMounted = false;
@@ -258,7 +301,7 @@ export default function DiscoverScreen() {
   useEffect(() => {
     let isMounted = true;
 
-    async function loadNewestProfiles() {
+    async function loadInitialNewestProfiles() {
       try {
         const profiles =
           await getNewestPublicProfiles(
@@ -281,12 +324,45 @@ export default function DiscoverScreen() {
       }
     }
 
-    void loadNewestProfiles();
+    void loadInitialNewestProfiles();
 
     return () => {
       isMounted = false;
     };
   }, [profile.id]);
+
+  const refreshDiscover = useCallback(
+    async () => {
+      setIsRefreshing(true);
+
+      try {
+        const results = await Promise.allSettled([
+          loadPosts(),
+          loadNewestProfiles(),
+        ]);
+
+        const postsResult = results[0];
+        const profilesResult = results[1];
+
+        if (postsResult.status === 'rejected') {
+          console.error(
+            'Failed to refresh Discover content:',
+            postsResult.reason
+          );
+        }
+
+        if (profilesResult.status === 'rejected') {
+          console.error(
+            'Failed to refresh newest public profiles:',
+            profilesResult.reason
+          );
+        }
+      } finally {
+        setIsRefreshing(false);
+      }
+    },
+    [loadNewestProfiles, loadPosts]
+  );
 
   const visiblePosts = useMemo(
     () =>
@@ -1326,6 +1402,12 @@ export default function DiscoverScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={refreshDiscover}
+          />
+        }
         keyboardDismissMode={
           Platform.OS === 'ios'
             ? 'interactive'
