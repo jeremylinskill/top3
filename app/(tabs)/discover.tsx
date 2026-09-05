@@ -1,4 +1,5 @@
 import DiscoverListCard from '@/components/discover-list-card';
+import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
 import SearchInput from '@/components/search-input';
 import SegmentedControl from '@/components/segmented-control';
@@ -165,6 +166,11 @@ export default function DiscoverScreen() {
   const [isRefreshing, setIsRefreshing] =
     useState(false);
 
+  const [
+    hasDiscoverLoadError,
+    setHasDiscoverLoadError,
+  ] = useState(false);
+
   const [searchQuery, setSearchQuery] =
     useState('');
 
@@ -245,6 +251,7 @@ export default function DiscoverScreen() {
 
     async function loadDiscover() {
       setIsLoading(true);
+      setHasDiscoverLoadError(false);
 
       try {
         const publishedPosts =
@@ -274,15 +281,19 @@ export default function DiscoverScreen() {
           setProfilesByUserId(
             nextProfilesByUserId
           );
+          setHasDiscoverLoadError(false);
         }
       } catch (error) {
-        console.error(
-          'Failed to load Discover content:',
-          error
-        );
+        if (__DEV__) {
+          console.log(
+            'Failed to load Discover content:',
+            error
+          );
+        }
 
         if (isMounted) {
           setAllPosts([]);
+          setHasDiscoverLoadError(true);
         }
       } finally {
         if (isMounted) {
@@ -313,10 +324,12 @@ export default function DiscoverScreen() {
           setNewestProfiles(profiles);
         }
       } catch (error) {
-        console.error(
-          'Failed to load newest public profiles:',
-          error
-        );
+        if (__DEV__) {
+          console.log(
+            'Failed to load newest public profiles:',
+            error
+          );
+        }
 
         if (isMounted) {
           setNewestProfiles([]);
@@ -345,17 +358,23 @@ export default function DiscoverScreen() {
         const profilesResult = results[1];
 
         if (postsResult.status === 'rejected') {
-          console.error(
-            'Failed to refresh Discover content:',
-            postsResult.reason
-          );
+          if (__DEV__) {
+            console.log(
+              'Failed to refresh Discover content:',
+              postsResult.reason
+            );
+          }
+        } else {
+          setHasDiscoverLoadError(false);
         }
 
         if (profilesResult.status === 'rejected') {
-          console.error(
-            'Failed to refresh newest public profiles:',
-            profilesResult.reason
-          );
+          if (__DEV__) {
+            console.log(
+              'Failed to refresh newest public profiles:',
+              profilesResult.reason
+            );
+          }
         }
       } finally {
         setIsRefreshing(false);
@@ -363,6 +382,43 @@ export default function DiscoverScreen() {
     },
     [loadNewestProfiles, loadPosts]
   );
+
+  const retryDiscover = useCallback(async () => {
+    setIsLoading(true);
+
+    try {
+      const results = await Promise.allSettled([
+        loadPosts(),
+        loadNewestProfiles(),
+      ]);
+
+      const postsResult = results[0];
+      const profilesResult = results[1];
+
+      if (postsResult.status === 'rejected') {
+        if (__DEV__) {
+          console.log(
+            'Failed to retry Discover content:',
+            postsResult.reason
+          );
+        }
+        setHasDiscoverLoadError(true);
+      } else {
+        setHasDiscoverLoadError(false);
+      }
+
+      if (profilesResult.status === 'rejected') {
+        if (__DEV__) {
+          console.log(
+            'Failed to retry newest public profiles:',
+            profilesResult.reason
+          );
+        }
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [loadNewestProfiles, loadPosts]);
 
   const visiblePosts = useMemo(
     () =>
@@ -890,10 +946,12 @@ export default function DiscoverScreen() {
             );
           }
         } catch (error) {
-          console.error(
-            'Failed to search public profiles:',
-            error
-          );
+          if (__DEV__) {
+            console.log(
+              'Failed to search public profiles:',
+              error
+            );
+          }
 
           if (isMounted) {
             setProfileSearchResults([]);
@@ -1426,7 +1484,9 @@ export default function DiscoverScreen() {
             onClear={clearSearch}
           />
 
-          {!showRecentSearches && !isSearching ? (
+          {!showRecentSearches &&
+          !isSearching &&
+          !hasDiscoverLoadError ? (
             <View style={styles.segmentedSection}>
               <SegmentedControl<DiscoverBrowseMode>
                 value={browseMode}
@@ -1454,7 +1514,28 @@ export default function DiscoverScreen() {
           style={styles.contentDismissArea}
           onPress={dismissSearchKeyboard}
           accessible={false}>
-          {showRecentSearches ? (
+          {hasDiscoverLoadError ? (
+            <View style={styles.searchPlaceholder}>
+              <Text
+                style={styles.searchPlaceholderTitle}>
+                Couldn&apos;t load Discover
+              </Text>
+
+              <Text
+                style={styles.searchPlaceholderText}>
+                Check your connection and try again.
+              </Text>
+
+              <PrimaryButton
+                title="Try Again"
+                onPress={() => {
+                  void retryDiscover();
+                }}
+                disabled={isLoading}
+                style={styles.errorAction}
+              />
+            </View>
+          ) : showRecentSearches ? (
           <View style={styles.recentSection}>
             <View style={styles.recentHeader}>
               <Text style={styles.sectionTitle}>
@@ -2641,6 +2722,11 @@ const styles = StyleSheet.create({
     marginTop: 7,
     color: '#777777',
     textAlign: 'center',
+  },
+
+  errorAction: {
+    alignSelf: 'stretch',
+    marginTop: 20,
   },
 
   arrow: {

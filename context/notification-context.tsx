@@ -49,6 +49,7 @@ type NotificationContextValue = {
   unreadCount: number;
   pendingFollowRequestCount: number;
   isLoading: boolean;
+  loadError: boolean;
   refreshNotifications: () => Promise<void>;
   markNotificationRead: (
     notificationId: string
@@ -157,10 +158,12 @@ async function enrichFollowRequests(
               requesterUserId
             );
           } catch (error) {
-            console.error(
-              'Failed to load follow request profile:',
-              error
-            );
+            if (__DEV__) {
+              console.log(
+                'Failed to load follow request profile:',
+                error
+              );
+            }
 
             return null;
           }
@@ -208,6 +211,9 @@ export function NotificationProvider({
   const [isLoading, setIsLoading] =
     useState(false);
 
+  const [loadError, setLoadError] =
+    useState(false);
+
   const userId = user?.id;
 
   const refreshNotifications =
@@ -215,6 +221,7 @@ export function NotificationProvider({
       if (!userId) {
         setNotifications([]);
         setPendingFollowRequests([]);
+        setLoadError(false);
         setIsLoading(false);
         return;
       }
@@ -249,11 +256,17 @@ export function NotificationProvider({
         setPendingFollowRequests(
           enrichedFollowRequests
         );
+
+        setLoadError(false);
       } catch (error) {
-        console.error(
-          'Failed to load notifications:',
-          error
-        );
+        if (__DEV__) {
+          console.log(
+            'Failed to load notifications:',
+            error
+          );
+        }
+
+        setLoadError(true);
       } finally {
         setIsLoading(false);
       }
@@ -537,6 +550,7 @@ export function NotificationProvider({
         unreadCount,
         pendingFollowRequestCount,
         isLoading,
+        loadError,
         refreshNotifications,
         markNotificationRead,
         markAllNotificationsRead,
@@ -549,6 +563,7 @@ export function NotificationProvider({
         unreadCount,
         pendingFollowRequestCount,
         isLoading,
+        loadError,
         refreshNotifications,
         markNotificationRead,
         markAllNotificationsRead,

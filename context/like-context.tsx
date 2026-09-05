@@ -94,10 +94,12 @@ export function LikeProvider({
 
         setLikeCounts(snapshot.likeCounts);
       } catch (error) {
-        console.error(
-          'Failed to load likes:',
-          error
-        );
+        if (__DEV__) {
+          console.log(
+            'Failed to load likes:',
+            error
+          );
+        }
       } finally {
         if (showLoading) {
           setIsLoading(false);
@@ -139,10 +141,12 @@ export function LikeProvider({
 
         setLikeCounts(snapshot.likeCounts);
       } catch (error) {
-        console.error(
-          'Failed to load likes:',
-          error
-        );
+        if (__DEV__) {
+          console.log(
+            'Failed to load likes:',
+            error
+          );
+        }
       } finally {
         if (!isCancelled) {
           setIsLoading(false);

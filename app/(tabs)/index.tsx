@@ -2,8 +2,12 @@ import ActionSheet, {
   ActionSheetAction,
 } from '@/components/action-sheet';
 import CommentsSheet from '@/components/comments-sheet';
+import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
 import Top3Card from '@/components/top3-card';
+import { COLORS } from '@/constants/colors';
+import { RADIUS } from '@/constants/radius';
+import { SPACING } from '@/constants/spacing';
 import { useBlock } from '@/context/block-context';
 import { useComments } from '@/context/comment-context';
 import { useFollow } from '@/context/follow-context';
@@ -223,10 +227,12 @@ export default function FeedScreen() {
           setFeedAuthors(nextFeedAuthors);
         }
       } catch (error) {
-        console.error(
-          'Failed to load feed posts:',
-          error
-        );
+        if (__DEV__) {
+          console.log(
+            'Failed to load feed posts:',
+            error
+          );
+        }
 
         if (isMounted) {
           setFeedPosts(posts);
@@ -348,6 +354,10 @@ export default function FeedScreen() {
         postId: post.id,
       },
     });
+  }
+
+  function openCreateScreen() {
+    router.push('/top3');
   }
 
   function openCollectionFeed(post: Post) {
@@ -1065,10 +1075,12 @@ export default function FeedScreen() {
       setFeedPosts(nextPosts);
       setFeedAuthors(nextFeedAuthors);
     } catch (error) {
-      console.error(
-        'Failed to refresh feed posts:',
-        error
-      );
+      if (__DEV__) {
+        console.log(
+          'Failed to refresh feed posts:',
+          error
+        );
+      }
     } finally {
       setIsRefreshing(false);
     }
@@ -1111,14 +1123,19 @@ export default function FeedScreen() {
             style={styles.emptyState}>
             <Text
               style={styles.emptyTitle}>
-              Nothing published yet
+              Nothing published
             </Text>
 
             <Text
               style={styles.emptyText}>
-              Publish a completed Top 3 to
-              see it here.
+              Publish a Top 3 to see it here.
             </Text>
+
+            <PrimaryButton
+              title="Create a Top 3"
+              onPress={openCreateScreen}
+              style={styles.emptyAction}
+            />
           </View>
         ) : (
           personalizedFeed.map(
@@ -1282,8 +1299,12 @@ const styles = StyleSheet.create({
 
   emptyState: {
     alignItems: 'center',
-    paddingTop: 80,
-    paddingHorizontal: 24,
+    paddingVertical: 36,
+    paddingHorizontal: SPACING.xxl,
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
 
   emptyTitle: {
@@ -1298,5 +1319,10 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: '#777777',
     textAlign: 'center',
+  },
+
+  emptyAction: {
+    marginTop: 24,
+    alignSelf: 'stretch',
   },
 });

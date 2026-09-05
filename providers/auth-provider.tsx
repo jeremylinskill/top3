@@ -96,7 +96,7 @@ export function AuthProvider({
       }
     }
 
-    initializeAuth();
+    void initializeAuth();
 
     const {
       data: { subscription },

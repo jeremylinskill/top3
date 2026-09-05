@@ -544,6 +544,14 @@ export default function ProfileScreen({
     router.push('/settings');
   }
 
+  function openCreateScreen() {
+    if (!isCurrentUser) {
+      return;
+    }
+
+    router.push('/top3');
+  }
+
   async function handleBlockUser() {
     if (
       !viewedUserId ||
@@ -1375,6 +1383,11 @@ export default function ProfileScreen({
             isCurrentUser
               ? undefined
               : handleToggleFollow
+          }
+          onCreateTop3={
+            isCurrentUser
+              ? openCreateScreen
+              : undefined
           }
           onTitlePress={openCollectionFeed}
           onPostPress={openPublishedPost}

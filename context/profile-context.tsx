@@ -15,6 +15,8 @@ import {
 type ProfileContextValue = {
   profile: UserProfile;
   isProfileLoading: boolean;
+  hasProfileLoadError: boolean;
+  retryProfileLoad: () => void;
   updateProfile: (
     updates: Partial<UserProfile>
   ) => Promise<void>;
@@ -177,6 +179,14 @@ export function ProfileProvider({
   const [loadedUserId, setLoadedUserId] =
     useState<string | null>(null);
 
+  const [
+    hasProfileLoadError,
+    setHasProfileLoadError,
+  ] = useState(false);
+
+  const [loadAttempt, setLoadAttempt] =
+    useState(0);
+
   const userId = user?.id;
   const userEmail = user?.email;
 
@@ -190,6 +200,7 @@ export function ProfileProvider({
     async function loadProfile() {
       setProfile(EMPTY_PROFILE);
       setLoadedUserId(null);
+      setHasProfileLoadError(false);
 
       if (!userId) {
         return;
@@ -347,8 +358,7 @@ export function ProfileProvider({
           return;
         }
 
-        setProfile(defaultProfile);
-        setLoadedUserId(userId);
+        setHasProfileLoadError(true);
       }
     }
 
@@ -357,7 +367,22 @@ export function ProfileProvider({
     return () => {
       isCancelled = true;
     };
-  }, [userId, userEmail]);
+  }, [
+    userId,
+    userEmail,
+    loadAttempt,
+  ]);
+
+  function retryProfileLoad() {
+    if (!userId) {
+      return;
+    }
+
+    setLoadAttempt(
+      (currentAttempt) =>
+        currentAttempt + 1
+    );
+  }
 
   async function updateProfile(
     updates: Partial<UserProfile>
@@ -468,11 +493,14 @@ export function ProfileProvider({
       () => ({
         profile,
         isProfileLoading,
+        hasProfileLoadError,
+        retryProfileLoad,
         updateProfile,
       }),
       [
         profile,
         isProfileLoading,
+        hasProfileLoadError,
       ]
     );
 

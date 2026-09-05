@@ -1,5 +1,6 @@
 import ActionSheet from '@/components/action-sheet';
 import PageHeader from '@/components/page-header';
+import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
 import Card from '@/components/ui/card';
 import SecondaryActionPill from '@/components/ui/secondary-action-pill';
@@ -116,6 +117,7 @@ export default function NotificationsScreen() {
     unreadCount,
     pendingFollowRequestCount,
     isLoading,
+    loadError,
     refreshNotifications,
     markNotificationRead,
     markAllNotificationsRead,
@@ -356,6 +358,26 @@ export default function NotificationsScreen() {
             <Text style={styles.messageText}>
               Loading notifications...
             </Text>
+          </View>
+        ) : loadError &&
+          visibleNotifications.length === 0 &&
+          visiblePendingFollowRequests.length === 0 ? (
+          <View style={styles.messageContainer}>
+            <Text style={styles.messageTitle}>
+              Couldn’t load notifications
+            </Text>
+
+            <Text style={styles.messageText}>
+              Check your connection and try again.
+            </Text>
+
+            <PrimaryButton
+              title="Try Again"
+              onPress={() => {
+                void refreshNotifications();
+              }}
+              style={styles.retryButton}
+            />
           </View>
         ) : visibleNotifications.length === 0 &&
           visiblePendingFollowRequests.length === 0 ? (
@@ -677,6 +699,12 @@ const styles = StyleSheet.create({
     marginTop: 8,
     color: COLORS.tertiaryText,
     textAlign: 'center',
+  },
+
+  retryButton: {
+    alignSelf: 'stretch',
+    marginTop: 20,
+    marginHorizontal: 20,
   },
 
   followRequestsSection: {

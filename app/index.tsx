@@ -1,3 +1,4 @@
+import PrimaryButton from '@/components/primary-button';
 import { useOnboardingCollection } from '@/context/onboarding-collection-context';
 import { useProfile } from '@/context/profile-context';
 import { useAuth } from '@/hooks/use-auth';
@@ -5,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import {
   createCollection,
   getCollections,
+  hasPublishedCollection,
   publishCollection,
   updateCollection,
 } from '@/lib/supabase/collections';
@@ -16,6 +18,7 @@ import { router } from 'expo-router';
 import {
   useEffect,
   useRef,
+  useState,
 } from 'react';
 import {
   ActivityIndicator,
@@ -37,6 +40,9 @@ export default function IndexScreen() {
   const {
     profile,
     isProfileLoading,
+    hasProfileLoadError,
+    retryProfileLoad,
+    updateProfile,
   } = useProfile();
 
   const {
@@ -53,10 +59,22 @@ export default function IndexScreen() {
   const isProcessingPendingPublish =
     useRef(false);
 
+  const [
+    hasLegacyOnboardingCheckError,
+    setHasLegacyOnboardingCheckError,
+  ] = useState(false);
+
+  const [
+    legacyOnboardingCheckAttempt,
+    setLegacyOnboardingCheckAttempt,
+  ] = useState(0);
+
   useEffect(() => {
     if (
       isAuthLoading ||
-      isOnboardingCollectionLoading
+      isOnboardingCollectionLoading ||
+      hasProfileLoadError ||
+      hasLegacyOnboardingCheckError
     ) {
       return;
     }
@@ -251,10 +269,53 @@ export default function IndexScreen() {
 
           if (profile.hasCompletedOnboarding) {
             router.replace('/(tabs)');
-          } else {
-            router.replace('/onboarding');
+            return;
           }
 
+          if (!user) {
+            return;
+          }
+
+          try {
+            const hasPublishedTop3 =
+              await hasPublishedCollection(
+                user.id
+              );
+
+            if (!isMounted) {
+              return;
+            }
+
+            if (hasPublishedTop3) {
+              await updateProfile({
+                hasCompletedOnboarding: true,
+              });
+
+              if (!isMounted) {
+                return;
+              }
+
+              router.replace('/(tabs)');
+              return;
+            }
+          } catch (error) {
+            if (__DEV__) {
+              console.log(
+                'Failed to verify legacy onboarding state:',
+                error
+              );
+            }
+
+            if (isMounted) {
+              setHasLegacyOnboardingCheckError(
+                true
+              );
+            }
+
+            return;
+          }
+
+          router.replace('/onboarding');
           return;
         }
 
@@ -314,20 +375,78 @@ export default function IndexScreen() {
     clearAuthIntent,
     clearOnboardingCollection,
     clearPendingPublish,
+    hasLegacyOnboardingCheckError,
+    hasProfileLoadError,
     isAuthenticated,
     isAuthLoading,
     isOnboardingCollectionLoading,
     isPendingPublish,
     isProfileLoading,
+    legacyOnboardingCheckAttempt,
     onboardingCollection,
     profile.hasCompletedOnboarding,
+    updateProfile,
     user,
   ]);
+
+  function retryLegacyOnboardingCheck() {
+    setHasLegacyOnboardingCheckError(false);
+    setLegacyOnboardingCheckAttempt(
+      (currentAttempt) =>
+        currentAttempt + 1
+    );
+  }
 
   const isFinishingOnboardingAccount =
     isAuthenticated &&
     Boolean(onboardingCollection) &&
     isPendingPublish;
+
+  if (
+    isAuthenticated &&
+    hasProfileLoadError
+  ) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorTitle}>
+          Couldn&apos;t load your profile
+        </Text>
+
+        <Text style={styles.errorDescription}>
+          Check your connection and try again.
+        </Text>
+
+        <PrimaryButton
+          title="Try Again"
+          onPress={retryProfileLoad}
+          style={styles.errorAction}
+        />
+      </View>
+    );
+  }
+
+  if (
+    isAuthenticated &&
+    hasLegacyOnboardingCheckError
+  ) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorTitle}>
+          Couldn&apos;t load your account
+        </Text>
+
+        <Text style={styles.errorDescription}>
+          Check your connection and try again.
+        </Text>
+
+        <PrimaryButton
+          title="Try Again"
+          onPress={retryLegacyOnboardingCheck}
+          style={styles.errorAction}
+        />
+      </View>
+    );
+  }
 
   if (!isFinishingOnboardingAccount) {
     return (
@@ -371,6 +490,36 @@ const styles = StyleSheet.create({
   splashIcon: {
     width: SPLASH_ICON_SIZE,
     height: SPLASH_ICON_SIZE,
+  },
+
+  errorContainer: {
+    flex: 1,
+    backgroundColor: '#FAFAFA',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+
+  errorTitle: {
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: '700',
+    color: '#222222',
+    textAlign: 'center',
+  },
+
+  errorDescription: {
+    marginTop: 10,
+    maxWidth: 320,
+    fontSize: 16,
+    lineHeight: 24,
+    color: '#666666',
+    textAlign: 'center',
+  },
+
+  errorAction: {
+    alignSelf: 'stretch',
+    marginTop: 24,
   },
 
   container: {

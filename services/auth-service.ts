@@ -348,15 +348,33 @@ export async function getSession(): Promise<
   Session | null
 > {
   const {
-    data,
-    error,
+    data: sessionData,
+    error: sessionError,
   } = await supabase.auth.getSession();
 
-  if (error) {
-    throw error;
+  if (sessionError) {
+    throw sessionError;
   }
 
-  return data.session;
+  const currentSession =
+    sessionData.session;
+
+  if (!currentSession) {
+    return null;
+  }
+
+  const {
+    data: refreshedData,
+    error: refreshError,
+  } = await supabase.auth.refreshSession(
+    currentSession
+  );
+
+  if (refreshError) {
+    throw refreshError;
+  }
+
+  return refreshedData.session;
 }
 
 export async function signOut() {

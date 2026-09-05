@@ -175,6 +175,27 @@ export async function getCollections(
   );
 }
 
+export async function hasPublishedCollection(
+  userId: string
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('collections')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('status', 'published')
+    .is('removed_at', null)
+    .not('published_at', 'is', null)
+    .limit(1);
+
+  if (error) {
+    throw new Error(
+      `Failed to check published collections: ${error.message}`
+    );
+  }
+
+  return (data?.length ?? 0) > 0;
+}
+
 export async function getPublishedPosts(): Promise<
   Post[]
 > {

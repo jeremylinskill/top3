@@ -1,4 +1,5 @@
 import FollowButton from '@/components/follow-button';
+import PrimaryButton from '@/components/primary-button';
 import TasteMatchBadge from '@/components/taste-match-badge';
 import Top3Card from '@/components/top3-card';
 import UserAvatar from '@/components/user-avatar';
@@ -40,6 +41,7 @@ type ProfileScreenContentProps = {
   isLoadingFollowState?: boolean;
 
   onToggleFollow?: () => void;
+  onCreateTop3?: () => void;
   onFollowersPress?: () => void;
   onFollowingPress?: () => void;
   onTasteMatchPress?: () => void;
@@ -73,6 +75,7 @@ export default function ProfileScreenContent({
   isLoadingFollowState = false,
 
   onToggleFollow,
+  onCreateTop3,
   onFollowersPress,
   onFollowingPress,
   onTasteMatchPress,
@@ -240,14 +243,24 @@ export default function ProfileScreenContent({
         ) : publishedPosts.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateTitle}>
-              Nothing published yet
+              {isCurrentUser
+                ? 'Nothing published'
+                : 'Nothing published yet'}
             </Text>
 
             <Text style={styles.emptyStateText}>
               {isCurrentUser
-                ? 'Complete and publish a Top 3 to show it on your profile.'
+                ? 'Publish a Top 3 to see it here.'
                 : 'This person has not published any Top 3s yet.'}
             </Text>
+
+            {isCurrentUser && onCreateTop3 ? (
+              <PrimaryButton
+                title="Create a Top 3"
+                onPress={onCreateTop3}
+                style={styles.emptyStateAction}
+              />
+            ) : null}
           </View>
         ) : (
           <View style={styles.postList}>
@@ -413,5 +426,10 @@ const styles = StyleSheet.create({
     marginTop: SPACING.sm,
     color: COLORS.tertiaryText,
     textAlign: 'center',
+  },
+
+  emptyStateAction: {
+    alignSelf: 'stretch',
+    marginTop: SPACING.lg,
   },
 });
