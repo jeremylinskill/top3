@@ -77,7 +77,8 @@ function routeFromNotificationData(
   }
 
   if (
-    type === 'follow' &&
+    (type === 'follow' ||
+      type === 'follow_request_accepted') &&
     actorUserId
   ) {
     router.push({

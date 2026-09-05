@@ -47,6 +47,9 @@ function getNotificationMessage(
     case 'follow':
       return 'started following you.';
 
+    case 'follow_request_accepted':
+      return 'accepted your follow request.';
+
     default:
       return 'interacted with your profile.';
   }
@@ -191,7 +194,9 @@ export default function NotificationsScreen() {
       }
 
       if (
-        notification.type === 'follow'
+        notification.type === 'follow' ||
+        notification.type ===
+          'follow_request_accepted'
       ) {
         router.push({
           pathname: '/public-profile',
@@ -590,6 +595,9 @@ export default function NotificationsScreen() {
                             ) : notification.type ===
                               'follow' ? (
                               'started following you.'
+                            ) : notification.type ===
+                              'follow_request_accepted' ? (
+                              'accepted your follow request.'
                             ) : (
                               'interacted with your profile.'
                             )}
@@ -681,12 +689,12 @@ const styles = StyleSheet.create({
 
   sectionTitle: {
     ...TYPOGRAPHY.sectionTitle,
+    paddingHorizontal: 20,
   },
 
   followRequestRow: {
-    minHeight: 118,
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 14,
     borderBottomWidth:
@@ -721,13 +729,14 @@ const styles = StyleSheet.create({
   followRequestActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: 12,
-    gap: 12,
+    flexShrink: 0,
+    marginLeft: 8,
+    gap: 4,
   },
 
   acceptButton: {
-    width: 92,
-    minHeight: 38,
+    minWidth: 76,
+    minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 12,
@@ -742,8 +751,8 @@ const styles = StyleSheet.create({
   },
 
   declineIconButton: {
-    width: 38,
-    height: 38,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
