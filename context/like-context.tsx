@@ -14,6 +14,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { AppState } from 'react-native';
@@ -53,6 +54,9 @@ export function LikeProvider({
 
   const [isLoading, setIsLoading] =
     useState(true);
+
+  const pendingPostIdsRef =
+    useRef<Set<string>>(new Set());
 
   const userId = user?.id;
 
@@ -104,6 +108,8 @@ export function LikeProvider({
   );
 
   useEffect(() => {
+    pendingPostIdsRef.current.clear();
+
     let isCancelled = false;
 
     async function loadLikes() {
@@ -202,17 +208,23 @@ export function LikeProvider({
       if (
         !userId ||
         !postId ||
-        likedPostIds.includes(postId)
+        likedPostIds.includes(postId) ||
+        pendingPostIdsRef.current.has(postId)
       ) {
         return;
       }
 
       const currentUserId = userId;
 
-      setLikedPostIds((currentIds) => [
-        ...currentIds,
-        postId,
-      ]);
+      pendingPostIdsRef.current.add(postId);
+
+      setLikedPostIds((currentIds) => {
+        if (currentIds.includes(postId)) {
+          return currentIds;
+        }
+
+        return [...currentIds, postId];
+      });
 
       setLikeCounts((currentCounts) => ({
         ...currentCounts,
@@ -250,6 +262,8 @@ export function LikeProvider({
               (currentCounts[postId] ?? 1) - 1
             ),
           }));
+        } finally {
+          pendingPostIdsRef.current.delete(postId);
         }
       }
 
@@ -263,12 +277,15 @@ export function LikeProvider({
       if (
         !userId ||
         !postId ||
-        !likedPostIds.includes(postId)
+        !likedPostIds.includes(postId) ||
+        pendingPostIdsRef.current.has(postId)
       ) {
         return;
       }
 
       const currentUserId = userId;
+
+      pendingPostIdsRef.current.add(postId);
 
       setLikedPostIds((currentIds) =>
         currentIds.filter(
@@ -310,6 +327,8 @@ export function LikeProvider({
             [postId]:
               (currentCounts[postId] ?? 0) + 1,
           }));
+        } finally {
+          pendingPostIdsRef.current.delete(postId);
         }
       }
 
@@ -320,6 +339,10 @@ export function LikeProvider({
 
   const toggleLike = useCallback(
     (postId: string) => {
+      if (pendingPostIdsRef.current.has(postId)) {
+        return;
+      }
+
       if (isLiked(postId)) {
         unlikePost(postId);
         return;

@@ -55,10 +55,16 @@ export async function createLike(
 ): Promise<void> {
   const { error } = await supabase
     .from('likes')
-    .insert({
-      user_id: userId,
-      collection_id: collectionId,
-    });
+    .upsert(
+      {
+        user_id: userId,
+        collection_id: collectionId,
+      },
+      {
+        onConflict: 'user_id,collection_id',
+        ignoreDuplicates: true,
+      }
+    );
 
   if (error) {
     throw new Error(
