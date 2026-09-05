@@ -1,5 +1,6 @@
 import ActionSheet from '@/components/action-sheet';
 import PageHeader from '@/components/page-header';
+import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
 import UserAvatar from '@/components/user-avatar';
 import { COLORS } from '@/constants/colors';
@@ -40,6 +41,11 @@ export default function BlockedUsersScreen() {
     useState(true);
 
   const [
+    hasLoadError,
+    setHasLoadError,
+  ] = useState(false);
+
+  const [
     unblockingUserId,
     setUnblockingUserId,
   ] = useState<string | null>(null);
@@ -61,12 +67,14 @@ export default function BlockedUsersScreen() {
     useCallback(async () => {
       if (blockedUserIds.length === 0) {
         setBlockedProfiles([]);
+        setHasLoadError(false);
         setIsLoadingProfiles(false);
         return;
       }
 
       try {
         setIsLoadingProfiles(true);
+        setHasLoadError(false);
 
         const profiles =
           await getProfilesByIds(
@@ -75,12 +83,15 @@ export default function BlockedUsersScreen() {
 
         setBlockedProfiles(profiles);
       } catch (error) {
-        console.error(
-          'Failed to load blocked user profiles:',
-          error
-        );
+        if (__DEV__) {
+          console.log(
+            'Failed to load blocked user profiles:',
+            error
+          );
+        }
 
         setBlockedProfiles([]);
+        setHasLoadError(true);
       } finally {
         setIsLoadingProfiles(false);
       }
@@ -182,6 +193,32 @@ export default function BlockedUsersScreen() {
             <Text style={styles.loadingText}>
               Loading blocked users…
             </Text>
+          </View>
+        ) : hasLoadError ? (
+          <View style={styles.emptyState}>
+            <View style={styles.emptyIcon}>
+              <Ionicons
+                name="cloud-offline-outline"
+                size={28}
+                color={COLORS.tertiaryText}
+              />
+            </View>
+
+            <Text style={styles.emptyTitle}>
+              Couldn’t load blocked users
+            </Text>
+
+            <Text style={styles.emptyText}>
+              Check your connection and try again.
+            </Text>
+
+            <PrimaryButton
+              title="Try Again"
+              onPress={() => {
+                void loadBlockedProfiles();
+              }}
+              style={styles.retryButton}
+            />
           </View>
         ) : visibleProfiles.length === 0 ? (
           <View style={styles.emptyState}>
@@ -414,6 +451,11 @@ const styles = StyleSheet.create({
     marginTop: SPACING.sm,
     color: COLORS.tertiaryText,
     textAlign: 'center',
+  },
+
+  retryButton: {
+    alignSelf: 'stretch',
+    marginTop: SPACING.lg,
   },
 
   card: {

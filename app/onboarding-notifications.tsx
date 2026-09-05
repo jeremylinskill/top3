@@ -207,10 +207,12 @@ export default function OnboardingNotificationsScreen() {
         );
       }
     } catch (error) {
-      console.error(
-        'Failed to enable push notifications:',
-        error
-      );
+      if (__DEV__) {
+        console.log(
+          'Failed to enable push notifications:',
+          error
+        );
+      }
     } finally {
       setIsEnabling(false);
       enterApp();
@@ -246,10 +248,12 @@ export default function OnboardingNotificationsScreen() {
         false
       );
     } catch (error) {
-      console.error(
-        'Failed to disable push notifications during onboarding:',
-        error
-      );
+      if (__DEV__) {
+        console.log(
+          'Failed to disable push notifications during onboarding:',
+          error
+        );
+      }
     } finally {
       setIsSkipping(false);
       enterApp();

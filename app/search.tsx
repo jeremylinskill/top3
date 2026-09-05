@@ -433,10 +433,12 @@ export default function SearchScreen() {
           setSeenSuggestionIds([]);
           setIsLoadingSuggestions(false);
         } catch (error) {
-          console.warn(
-            'Failed to load provider suggestions:',
-            error
-          );
+          if (__DEV__) {
+            console.log(
+              'Failed to load provider suggestions:',
+              error
+            );
+          }
 
           if (isMounted) {
             setSuggestionPool([]);
@@ -567,10 +569,12 @@ export default function SearchScreen() {
 
         await loadProviderSuggestions(categoryId);
       } catch (error) {
-        console.warn(
-          'Failed to load community suggestions. Falling back to provider suggestions.',
-          error
-        );
+        if (__DEV__) {
+          console.log(
+            'Failed to load community suggestions. Falling back to provider suggestions.',
+            error
+          );
+        }
 
         await loadProviderSuggestions(categoryId);
       }
@@ -663,7 +667,7 @@ export default function SearchScreen() {
 
       if (!searchProvider) {
         if (__DEV__) {
-          console.warn(
+          console.log(
             `No search provider exists for: ${categoryId}`
           );
         }
@@ -711,7 +715,7 @@ export default function SearchScreen() {
         }
 
         if (__DEV__) {
-          console.warn(
+          console.log(
             `${categoryName} search failed:`,
             error
           );
@@ -951,7 +955,7 @@ function chooseSuggestion(
       setActiveTrailerUrl(embedUrl);
     } catch (error) {
       if (__DEV__) {
-        console.warn(
+        console.log(
           `Failed to open trailer for ${item.title}:`,
           error
         );

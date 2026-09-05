@@ -16,8 +16,11 @@ import {
 import {
   useEffect,
   useRef,
+  useState,
 } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -177,6 +180,14 @@ export default function CreateTopicScreen() {
   const hasHandledRequestedTopic =
     useRef(false);
 
+  const isCreatingRef =
+    useRef(false);
+
+  const [
+    creatingCollectionKey,
+    setCreatingCollectionKey,
+  ] = useState<string | null>(null);
+
 
   const category =
     TOP3_CATEGORIES.find(
@@ -250,9 +261,12 @@ export default function CreateTopicScreen() {
   async function chooseCollection(
     topic?: Top3Topic
   ) {
+    if (isCreatingRef.current) {
+      return;
+    }
+
     const topicName =
       topic?.name;
-
 
     const existingCollection =
       findExistingCollection(
@@ -261,12 +275,10 @@ export default function CreateTopicScreen() {
         topicName
       );
 
-
     if (existingCollection) {
       selectList(
         existingCollection.id
       );
-
 
       router.push({
         pathname: '/collection',
@@ -276,10 +288,8 @@ export default function CreateTopicScreen() {
         },
       });
 
-
       return;
     }
-
 
     const title =
       buildCollectionTitle(
@@ -287,23 +297,47 @@ export default function CreateTopicScreen() {
         topic?.id
       );
 
+    const collectionKey =
+      topic?.id ?? 'general';
 
-    const listId =
-      await createList({
-        category:
-          selectedCategory.id,
-        topic:
-          topicName,
-        title,
+    isCreatingRef.current = true;
+
+    setCreatingCollectionKey(
+      collectionKey
+    );
+
+    try {
+      const listId =
+        await createList({
+          category:
+            selectedCategory.id,
+          topic:
+            topicName,
+          title,
+        });
+
+      router.push({
+        pathname: '/collection',
+        params: {
+          listId,
+        },
       });
+    } catch (error) {
+      if (__DEV__) {
+        console.log(
+          'Failed to create collection:',
+          error
+        );
+      }
 
-
-    router.push({
-      pathname: '/collection',
-      params: {
-        listId,
-      },
-    });
+      Alert.alert(
+        'Couldn’t create this Top 3',
+        'Check your connection and try again.'
+      );
+    } finally {
+      isCreatingRef.current = false;
+      setCreatingCollectionKey(null);
+    }
   }
 
 
@@ -384,6 +418,9 @@ export default function CreateTopicScreen() {
           onPress={() =>
             chooseCollection()
           }
+          disabled={
+            creatingCollectionKey !== null
+          }
           accessibilityRole="button"
           accessibilityLabel={
             overallIsPublished
@@ -411,11 +448,18 @@ export default function CreateTopicScreen() {
           </View>
 
 
-          <Ionicons
-            name="chevron-forward"
-            size={20}
-            color="#777777"
-          />
+          {creatingCollectionKey ===
+          'general' ? (
+            <ActivityIndicator
+              size="small"
+            />
+          ) : (
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color="#777777"
+            />
+          )}
         </Pressable>
 
 
@@ -478,6 +522,10 @@ export default function CreateTopicScreen() {
                             topic
                           )
                         }
+                        disabled={
+                          creatingCollectionKey !==
+                          null
+                        }
                         accessibilityRole="button"
                         accessibilityLabel={
                           isPublished
@@ -490,6 +538,13 @@ export default function CreateTopicScreen() {
                           }>
                           {topic.name}
                         </Text>
+
+                        {creatingCollectionKey ===
+                        topic.id ? (
+                          <ActivityIndicator
+                            size="small"
+                          />
+                        ) : null}
 
 
                       </Pressable>

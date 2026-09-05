@@ -51,10 +51,12 @@ export async function getRecentSearches(
         item.trim().length > 0
     );
   } catch (error) {
-    console.error(
-      'Failed to load recent searches:',
-      error
-    );
+    if (__DEV__) {
+      console.log(
+        'Failed to load recent searches:',
+        error
+      );
+    }
 
     return [];
   }
@@ -102,10 +104,12 @@ export async function saveRecentSearch(
 
     return nextSearches;
   } catch (error) {
-    console.error(
-      'Failed to save recent search:',
-      error
-    );
+    if (__DEV__) {
+      console.log(
+        'Failed to save recent search:',
+        error
+      );
+    }
 
     return [];
   }
@@ -127,9 +131,11 @@ export async function clearRecentSearches(
       )
     );
   } catch (error) {
-    console.error(
-      'Failed to clear recent searches:',
-      error
-    );
+    if (__DEV__) {
+      console.log(
+        'Failed to clear recent searches:',
+        error
+      );
+    }
   }
 }

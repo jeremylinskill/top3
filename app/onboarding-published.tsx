@@ -150,6 +150,16 @@ export default function OnboardingPublishedScreen() {
   ] = useState(false);
 
   const [
+    hasPublishedPostLoadError,
+    setHasPublishedPostLoadError,
+  ] = useState(false);
+
+  const [
+    publishedPostLoadAttempt,
+    setPublishedPostLoadAttempt,
+  ] = useState(0);
+
+  const [
     activeView,
     setActiveView,
   ] = useState<OnboardingView>('lists');
@@ -422,6 +432,7 @@ export default function OnboardingPublishedScreen() {
 
     async function loadLatestPublishedPost() {
       setIsLoadingPublishedPost(true);
+      setHasPublishedPostLoadError(false);
 
 
       try {
@@ -439,15 +450,19 @@ export default function OnboardingPublishedScreen() {
         setFetchedPublishedPost(
           publishedPosts[0] ?? null
         );
+        setHasPublishedPostLoadError(false);
       } catch (error) {
-        console.error(
-          'Failed to load published onboarding collection:',
-          error
-        );
+        if (__DEV__) {
+          console.log(
+            'Failed to load published onboarding collection:',
+            error
+          );
+        }
 
 
         if (!isCancelled) {
           setFetchedPublishedPost(null);
+          setHasPublishedPostLoadError(true);
         }
       } finally {
         if (!isCancelled) {
@@ -465,6 +480,7 @@ export default function OnboardingPublishedScreen() {
     };
   }, [
     localPublishedPost,
+    publishedPostLoadAttempt,
     user,
   ]);
 
@@ -625,10 +641,12 @@ export default function OnboardingPublishedScreen() {
         }
 
 
-        console.warn(
-          'Failed to load onboarding Overall Top 3 suggestions:',
-          error
-        );
+        if (__DEV__) {
+          console.log(
+            'Failed to load onboarding Overall Top 3 suggestions:',
+            error
+          );
+        }
 
 
         if (!isCancelled) {
@@ -831,6 +849,15 @@ export default function OnboardingPublishedScreen() {
   }
 
 
+  function retryPublishedPostLoad() {
+    setHasPublishedPostLoadError(false);
+    setPublishedPostLoadAttempt(
+      (currentAttempt) =>
+        currentAttempt + 1
+    );
+  }
+
+
   function continueOnboarding() {
     if (activeView === 'lists') {
       changeView('overall');
@@ -854,6 +881,32 @@ export default function OnboardingPublishedScreen() {
           <ActivityIndicator
             size="large"
             color="#222222"
+          />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+
+  if (
+    !publishedPost &&
+    hasPublishedPostLoadError
+  ) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.emptyContent}>
+          <Text style={styles.title}>
+            Couldn&apos;t load your Top 3
+          </Text>
+
+          <Text style={styles.loadErrorText}>
+            Check your connection and try again.
+          </Text>
+
+          <PrimaryButton
+            title="Try Again"
+            onPress={retryPublishedPostLoad}
+            style={styles.loadErrorAction}
           />
         </View>
       </SafeAreaView>
@@ -1816,5 +1869,17 @@ const styles = StyleSheet.create({
     borderTopWidth:
       StyleSheet.hairlineWidth,
     borderTopColor: '#DDDDDD',
+  },
+
+  loadErrorText: {
+    ...TYPOGRAPHY.body,
+    marginTop: 8,
+    color: '#777777',
+    textAlign: 'center',
+  },
+
+  loadErrorAction: {
+    alignSelf: 'stretch',
+    marginTop: 24,
   },
 });

@@ -18,10 +18,12 @@ async function invokeVideoGameSearch(
     );
 
   if (error) {
-    console.error(
-      'Video Game Edge Function invocation failed:',
-      error
-    );
+    if (__DEV__) {
+      console.log(
+        'Video Game Edge Function invocation failed:',
+        error
+      );
+    }
 
     throw new Error(
       'Video game search is temporarily unavailable.'
@@ -32,10 +34,12 @@ async function invokeVideoGameSearch(
     data as VideoGameSearchResponse | null;
 
   if (response?.error) {
-    console.error(
-      'Video Game Edge Function returned an error:',
-      response.error
-    );
+    if (__DEV__) {
+      console.log(
+        'Video Game Edge Function returned an error:',
+        response.error
+      );
+    }
 
     throw new Error(
       response.error
@@ -47,10 +51,12 @@ async function invokeVideoGameSearch(
       response?.results
     )
   ) {
-    console.error(
-      'Video Game Edge Function returned an invalid response:',
-      data
-    );
+    if (__DEV__) {
+      console.log(
+        'Video Game Edge Function returned an invalid response:',
+        data
+      );
+    }
 
     throw new Error(
       'Video game search returned an invalid response.'

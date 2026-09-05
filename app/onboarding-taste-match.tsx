@@ -16,6 +16,7 @@ import {
   useState,
 } from 'react';
 import {
+  ActivityIndicator,
   Animated,
   Easing,
   StyleSheet,
@@ -48,6 +49,21 @@ export default function OnboardingTasteMatchScreen() {
     fetchedPublishedCollection,
     setFetchedPublishedCollection,
   ] = useState<Top3List | null>(null);
+
+  const [
+    isLoadingPublishedCollection,
+    setIsLoadingPublishedCollection,
+  ] = useState(false);
+
+  const [
+    hasPublishedCollectionLoadError,
+    setHasPublishedCollectionLoadError,
+  ] = useState(false);
+
+  const [
+    publishedCollectionLoadAttempt,
+    setPublishedCollectionLoadAttempt,
+  ] = useState(0);
 
   const [animatedScore, setAnimatedScore] =
     useState(0);
@@ -92,6 +108,11 @@ export default function OnboardingTasteMatchScreen() {
 
 
     async function loadLatestPublishedCollection() {
+      setIsLoadingPublishedCollection(true);
+      setHasPublishedCollectionLoadError(
+        false
+      );
+
       try {
         const publishedPosts =
           await getPublishedPostsByUser(
@@ -108,15 +129,29 @@ export default function OnboardingTasteMatchScreen() {
           publishedPosts[0]?.collection ??
             null
         );
-      } catch (error) {
-        console.error(
-          'Failed to load published collection for Taste Match:',
-          error
+        setHasPublishedCollectionLoadError(
+          false
         );
+      } catch (error) {
+        if (__DEV__) {
+          console.log(
+            'Failed to load published collection for Taste Match:',
+            error
+          );
+        }
 
 
         if (!isCancelled) {
           setFetchedPublishedCollection(null);
+          setHasPublishedCollectionLoadError(
+            true
+          );
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoadingPublishedCollection(
+            false
+          );
         }
       }
     }
@@ -130,8 +165,20 @@ export default function OnboardingTasteMatchScreen() {
     };
   }, [
     currentList,
+    publishedCollectionLoadAttempt,
     user,
   ]);
+
+
+  function retryPublishedCollectionLoad() {
+    setHasPublishedCollectionLoadError(
+      false
+    );
+    setPublishedCollectionLoadAttempt(
+      (currentAttempt) =>
+        currentAttempt + 1
+    );
+  }
 
 
   const userItems =
@@ -323,6 +370,51 @@ export default function OnboardingTasteMatchScreen() {
 
   function continueOnboarding() {
     router.push('/onboarding-notifications');
+  }
+
+
+  if (
+    !activeCollection &&
+    isLoadingPublishedCollection
+  ) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadState}>
+          <ActivityIndicator
+            size="large"
+            color="#222222"
+          />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+
+  if (
+    !activeCollection &&
+    hasPublishedCollectionLoadError
+  ) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadState}>
+          <Text style={styles.loadErrorTitle}>
+            Couldn&apos;t load your Taste Match
+          </Text>
+
+          <Text style={styles.loadErrorText}>
+            Check your connection and try again.
+          </Text>
+
+          <PrimaryButton
+            title="Try Again"
+            onPress={
+              retryPublishedCollectionLoad
+            }
+            style={styles.loadErrorAction}
+          />
+        </View>
+      </SafeAreaView>
+    );
   }
 
 
@@ -730,5 +822,30 @@ const styles = StyleSheet.create({
     borderTopWidth:
       StyleSheet.hairlineWidth,
     borderTopColor: '#DDDDDD',
+  },
+
+  loadState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+  },
+
+  loadErrorTitle: {
+    ...TYPOGRAPHY.sectionTitle,
+    color: '#222222',
+    textAlign: 'center',
+  },
+
+  loadErrorText: {
+    ...TYPOGRAPHY.body,
+    marginTop: 8,
+    color: '#777777',
+    textAlign: 'center',
+  },
+
+  loadErrorAction: {
+    alignSelf: 'stretch',
+    marginTop: 24,
   },
 });

@@ -36,6 +36,8 @@ type StartOnboardingCollectionInput = {
 type OnboardingCollectionContextValue = {
   collection: OnboardingCollection | null;
   isLoading: boolean;
+  hasLoadError: boolean;
+  retryLoad: () => void;
   isPendingPublish: boolean;
   authIntent: OnboardingAuthIntent;
   startCollection: (
@@ -102,10 +104,25 @@ export function OnboardingCollectionProvider({
   const [isLoading, setIsLoading] =
     useState(true);
 
+  const [
+    hasLoadError,
+    setHasLoadError,
+  ] = useState(false);
+
+  const [
+    loadAttempt,
+    setLoadAttempt,
+  ] = useState(0);
+
   useEffect(() => {
     let isCancelled = false;
 
     async function loadOnboardingState() {
+      if (!isCancelled) {
+        setIsLoading(true);
+        setHasLoadError(false);
+      }
+
       try {
         const [
           storedCollectionValue,
@@ -136,19 +153,65 @@ export function OnboardingCollectionProvider({
           );
 
         if (!hasPersistedAuthHandoff) {
-          await AsyncStorage.multiRemove([
-            STORAGE_KEY,
-            PENDING_PUBLISH_STORAGE_KEY,
-            AUTH_INTENT_STORAGE_KEY,
-          ]);
+          setCollection(null);
+          setIsPendingPublish(false);
+          setAuthIntentState(null);
+
+          try {
+            await AsyncStorage.multiRemove([
+              STORAGE_KEY,
+              PENDING_PUBLISH_STORAGE_KEY,
+              AUTH_INTENT_STORAGE_KEY,
+            ]);
+          } catch (cleanupError) {
+            if (__DEV__) {
+              console.log(
+                'Failed to clear incomplete onboarding collection state:',
+                cleanupError
+              );
+            }
+          }
 
           return;
         }
 
-        const storedCollection =
-          JSON.parse(
-            storedCollectionValue as string
-          ) as OnboardingCollection;
+        let storedCollection:
+          OnboardingCollection;
+
+        try {
+          storedCollection =
+            JSON.parse(
+              storedCollectionValue as string
+            ) as OnboardingCollection;
+        } catch (parseError) {
+          if (__DEV__) {
+            console.log(
+              'Failed to parse onboarding collection state:',
+              parseError
+            );
+          }
+
+          setCollection(null);
+          setIsPendingPublish(false);
+          setAuthIntentState(null);
+
+          try {
+            await AsyncStorage.multiRemove([
+              STORAGE_KEY,
+              PENDING_PUBLISH_STORAGE_KEY,
+              AUTH_INTENT_STORAGE_KEY,
+            ]);
+          } catch (cleanupError) {
+            if (__DEV__) {
+              console.log(
+                'Failed to clear invalid onboarding collection state:',
+                cleanupError
+              );
+            }
+          }
+
+          return;
+        }
 
         setCollection(storedCollection);
         setIsPendingPublish(true);
@@ -158,23 +221,17 @@ export function OnboardingCollectionProvider({
             null
           >
         );
+        setHasLoadError(false);
       } catch (error) {
-        console.error(
-          'Failed to load onboarding collection state:',
-          error
-        );
-
-        try {
-          await AsyncStorage.multiRemove([
-            STORAGE_KEY,
-            PENDING_PUBLISH_STORAGE_KEY,
-            AUTH_INTENT_STORAGE_KEY,
-          ]);
-        } catch (cleanupError) {
-          console.error(
-            'Failed to clear invalid onboarding collection state:',
-            cleanupError
+        if (__DEV__) {
+          console.log(
+            'Failed to load onboarding collection state:',
+            error
           );
+        }
+
+        if (!isCancelled) {
+          setHasLoadError(true);
         }
       } finally {
         if (!isCancelled) {
@@ -188,7 +245,19 @@ export function OnboardingCollectionProvider({
     return () => {
       isCancelled = true;
     };
-  }, []);
+  }, [loadAttempt]);
+
+  function retryLoad() {
+    setIsLoading(true);
+    setHasLoadError(false);
+    setCollection(null);
+    setIsPendingPublish(false);
+    setAuthIntentState(null);
+    setLoadAttempt(
+      (currentAttempt) =>
+        currentAttempt + 1
+    );
+  }
 
   function startCollection(
     input: StartOnboardingCollectionInput
@@ -378,6 +447,8 @@ export function OnboardingCollectionProvider({
       () => ({
         collection,
         isLoading,
+        hasLoadError,
+        retryLoad,
         isPendingPublish,
         authIntent,
         startCollection,
@@ -394,6 +465,7 @@ export function OnboardingCollectionProvider({
       [
         authIntent,
         collection,
+        hasLoadError,
         isLoading,
         isPendingPublish,
       ]

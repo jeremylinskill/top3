@@ -349,10 +349,12 @@ export function ProfileProvider({
           'account_created'
         );
       } catch (error) {
-        console.error(
-          'Failed to load or create profile:',
-          error
-        );
+        if (__DEV__) {
+          console.log(
+            'Failed to load or create profile:',
+            error
+          );
+        }
 
         if (isCancelled) {
           return;

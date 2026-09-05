@@ -3,10 +3,12 @@ import PageHeader from '@/components/page-header';
 import PrimaryButton from '@/components/primary-button';
 import RankedItemCard from '@/components/ranked-item-card';
 import ScreenHeader from '@/components/screen-header';
+import { COLORS } from '@/constants/colors';
 import {
   CategoryId,
   TOP3_CATEGORIES,
 } from '@/constants/top3-categories';
+import { TYPOGRAPHY } from '@/constants/typography';
 import { useOnboardingCollection } from '@/context/onboarding-collection-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
@@ -47,6 +49,7 @@ type CollectionActionSheet =
       rank: number;
       itemTitle: string;
     }
+  | { type: 'publish-error' }
   | { type: 'delete-error' }
   | { type: 'delete-confirmation' }
   | null;
@@ -61,6 +64,8 @@ export default function CollectionScreen() {
     currentList,
     lists,
     isCollectionsLoaded,
+    hasCollectionsLoadError,
+    retryCollectionsLoad,
     selectList,
     setItems: setCurrentListItems,
     removeItemAtRank: removeCurrentListItemAtRank,
@@ -144,6 +149,9 @@ export default function CollectionScreen() {
   const [isDeleting, setIsDeleting] =
     useState(false);
 
+  const [isPublishing, setIsPublishing] =
+    useState(false);
+
   const [
     collectionActionSheet,
     setCollectionActionSheet,
@@ -201,16 +209,46 @@ export default function CollectionScreen() {
           type: 'drag-instruction',
         });
       } catch (error) {
-        console.error(
-          'Failed to load drag instruction status:',
-          error
-        );
+        if (__DEV__) {
+          console.log(
+            'Failed to load drag instruction status:',
+            error
+          );
+        }
       }
     }
 
 
     showDragInstruction();
   }, [selectedItemCount]);
+
+
+  if (
+    requestedListId &&
+    hasCollectionsLoadError
+  ) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScreenHeader showBackButton />
+
+        <View style={styles.loadErrorState}>
+          <Text style={styles.loadErrorTitle}>
+            Couldn’t load this Top 3
+          </Text>
+
+          <Text style={styles.loadErrorText}>
+            Check your connection and try again.
+          </Text>
+
+          <PrimaryButton
+            title="Try Again"
+            onPress={retryCollectionsLoad}
+            style={styles.loadErrorButton}
+          />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
 
   if (
@@ -374,10 +412,13 @@ function openSearch(rank: number) {
 
 
   async function publishCollection() {
-    if (!canPublish) {
+    if (
+      !canPublish ||
+      isPublishing ||
+      isDeleting
+    ) {
       return;
     }
-
 
     if (isOnboardingCollection) {
       markPendingPublish();
@@ -389,11 +430,25 @@ function openSearch(rank: number) {
       return;
     }
 
+    setIsPublishing(true);
 
-    publishCurrentList();
+    try {
+      await publishCurrentList();
+      router.replace('/(tabs)');
+    } catch (error) {
+      if (__DEV__) {
+        console.log(
+          'Failed to publish collection:',
+          error
+        );
+      }
 
-
-    router.replace('/(tabs)');
+      setCollectionActionSheet({
+        type: 'publish-error',
+      });
+    } finally {
+      setIsPublishing(false);
+    }
   }
 
 
@@ -401,7 +456,8 @@ function openSearch(rank: number) {
     if (
       isOnboardingCollection ||
       !persistedCollection ||
-      isDeleting
+      isDeleting ||
+      isPublishing
     ) {
       return;
     }
@@ -430,7 +486,8 @@ function openSearch(rank: number) {
     if (
       isOnboardingCollection ||
       !persistedCollection ||
-      isDeleting
+      isDeleting ||
+      isPublishing
     ) {
       return;
     }
@@ -519,6 +576,19 @@ function openSearch(rank: number) {
         ];
         break;
       }
+
+      case 'publish-error':
+        collectionActionSheetTitle =
+          'Could not publish Top 3';
+        collectionActionSheetMessage =
+          'Please try again.';
+        collectionActionSheetActions = [
+          {
+            label: 'OK',
+            onPress: closeCollectionActionSheet,
+          },
+        ];
+        break;
 
       case 'delete-error':
         collectionActionSheetTitle =
@@ -735,9 +805,17 @@ function openSearch(rank: number) {
 
       <View style={styles.bottomBar}>
         <PrimaryButton
-          title="Publish Top 3"
+          title={
+            isPublishing
+              ? 'Publishing…'
+              : 'Publish Top 3'
+          }
           onPress={publishCollection}
-          disabled={!canPublish || isDeleting}
+          disabled={
+            !canPublish ||
+            isDeleting ||
+            isPublishing
+          }
         />
 
         {!isOnboardingCollection &&
@@ -747,14 +825,18 @@ function openSearch(rank: number) {
               styles.deleteButton,
               pressed &&
                 !isDeleting &&
+                !isPublishing &&
                 styles.deleteButtonPressed,
             ]}
             onPress={confirmDeleteCollection}
-            disabled={isDeleting}
+            disabled={
+              isDeleting || isPublishing
+            }
             accessibilityRole="button"
             accessibilityLabel="Delete list"
             accessibilityState={{
-              disabled: isDeleting,
+              disabled:
+                isDeleting || isPublishing,
             }}>
             <Text style={styles.deleteButtonText}>
               {isDeleting
@@ -784,6 +866,31 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F8F8',
   },
 
+
+  loadErrorState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+
+  loadErrorTitle: {
+    ...TYPOGRAPHY.sectionTitle,
+    textAlign: 'center',
+    color: COLORS.text,
+  },
+
+  loadErrorText: {
+    ...TYPOGRAPHY.body,
+    marginTop: 8,
+    textAlign: 'center',
+    color: COLORS.secondaryText,
+  },
+
+  loadErrorButton: {
+    alignSelf: 'stretch',
+    marginTop: 20,
+  },
 
   loadingState: {
     flex: 1,

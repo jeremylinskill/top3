@@ -19,21 +19,12 @@ function getPushNotificationsEnabledKey(
 }
 
 export async function hasSeenWelcome() {
-  try {
-    const storedValue =
-      await AsyncStorage.getItem(
-        HAS_SEEN_WELCOME_KEY
-      );
-
-    return storedValue === 'true';
-  } catch (error) {
-    console.error(
-      'Failed to load welcome status:',
-      error
+  const storedValue =
+    await AsyncStorage.getItem(
+      HAS_SEEN_WELCOME_KEY
     );
 
-    return false;
-  }
+  return storedValue === 'true';
 }
 
 export async function markWelcomeAsSeen() {
@@ -68,21 +59,12 @@ export async function resetWelcomeStatus() {
 }
 
 export async function isAwaitingEmailVerification() {
-  try {
-    const storedValue =
-      await AsyncStorage.getItem(
-        AWAITING_EMAIL_VERIFICATION_KEY
-      );
-
-    return storedValue === 'true';
-  } catch (error) {
-    console.error(
-      'Failed to load email verification status:',
-      error
+  const storedValue =
+    await AsyncStorage.getItem(
+      AWAITING_EMAIL_VERIFICATION_KEY
     );
 
-    return false;
-  }
+  return storedValue === 'true';
 }
 
 export async function setAwaitingEmailVerification(
@@ -111,18 +93,9 @@ export async function setAwaitingEmailVerification(
 }
 
 export async function getAwaitingEmailVerificationEmail() {
-  try {
-    return await AsyncStorage.getItem(
-      AWAITING_EMAIL_VERIFICATION_EMAIL_KEY
-    );
-  } catch (error) {
-    console.error(
-      'Failed to load email verification email:',
-      error
-    );
-
-    return null;
-  }
+  return AsyncStorage.getItem(
+    AWAITING_EMAIL_VERIFICATION_EMAIL_KEY
+  );
 }
 
 export async function setAwaitingEmailVerificationEmail(

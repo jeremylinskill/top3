@@ -55,10 +55,12 @@ export default function AuthCallbackScreen() {
           router.replace('/');
         }
       } catch (error) {
-        console.error(
-          'Failed to complete email confirmation:',
-          error
-        );
+        if (__DEV__) {
+          console.log(
+            'Failed to complete email confirmation:',
+            error
+          );
+        }
 
         if (isMounted) {
           setErrorMessage(

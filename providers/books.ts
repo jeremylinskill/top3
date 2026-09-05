@@ -790,10 +790,12 @@ export async function getPopularBooks(
       throw error;
     }
 
-    console.warn(
-      'Google Books suggestions failed.',
-      error
-    );
+    if (__DEV__) {
+      console.log(
+        'Google Books suggestions failed.',
+        error
+      );
+    }
 
     return [];
   }
@@ -926,10 +928,12 @@ export async function searchBooks(
       throw error;
     }
 
-    console.warn(
-      'Google Books search failed. Using Open Library.',
-      error
-    );
+    if (__DEV__) {
+      console.log(
+        'Google Books search failed. Using Open Library.',
+        error
+      );
+    }
 
     return searchFallback(
       trimmedQuery,

@@ -1,4 +1,5 @@
 import { AuthGate } from '@/components/auth-gate';
+import { BlockGate } from '@/components/block-gate';
 import { AudioPreviewProvider } from '@/context/audio-preview-context';
 import { BlockProvider } from '@/context/block-context';
 import { CommentProvider } from '@/context/comment-context';
@@ -130,10 +131,12 @@ function NotificationResponseController() {
         }
       })
       .catch((error) => {
-        console.error(
-          'Failed to read last notification response:',
-          error
-        );
+        if (__DEV__) {
+          console.log(
+            'Failed to read last notification response:',
+            error
+          );
+        }
       });
 
     return () => {
@@ -159,12 +162,13 @@ export default function RootLayout() {
             <OnboardingCollectionProvider>
               <ProfileProvider>
                 <BlockProvider>
-                  <NotificationProvider>
-                    <FollowProvider>
-                      <LikeProvider>
-                        <CommentProvider>
-                          <Top3Provider>
-                            <AudioPreviewProvider>
+                  <BlockGate>
+                    <NotificationProvider>
+                      <FollowProvider>
+                        <LikeProvider>
+                          <CommentProvider>
+                            <Top3Provider>
+                              <AudioPreviewProvider>
                               <ThemeProvider
                                 value={
                                   colorScheme === 'dark'
@@ -208,12 +212,13 @@ export default function RootLayout() {
 
                                 <StatusBar style="auto" />
                               </ThemeProvider>
-                            </AudioPreviewProvider>
-                          </Top3Provider>
-                        </CommentProvider>
-                      </LikeProvider>
-                    </FollowProvider>
-                  </NotificationProvider>
+                              </AudioPreviewProvider>
+                            </Top3Provider>
+                          </CommentProvider>
+                        </LikeProvider>
+                      </FollowProvider>
+                    </NotificationProvider>
+                  </BlockGate>
                 </BlockProvider>
               </ProfileProvider>
             </OnboardingCollectionProvider>

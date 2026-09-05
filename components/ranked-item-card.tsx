@@ -254,7 +254,7 @@ export default function RankedItemCard({
         }
       } catch (error) {
         if (__DEV__) {
-          console.warn(
+          console.log(
             `Failed to check trailer availability for ${itemTitle}:`,
             error
           );
@@ -328,7 +328,7 @@ export default function RankedItemCard({
       setActiveTrailerUrl(embedUrl);
     } catch (error) {
       if (__DEV__) {
-        console.warn(
+        console.log(
           `Failed to open trailer for ${item.title}:`,
           error
         );

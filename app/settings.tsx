@@ -116,10 +116,12 @@ export default function SettingsScreen() {
 
         setIsPushEnabled(isRegistered);
       } catch (error) {
-        console.error(
-          'Failed to load push notification status:',
-          error
-        );
+        if (__DEV__) {
+          console.log(
+            'Failed to load push notification status:',
+            error
+          );
+        }
       }
     }, [user?.id]);
 

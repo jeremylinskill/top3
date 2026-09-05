@@ -48,16 +48,20 @@ export function subscribeToTableChanges({
           return;
 
         case 'CHANNEL_ERROR':
-          console.warn(
-            `Realtime subscription error for ${table}:`,
-            error
-          );
+          if (__DEV__) {
+            console.log(
+              `Realtime subscription error for ${table}:`,
+              error
+            );
+          }
           return;
 
         case 'TIMED_OUT':
-          console.warn(
-            `Realtime subscription timed out for ${table}.`
-          );
+          if (__DEV__) {
+            console.log(
+              `Realtime subscription timed out for ${table}.`
+            );
+          }
           return;
 
         default:

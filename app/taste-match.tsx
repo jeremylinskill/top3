@@ -1,4 +1,5 @@
 import FollowButton from '@/components/follow-button';
+import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
 import {
   COLORS,
@@ -243,8 +244,26 @@ export default function TasteMatchScreen() {
   const [isLoading, setIsLoading] =
     useState(true);
 
+  const [
+    isLoadingViewedUser,
+    setIsLoadingViewedUser,
+  ] = useState(true);
+
+  const [
+    hasViewedUserLoadError,
+    setHasViewedUserLoadError,
+  ] = useState(false);
+
+  const [
+    hasPostsLoadError,
+    setHasPostsLoadError,
+  ] = useState(false);
+
+  const [loadAttempt, setLoadAttempt] =
+    useState(0);
+
   const [viewedUser, setViewedUser] =
-  useState<UserProfile | null>(null);
+    useState<UserProfile | null>(null);
 
   const [animatedScore, setAnimatedScore] =
     useState(0);
@@ -259,6 +278,9 @@ export default function TasteMatchScreen() {
   let isMounted = true;
 
   async function loadViewedUser() {
+    setIsLoadingViewedUser(true);
+    setHasViewedUserLoadError(false);
+
     if (
       !userId ||
       userId === profile.id ||
@@ -266,16 +288,36 @@ export default function TasteMatchScreen() {
     ) {
       if (isMounted) {
         setViewedUser(null);
+        setIsLoadingViewedUser(false);
       }
       return;
     }
 
-    const profiles = await getPublicProfilesByIds([
-      userId,
-    ]);
+    try {
+      const profiles =
+        await getPublicProfilesByIds([
+          userId,
+        ]);
 
-    if (isMounted) {
-      setViewedUser(profiles[0] ?? null);
+      if (isMounted) {
+        setViewedUser(profiles[0] ?? null);
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.log(
+          'Failed to load taste match profile:',
+          error
+        );
+      }
+
+      if (isMounted) {
+        setViewedUser(null);
+        setHasViewedUserLoadError(true);
+      }
+    } finally {
+      if (isMounted) {
+        setIsLoadingViewedUser(false);
+      }
     }
   }
 
@@ -286,6 +328,7 @@ export default function TasteMatchScreen() {
   };
 }, [
   isViewedUserBlocked,
+  loadAttempt,
   profile.id,
   userId,
 ]);
@@ -295,6 +338,7 @@ export default function TasteMatchScreen() {
 
     async function loadPosts() {
       setIsLoading(true);
+      setHasPostsLoadError(false);
 
       if (isViewedUserBlocked) {
         if (isMounted) {
@@ -336,13 +380,16 @@ export default function TasteMatchScreen() {
           setAllPosts(mergedPosts);
         }
       } catch (error) {
-        console.error(
-          'Failed to load taste match:',
-          error
-        );
+        if (__DEV__) {
+          console.log(
+            'Failed to load taste match:',
+            error
+          );
+        }
 
         if (isMounted) {
           setAllPosts([]);
+          setHasPostsLoadError(true);
         }
       } finally {
         if (isMounted) {
@@ -358,6 +405,7 @@ export default function TasteMatchScreen() {
     };
   }, [
     isViewedUserBlocked,
+    loadAttempt,
     userId,
   ]);
 
@@ -537,6 +585,60 @@ return getTasteRecommendationForUser({
         </Text>
 
       </View>
+    );
+  }
+
+  if (isLoadingViewedUser) {
+    return (
+      <SafeAreaView
+        style={styles.container}
+        edges={['top', 'left', 'right']}>
+        <ScreenHeader showBackButton />
+
+        <View style={styles.stateContainer}>
+          <ActivityIndicator
+            size="small"
+            color={COLORS.tertiaryText}
+          />
+
+          <Text style={styles.loadingText}>
+            Calculating your taste match…
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (
+    hasViewedUserLoadError ||
+    hasPostsLoadError
+  ) {
+    return (
+      <SafeAreaView
+        style={styles.container}
+        edges={['top', 'left', 'right']}>
+        <ScreenHeader showBackButton />
+
+        <View style={styles.stateContainer}>
+          <Text style={styles.stateTitle}>
+            Couldn’t load this Taste Match
+          </Text>
+
+          <Text style={styles.stateText}>
+            Check your connection and try again.
+          </Text>
+
+          <PrimaryButton
+            title="Try Again"
+            onPress={() =>
+              setLoadAttempt(
+                (current) => current + 1
+              )
+            }
+            style={styles.retryButton}
+          />
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -795,6 +897,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 70,
     paddingHorizontal: SPACING.xxl,
+  },
+
+  retryButton: {
+    alignSelf: 'stretch',
+    marginTop: 20,
   },
 
   loadingText: {

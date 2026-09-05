@@ -1,6 +1,7 @@
 import ActionSheet, {
   ActionSheetAction,
 } from '@/components/action-sheet';
+import PrimaryButton from '@/components/primary-button';
 import UserAvatar from '@/components/user-avatar';
 import { AVATAR } from '@/constants/avatar';
 import { COLORS } from '@/constants/colors';
@@ -105,6 +106,7 @@ export default function CommentsSheet({
     loadCommentsForCollection,
     clearCommentsForCollection,
     isLoading,
+    hasLoadError,
   } = useComments();
 
   const [commentText, setCommentText] =
@@ -806,27 +808,71 @@ export default function CommentsSheet({
                 false
               }
               keyboardShouldPersistTaps="handled">
-              {comments.length === 0 ? (
+              {isLoading &&
+              comments.length === 0 ? (
                 <View
                   style={styles.emptyState}>
                   <Text
                     style={
                       styles.emptyStateTitle
                     }>
-                    {isLoading
-                      ? 'Loading comments…'
-                      : 'No comments yet'}
+                    Loading comments…
+                  </Text>
+                </View>
+              ) : hasLoadError &&
+                comments.length === 0 ? (
+                <View
+                  style={styles.emptyState}>
+                  <Ionicons
+                    name="cloud-offline-outline"
+                    size={34}
+                    color="#999999"
+                  />
+
+                  <Text
+                    style={
+                      styles.emptyStateTitle
+                    }>
+                    Couldn’t load comments
                   </Text>
 
-                  {!isLoading ? (
-                    <Text
-                      style={
-                        styles.emptyStateText
-                      }>
-                      Be the first to share your
-                      thoughts.
-                    </Text>
-                  ) : null}
+                  <Text
+                    style={
+                      styles.emptyStateText
+                    }>
+                    Check your connection and try
+                    again.
+                  </Text>
+
+                  <PrimaryButton
+                    title="Try Again"
+                    onPress={() => {
+                      if (collectionId) {
+                        void loadCommentsForCollection(
+                          collectionId
+                        );
+                      }
+                    }}
+                    style={styles.retryButton}
+                  />
+                </View>
+              ) : comments.length === 0 ? (
+                <View
+                  style={styles.emptyState}>
+                  <Text
+                    style={
+                      styles.emptyStateTitle
+                    }>
+                    No comments yet
+                  </Text>
+
+                  <Text
+                    style={
+                      styles.emptyStateText
+                    }>
+                    Be the first to share your
+                    thoughts.
+                  </Text>
                 </View>
               ) : (
                 <View
@@ -1191,6 +1237,11 @@ const styles = StyleSheet.create({
     marginTop: 7,
     color: '#777777',
     textAlign: 'center',
+  },
+
+  retryButton: {
+    alignSelf: 'stretch',
+    marginTop: 20,
   },
 
   composer: {

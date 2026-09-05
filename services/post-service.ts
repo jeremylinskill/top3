@@ -86,10 +86,12 @@ async function hydrateItem(
       rating: matchingItem.rating,
     };
   } catch (error) {
-    console.error(
-      `Failed to load artwork for ${item.title}:`,
-      error
-    );
+    if (__DEV__) {
+      console.log(
+        `Failed to load artwork for ${item.title}:`,
+        error
+      );
+    }
 
     hydratedItemCache.set(cacheKey, null);
 

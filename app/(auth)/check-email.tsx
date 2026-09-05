@@ -30,6 +30,16 @@ export default function CheckEmailScreen() {
   ] = useState<string | null>(null);
 
   const [
+    hasVerificationEmailLoadError,
+    setHasVerificationEmailLoadError,
+  ] = useState(false);
+
+  const [
+    verificationEmailLoadAttempt,
+    setVerificationEmailLoadAttempt,
+  ] = useState(0);
+
+  const [
     isEmailSentSheetVisible,
     setIsEmailSentSheetVisible,
   ] = useState(false);
@@ -53,11 +63,29 @@ export default function CheckEmailScreen() {
     let isMounted = true;
 
     async function loadVerificationEmail() {
-      const email =
-        await getAwaitingEmailVerificationEmail();
+      try {
+        const email =
+          await getAwaitingEmailVerificationEmail();
 
-      if (isMounted) {
-        setVerificationEmail(email);
+        if (isMounted) {
+          setVerificationEmail(email);
+          setHasVerificationEmailLoadError(
+            false
+          );
+        }
+      } catch (error) {
+        if (__DEV__) {
+          console.log(
+            'Unable to load verification email:',
+            error
+          );
+        }
+
+        if (isMounted) {
+          setHasVerificationEmailLoadError(
+            true
+          );
+        }
       }
     }
 
@@ -66,7 +94,15 @@ export default function CheckEmailScreen() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [verificationEmailLoadAttempt]);
+
+  function retryVerificationEmailLoad() {
+    setHasVerificationEmailLoadError(false);
+    setVerificationEmailLoadAttempt(
+      (currentAttempt) =>
+        currentAttempt + 1
+    );
+  }
 
   async function handleOpenEmail() {
     try {
@@ -238,6 +274,23 @@ export default function CheckEmailScreen() {
           </View>
         </View>
       </SafeAreaView>
+
+      <ActionSheet
+        visible={hasVerificationEmailLoadError}
+        title="Unable to load email address"
+        message="Please try again."
+        actions={[
+          {
+            label: 'Try Again',
+            onPress: retryVerificationEmailLoad,
+          },
+        ]}
+        onClose={() => {
+          setHasVerificationEmailLoadError(
+            false
+          );
+        }}
+      />
 
       <ActionSheet
         visible={isEmailSentSheetVisible}

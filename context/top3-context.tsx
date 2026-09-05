@@ -18,6 +18,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
@@ -33,6 +34,8 @@ type Top3ContextValue = {
   posts: Post[];
   currentList: Top3List | null;
   isCollectionsLoaded: boolean;
+  hasCollectionsLoadError: boolean;
+  retryCollectionsLoad: () => void;
   createList: (input: CreateListInput) => Promise<string>;
   selectList: (listId: string) => void;
   setItemAtRank: (
@@ -41,7 +44,7 @@ type Top3ContextValue = {
   ) => void;
   removeItemAtRank: (rank: number) => void;
   setItems: (items: Top3List['items']) => void;
-  publishCurrentList: () => void;
+  publishCurrentList: () => Promise<void>;
   deleteCurrentList: () => Promise<void>;
 };
 
@@ -105,6 +108,26 @@ export function Top3Provider({
   const [loadedUserId, setLoadedUserId] =
     useState<string | null>(null);
 
+  const [
+    hasCollectionsLoadError,
+    setHasCollectionsLoadError,
+  ] = useState(false);
+
+  const [
+    collectionsLoadAttempt,
+    setCollectionsLoadAttempt,
+  ] = useState(0);
+
+  const collectionItemSaveQueuesRef =
+    useRef<Map<string, Promise<void>>>(
+      new Map()
+    );
+
+  const collectionItemSaveRevisionRef =
+    useRef<Map<string, number>>(
+      new Map()
+    );
+
   const currentList = useMemo(
     () =>
       lists.find(
@@ -125,6 +148,7 @@ export function Top3Provider({
       setLists([]);
       setPosts([]);
       setCurrentListId('');
+      setHasCollectionsLoadError(false);
 
       if (!user) {
         return;
@@ -152,11 +176,14 @@ export function Top3Provider({
         setPosts(savedPosts);
         setCurrentListId('');
         setLoadedUserId(userId);
+        setHasCollectionsLoadError(false);
       } catch (error) {
-        console.error(
-          'Failed to load collections from Supabase:',
-          error
-        );
+        if (__DEV__) {
+          console.log(
+            'Failed to load collections from Supabase:',
+            error
+          );
+        }
 
         if (isCancelled) {
           return;
@@ -165,7 +192,8 @@ export function Top3Provider({
         setLists([]);
         setPosts([]);
         setCurrentListId('');
-        setLoadedUserId(userId);
+        setLoadedUserId(null);
+        setHasCollectionsLoadError(true);
       }
     }
 
@@ -174,7 +202,18 @@ export function Top3Provider({
     return () => {
       isCancelled = true;
     };
-  }, [user]);
+  }, [user, collectionsLoadAttempt]);
+
+  function retryCollectionsLoad() {
+    if (!user?.id) {
+      return;
+    }
+
+    setCollectionsLoadAttempt(
+      (currentAttempt) =>
+        currentAttempt + 1
+    );
+  }
 
   useEffect(() => {
     const userId = user?.id;
@@ -274,43 +313,21 @@ export function Top3Provider({
         existingList.id;
 
       if (existingList.title !== input.title) {
-        const now =
-          new Date().toISOString();
+        const savedList =
+          await updateCollection(
+            existingListId,
+            {
+              title: input.title,
+            }
+          );
 
         setLists((currentLists) =>
           currentLists.map((list) =>
             list.id === existingListId
-              ? {
-                  ...list,
-                  title: input.title,
-                  updatedAt: now,
-                }
+              ? savedList
               : list
           )
         );
-
-        try {
-          const savedList =
-            await updateCollection(
-              existingListId,
-              {
-                title: input.title,
-              }
-            );
-
-          setLists((currentLists) =>
-            currentLists.map((list) =>
-              list.id === existingListId
-                ? savedList
-                : list
-            )
-          );
-        } catch (error) {
-          console.error(
-            'Failed to update existing collection title:',
-            error
-          );
-        }
       }
 
       setCurrentListId(existingListId);
@@ -360,6 +377,78 @@ export function Top3Provider({
     }
   }
 
+  function queueCollectionItemsSave(
+    collectionId: string,
+    items: Top3List['items'],
+    onSaved?: (savedList: Top3List) => void
+  ) {
+    const nextRevision =
+      (collectionItemSaveRevisionRef.current.get(
+        collectionId
+      ) ?? 0) + 1;
+
+    collectionItemSaveRevisionRef.current.set(
+      collectionId,
+      nextRevision
+    );
+
+    const previousSave =
+      collectionItemSaveQueuesRef.current.get(
+        collectionId
+      ) ?? Promise.resolve();
+
+    const nextSave = previousSave
+      .catch(() => undefined)
+      .then(async () => {
+        const savedList = await updateCollection(
+          collectionId,
+          { items }
+        );
+
+        const latestRevision =
+          collectionItemSaveRevisionRef.current.get(
+            collectionId
+          );
+
+        if (latestRevision === nextRevision) {
+          setLists((currentLists) =>
+            currentLists.map((list) =>
+              list.id === collectionId
+                ? savedList
+                : list
+            )
+          );
+        }
+
+        onSaved?.(savedList);
+      })
+      .catch((error) => {
+        if (__DEV__) {
+          console.log(
+            'Failed to save collection items:',
+            error
+          );
+        }
+      });
+
+    collectionItemSaveQueuesRef.current.set(
+      collectionId,
+      nextSave
+    );
+
+    void nextSave.then(() => {
+      if (
+        collectionItemSaveQueuesRef.current.get(
+          collectionId
+        ) === nextSave
+      ) {
+        collectionItemSaveQueuesRef.current.delete(
+          collectionId
+        );
+      }
+    });
+  }
+
   function setItemAtRank(
     rank: number,
     item: Top3Item
@@ -405,21 +494,10 @@ export function Top3Provider({
       )
     );
 
-    async function saveItems() {
-      try {
-        const savedList = await updateCollection(
-          collectionId,
-          { items: nextItems }
-        );
-
-        setLists((currentLists) =>
-          currentLists.map((list) =>
-            list.id === collectionId
-              ? savedList
-              : list
-          )
-        );
-
+    queueCollectionItemsSave(
+      collectionId,
+      nextItems,
+      (savedList) => {
         if (
           !wasComplete &&
           isNowComplete
@@ -432,15 +510,8 @@ export function Top3Provider({
             }
           );
         }
-      } catch (error) {
-        console.error(
-          'Failed to save collection item:',
-          error
-        );
       }
-    }
-
-    saveItems();
+    );
   }
 
   function removeItemAtRank(rank: number) {
@@ -480,29 +551,10 @@ export function Top3Provider({
       )
     );
 
-    async function saveItems() {
-      try {
-        const savedList = await updateCollection(
-          collectionId,
-          { items: nextItems }
-        );
-
-        setLists((currentLists) =>
-          currentLists.map((list) =>
-            list.id === collectionId
-              ? savedList
-              : list
-          )
-        );
-      } catch (error) {
-        console.error(
-          'Failed to remove collection item:',
-          error
-        );
-      }
-    }
-
-    saveItems();
+    queueCollectionItemsSave(
+      collectionId,
+      nextItems
+    );
   }
 
   function setItems(
@@ -527,129 +579,101 @@ export function Top3Provider({
       )
     );
 
-    async function saveItems() {
-      try {
-        const savedList = await updateCollection(
-          collectionId,
-          { items }
-        );
-
-        setLists((currentLists) =>
-          currentLists.map((list) =>
-            list.id === collectionId
-              ? savedList
-              : list
-          )
-        );
-      } catch (error) {
-        console.error(
-          'Failed to reorder collection items:',
-          error
-        );
-      }
-    }
-
-    saveItems();
+    queueCollectionItemsSave(
+      collectionId,
+      items
+    );
   }
 
-  function publishCurrentList() {
+  async function publishCurrentList(): Promise<void> {
     if (!currentList) {
-      return;
+      throw new Error(
+        'A current collection is required to publish a collection.'
+      );
     }
 
     const collectionId = currentList.id;
     const wasAlreadyPublished =
       Boolean(currentList.publishedAt);
 
-    async function savePublishedCollection() {
-      try {
-        const savedList = await publishCollection(
-          collectionId
-        );
+    const savedList = await publishCollection(
+      collectionId
+    );
 
-        if (!savedList.publishedAt) {
-          throw new Error(
-            'Published collection is missing its published date.'
-          );
-        }
-
-        setLists((currentLists) =>
-          currentLists.map((list) =>
-            list.id === collectionId
-              ? savedList
-              : list
-          )
-        );
-
-        setPosts((currentPosts) => {
-          const existingPostIndex =
-            currentPosts.findIndex(
-              (post) =>
-                post.collection.id ===
-                  collectionId &&
-                post.authorId === profile.id
-            );
-
-          const nextPost: Post = {
-            id:
-              existingPostIndex >= 0
-                ? currentPosts[
-                    existingPostIndex
-                  ].id
-                : `post-${collectionId}`,
-            authorId: profile.id,
-            collection: savedList,
-            publishedAt: savedList.publishedAt!,
-            reactions:
-              existingPostIndex >= 0
-                ? currentPosts[
-                    existingPostIndex
-                  ].reactions
-                : 0,
-            comments:
-              existingPostIndex >= 0
-                ? currentPosts[
-                    existingPostIndex
-                  ].comments
-                : 0,
-          };
-
-          if (existingPostIndex < 0) {
-            return [
-              nextPost,
-              ...currentPosts,
-            ];
-          }
-
-          return currentPosts.map(
-            (post, index) =>
-              index === existingPostIndex
-                ? nextPost
-                : post
-          );
-        });
-
-        trackAnalyticsEvent(
-          wasAlreadyPublished
-            ? 'collection_edited'
-            : 'collection_published',
-          {
-            category: savedList.category,
-            rankCount:
-              savedList.items.filter(
-                (item) => item !== null
-              ).length,
-          }
-        );
-      } catch (error) {
-        console.error(
-          'Failed to publish collection in Supabase:',
-          error
-        );
-      }
+    if (!savedList.publishedAt) {
+      throw new Error(
+        'Published collection is missing its published date.'
+      );
     }
 
-    savePublishedCollection();
+    setLists((currentLists) =>
+      currentLists.map((list) =>
+        list.id === collectionId
+          ? savedList
+          : list
+      )
+    );
+
+    setPosts((currentPosts) => {
+      const existingPostIndex =
+        currentPosts.findIndex(
+          (post) =>
+            post.collection.id ===
+              collectionId &&
+            post.authorId === profile.id
+        );
+
+      const nextPost: Post = {
+        id:
+          existingPostIndex >= 0
+            ? currentPosts[
+                existingPostIndex
+              ].id
+            : `post-${collectionId}`,
+        authorId: profile.id,
+        collection: savedList,
+        publishedAt: savedList.publishedAt!,
+        reactions:
+          existingPostIndex >= 0
+            ? currentPosts[
+                existingPostIndex
+              ].reactions
+            : 0,
+        comments:
+          existingPostIndex >= 0
+            ? currentPosts[
+                existingPostIndex
+              ].comments
+            : 0,
+      };
+
+      if (existingPostIndex < 0) {
+        return [
+          nextPost,
+          ...currentPosts,
+        ];
+      }
+
+      return currentPosts.map(
+        (post, index) =>
+          index === existingPostIndex
+            ? nextPost
+            : post
+      );
+    });
+
+    trackAnalyticsEvent(
+      wasAlreadyPublished
+        ? 'collection_edited'
+        : 'collection_published',
+      {
+        category: savedList.category,
+        rankCount:
+          savedList.items.filter(
+            (item) => item !== null
+          ).length,
+      }
+    );
   }
 
 
@@ -687,6 +711,8 @@ export function Top3Provider({
         posts,
         currentList,
         isCollectionsLoaded,
+        hasCollectionsLoadError,
+        retryCollectionsLoad,
         createList,
         selectList,
         setItemAtRank,

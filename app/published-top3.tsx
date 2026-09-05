@@ -2,6 +2,7 @@ import ActionSheet, {
   ActionSheetAction,
 } from '@/components/action-sheet';
 import CommentsSheet from '@/components/comments-sheet';
+import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
 import Top3Card from '@/components/top3-card';
 import UserAvatar from '@/components/user-avatar';
@@ -77,6 +78,12 @@ export default function PublishedTop3Screen() {
   const [isLoadingPost, setIsLoadingPost] =
     useState(true);
 
+  const [hasLoadError, setHasLoadError] =
+    useState(false);
+
+  const [loadAttempt, setLoadAttempt] =
+    useState(0);
+
   const [isCommentsVisible, setIsCommentsVisible] =
     useState(false);
 
@@ -104,6 +111,7 @@ export default function PublishedTop3Screen() {
       }
 
       setIsLoadingPost(true);
+      setHasLoadError(false);
 
       try {
         const publishedPosts =
@@ -143,14 +151,17 @@ export default function PublishedTop3Screen() {
           }
         }
       } catch (error) {
-        console.error(
-          'Failed to load published Top 3:',
-          error
-        );
+        if (__DEV__) {
+          console.log(
+            'Failed to load published Top 3:',
+            error
+          );
+        }
 
         if (isMounted) {
           setPost(null);
           setAuthor(null);
+          setHasLoadError(true);
         }
       } finally {
         if (isMounted) {
@@ -164,7 +175,7 @@ export default function PublishedTop3Screen() {
     return () => {
       isMounted = false;
     };
-  }, [postId, profile]);
+  }, [postId, profile, loadAttempt]);
 
 
   if (isLoadingPost) {
@@ -181,6 +192,32 @@ export default function PublishedTop3Screen() {
           <Text style={styles.loadingText}>
             Loading Top 3…
           </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (hasLoadError) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScreenHeader showBackButton />
+
+        <View style={styles.messageContainer}>
+          <Text style={styles.messageTitle}>
+            Couldn’t load this Top 3
+          </Text>
+
+          <Text style={styles.messageText}>
+            Check your connection and try again.
+          </Text>
+
+          <PrimaryButton
+            title="Try Again"
+            onPress={() =>
+              setLoadAttempt((current) => current + 1)
+            }
+            style={styles.retryButton}
+          />
         </View>
       </SafeAreaView>
     );
@@ -690,6 +727,11 @@ const styles = StyleSheet.create({
     marginTop: 8,
     color: '#777777',
     textAlign: 'center',
+  },
+
+  retryButton: {
+    alignSelf: 'stretch',
+    marginTop: 20,
   },
 
   pressed: {

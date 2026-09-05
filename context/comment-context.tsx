@@ -48,6 +48,7 @@ type CommentContextValue = {
   commentCounts: CommentCounts;
   activeCollectionId: string | null;
   isLoading: boolean;
+  hasLoadError: boolean;
   isLoadingCommentCounts: boolean;
   loadCommentsForCollection: (
     collectionId: string
@@ -149,6 +150,11 @@ export function CommentProvider({
     useState(false);
 
   const [
+    hasLoadError,
+    setHasLoadError,
+  ] = useState(false);
+
+  const [
     isLoadingCommentCounts,
     setIsLoadingCommentCounts,
   ] = useState(false);
@@ -166,6 +172,7 @@ export function CommentProvider({
 
       setComments([]);
       setActiveCollectionId(null);
+      setHasLoadError(false);
       setIsLoading(false);
     }, []);
 
@@ -176,6 +183,7 @@ export function CommentProvider({
     setComments([]);
     setCommentCounts({});
     setActiveCollectionId(null);
+    setHasLoadError(false);
     setIsLoading(false);
     setIsLoadingCommentCounts(false);
   }, [user?.id]);
@@ -218,6 +226,7 @@ export function CommentProvider({
 
         setActiveCollectionId(collectionId);
         setComments([]);
+        setHasLoadError(false);
         setIsLoading(true);
 
         try {
@@ -246,6 +255,7 @@ export function CommentProvider({
             );
 
           setComments(mappedComments);
+          setHasLoadError(false);
 
           setCommentCounts(
             (currentCounts) => ({
@@ -262,12 +272,15 @@ export function CommentProvider({
             return;
           }
 
-          console.error(
-            'Failed to load comments:',
-            error
-          );
+          if (__DEV__) {
+            console.log(
+              'Failed to load comments:',
+              error
+            );
+          }
 
           setComments([]);
+          setHasLoadError(true);
         } finally {
           if (
             commentsRequestIdRef.current ===
@@ -350,10 +363,12 @@ export function CommentProvider({
           return;
         }
 
-        console.error(
-          'Failed to load comment counts:',
-          error
-        );
+        if (__DEV__) {
+          console.log(
+            'Failed to load comment counts:',
+            error
+          );
+        }
       } finally {
         if (
           countsRequestIdRef.current ===
@@ -821,6 +836,7 @@ export function CommentProvider({
       commentCounts,
       activeCollectionId,
       isLoading,
+      hasLoadError,
       isLoadingCommentCounts,
       loadCommentsForCollection,
       clearCommentsForCollection,
@@ -835,6 +851,7 @@ export function CommentProvider({
       commentCounts,
       activeCollectionId,
       isLoading,
+      hasLoadError,
       isLoadingCommentCounts,
       loadCommentsForCollection,
       clearCommentsForCollection,

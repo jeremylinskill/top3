@@ -191,10 +191,12 @@ async function storeAppleRefreshToken(
     );
 
   if (error) {
-    console.error(
-      'Apple auth token Edge Function invocation failed:',
-      error
-    );
+    if (__DEV__) {
+      console.log(
+        'Apple auth token Edge Function invocation failed:',
+        error
+      );
+    }
 
     return;
   }
@@ -206,11 +208,13 @@ async function storeAppleRefreshToken(
     response?.error ||
     !response?.success
   ) {
-    console.error(
-      'Apple auth token Edge Function returned an error:',
-      response?.error ??
-        'Invalid response.'
-    );
+    if (__DEV__) {
+      console.log(
+        'Apple auth token Edge Function returned an error:',
+        response?.error ??
+          'Invalid response.'
+      );
+    }
   }
 }
 

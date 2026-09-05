@@ -2,6 +2,7 @@ import ActionSheet, {
   ActionSheetAction,
 } from '@/components/action-sheet';
 import CommentsSheet from '@/components/comments-sheet';
+import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
 import SegmentedControl from '@/components/segmented-control';
 import Top3Card from '@/components/top3-card';
@@ -346,11 +347,18 @@ export default function CategoryFeedScreen() {
       normalizeValue(categoryId)
   );
 
+  const [hasLoadError, setHasLoadError] =
+    useState(false);
+
+  const [loadAttempt, setLoadAttempt] =
+    useState(0);
+
   useEffect(() => {
     let isMounted = true;
 
     async function loadPosts() {
       setIsLoading(true);
+      setHasLoadError(false);
 
       try {
         const publishedPosts =
@@ -374,13 +382,16 @@ if (isMounted) {
   setProfilesByUserId(nextProfilesByUserId);
 }
       } catch (error) {
-        console.error(
-          'Failed to load category feed:',
-          error
-        );
+        if (__DEV__) {
+          console.log(
+            'Failed to load category feed:',
+            error
+          );
+        }
 
         if (isMounted) {
           setAllPosts(posts);
+          setHasLoadError(posts.length === 0);
         }
       } finally {
         if (isMounted) {
@@ -394,7 +405,7 @@ if (isMounted) {
     return () => {
       isMounted = false;
     };
-  }, [posts]);
+  }, [posts, loadAttempt]);
 
   const filteredPosts = useMemo(() => {
     if (!categoryId) {
@@ -1401,7 +1412,7 @@ if (isMounted) {
       setActiveTrailerUrl(embedUrl);
     } catch (error) {
       if (__DEV__) {
-        console.warn(
+        console.log(
           `Failed to open trailer for ${item.title}:`,
           error
         );
@@ -1449,6 +1460,32 @@ if (isMounted) {
           <Text style={styles.loadingText}>
             Loading published Top 3s…
           </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (hasLoadError) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScreenHeader showBackButton />
+
+        <View style={styles.messageState}>
+          <Text style={styles.messageTitle}>
+            Couldn’t load this feed
+          </Text>
+
+          <Text style={styles.messageText}>
+            Check your connection and try again.
+          </Text>
+
+          <PrimaryButton
+            title="Try Again"
+            onPress={() =>
+              setLoadAttempt((current) => current + 1)
+            }
+            style={styles.retryButton}
+          />
         </View>
       </SafeAreaView>
     );
@@ -2338,6 +2375,11 @@ const styles = StyleSheet.create({
     marginTop: 8,
     color: '#777777',
     textAlign: 'center',
+  },
+
+  retryButton: {
+    alignSelf: 'stretch',
+    marginTop: 20,
   },
 
   trailerModal: {

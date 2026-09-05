@@ -1,3 +1,4 @@
+import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
 import { COLORS } from '@/constants/colors';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
@@ -61,6 +62,14 @@ export default function OverallTop3TopicsScreen() {
   const [isLoading, setIsLoading] =
     useState(true);
 
+  const [
+    hasLoadError,
+    setHasLoadError,
+  ] = useState(false);
+
+  const [loadAttempt, setLoadAttempt] =
+    useState(0);
+
   const category = TOP3_CATEGORIES.find(
     (item) =>
       normalizeValue(item.id) ===
@@ -72,6 +81,7 @@ export default function OverallTop3TopicsScreen() {
 
     async function loadPosts() {
       setIsLoading(true);
+      setHasLoadError(false);
 
       try {
         const publishedPosts =
@@ -81,13 +91,16 @@ export default function OverallTop3TopicsScreen() {
           setAllPosts(publishedPosts);
         }
       } catch (error) {
-        console.error(
-          'Failed to load Overall Top 3 topics:',
-          error
-        );
+        if (__DEV__) {
+          console.log(
+            'Failed to load Overall Top 3 topics:',
+            error
+          );
+        }
 
         if (isMounted) {
           setAllPosts([]);
+          setHasLoadError(true);
         }
       } finally {
         if (isMounted) {
@@ -101,7 +114,7 @@ export default function OverallTop3TopicsScreen() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [loadAttempt]);
 
   const topics = useMemo(() => {
     if (!categoryId) {
@@ -202,6 +215,34 @@ export default function OverallTop3TopicsScreen() {
           <Text style={styles.loadingText}>
             Loading topics…
           </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (hasLoadError) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScreenHeader showBackButton />
+
+        <View style={styles.messageState}>
+          <Text style={styles.messageTitle}>
+            Couldn’t load topics
+          </Text>
+
+          <Text style={styles.messageText}>
+            Check your connection and try again.
+          </Text>
+
+          <PrimaryButton
+            title="Try Again"
+            onPress={() =>
+              setLoadAttempt(
+                (current) => current + 1
+              )
+            }
+            style={styles.retryButton}
+          />
         </View>
       </SafeAreaView>
     );
@@ -472,6 +513,11 @@ const styles = StyleSheet.create({
     marginTop: 8,
     color: COLORS.tertiaryText,
     textAlign: 'center',
+  },
+
+  retryButton: {
+    alignSelf: 'stretch',
+    marginTop: 20,
   },
 
   loadingState: {

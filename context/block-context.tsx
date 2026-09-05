@@ -11,12 +11,15 @@ import {
     useContext,
     useEffect,
     useMemo,
+    useRef,
     useState,
 } from 'react';
 
 interface BlockContextValue {
   blockedUserIds: string[];
   isLoading: boolean;
+  isReady: boolean;
+  hasLoadError: boolean;
   isBlocked: (userId: string) => boolean;
   blockUser: (userId: string) => Promise<void>;
   unblockUser: (userId: string) => Promise<void>;
@@ -40,34 +43,94 @@ export function BlockProvider({
   const [isLoading, setIsLoading] =
     useState(false);
 
+  const [
+    loadedUserId,
+    setLoadedUserId,
+  ] = useState<string | null>(null);
+
+  const loadedUserIdRef =
+    useRef<string | null>(null);
+
+  const refreshRequestIdRef =
+    useRef(0);
+
+  const [
+    hasLoadError,
+    setHasLoadError,
+  ] = useState(false);
+
+  const isReady =
+    !isAuthenticated ||
+    !user?.id ||
+    loadedUserId === user.id;
+
   const refreshBlocks =
     useCallback(async () => {
+      const requestId =
+        ++refreshRequestIdRef.current;
+
       if (
         !isAuthenticated ||
         !user?.id
       ) {
+        loadedUserIdRef.current = null;
+        setLoadedUserId(null);
         setBlockedUserIds([]);
+        setHasLoadError(false);
+        setIsLoading(false);
         return;
       }
 
-      try {
-        setIsLoading(true);
+      const isInitialUserLoad =
+        loadedUserIdRef.current !== user.id;
 
+      if (isInitialUserLoad) {
+        setBlockedUserIds([]);
+      }
+
+      setIsLoading(true);
+      setHasLoadError(false);
+
+      try {
         const nextBlockedUserIds =
           await getBlockedUserIds(user.id);
+
+        if (
+          refreshRequestIdRef.current !==
+          requestId
+        ) {
+          return;
+        }
 
         setBlockedUserIds(
           nextBlockedUserIds
         );
-      } catch (error) {
-        console.error(
-          'Failed to load blocked users:',
-          error
-        );
 
-        setBlockedUserIds([]);
+        loadedUserIdRef.current = user.id;
+        setLoadedUserId(user.id);
+      } catch (error) {
+        if (
+          refreshRequestIdRef.current !==
+          requestId
+        ) {
+          return;
+        }
+
+        if (__DEV__) {
+          console.log(
+            'Failed to load blocked users:',
+            error
+          );
+        }
+
+        setHasLoadError(true);
       } finally {
-        setIsLoading(false);
+        if (
+          refreshRequestIdRef.current ===
+          requestId
+        ) {
+          setIsLoading(false);
+        }
       }
     }, [
       isAuthenticated,
@@ -211,6 +274,8 @@ export function BlockProvider({
       () => ({
         blockedUserIds,
         isLoading,
+        isReady,
+        hasLoadError,
         isBlocked,
         blockUser,
         unblockUser,
@@ -219,6 +284,8 @@ export function BlockProvider({
       [
         blockedUserIds,
         isLoading,
+        isReady,
+        hasLoadError,
         isBlocked,
         blockUser,
         unblockUser,

@@ -1,4 +1,5 @@
 import ActionSheet from '@/components/action-sheet';
+import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
 import SearchInput from '@/components/search-input';
 import SegmentedControl from '@/components/segmented-control';
@@ -86,6 +87,8 @@ export default function SocialScreen() {
     cancelFollowRequest,
     removeFollower,
     isLoading,
+    hasLoadError,
+    retryFollowState,
   } = useFollow();
 
   const [activeTab, setActiveTab] =
@@ -118,6 +121,16 @@ export default function SocialScreen() {
     setIsLoadingProfiles,
   ] = useState(true);
 
+  const [
+    hasProfileLoadError,
+    setHasProfileLoadError,
+  ] = useState(false);
+
+  const [
+    profileLoadAttempt,
+    setProfileLoadAttempt,
+  ] = useState(0);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -132,10 +145,12 @@ export default function SocialScreen() {
           setAllPosts(publishedPosts);
         }
       } catch (error) {
-        console.error(
-          'Failed to load social taste matches:',
-          error
-        );
+        if (__DEV__) {
+          console.log(
+            'Failed to load social taste matches:',
+            error
+          );
+        }
 
         if (isMounted) {
           setAllPosts([]);
@@ -169,6 +184,7 @@ export default function SocialScreen() {
         if (isMounted) {
           socialProfilesByIdRef.current = {};
           setSocialProfilesById({});
+          setHasProfileLoadError(false);
           setIsLoadingProfiles(false);
         }
 
@@ -185,6 +201,7 @@ export default function SocialScreen() {
 
       if (missingUserIds.length === 0) {
         if (isMounted) {
+          setHasProfileLoadError(false);
           setIsLoadingProfiles(false);
         }
 
@@ -197,6 +214,7 @@ export default function SocialScreen() {
         ).length === 0;
 
       if (isInitialLoad) {
+        setHasProfileLoadError(false);
         setIsLoadingProfiles(true);
       }
 
@@ -209,6 +227,8 @@ export default function SocialScreen() {
         if (isMounted) {
           const loadedProfiles =
             buildProfileRecord(profiles);
+
+          setHasProfileLoadError(false);
 
           setSocialProfilesById(
             (currentProfiles) => {
@@ -225,10 +245,12 @@ export default function SocialScreen() {
           );
         }
       } catch (error) {
-        console.error(
-          'Failed to load social profiles:',
-          error
-        );
+        if (__DEV__) {
+          console.log(
+            'Failed to load social profiles:',
+            error
+          );
+        }
 
         if (
           isMounted &&
@@ -236,6 +258,7 @@ export default function SocialScreen() {
         ) {
           socialProfilesByIdRef.current = {};
           setSocialProfilesById({});
+          setHasProfileLoadError(true);
         }
       } finally {
         if (
@@ -252,7 +275,11 @@ export default function SocialScreen() {
     return () => {
       isMounted = false;
     };
-  }, [followedUserIds, followerUserIds]);
+  }, [
+    followedUserIds,
+    followerUserIds,
+    profileLoadAttempt,
+  ]);
 
   const followingUsers = useMemo<
     UserProfile[]
@@ -531,6 +558,35 @@ export default function SocialScreen() {
               Loading…
             </Text>
           </View>
+        ) : hasLoadError ||
+        hasProfileLoadError ? (
+          <View style={styles.emptyState}>
+            <Ionicons
+              name="cloud-offline-outline"
+              size={34}
+              color="#999999"
+            />
+
+            <Text style={styles.emptyTitle}>
+              Couldn’t load your connections
+            </Text>
+
+            <Text style={styles.emptyText}>
+              Check your connection and try again.
+            </Text>
+
+            <PrimaryButton
+              title="Try Again"
+              onPress={() => {
+                retryFollowState();
+
+                setProfileLoadAttempt(
+                  (current) => current + 1
+                );
+              }}
+              style={styles.retryButton}
+            />
+          </View>
         ) : filteredUsers.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons
@@ -801,6 +857,11 @@ const styles = StyleSheet.create({
     marginTop: 8,
     color: '#777777',
     textAlign: 'center',
+  },
+
+  retryButton: {
+    alignSelf: 'stretch',
+    marginTop: 20,
   },
 
   userList: {

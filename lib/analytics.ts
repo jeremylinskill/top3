@@ -42,9 +42,11 @@ export function initializeAnalytics() {
     process.env.EXPO_PUBLIC_AMPLITUDE_API_KEY;
 
   if (!apiKey) {
-    console.warn(
-      'Amplitude analytics is not configured.'
-    );
+    if (__DEV__) {
+      console.log(
+        'Amplitude analytics is not configured.'
+      );
+    }
 
     return;
   }

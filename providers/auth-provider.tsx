@@ -41,6 +41,8 @@ interface AuthContextValue {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
+  hasAuthLoadError: boolean;
+  retryAuthLoad: () => void;
   isAuthenticated: boolean;
   signOut: () => Promise<void>;
 }
@@ -59,6 +61,16 @@ export function AuthProvider({
   const [isLoading, setIsLoading] =
     useState(true);
 
+  const [
+    hasAuthLoadError,
+    setHasAuthLoadError,
+  ] = useState(false);
+
+  const [
+    authLoadAttempt,
+    setAuthLoadAttempt,
+  ] = useState(0);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -72,6 +84,8 @@ export function AuthProvider({
         });
 
       try {
+        setHasAuthLoadError(false);
+
         const [
           currentSession,
         ] = await Promise.all([
@@ -81,14 +95,21 @@ export function AuthProvider({
 
         if (isMounted) {
           setSession(currentSession);
+          setHasAuthLoadError(false);
         }
       } catch (error) {
-        console.error(
-          'Failed to initialize authentication:',
-          error
-        );
+        if (__DEV__) {
+          console.log(
+            'Failed to initialize authentication:',
+            error
+          );
+        }
 
         await minimumLoadingDuration;
+
+        if (isMounted) {
+          setHasAuthLoadError(true);
+        }
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -112,6 +133,15 @@ export function AuthProvider({
       isMounted = false;
       subscription.unsubscribe();
     };
+  }, [authLoadAttempt]);
+
+  const retryAuthLoad = useCallback(() => {
+    setIsLoading(true);
+    setHasAuthLoadError(false);
+    setAuthLoadAttempt(
+      (currentAttempt) =>
+        currentAttempt + 1
+    );
   }, []);
 
   const sessionUser =
@@ -141,7 +171,10 @@ export function AuthProvider({
   useEffect(() => {
     const userId = user?.id;
 
-    if (!userId) {
+    if (
+      isLoading ||
+      !userId
+    ) {
       return;
     }
 
@@ -187,10 +220,12 @@ export function AuthProvider({
           platform: Platform.OS,
         });
       } catch (error) {
-        console.error(
-          'Failed to sync push token with authenticated user:',
-          error
-        );
+        if (__DEV__) {
+          console.log(
+            'Failed to sync push token with authenticated user:',
+            error
+          );
+        }
       }
     }
 
@@ -199,7 +234,10 @@ export function AuthProvider({
     return () => {
       isCancelled = true;
     };
-  }, [user?.id]);
+  }, [
+    isLoading,
+    user?.id,
+  ]);
 
   const signOut = useCallback(async () => {
     try {
@@ -212,10 +250,12 @@ export function AuthProvider({
         );
       }
     } catch (error) {
-      console.error(
-        'Failed to remove push token during sign out:',
-        error
-      );
+      if (__DEV__) {
+        console.log(
+          'Failed to remove push token during sign out:',
+          error
+        );
+      }
     }
 
     await signOutFromService();
@@ -227,6 +267,8 @@ export function AuthProvider({
         user,
         session,
         isLoading,
+        hasAuthLoadError,
+        retryAuthLoad,
         isAuthenticated:
           Boolean(user),
         signOut,
@@ -235,6 +277,8 @@ export function AuthProvider({
         user,
         session,
         isLoading,
+        hasAuthLoadError,
+        retryAuthLoad,
         signOut,
       ]
     );

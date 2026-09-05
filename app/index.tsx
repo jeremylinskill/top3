@@ -34,6 +34,8 @@ export default function IndexScreen() {
   const {
     isAuthenticated,
     isLoading: isAuthLoading,
+    hasAuthLoadError,
+    retryAuthLoad,
     user,
   } = useAuth();
 
@@ -48,6 +50,10 @@ export default function IndexScreen() {
   const {
     collection: onboardingCollection,
     isLoading: isOnboardingCollectionLoading,
+    hasLoadError:
+      hasOnboardingCollectionLoadError,
+    retryLoad:
+      retryOnboardingCollectionLoad,
     isPendingPublish,
     authIntent,
     clearAuthIntent,
@@ -69,12 +75,36 @@ export default function IndexScreen() {
     setLegacyOnboardingCheckAttempt,
   ] = useState(0);
 
+  const [
+    hasStartupLoadError,
+    setHasStartupLoadError,
+  ] = useState(false);
+
+  const [
+    startupLoadAttempt,
+    setStartupLoadAttempt,
+  ] = useState(0);
+
+  const [
+    hasPendingPublishError,
+    setHasPendingPublishError,
+  ] = useState(false);
+
+  const [
+    pendingPublishAttempt,
+    setPendingPublishAttempt,
+  ] = useState(0);
+
   useEffect(() => {
     if (
       isAuthLoading ||
       isOnboardingCollectionLoading ||
+      hasOnboardingCollectionLoadError ||
+      hasAuthLoadError ||
       hasProfileLoadError ||
-      hasLegacyOnboardingCheckError
+      hasLegacyOnboardingCheckError ||
+      hasStartupLoadError ||
+      hasPendingPublishError
     ) {
       return;
     }
@@ -225,14 +255,17 @@ export default function IndexScreen() {
 
         return true;
       } catch (error) {
-        console.error(
-          'Failed to publish pending onboarding collection:',
-          error
-        );
+        if (__DEV__) {
+          console.log(
+            'Failed to publish pending onboarding collection:',
+            error
+          );
+        }
 
         if (isMounted) {
           isProcessingPendingPublish.current =
             false;
+          setHasPendingPublishError(true);
         }
 
         return false;
@@ -241,6 +274,8 @@ export default function IndexScreen() {
 
     async function initializeApp() {
       try {
+        setHasStartupLoadError(false);
+
         if (isAuthenticated) {
           if (isProfileLoading) {
             return;
@@ -354,13 +389,15 @@ export default function IndexScreen() {
           router.replace('/onboarding');
         }
       } catch (error) {
-        console.error(
-          'Failed to initialize app:',
-          error
-        );
+        if (__DEV__) {
+          console.log(
+            'Failed to initialize app:',
+            error
+          );
+        }
 
         if (isMounted) {
-          router.replace('/onboarding');
+          setHasStartupLoadError(true);
         }
       }
     }
@@ -375,8 +412,12 @@ export default function IndexScreen() {
     clearAuthIntent,
     clearOnboardingCollection,
     clearPendingPublish,
+    hasAuthLoadError,
+    hasOnboardingCollectionLoadError,
     hasLegacyOnboardingCheckError,
     hasProfileLoadError,
+    hasStartupLoadError,
+    hasPendingPublishError,
     isAuthenticated,
     isAuthLoading,
     isOnboardingCollectionLoading,
@@ -384,7 +425,9 @@ export default function IndexScreen() {
     isProfileLoading,
     legacyOnboardingCheckAttempt,
     onboardingCollection,
+    pendingPublishAttempt,
     profile.hasCompletedOnboarding,
+    startupLoadAttempt,
     updateProfile,
     user,
   ]);
@@ -397,10 +440,111 @@ export default function IndexScreen() {
     );
   }
 
+  function retryStartupLoad() {
+    setHasStartupLoadError(false);
+    setStartupLoadAttempt(
+      (currentAttempt) =>
+        currentAttempt + 1
+    );
+  }
+
+  function retryPendingPublish() {
+    setHasPendingPublishError(false);
+    setPendingPublishAttempt(
+      (currentAttempt) =>
+        currentAttempt + 1
+    );
+  }
+
   const isFinishingOnboardingAccount =
     isAuthenticated &&
     Boolean(onboardingCollection) &&
     isPendingPublish;
+
+  if (hasAuthLoadError) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorTitle}>
+          Couldn&apos;t load your account
+        </Text>
+
+        <Text style={styles.errorDescription}>
+          Check your connection and try again.
+        </Text>
+
+        <PrimaryButton
+          title="Try Again"
+          onPress={retryAuthLoad}
+          style={styles.errorAction}
+        />
+      </View>
+    );
+  }
+
+  if (hasOnboardingCollectionLoadError) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorTitle}>
+          Couldn&apos;t load your account
+        </Text>
+
+        <Text style={styles.errorDescription}>
+          Check your connection and try again.
+        </Text>
+
+        <PrimaryButton
+          title="Try Again"
+          onPress={
+            retryOnboardingCollectionLoad
+          }
+          style={styles.errorAction}
+        />
+      </View>
+    );
+  }
+
+  if (hasStartupLoadError) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorTitle}>
+          Couldn&apos;t load your account
+        </Text>
+
+        <Text style={styles.errorDescription}>
+          Check your connection and try again.
+        </Text>
+
+        <PrimaryButton
+          title="Try Again"
+          onPress={retryStartupLoad}
+          style={styles.errorAction}
+        />
+      </View>
+    );
+  }
+
+  if (
+    isAuthenticated &&
+    hasPendingPublishError
+  ) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorTitle}>
+          Couldn&apos;t finish setting up your account
+        </Text>
+
+        <Text style={styles.errorDescription}>
+          Check your connection and try again.
+        </Text>
+
+        <PrimaryButton
+          title="Try Again"
+          onPress={retryPendingPublish}
+          style={styles.errorAction}
+        />
+      </View>
+    );
+  }
 
   if (
     isAuthenticated &&

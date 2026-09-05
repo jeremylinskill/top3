@@ -23,10 +23,12 @@ async function invokeAppleMusic(
     );
 
   if (error) {
-    console.error(
-      'Apple Music Edge Function invocation failed:',
-      error
-    );
+    if (__DEV__) {
+      console.log(
+        'Apple Music Edge Function invocation failed:',
+        error
+      );
+    }
 
     throw new Error(
       'Apple Music search is temporarily unavailable.'
@@ -37,10 +39,12 @@ async function invokeAppleMusic(
     data as AppleMusicSearchResponse | null;
 
   if (response?.error) {
-    console.error(
-      'Apple Music Edge Function returned an error:',
-      response.error
-    );
+    if (__DEV__) {
+      console.log(
+        'Apple Music Edge Function returned an error:',
+        response.error
+      );
+    }
 
     throw new Error(
       response.error
@@ -52,10 +56,12 @@ async function invokeAppleMusic(
       response?.results
     )
   ) {
-    console.error(
-      'Apple Music Edge Function returned an invalid response:',
-      data
-    );
+    if (__DEV__) {
+      console.log(
+        'Apple Music Edge Function returned an invalid response:',
+        data
+      );
+    }
 
     throw new Error(
       'Apple Music search returned an invalid response.'

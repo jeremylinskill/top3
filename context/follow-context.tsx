@@ -22,6 +22,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
@@ -31,6 +32,8 @@ type FollowContextValue = {
   sentFollowRequests: FollowRequest[];
   receivedFollowRequests: FollowRequest[];
   isLoading: boolean;
+  hasLoadError: boolean;
+  retryFollowState: () => void;
 
   isFollowing: (userId: string) => boolean;
   isFollower: (userId: string) => boolean;
@@ -102,6 +105,27 @@ export function FollowProvider({
   const [isLoading, setIsLoading] =
     useState(true);
 
+  const [
+    hasLoadError,
+    setHasLoadError,
+  ] = useState(false);
+
+  const [
+    loadAttempt,
+    setLoadAttempt,
+  ] = useState(0);
+
+  const stateUserIdRef =
+    useRef<string | null>(null);
+
+  const retryFollowState =
+    useCallback(() => {
+      setLoadAttempt(
+        (currentAttempt) =>
+          currentAttempt + 1
+      );
+    }, []);
+
   const userId = user?.id;
 
   const refreshFollows = useCallback(
@@ -144,10 +168,12 @@ export function FollowProvider({
           )
         );
       } catch (error) {
-        console.error(
-          'Failed to load follows:',
-          error
-        );
+        if (__DEV__) {
+          console.log(
+            'Failed to load follows:',
+            error
+          );
+        }
       } finally {
         if (showLoading) {
           setIsLoading(false);
@@ -188,10 +214,12 @@ export function FollowProvider({
           snapshot.receivedRequests
         );
       } catch (error) {
-        console.error(
-          'Failed to load follow requests:',
-          error
-        );
+        if (__DEV__) {
+          console.log(
+            'Failed to load follow requests:',
+            error
+          );
+        }
       }
     },
     [userId]
@@ -201,62 +229,106 @@ export function FollowProvider({
     let isCancelled = false;
 
     async function loadFollowState() {
-      setFollowedUserIds([]);
-      setFollowerUserIds([]);
-      setSentFollowRequests([]);
-      setReceivedFollowRequests([]);
       setIsLoading(true);
 
       if (!userId) {
+        stateUserIdRef.current = null;
+
+        setFollowedUserIds([]);
+        setFollowerUserIds([]);
+        setSentFollowRequests([]);
+        setReceivedFollowRequests([]);
+
         if (!isCancelled) {
+          setHasLoadError(false);
           setIsLoading(false);
         }
 
         return;
       }
 
-      try {
-        const [
-          followSnapshot,
-          followRequestSnapshot,
-        ] = await Promise.all([
-          getFollowSnapshot(userId),
-          getFollowRequestSnapshot(userId),
-        ]);
+      const isNewUser =
+        stateUserIdRef.current !== userId;
 
-        if (isCancelled) {
-          return;
-        }
+      if (isNewUser) {
+        stateUserIdRef.current = userId;
 
+        setFollowedUserIds([]);
+        setFollowerUserIds([]);
+        setSentFollowRequests([]);
+        setReceivedFollowRequests([]);
+      }
+
+      setHasLoadError(false);
+
+      const [
+        followResult,
+        followRequestResult,
+      ] = await Promise.allSettled([
+        getFollowSnapshot(userId),
+        getFollowRequestSnapshot(userId),
+      ]);
+
+      if (isCancelled) {
+        return;
+      }
+
+      let didFail = false;
+
+      if (
+        followResult.status ===
+        'fulfilled'
+      ) {
         setFollowedUserIds(
           getUniqueUserIds(
-            followSnapshot.followedUserIds
+            followResult.value
+              .followedUserIds
           )
         );
 
         setFollowerUserIds(
           getUniqueUserIds(
-            followSnapshot.followerUserIds
+            followResult.value
+              .followerUserIds
           )
         );
+      } else {
+        didFail = true;
 
+        if (__DEV__) {
+          console.log(
+            'Failed to load follows:',
+            followResult.reason
+          );
+        }
+      }
+
+      if (
+        followRequestResult.status ===
+        'fulfilled'
+      ) {
         setSentFollowRequests(
-          followRequestSnapshot.sentRequests
+          followRequestResult.value
+            .sentRequests
         );
 
         setReceivedFollowRequests(
-          followRequestSnapshot.receivedRequests
+          followRequestResult.value
+            .receivedRequests
         );
-      } catch (error) {
-        console.error(
-          'Failed to load follow state:',
-          error
-        );
-      } finally {
-        if (!isCancelled) {
-          setIsLoading(false);
+      } else {
+        didFail = true;
+
+        if (__DEV__) {
+          console.log(
+            'Failed to load follow requests:',
+            followRequestResult.reason
+          );
         }
       }
+
+      setHasLoadError(didFail);
+      setIsLoading(false);
     }
 
     void loadFollowState();
@@ -264,7 +336,10 @@ export function FollowProvider({
     return () => {
       isCancelled = true;
     };
-  }, [userId]);
+  }, [
+    userId,
+    loadAttempt,
+  ]);
 
   useEffect(() => {
     if (!userId) {
@@ -794,6 +869,8 @@ export function FollowProvider({
       sentFollowRequests,
       receivedFollowRequests,
       isLoading,
+      hasLoadError,
+      retryFollowState,
 
       isFollowing,
       isFollower,
@@ -822,6 +899,8 @@ export function FollowProvider({
       sentFollowRequests,
       receivedFollowRequests,
       isLoading,
+      hasLoadError,
+      retryFollowState,
       isFollowing,
       isFollower,
       isFollowRequested,

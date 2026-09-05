@@ -1,4 +1,5 @@
 import CommentsSheet from '@/components/comments-sheet';
+import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
 import {
   getCategoryArtworkRule,
@@ -189,6 +190,12 @@ export default function CommunityTop3Screen() {
   const [isLoading, setIsLoading] =
     useState(true);
 
+  const [hasLoadError, setHasLoadError] =
+    useState(false);
+
+  const [loadAttempt, setLoadAttempt] =
+    useState(0);
+
   const [
     selectedCommentsPost,
     setSelectedCommentsPost,
@@ -199,6 +206,7 @@ export default function CommunityTop3Screen() {
 
     async function loadPosts() {
       setIsLoading(true);
+      setHasLoadError(false);
 
       try {
 const publishedPosts =
@@ -208,13 +216,16 @@ if (isMounted) {
   setAllPosts(publishedPosts);
 }
       } catch (error) {
-        console.error(
-          'Failed to load overall Top 3:',
-          error
-        );
+        if (__DEV__) {
+          console.log(
+            'Failed to load overall Top 3:',
+            error
+          );
+        }
 
         if (isMounted) {
           setAllPosts(posts);
+          setHasLoadError(posts.length === 0);
         }
       } finally {
         if (isMounted) {
@@ -228,7 +239,7 @@ if (isMounted) {
     return () => {
       isMounted = false;
     };
-  }, [posts]);
+  }, [posts, loadAttempt]);
 
   const result = useMemo<
     CommunityTop3Result | null
@@ -435,7 +446,7 @@ if (isMounted) {
               Boolean(trailerUrl);
           } catch (error) {
             if (__DEV__) {
-              console.warn(
+              console.log(
                 `Failed to check trailer availability for ${item.title}:`,
                 error
               );
@@ -518,7 +529,7 @@ if (isMounted) {
       setActiveTrailerUrl(embedUrl);
     } catch (error) {
       if (__DEV__) {
-        console.warn(
+        console.log(
           `Failed to open trailer for ${item.title}:`,
           error
         );
@@ -566,6 +577,32 @@ if (isMounted) {
           <Text style={styles.loadingText}>
             Calculating overall rankings…
           </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (hasLoadError) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScreenHeader showBackButton />
+
+        <View style={styles.messageState}>
+          <Text style={styles.messageTitle}>
+            Couldn’t load this ranking
+          </Text>
+
+          <Text style={styles.messageText}>
+            Check your connection and try again.
+          </Text>
+
+          <PrimaryButton
+            title="Try Again"
+            onPress={() =>
+              setLoadAttempt((current) => current + 1)
+            }
+            style={styles.retryButton}
+          />
         </View>
       </SafeAreaView>
     );
@@ -1259,6 +1296,11 @@ const styles = StyleSheet.create({
     marginTop: 8,
     color: '#777777',
     textAlign: 'center',
+  },
+
+  retryButton: {
+    alignSelf: 'stretch',
+    marginTop: 20,
   },
 
   emptyState: {

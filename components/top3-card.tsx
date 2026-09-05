@@ -382,7 +382,7 @@ export default function Top3Card({
                 Boolean(trailerUrl);
             } catch (error) {
               if (__DEV__) {
-                console.warn(
+                console.log(
                   `Failed to check trailer availability for ${item.title}:`,
                   error
                 );
@@ -465,7 +465,7 @@ export default function Top3Card({
       setActiveTrailerUrl(embedUrl);
     } catch (error) {
       if (__DEV__) {
-        console.warn(
+        console.log(
           `Failed to open trailer for ${item.title}:`,
           error
         );
