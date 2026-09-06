@@ -32,7 +32,11 @@ export async function searchOpenLibrary(
     `&fields=key,title,author_name,first_publish_year,cover_i` +
     `&limit=10`;
 
-  const response = await fetch(requestUrl);
+  const response = await fetch(requestUrl, {
+    headers: {
+      'User-Agent': 'Top 3 (jeremylinskill@gmail.com)',
+    },
+  });
 
   if (!response.ok) {
     const errorBody = await response.text();
