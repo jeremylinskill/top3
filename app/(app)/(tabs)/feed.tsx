@@ -15,7 +15,7 @@ import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
 import { useAuth } from '@/hooks/use-auth';
 import { sharePublishedCollection } from '@/lib/share';
-import { getPublicProfilesByIds } from '@/lib/supabase/profiles';
+import { getProfilesByIds } from '@/lib/supabase/profiles';
 import {
   createPostReport,
   createUserReport,
@@ -209,7 +209,7 @@ export default function FeedScreen() {
         );
 
         const authors =
-          await getPublicProfilesByIds(
+          await getProfilesByIds(
             authorIds
           );
 
@@ -1059,7 +1059,7 @@ export default function FeedScreen() {
       );
 
       const authors =
-        await getPublicProfilesByIds(
+        await getProfilesByIds(
           authorIds
         );
 

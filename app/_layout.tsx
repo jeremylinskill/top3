@@ -1,5 +1,3 @@
-import { AuthGate } from '@/components/auth-gate';
-import { BlockGate } from '@/components/block-gate';
 import { AudioPreviewProvider } from '@/context/audio-preview-context';
 import { BlockProvider } from '@/context/block-context';
 import { CommentProvider } from '@/context/comment-context';
@@ -32,7 +30,7 @@ import { KeyboardProvider } from 'react-native-keyboard-controller';
 import 'react-native-reanimated';
 
 export const unstable_settings = {
-  anchor: '(tabs)',
+  anchor: '(app)',
 };
 
 type NotificationRouteData = {
@@ -158,12 +156,10 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <KeyboardProvider>
         <AuthProvider>
-          <AuthGate>
-            <OnboardingCollectionProvider>
+          <OnboardingCollectionProvider>
               <ProfileProvider>
                 <BlockProvider>
-                  <BlockGate>
-                    <NotificationProvider>
+                  <NotificationProvider>
                       <FollowProvider>
                         <LikeProvider>
                           <CommentProvider>
@@ -192,16 +188,7 @@ export default function RootLayout() {
                                   <Stack.Screen name="onboarding-overall-top3" />
                                   <Stack.Screen name="onboarding-taste-match" />
                                   <Stack.Screen name="onboarding-notifications" />
-                                  <Stack.Screen name="(tabs)" />
-                                  <Stack.Screen name="collections" />
-                                  <Stack.Screen name="collection" />
-                                  <Stack.Screen name="search" />
-                                  <Stack.Screen name="edit-profile" />
-                                  <Stack.Screen name="notifications" />
-                                  <Stack.Screen name="public-profile" />
-                                  <Stack.Screen name="published-top3" />
-                                  <Stack.Screen name="community-top3" />
-                                  <Stack.Screen name="overall-top3-topics" />
+                                  <Stack.Screen name="(app)" />
                                   <Stack.Screen
                                     name="modal"
                                     options={{
@@ -217,12 +204,10 @@ export default function RootLayout() {
                           </CommentProvider>
                         </LikeProvider>
                       </FollowProvider>
-                    </NotificationProvider>
-                  </BlockGate>
+                  </NotificationProvider>
                 </BlockProvider>
               </ProfileProvider>
-            </OnboardingCollectionProvider>
-          </AuthGate>
+          </OnboardingCollectionProvider>
         </AuthProvider>
       </KeyboardProvider>
     </GestureHandlerRootView>

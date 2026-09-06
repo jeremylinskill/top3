@@ -621,7 +621,7 @@ if (isMounted) {
     authorId: string
   ) {
     if (authorId === profile.id) {
-      router.push('/(tabs)/profile');
+      router.push('/profile');
       return;
     }
 

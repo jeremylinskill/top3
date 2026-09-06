@@ -29,11 +29,11 @@ export default function SignInEmailScreen() {
   function handleSuccess() {
     if (isReturningFromOnboarding) {
       setAuthIntent('sign-in');
-      router.replace('/');
+      router.replace('/feed');
       return;
     }
 
-    router.replace('/(tabs)');
+    router.replace('/feed');
   }
 
   function handleCreateAccount() {

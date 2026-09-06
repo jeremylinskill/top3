@@ -17,7 +17,7 @@ export default function TabLayout() {
 
   return (
     <Tabs
-      initialRouteName="index"
+      initialRouteName="feed"
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
@@ -47,7 +47,7 @@ export default function TabLayout() {
 },
       }}>
       <Tabs.Screen
-        name="index"
+        name="feed"
         options={{
           title: 'Feed',
           tabBarIcon: ({

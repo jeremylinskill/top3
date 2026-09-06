@@ -434,7 +434,7 @@ function openSearch(rank: number) {
 
     try {
       await publishCurrentList();
-      router.replace('/(tabs)');
+      router.replace('/feed');
     } catch (error) {
       if (__DEV__) {
         console.log(
@@ -466,7 +466,7 @@ function openSearch(rank: number) {
 
     try {
       await deleteCurrentList();
-      router.replace('/(tabs)');
+      router.replace('/feed');
     } catch (error) {
       console.error(
         'Failed to delete collection:',

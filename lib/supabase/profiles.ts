@@ -62,40 +62,30 @@ export async function searchPublicProfiles(
   currentUserId: string
 ): Promise<UserProfile[]> {
   const normalizedQuery = query.trim();
-  const normalizedCurrentUserId =
-    currentUserId.trim();
 
   if (!normalizedQuery) {
     return [];
   }
 
-  let profilesQuery = supabase
-    .from('profiles')
-    .select(PROFILE_SELECT)
-    .or(
-      `username.ilike.%${normalizedQuery}%,display_name.ilike.%${normalizedQuery}%`
-    )
-    .order('display_name', {
-      ascending: true,
-    })
-    .limit(20);
+  // The authenticated database function uses auth.uid()
+  // to exclude the current user and hide profiles where
+  // a block exists in either direction.
+  void currentUserId;
 
-  if (normalizedCurrentUserId) {
-    profilesQuery = profilesQuery.neq(
-      'id',
-      normalizedCurrentUserId
-    );
-  }
-
-  const { data, error } =
-    await profilesQuery;
+  const { data, error } = await supabase.rpc(
+    'search_visible_profiles',
+    {
+      search_query: normalizedQuery,
+      result_limit: 20,
+    }
+  );
 
   if (error) {
     throw error;
   }
 
-  return (data ?? []).map((row) =>
-    mapProfileRow(row as ProfileRow)
+  return ((data ?? []) as ProfileRow[]).map(
+    (row: ProfileRow) => mapProfileRow(row)
   );
 }
 

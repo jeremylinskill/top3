@@ -254,7 +254,7 @@ export default function PublishedTop3Screen() {
 
   function openAuthorProfile() {
     if (isCurrentUserPost) {
-      router.push('/(tabs)/profile');
+      router.push('/profile');
       return;
     }
 

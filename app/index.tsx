@@ -249,7 +249,7 @@ export default function IndexScreen() {
 
         router.replace(
           shouldReturnToFeed
-            ? '/(tabs)'
+            ? '/feed'
             : '/onboarding-published'
         );
 
@@ -303,7 +303,7 @@ export default function IndexScreen() {
           }
 
           if (profile.hasCompletedOnboarding) {
-            router.replace('/(tabs)');
+            router.replace('/feed');
             return;
           }
 
@@ -330,7 +330,7 @@ export default function IndexScreen() {
                 return;
               }
 
-              router.replace('/(tabs)');
+              router.replace('/feed');
               return;
             }
           } catch (error) {

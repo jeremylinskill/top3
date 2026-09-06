@@ -162,7 +162,7 @@ export default function OnboardingNotificationsScreen() {
   ]);
 
   function enterApp() {
-    router.replace('/(tabs)');
+    router.replace('/feed');
   }
 
   async function enableNotifications() {

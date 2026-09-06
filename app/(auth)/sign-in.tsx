@@ -67,7 +67,7 @@ export default function SignInScreen() {
       router.replace(
         isReturningFromOnboarding
           ? '/'
-          : '/(tabs)'
+          : '/feed'
       );
     } catch (error) {
       setIsSigningIn(false);
@@ -105,7 +105,7 @@ export default function SignInScreen() {
       router.replace(
         isReturningFromOnboarding
           ? '/'
-          : '/(tabs)'
+          : '/feed'
       );
     } catch (error) {
       setIsSigningIn(false);
