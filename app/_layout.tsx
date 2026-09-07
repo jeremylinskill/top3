@@ -1,3 +1,5 @@
+import AppleMusicPreviewSheet from '@/components/apple-music-preview-sheet';
+import TrailerPreviewSheet from '@/components/trailer-preview-sheet';
 import { AudioPreviewProvider } from '@/context/audio-preview-context';
 import { BlockProvider } from '@/context/block-context';
 import { CommentProvider } from '@/context/comment-context';
@@ -7,6 +9,7 @@ import { NotificationProvider } from '@/context/notification-context';
 import { OnboardingCollectionProvider } from '@/context/onboarding-collection-context';
 import { ProfileProvider } from '@/context/profile-context';
 import { Top3Provider } from '@/context/top3-context';
+import { TrailerPreviewProvider } from '@/context/trailer-preview-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { initializeAnalytics } from '@/lib/analytics';
 import { AuthProvider } from '@/providers/auth-provider';
@@ -157,14 +160,15 @@ export default function RootLayout() {
       <KeyboardProvider>
         <AuthProvider>
           <OnboardingCollectionProvider>
-              <ProfileProvider>
-                <BlockProvider>
-                  <NotificationProvider>
-                      <FollowProvider>
-                        <LikeProvider>
-                          <CommentProvider>
-                            <Top3Provider>
-                              <AudioPreviewProvider>
+            <ProfileProvider>
+              <BlockProvider>
+                <NotificationProvider>
+                  <FollowProvider>
+                    <LikeProvider>
+                      <CommentProvider>
+                        <Top3Provider>
+                          <AudioPreviewProvider>
+                            <TrailerPreviewProvider>
                               <ThemeProvider
                                 value={
                                   colorScheme === 'dark'
@@ -197,16 +201,19 @@ export default function RootLayout() {
                                   />
                                 </Stack>
 
+                                <AppleMusicPreviewSheet />
+                                <TrailerPreviewSheet />
                                 <StatusBar style="auto" />
                               </ThemeProvider>
-                              </AudioPreviewProvider>
-                            </Top3Provider>
-                          </CommentProvider>
-                        </LikeProvider>
-                      </FollowProvider>
-                  </NotificationProvider>
-                </BlockProvider>
-              </ProfileProvider>
+                            </TrailerPreviewProvider>
+                          </AudioPreviewProvider>
+                        </Top3Provider>
+                      </CommentProvider>
+                    </LikeProvider>
+                  </FollowProvider>
+                </NotificationProvider>
+              </BlockProvider>
+            </ProfileProvider>
           </OnboardingCollectionProvider>
         </AuthProvider>
       </KeyboardProvider>

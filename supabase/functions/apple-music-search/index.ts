@@ -32,6 +32,7 @@ type AppleMusicSongAttributes = {
   genreNames?: string[];
   artwork?: AppleMusicArtwork;
   previews?: AppleMusicPreview[];
+  url?: string;
 };
 
 type AppleMusicSong = {
@@ -46,6 +47,7 @@ type AppleMusicAlbumAttributes = {
   releaseDate?: string;
   genreNames?: string[];
   artwork?: AppleMusicArtwork;
+  url?: string;
 };
 
 type AppleMusicAlbumRelationships = {
@@ -65,6 +67,7 @@ type AppleMusicArtistAttributes = {
   name?: string;
   genreNames?: string[];
   artwork?: AppleMusicArtwork;
+  url?: string;
 };
 
 type AppleMusicArtist = {
@@ -160,6 +163,7 @@ type SongSearchResult = {
   subtitle?: string;
   imageUrl?: string;
   previewUrl?: string;
+  appleMusicUrl?: string;
 };
 
 type RankedSong = SongSearchResult & {
@@ -177,6 +181,7 @@ type AlbumSearchResult = {
   subtitle?: string;
   imageUrl?: string;
   previewUrl?: string;
+  appleMusicUrl?: string;
 };
 
 type RankedAlbum = AlbumSearchResult & {
@@ -193,6 +198,7 @@ type ArtistSearchResult = {
   subtitle?: string;
   imageUrl?: string;
   previewUrl?: string;
+  appleMusicUrl?: string;
 };
 
 type RankedArtist = ArtistSearchResult & {
@@ -876,6 +882,8 @@ function mapSong(
         ?.[0]
         ?.url
         ?.trim() || undefined,
+    appleMusicUrl:
+      song.attributes?.url?.trim() || undefined,
     artistName,
     albumName,
     releaseDate,
@@ -1030,6 +1038,8 @@ function mapAlbum(
         album,
         chartSongIds
       ),
+    appleMusicUrl:
+      album.attributes?.url?.trim() || undefined,
     artistName,
     releaseDate,
     genreNames,
@@ -1081,6 +1091,8 @@ function mapArtist(
       artist.attributes?.artwork
     ),
     previewUrl,
+    appleMusicUrl:
+      artist.attributes?.url?.trim() || undefined,
     genreNames,
     originalIndex,
     score: 0,
@@ -1738,6 +1750,8 @@ function rankAndDeduplicateAlbums(
       imageUrl: album.imageUrl,
       previewUrl:
         album.previewUrl,
+      appleMusicUrl:
+        album.appleMusicUrl,
     });
 
     if (
@@ -1851,6 +1865,8 @@ function rankAndDeduplicateArtists(
       imageUrl: artist.imageUrl,
       previewUrl:
         artist.previewUrl,
+      appleMusicUrl:
+        artist.appleMusicUrl,
     });
 
     if (
@@ -2020,6 +2036,8 @@ function rankAndDeduplicateSongs(
       subtitle: song.subtitle,
       imageUrl: song.imageUrl,
       previewUrl: song.previewUrl,
+      appleMusicUrl:
+        song.appleMusicUrl,
     });
 
     if (
@@ -2200,6 +2218,8 @@ async function getPopularAppleMusicSongs(
       subtitle: song.subtitle,
       imageUrl: song.imageUrl,
       previewUrl: song.previewUrl,
+      appleMusicUrl:
+        song.appleMusicUrl,
     });
 
     if (
@@ -2485,6 +2505,8 @@ async function getPopularAppleMusicAlbums(
       imageUrl: album.imageUrl,
       previewUrl:
         album.previewUrl,
+      appleMusicUrl:
+        album.appleMusicUrl,
     });
 
     if (

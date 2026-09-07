@@ -13,6 +13,11 @@ type IgdbCover = {
   image_id?: string;
 };
 
+type IgdbVideo = {
+  name?: string;
+  video_id?: string;
+};
+
 type IgdbGame = {
   id?: number;
   name?: string;
@@ -20,6 +25,7 @@ type IgdbGame = {
   total_rating?: number;
   total_rating_count?: number;
   cover?: IgdbCover;
+  videos?: IgdbVideo[];
 };
 
 type SearchRequestBody = {
@@ -35,6 +41,7 @@ type GameSearchResult = {
   subtitle?: string;
   imageUrl?: string;
   rating?: number;
+  trailerVideoId?: string;
 };
 
 const TWITCH_TOKEN_URL =
@@ -331,6 +338,31 @@ function getCoverUrl(
   );
 }
 
+function getTrailerVideoId(
+  videos?: IgdbVideo[]
+): string | undefined {
+  if (!videos || videos.length === 0) {
+    return undefined;
+  }
+
+  const usableVideos = videos.filter(
+    (video) =>
+      typeof video.video_id === 'string' &&
+      video.video_id.trim().length > 0
+  );
+
+  if (usableVideos.length === 0) {
+    return undefined;
+  }
+
+  const preferredVideo =
+    usableVideos.find((video) =>
+      video.name?.toLowerCase().includes('trailer')
+    ) ?? usableVideos[0];
+
+  return preferredVideo.video_id?.trim();
+}
+
 function getFiveStarRating(
   totalRating?: number
 ): number | undefined {
@@ -525,6 +557,9 @@ function mapIgdbGameToSearchResult(
     rating: getFiveStarRating(
       game.total_rating
     ),
+    trailerVideoId: getTrailerVideoId(
+      game.videos
+    ),
   };
 }
 
@@ -536,7 +571,9 @@ function buildFieldsClause(): string {
     'first_release_date,',
     'total_rating,',
     'total_rating_count,',
-    'cover.image_id;',
+    'cover.image_id,',
+    'videos.name,',
+    'videos.video_id;',
   ].join(' ');
 }
 
@@ -748,6 +785,9 @@ async function searchIgdbGames(
       ),
       rating: getFiveStarRating(
         game.total_rating
+      ),
+      trailerVideoId: getTrailerVideoId(
+        game.videos
       ),
     }));
 }

@@ -5,4 +5,6 @@ export type Top3Item = {
   imageUrl?: string;
   rating?: number;
   previewUrl?: string;
+  appleMusicUrl?: string;
+  trailerVideoId?: string;
 };

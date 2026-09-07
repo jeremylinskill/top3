@@ -9,6 +9,7 @@ import { useAudioPreview } from '@/context/audio-preview-context';
 import { useComments } from '@/context/comment-context';
 import { useLike } from '@/context/like-context';
 import { useTop3 } from '@/context/top3-context';
+import { useTrailerPreview } from '@/context/trailer-preview-context';
 import {
   getCachedTrailerAvailability,
   getMovieTrailerUrl,
@@ -25,14 +26,11 @@ import { useLocalSearchParams } from 'expo-router';
 import {
   useEffect,
   useMemo,
-  useRef,
-  useState,
+  useState
 } from 'react';
 import {
   ActivityIndicator,
-  Animated,
   Image,
-  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -40,80 +38,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { WebView } from 'react-native-webview';
 
-
-function getYouTubeEmbedUrl(
-  trailerUrl: string
-): string | undefined {
-  const videoIdMatch =
-    /[?&]v=([^&]+)/.exec(trailerUrl);
-
-  const encodedVideoId =
-    videoIdMatch?.[1];
-
-  if (!encodedVideoId) {
-    return undefined;
-  }
-
-  let videoId = encodedVideoId;
-
-  try {
-    videoId =
-      decodeURIComponent(encodedVideoId);
-  } catch {
-    // Keep the encoded ID if decoding fails.
-  }
-
-  return (
-    `https://www.youtube.com/embed/${videoId}` +
-    '?autoplay=1&playsinline=1&rel=0'
-  );
-}
-
-
-function getYouTubeEmbedHtml(
-  embedUrl: string
-): string {
-  return `
-<!doctype html>
-<html>
-  <head>
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
-    />
-    <style>
-      html,
-      body {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        background: #000000;
-      }
-
-      iframe {
-        display: block;
-        width: 100%;
-        height: 100%;
-        border: 0;
-        background: #000000;
-      }
-    </style>
-  </head>
-  <body>
-    <iframe
-      src="${embedUrl}"
-      title="Trailer"
-      allow="autoplay; encrypted-media; picture-in-picture"
-      allowfullscreen
-    ></iframe>
-  </body>
-</html>
-  `.trim();
-}
 
 function normalizeRouteValue(value?: string) {
   return value?.trim().toLowerCase() ?? '';
@@ -160,28 +85,17 @@ export default function CommunityTop3Screen() {
     loadingTrailerItemId,
     setLoadingTrailerItemId,
   ] = useState<string | null>(null);
+
   const [
     trailerAvailability,
     setTrailerAvailability,
   ] = useState<Record<string, boolean | undefined>>({});
 
-  const [
-    activeTrailerUrl,
-    setActiveTrailerUrl,
-  ] = useState<string | null>(null);
-
-  const [
-    activeTrailerTitle,
-    setActiveTrailerTitle,
-  ] = useState<string | null>(null);
-
-  const [
-    isTrailerLoaded,
-    setIsTrailerLoaded,
-  ] = useState(false);
-
-  const trailerCloseOpacity =
-    useRef(new Animated.Value(0)).current;
+  const {
+    activeTrailerItem,
+    openTrailer,
+    closeTrailer,
+  } = useTrailerPreview();
 
   const [allPosts, setAllPosts] = useState<
     Post[]
@@ -384,12 +298,28 @@ if (isMounted) {
 
 
   useEffect(() => {
+    if (!result) {
+      return;
+    }
+
+    if (result.category === 'games') {
+      const updates = Object.fromEntries(
+        result.items.map((entry) => [
+          entry.item.id,
+          Boolean(entry.item.trailerVideoId),
+        ])
+      );
+
+      setTrailerAvailability((current) => ({
+        ...current,
+        ...updates,
+      }));
+      return;
+    }
+
     if (
-      !result ||
-      (
-        result.category !== 'movies' &&
-        result.category !== 'tv'
-      )
+      result.category !== 'movies' &&
+      result.category !== 'tv'
     ) {
       return;
     }
@@ -479,89 +409,48 @@ if (isMounted) {
   async function playTrailer(
     item: CommunityTop3Result['items'][number]['item']
   ) {
-    if (!result) {
+    const trailerCategory =
+      result?.category === 'movies' ||
+      result?.category === 'tv' ||
+      result?.category === 'games'
+        ? result.category
+        : null;
+
+    if (!trailerCategory) {
       return;
     }
 
-    const itemId =
-      getTrailerItemId(item.id);
-
-    if (itemId === undefined) {
+    if (
+      trailerCategory === 'games'
+        ? !item.trailerVideoId
+        : getTrailerItemId(item.id) === undefined
+    ) {
       return;
     }
 
     setLoadingTrailerItemId(item.id);
 
     try {
-      const trailerUrl =
-        result.category === 'movies'
-          ? await getMovieTrailerUrl(itemId)
-          : await getTvShowTrailerUrl(itemId);
-
-      if (!trailerUrl) {
-        setTrailerAvailability(
-          (current) => ({
-            ...current,
-            [item.id]: false,
-          })
-        );
-        return;
-      }
+      const didOpen = await openTrailer(
+        item,
+        trailerCategory
+      );
 
       setTrailerAvailability(
         (current) => ({
           ...current,
-          [item.id]: true,
+          [item.id]: didOpen,
         })
       );
-
-      const embedUrl =
-        getYouTubeEmbedUrl(trailerUrl);
-
-      if (!embedUrl) {
-        return;
-      }
-
-      stopPreview();
-      setIsTrailerLoaded(false);
-      trailerCloseOpacity.setValue(0);
-      setActiveTrailerTitle(item.title);
-      setActiveTrailerUrl(embedUrl);
-    } catch (error) {
-      if (__DEV__) {
-        console.log(
-          `Failed to open trailer for ${item.title}:`,
-          error
-        );
-      }
     } finally {
       setLoadingTrailerItemId((currentItemId) =>
-        currentItemId === item.id ? null : currentItemId
+        currentItemId === item.id
+          ? null
+          : currentItemId
       );
     }
   }
 
-
-  function handleTrailerLoadEnd() {
-    setIsTrailerLoaded(true);
-
-    Animated.timing(
-      trailerCloseOpacity,
-      {
-        toValue: 1,
-        duration: 180,
-        useNativeDriver: true,
-      }
-    ).start();
-  }
-
-
-  function closeTrailer() {
-    setIsTrailerLoaded(false);
-    trailerCloseOpacity.setValue(0);
-    setActiveTrailerUrl(null);
-    setActiveTrailerTitle(null);
-  }
 
   if (isLoading) {
     return (
@@ -735,6 +624,15 @@ if (isMounted) {
                           ]}
                           onPress={(event) => {
                             event.stopPropagation();
+
+                            if (
+                              activeTrailerItem?.id ===
+                              entry.item.id
+                            ) {
+                              closeTrailer();
+                              return;
+                            }
+
                             void playTrailer(
                               entry.item
                             );
@@ -746,14 +644,20 @@ if (isMounted) {
                           hitSlop={6}
                           accessibilityRole="button"
                           accessibilityLabel={
-                            `Play trailer for ${entry.item.title}`
+                            activeTrailerItem?.id ===
+                            entry.item.id
+                              ? `Close trailer for ${entry.item.title}`
+                              : `Play trailer for ${entry.item.title}`
                           }>
                           <Ionicons
                             name={
-                              loadingTrailerItemId ===
+                              activeTrailerItem?.id ===
                               entry.item.id
-                                ? 'ellipsis-horizontal'
-                                : 'play'
+                                ? 'close'
+                                : loadingTrailerItemId ===
+                                    entry.item.id
+                                  ? 'ellipsis-horizontal'
+                                  : 'play'
                             }
                             size={18}
                             color="#FFFFFF"
@@ -970,71 +874,6 @@ if (isMounted) {
         onClose={closeComments}
       />
 
-      <Modal
-        visible={Boolean(activeTrailerUrl)}
-        animationType="fade"
-        presentationStyle="fullScreen"
-        onRequestClose={closeTrailer}>
-        <SafeAreaView
-          style={styles.trailerModal}
-          edges={['top', 'right', 'bottom', 'left']}>
-          <View style={styles.trailerModalContent}>
-            {activeTrailerUrl ? (
-              <View style={styles.trailerPlayer}>
-                {isTrailerLoaded ? (
-                  <Animated.View
-                    style={[
-                      styles.trailerCloseButtonWrapper,
-                      {
-                        opacity:
-                          trailerCloseOpacity,
-                      },
-                    ]}>
-                    <Pressable
-                      style={({ pressed }) => [
-                        styles.trailerCloseButton,
-                        pressed &&
-                          styles.trailerCloseButtonPressed,
-                      ]}
-                      onPress={closeTrailer}
-                      hitSlop={10}
-                      accessibilityRole="button"
-                      accessibilityLabel={
-                        activeTrailerTitle
-                          ? `Close trailer for ${activeTrailerTitle}`
-                          : 'Close trailer'
-                      }>
-                      <Ionicons
-                        name="close"
-                        size={20}
-                        color="rgba(255, 255, 255, 0.88)"
-                      />
-                    </Pressable>
-                  </Animated.View>
-                ) : null}
-
-                <WebView
-                  source={{
-                    html:
-                      getYouTubeEmbedHtml(
-                        activeTrailerUrl
-                      ),
-                    baseUrl:
-                      'https://com.jeremylinskillsteam.top3',
-                  }}
-                  style={styles.trailerWebView}
-                  allowsInlineMediaPlayback
-                  mediaPlaybackRequiresUserAction={false}
-                  javaScriptEnabled
-                  domStorageEnabled
-                  allowsFullscreenVideo
-                  onLoadEnd={handleTrailerLoadEnd}
-                />
-              </View>
-            ) : null}
-          </View>
-        </SafeAreaView>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -1214,47 +1053,6 @@ const styles = StyleSheet.create({
   activeEngagementText: {
     color: '#222222',
     fontWeight: '600',
-  },
-
-  trailerModal: {
-    flex: 1,
-    backgroundColor: '#000000',
-  },
-
-  trailerModalContent: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-
-  trailerPlayer: {
-    width: '100%',
-    aspectRatio: 16 / 9,
-    backgroundColor: '#000000',
-  },
-
-  trailerWebView: {
-    flex: 1,
-    backgroundColor: '#000000',
-  },
-
-  trailerCloseButtonWrapper: {
-    position: 'absolute',
-    top: -52,
-    right: 18,
-    zIndex: 2,
-  },
-
-  trailerCloseButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-  },
-
-  trailerCloseButtonPressed: {
-    opacity: 0.7,
   },
 
   pressed: {

@@ -1,50 +1,81 @@
+import {
+  registerAudioPreviewStopper,
+  stopTrailerPreviewFromCoordinator,
+} from '@/lib/media-preview-coordinator';
 import { Top3Item } from '@/types/top3-item';
 import {
-    setAudioModeAsync,
-    useAudioPlayer,
-    useAudioPlayerStatus,
+  setAudioModeAsync,
+  useAudioPlayer,
+  useAudioPlayerStatus,
 } from 'expo-audio';
 import {
-    createContext,
-    ReactNode,
-    useContext,
-    useEffect,
-    useState,
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
 } from 'react';
 
 type AudioPreviewContextValue = {
+  activePreviewItem: Top3Item | null;
   activePreviewItemId: string | null;
   isPreviewPlaying: boolean;
-  togglePreview: (
-    item: Top3Item
-  ) => Promise<void>;
+  isPreviewVisible: boolean;
+  previewCurrentTime: number;
+  previewDuration: number;
+  previewProgress: number;
+  togglePreview: (item: Top3Item) => Promise<void>;
   stopPreview: () => void;
 };
 
 const AudioPreviewContext =
-  createContext<
-    AudioPreviewContextValue | undefined
-  >(undefined);
+  createContext<AudioPreviewContextValue | undefined>(undefined);
 
 type AudioPreviewProviderProps = {
   children: ReactNode;
 };
 
+function isAppleMusicItem(item: Top3Item) {
+  return item.id.startsWith('apple-music-');
+}
+
 export function AudioPreviewProvider({
   children,
 }: AudioPreviewProviderProps) {
-  const [
-    activePreviewItemId,
-    setActivePreviewItemId,
-  ] = useState<string | null>(null);
+  const [activePreviewItem, setActivePreviewItem] =
+    useState<Top3Item | null>(null);
+  const [isPreviewVisible, setIsPreviewVisible] =
+    useState(false);
 
-  const previewPlayer =
-    useAudioPlayer(null);
+  const previewPlayer = useAudioPlayer(null);
+  const previewStatus = useAudioPlayerStatus(previewPlayer);
+  const previewActionIdRef = useRef(0);
 
-  const previewStatus =
-    useAudioPlayerStatus(
-      previewPlayer
-    );
+  const activePreviewItemId =
+    activePreviewItem?.id ?? null;
+
+  const previewCurrentTime =
+    Number.isFinite(previewStatus.currentTime)
+      ? Math.max(previewStatus.currentTime, 0)
+      : 0;
+
+  const previewDuration =
+    Number.isFinite(previewStatus.duration)
+      ? Math.max(previewStatus.duration, 0)
+      : 0;
+
+  const previewProgress =
+    previewDuration > 0
+      ? Math.min(
+          Math.max(
+            previewCurrentTime / previewDuration,
+            0
+          ),
+          1
+        )
+      : 0;
 
   useEffect(() => {
     void setAudioModeAsync({
@@ -56,30 +87,60 @@ export function AudioPreviewProvider({
   useEffect(() => {
     if (
       previewStatus.didJustFinish &&
-      activePreviewItemId
+      activePreviewItem
     ) {
-      setActivePreviewItemId(null);
+      previewActionIdRef.current += 1;
+      setIsPreviewVisible(false);
+      setActivePreviewItem(null);
     }
   }, [
-    activePreviewItemId,
+    activePreviewItem,
     previewStatus.didJustFinish,
   ]);
 
-  async function togglePreview(
-    item: Top3Item
-  ) {
+  const stopPreview = useCallback(() => {
+    previewActionIdRef.current += 1;
+    previewPlayer.pause();
+    setIsPreviewVisible(false);
+    setActivePreviewItem(null);
+  }, [previewPlayer]);
+
+  useEffect(() => {
+    return registerAudioPreviewStopper(
+      stopPreview
+    );
+  }, [stopPreview]);
+
+  async function togglePreview(item: Top3Item) {
     if (!item.previewUrl) {
       return;
     }
 
+    if (
+      isAppleMusicItem(item) &&
+      !item.appleMusicUrl
+    ) {
+      if (activePreviewItem?.id === item.id) {
+        stopPreview();
+      }
+
+      return;
+    }
+
     const isCurrentPreview =
-      activePreviewItemId === item.id;
+      activePreviewItem?.id === item.id;
 
     if (isCurrentPreview) {
       if (previewStatus.playing) {
-        previewPlayer.pause();
+        stopPreview();
         return;
       }
+
+      const actionId =
+        previewActionIdRef.current + 1;
+      previewActionIdRef.current = actionId;
+
+      stopTrailerPreviewFromCoordinator();
 
       if (
         previewStatus.didJustFinish ||
@@ -90,36 +151,42 @@ export function AudioPreviewProvider({
         )
       ) {
         await previewPlayer.seekTo(0);
+
+        if (
+          previewActionIdRef.current !== actionId
+        ) {
+          return;
+        }
       }
 
+      setIsPreviewVisible(true);
       previewPlayer.play();
       return;
     }
 
+    previewActionIdRef.current += 1;
+
+    stopTrailerPreviewFromCoordinator();
+
     previewPlayer.pause();
+    previewPlayer.replace(item.previewUrl);
 
-    previewPlayer.replace(
-      item.previewUrl
-    );
-
-    setActivePreviewItemId(
-      item.id
-    );
+    setActivePreviewItem(item);
+    setIsPreviewVisible(true);
 
     previewPlayer.play();
-  }
-
-  function stopPreview() {
-    previewPlayer.pause();
-    setActivePreviewItemId(null);
   }
 
   return (
     <AudioPreviewContext.Provider
       value={{
+        activePreviewItem,
         activePreviewItemId,
-        isPreviewPlaying:
-          previewStatus.playing,
+        isPreviewPlaying: previewStatus.playing,
+        isPreviewVisible,
+        previewCurrentTime,
+        previewDuration,
+        previewProgress,
         togglePreview,
         stopPreview,
       }}>
@@ -129,10 +196,7 @@ export function AudioPreviewProvider({
 }
 
 export function useAudioPreview() {
-  const context =
-    useContext(
-      AudioPreviewContext
-    );
+  const context = useContext(AudioPreviewContext);
 
   if (!context) {
     throw new Error(
