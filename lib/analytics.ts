@@ -54,9 +54,11 @@ export function initializeAnalytics() {
   init(apiKey, undefined, {
     trackingOptions: {
       adid: false,
+      appSetId: false,
       carrier: false,
       deviceManufacturer: false,
       deviceModel: false,
+      idfv: false,
       ipAddress: false,
       language: false,
       osName: false,
