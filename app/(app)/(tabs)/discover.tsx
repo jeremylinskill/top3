@@ -582,7 +582,11 @@ export default function DiscoverScreen() {
         post.collection.category
       );
 
-      if (!categoryId) {
+      const postTopic =
+        normalizeValue(post.collection.topic) ||
+        'general';
+
+      if (!categoryId || postTopic !== 'general') {
         return;
       }
 
@@ -2245,7 +2249,7 @@ export default function DiscoverScreen() {
                         <DiscoverListCard
                           key={category.id}
                           icon={category.icon}
-                          title={category.name}
+                          title={`All ${category.name}`}
                           metadata={
                             showTrendingCategories
                               ? trendingCount === 1
