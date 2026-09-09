@@ -1,6 +1,7 @@
 import FollowButton from '@/components/follow-button';
 import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
+import UserAvatar from '@/components/user-avatar';
 import {
   COLORS,
   TASTE_MATCH_RANK_COLORS,
@@ -207,7 +208,7 @@ function getComparisonCardTitle(
     return `${categoryName} • ${formatLabel(topic!)}`;
   }
 
-  return categoryName;
+  return `All ${categoryName}`;
 }
 
 function getSharedPickCount(
@@ -696,6 +697,34 @@ return getTasteRecommendationForUser({
         ) : (
           <>
             <View style={styles.heroCard}>
+              <View style={styles.avatarPair}>
+                <View
+                  style={[
+                    styles.avatarFrame,
+                    styles.currentUserAvatarFrame,
+                  ]}>
+                  <UserAvatar
+                    displayName={profile.displayName}
+                    avatarUrl={profile.avatarUrl}
+                    size={48}
+                    fontSize={19}
+                  />
+                </View>
+
+                <View
+                  style={[
+                    styles.avatarFrame,
+                    styles.otherUserAvatarFrame,
+                  ]}>
+                  <UserAvatar
+                    displayName={viewedUser.displayName}
+                    avatarUrl={viewedUser.avatarUrl}
+                    size={48}
+                    fontSize={19}
+                  />
+                </View>
+              </View>
+
               <Text style={styles.pageTitle}>
                 You & {viewedUser.displayName}
               </Text>
@@ -930,6 +959,31 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: 20,
+  },
+
+  avatarPair: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.md,
+  },
+
+  avatarFrame: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+
+  currentUserAvatarFrame: {
+    zIndex: 2,
+  },
+
+  otherUserAvatarFrame: {
+    marginLeft: -12,
+    zIndex: 1,
   },
 
   pageTitle: {
