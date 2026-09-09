@@ -783,7 +783,11 @@ export default function Top3Card({
                         }
                       />
                     </Pressable>
-                  ) : item?.previewUrl ? (
+                  ) : item?.previewUrl &&
+                  (
+                    !item.id.startsWith('apple-music-') ||
+                    Boolean(item.appleMusicUrl)
+                  ) ? (
                     <Pressable
                       style={({ pressed }) => [
                         styles.previewButton,
