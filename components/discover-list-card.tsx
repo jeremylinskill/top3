@@ -1,12 +1,13 @@
-import { COLORS } from '@/constants/colors';
+import { COLORS, TASTE_MATCH_RANK_COLORS } from '@/constants/colors';
 import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
 import { TYPOGRAPHY } from '@/constants/typography';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 
 type DiscoverListCardProps = {
@@ -15,6 +16,8 @@ type DiscoverListCardProps = {
   metadata: string;
   onPress: () => void;
   accessibilityLabel: string;
+  rank?: number;
+  reserveRankSpace?: boolean;
 };
 
 export default function DiscoverListCard({
@@ -23,6 +26,8 @@ export default function DiscoverListCard({
   metadata,
   onPress,
   accessibilityLabel,
+  rank,
+  reserveRankSpace = false,
 }: DiscoverListCardProps) {
   return (
     <Pressable
@@ -33,9 +38,35 @@ export default function DiscoverListCard({
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}>
-      <View style={styles.iconContainer}>
-        <Text style={styles.icon}>{icon}</Text>
-      </View>
+      {typeof rank === 'number' ? (
+        <Text style={styles.rankNumber}>
+          {rank}
+        </Text>
+      ) : reserveRankSpace ? (
+        <View style={styles.rankSpacer} />
+      ) : null}
+
+      {typeof rank === 'number' ? (
+        <View
+          style={[
+            styles.iconContainer,
+            {
+              backgroundColor:
+                TASTE_MATCH_RANK_COLORS[rank - 1] ??
+                '#F3F3F3',
+            },
+          ]}>
+          <Text style={styles.icon}>{icon}</Text>
+        </View>
+      ) : (
+        <LinearGradient
+          colors={['#00D89A', '#00D2FD']}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={styles.iconContainer}>
+          <Text style={styles.icon}>{icon}</Text>
+        </LinearGradient>
+      )}
 
       <View style={styles.details}>
         <Text
@@ -65,6 +96,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: RADIUS.xxl,
+  },
+
+  rankNumber: {
+    width: 28,
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#222222',
+    textAlign: 'center',
+    transform: [{ translateX: -5 }],
+  },
+
+  rankSpacer: {
+    width: 28,
   },
 
   iconContainer: {

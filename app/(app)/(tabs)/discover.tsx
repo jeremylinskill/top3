@@ -773,6 +773,10 @@ export default function DiscoverScreen() {
     trendingCategories.length >=
     MIN_TRENDING_CATEGORIES;
 
+  const hasMixedTrendingState =
+    showTrendingCategories !==
+    showTrendingTopics;
+
   const displayedTopics =
     showTrendingTopics
       ? trendingTopics
@@ -2181,7 +2185,7 @@ export default function DiscoverScreen() {
               ) : (
                 <View style={styles.categoryList}>
                   {displayedCategories.map(
-                    (category) => {
+                    (category, index) => {
                       const trendingCount =
                         'trendingCount' in category
                           ? category.trendingCount
@@ -2190,6 +2194,14 @@ export default function DiscoverScreen() {
                       return (
                         <DiscoverListCard
                           key={category.id}
+                          rank={
+                            showTrendingCategories
+                              ? index + 1
+                              : undefined
+                          }
+                          reserveRankSpace={
+                            hasMixedTrendingState
+                          }
                           icon={category.icon}
                           title={`All ${category.name}`}
                           metadata={
@@ -2246,9 +2258,17 @@ export default function DiscoverScreen() {
                 </View>
               ) : (
                 <View style={styles.topicList}>
-                  {displayedTopics.map((topic) => (
+                  {displayedTopics.map((topic, index) => (
                     <DiscoverListCard
                       key={topic.id}
+                      rank={
+                        showTrendingTopics
+                          ? index + 1
+                          : undefined
+                      }
+                      reserveRankSpace={
+                        hasMixedTrendingState
+                      }
                       icon={topic.categoryIcon}
                       title={`${topic.categoryName} • ${topic.topic}`}
                       metadata={
