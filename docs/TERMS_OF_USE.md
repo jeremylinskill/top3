@@ -190,5 +190,5 @@ Questions about these Terms, reports concerning rights, or other legal inquiries
 
 Jeremy Linskill
 Toronto, Ontario, Canada
-Email: jeremylinskill@gmail.com
+Email: support@top3taste.com
 Website: jeremylinskill.com

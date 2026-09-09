@@ -495,7 +495,7 @@ export default function TermsOfUseScreen() {
               Toronto, Ontario, Canada
             </Text>
             <Text style={styles.contactText}>
-              jeremylinskill@gmail.com
+              support@top3taste.com
             </Text>
             <Text style={styles.contactText}>
               jeremylinskill.com

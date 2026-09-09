@@ -254,5 +254,5 @@ If you have questions about these Community Standards, need help with a safety c
 
 Jeremy Linskill
 Toronto, Ontario, Canada
-Email: jeremylinskill@gmail.com
+Email: support@top3taste.com
 Website: jeremylinskill.com

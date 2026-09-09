@@ -34,7 +34,7 @@ export async function searchOpenLibrary(
 
   const response = await fetch(requestUrl, {
     headers: {
-      'User-Agent': 'Top 3 (jeremylinskill@gmail.com)',
+      'User-Agent': 'Top 3 (support@top3taste.com)',
     },
   });
 

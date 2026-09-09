@@ -12,7 +12,7 @@ Top 3 is operated by Jeremy Linskill, based in Toronto, Ontario, Canada.
 
 If you have questions about this Privacy Policy or Top 3's privacy practices, you can contact:
 
-Email: jeremylinskill@gmail.com
+Email: support@top3taste.com
 
 Website: https://jeremylinskill.com/
 
@@ -480,7 +480,7 @@ Third-party deletion requests may require additional time to complete.
 
 Other cached or operating-system-managed information may remain temporarily until cleared by the application or operating system, or until the app is removed from the device.
 
-You may contact jeremylinskill@gmail.com if you have questions about deleting your account or personal information.
+You may contact support@top3taste.com if you have questions about deleting your account or personal information.
 
 Your Privacy Choices and Rights
 
@@ -508,7 +508,7 @@ You can change device permissions, such as photo-library and notification access
 
 To make a privacy request, contact:
 
-jeremylinskill@gmail.com
+support@top3taste.com
 
 We may need to verify your identity before fulfilling certain requests in order to protect your account and information.
 
@@ -522,7 +522,7 @@ However, no internet service, application, transmission method, or storage syste
 
 You are responsible for protecting access to your account and device.
 
-If you believe your Top 3 account or information may have been compromised, please contact jeremylinskill@gmail.com.
+If you believe your Top 3 account or information may have been compromised, please contact support@top3taste.com.
 
 International Processing
 
@@ -546,7 +546,7 @@ Top 3 does not currently collect a user's birthdate or perform age verification 
 
 If we learn that a child under 13 has created an account or provided personal information through Top 3, we may take steps to remove the account and associated information as appropriate.
 
-If you are a parent or guardian and believe that a child under 13 has provided personal information to Top 3, please contact jeremylinskill@gmail.com.
+If you are a parent or guardian and believe that a child under 13 has provided personal information to Top 3, please contact support@top3taste.com.
 
 We recognize that teenagers may require additional care when making privacy decisions and aim to provide understandable information and privacy controls that allow users to make informed choices about their participation in Top 3.
 
@@ -578,6 +578,6 @@ Jeremy Linskill
 
 Toronto, Ontario, Canada
 
-Email: jeremylinskill@gmail.com
+Email: support@top3taste.com
 
 Website: https://jeremylinskill.com/

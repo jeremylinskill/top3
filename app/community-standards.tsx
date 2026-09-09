@@ -490,7 +490,7 @@ export default function CommunityStandardsScreen() {
               Toronto, Ontario, Canada
             </Text>
             <Text style={styles.contactText}>
-              jeremylinskill@gmail.com
+              support@top3taste.com
             </Text>
             <Text style={styles.contactText}>
               jeremylinskill.com

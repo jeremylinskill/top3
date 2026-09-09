@@ -303,7 +303,7 @@ support address populated.
 The support email is stored in a centralized SUPPORT_EMAIL constant so
 it can be replaced later without changing the Support UI.
 
-The current temporary V1 support address is jeremylinskill@gmail.com.
+The current V1 support address is support@top3taste.com.
 
 End-to-end verification on iPhone confirmed that tapping Contact Support
 successfully opens the mail app.

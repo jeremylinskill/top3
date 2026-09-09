@@ -113,7 +113,7 @@ export default function PrivacyPolicyScreen() {
         <Paragraph>
           If you have questions about this Privacy Policy or
           Top 3&apos;s privacy practices, contact
-          jeremylinskill@gmail.com.
+          support@top3taste.com.
         </Paragraph>
 
         <PolicySection title="1. Information We Collect and Process">
@@ -939,7 +939,7 @@ export default function PrivacyPolicyScreen() {
           </Paragraph>
 
           <Paragraph>
-            You may contact jeremylinskill@gmail.com if you
+            You may contact support@top3taste.com if you
             have questions about deleting your account or
             personal information.
           </Paragraph>
@@ -981,7 +981,7 @@ export default function PrivacyPolicyScreen() {
 
           <Paragraph>
             To make a privacy request, contact
-            jeremylinskill@gmail.com.
+            support@top3taste.com.
           </Paragraph>
 
           <Paragraph>
@@ -1021,7 +1021,7 @@ export default function PrivacyPolicyScreen() {
           <Paragraph>
             If you believe your Top 3 account or information
             may have been compromised, please contact
-            jeremylinskill@gmail.com.
+            support@top3taste.com.
           </Paragraph>
         </PolicySection>
 
@@ -1088,7 +1088,7 @@ export default function PrivacyPolicyScreen() {
             If you are a parent or guardian and believe that
             a child under 13 has provided personal
             information to Top 3, please contact
-            jeremylinskill@gmail.com.
+            support@top3taste.com.
           </Paragraph>
 
           <Paragraph>
@@ -1172,7 +1172,7 @@ export default function PrivacyPolicyScreen() {
               Toronto, Ontario, Canada
             </Text>
             <Text style={styles.contactText}>
-              jeremylinskill@gmail.com
+              support@top3taste.com
             </Text>
           </View>
         </PolicySection>
