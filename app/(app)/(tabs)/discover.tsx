@@ -2161,64 +2161,6 @@ export default function DiscoverScreen() {
             <>
             <View>
               <Text style={styles.sectionTitle}>
-                {showTrendingTopics
-                  ? 'Trending Topics'
-                  : 'Featured Genres'}
-              </Text>
-
-              {isLoading ? (
-                <View style={styles.topicsLoading}>
-                  <ActivityIndicator
-                    size="small"
-                    color="#777777"
-                  />
-
-                  <Text
-                    style={styles.topicsLoadingText}>
-                    Loading topics…
-                  </Text>
-                </View>
-              ) : (
-                <View style={styles.topicList}>
-                  {displayedTopics.map((topic) => (
-                    <DiscoverListCard
-                      key={topic.id}
-                      icon={topic.categoryIcon}
-                      title={`${topic.categoryName} • ${topic.topic}`}
-                      metadata={
-                        showTrendingTopics
-                          ? topic.listCount === 1
-                            ? '1 recently published Top 3'
-                            : `${topic.listCount} recently published Top 3s`
-                          : topic.listCount === 0
-  ? 'No published Top 3s yet'
-  : getTopicCountLabel(
-      topic.listCount
-    )
-                      }
-                      onPress={() =>
-                        openDisplayedTopic(topic)
-                      }
-                      accessibilityLabel={
-                        !showTrendingTopics &&
-                        topic.listCount === 0
-                          ? `Create the first ${topic.categoryName} ${topic.topic} Top 3`
-                          : `Browse ${
-                              showTrendingTopics
-                                ? 'trending'
-                                : 'featured'
-                            } ${topic.categoryName} ${
-                              topic.topic
-                            } Top 3 lists`
-                      }
-                    />
-                  ))}
-                </View>
-              )}
-            </View>
-
-            <View style={styles.topicsSection}>
-              <Text style={styles.sectionTitle}>
                 {showTrendingCategories
                   ? 'Trending Categories'
                   : 'Featured Categories'}
@@ -2283,6 +2225,64 @@ export default function DiscoverScreen() {
                 </View>
               )}
             </View>
+            <View style={styles.topicsSection}>
+              <Text style={styles.sectionTitle}>
+                {showTrendingTopics
+                  ? 'Trending Topics'
+                  : 'Featured Genres'}
+              </Text>
+
+              {isLoading ? (
+                <View style={styles.topicsLoading}>
+                  <ActivityIndicator
+                    size="small"
+                    color="#777777"
+                  />
+
+                  <Text
+                    style={styles.topicsLoadingText}>
+                    Loading topics…
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.topicList}>
+                  {displayedTopics.map((topic) => (
+                    <DiscoverListCard
+                      key={topic.id}
+                      icon={topic.categoryIcon}
+                      title={`${topic.categoryName} • ${topic.topic}`}
+                      metadata={
+                        showTrendingTopics
+                          ? topic.listCount === 1
+                            ? '1 recently published Top 3'
+                            : `${topic.listCount} recently published Top 3s`
+                          : topic.listCount === 0
+  ? 'No published Top 3s yet'
+  : getTopicCountLabel(
+      topic.listCount
+    )
+                      }
+                      onPress={() =>
+                        openDisplayedTopic(topic)
+                      }
+                      accessibilityLabel={
+                        !showTrendingTopics &&
+                        topic.listCount === 0
+                          ? `Create the first ${topic.categoryName} ${topic.topic} Top 3`
+                          : `Browse ${
+                              showTrendingTopics
+                                ? 'trending'
+                                : 'featured'
+                            } ${topic.categoryName} ${
+                              topic.topic
+                            } Top 3 lists`
+                      }
+                    />
+                  ))}
+                </View>
+              )}
+            </View>
+
             </>
           )
         )}
