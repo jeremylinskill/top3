@@ -1186,9 +1186,7 @@ export default function FeedScreen() {
                         : undefined
                     }
                     tasteMatchItemTitles={
-                      isSuggested
-                        ? sharedItemTitles
-                        : undefined
+                      sharedItemTitles
                     }
                     showFollowButton={
                       isSuggested &&

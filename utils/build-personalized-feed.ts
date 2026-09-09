@@ -60,6 +60,100 @@ function getSharedItemsForPost(
     );
 }
 
+function getCurrentUserItemsByCategory(
+  posts: Post[],
+  currentUserId: string
+) {
+  const itemsByCategory =
+    new Map<string, Set<string>>();
+
+  posts
+    .filter(
+      (post) =>
+        post.authorId === currentUserId
+    )
+    .forEach((post) => {
+      const category = normalizeValue(
+        post.collection.category
+      );
+
+      if (!category) {
+        return;
+      }
+
+      let itemTitles =
+        itemsByCategory.get(category);
+
+      if (!itemTitles) {
+        itemTitles = new Set<string>();
+        itemsByCategory.set(
+          category,
+          itemTitles
+        );
+      }
+
+      post.collection.items
+        .filter(Boolean)
+        .forEach((item) => {
+          const normalizedTitle =
+            normalizeValue(item?.title);
+
+          if (normalizedTitle) {
+            itemTitles.add(normalizedTitle);
+          }
+        });
+    });
+
+  return itemsByCategory;
+}
+
+function getSharedItemsWithCurrentUser(
+  post: Post,
+  currentUserItemsByCategory:
+    Map<string, Set<string>>
+) {
+  const category = normalizeValue(
+    post.collection.category
+  );
+
+  if (!category) {
+    return [];
+  }
+
+  const currentUserItemTitles =
+    currentUserItemsByCategory.get(
+      category
+    );
+
+  if (!currentUserItemTitles) {
+    return [];
+  }
+
+  const seenTitles = new Set<string>();
+
+  return post.collection.items
+    .filter(Boolean)
+    .map((item) => item?.title.trim() ?? '')
+    .filter(Boolean)
+    .filter((title) => {
+      const normalizedTitle =
+        normalizeValue(title);
+
+      if (
+        !currentUserItemTitles.has(
+          normalizedTitle
+        ) ||
+        seenTitles.has(normalizedTitle)
+      ) {
+        return false;
+      }
+
+      seenTitles.add(normalizedTitle);
+
+      return true;
+    });
+}
+
 function getSuggestedPostForRecommendation(
   posts: Post[],
   recommendation: TasteRecommendation
@@ -145,6 +239,12 @@ export function buildPersonalizedFeed({
       .filter(Boolean)
   );
 
+  const currentUserItemsByCategory =
+    getCurrentUserItemsByCategory(
+      posts,
+      currentUserId
+    );
+
   /*
    * Your own posts and posts from followed users
    * form the main chronological feed.
@@ -224,9 +324,25 @@ export function buildPersonalizedFeed({
       priorityIndex < priorityPosts.length;
       count += 1
     ) {
+      const priorityPost =
+        priorityPosts[priorityIndex];
+
+      const sharedItemTitles =
+        priorityPost.authorId ===
+        currentUserId
+          ? []
+          : getSharedItemsWithCurrentUser(
+              priorityPost,
+              currentUserItemsByCategory
+            );
+
       result.push({
-        post: priorityPosts[priorityIndex],
+        post: priorityPost,
         isSuggested: false,
+        sharedItemTitles:
+          sharedItemTitles.length > 0
+            ? sharedItemTitles
+            : undefined,
       });
 
       priorityIndex += 1;
