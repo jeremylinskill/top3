@@ -35,10 +35,20 @@ type AppleMusicSongAttributes = {
   url?: string;
 };
 
+type AppleMusicSongRelationships = {
+  albums?: {
+    data?: Array<{
+      id?: string;
+      type?: string;
+    }>;
+  };
+};
+
 type AppleMusicSong = {
   id?: string;
   type?: string;
   attributes?: AppleMusicSongAttributes;
+  relationships?: AppleMusicSongRelationships;
 };
 
 type AppleMusicAlbumAttributes = {
@@ -111,6 +121,17 @@ type AppleMusicGenre = {
 
 type AppleMusicGenresResponse = {
   data?: AppleMusicGenre[];
+  errors?: Array<{
+    id?: string;
+    title?: string;
+    detail?: string;
+    status?: string;
+  }>;
+};
+
+type AppleMusicPlaylistTracksResponse = {
+  data?: AppleMusicSong[];
+  next?: string;
   errors?: Array<{
     id?: string;
     title?: string;
@@ -225,10 +246,108 @@ const CHART_CACHE_TTL_MS =
 const GENRE_CACHE_TTL_MS =
   60 * 60 * 1000;
 
+const FOLK_SUGGESTION_CACHE_TTL_MS =
+  6 * 60 * 60 * 1000;
+
+const BLUES_SUGGESTION_CACHE_TTL_MS =
+  6 * 60 * 60 * 1000;
+
+const BLUES_ALBUM_SUGGESTION_CACHE_TTL_MS =
+  6 * 60 * 60 * 1000;
+
+const JAZZ_SUGGESTION_CACHE_TTL_MS =
+  6 * 60 * 60 * 1000;
+
+const JAZZ_ALBUM_SUGGESTION_CACHE_TTL_MS =
+  6 * 60 * 60 * 1000;
+
+const FOLK_SONG_PLAYLIST_SOURCES = [
+  {
+    id: "pl.ced4e8788cab46e7982ba4a26e5211a7",
+    name: "Folk Essentials",
+    weight: 700,
+  },
+  {
+    id: "pl.ad5fb94a637445e7913da978dbe91e55",
+    name: "Indie Folk",
+    weight: 500,
+  },
+  {
+    id: "pl.a99fc9cfcf554228a0795b5c54fde910",
+    name: "Classic Singer-Songwriter Essentials",
+    weight: 450,
+  },
+  {
+    id: "pl.09d2969fa441483eba00a5ec41e279eb",
+    name: "Americana Essentials",
+    weight: 350,
+  },
+] as const;
+
+const BLUES_SONG_PLAYLIST_SOURCES = [
+  {
+    id: "pl.6f41aaf9730e48f29a71d7d4866659ae",
+    name: "Electric Blues Essentials",
+    weight: 1000,
+    requiresBluesMetadata: false,
+  },
+  {
+    id: "pl.a9faca07cf8f47e19f1819b0f5a2e765",
+    name: "Roadhouse",
+    weight: 900,
+    requiresBluesMetadata: true,
+  },
+] as const;
+
+const JAZZ_SONG_PLAYLIST_SOURCES = [
+  {
+    id: "pl.785dc09ee169431586a3f9f069aa5ddd",
+    name: "Jazz in 1959 Essentials",
+    weight: 1000,
+    requiresJazzMetadata: false,
+  },
+  {
+    id: "pl.b3f47883cff249eda4701069d8491fd1",
+    name: "Hard Bop Essentials",
+    weight: 850,
+    requiresJazzMetadata: false,
+  },
+  {
+    id: "pl.3143b27695214335a331ab93afc361e7",
+    name: "Jazz Vocal Essentials",
+    weight: 750,
+    requiresJazzMetadata: false,
+  },
+  {
+    id: "pl.07405f59596b402385451fa14695eec4",
+    name: "Jazz Currents",
+    weight: 350,
+    requiresJazzMetadata: true,
+  },
+] as const;
+
 const GENRE_ALIASES: Record<string, string[]> = {
+  blues: [
+    "blues",
+    "classic blues",
+    "contemporary blues",
+    "electric blues",
+    "chicago blues",
+    "delta blues",
+    "acoustic blues",
+    "country blues",
+    "blues rock",
+  ],
   folk: [
     "folk",
     "contemporary folk",
+    "alternative folk",
+    "indie folk",
+    "traditional folk",
+    "folk rock",
+    "americana",
+    "singer songwriter",
+    "contemporary singer songwriter",
   ],
   "hip hop": [
     "hip hop",
@@ -290,6 +409,41 @@ const cachedSongCharts =
       expiresAt: number;
     }
   >();
+
+let cachedFolkSongSuggestions:
+  | {
+      results: SongSearchResult[];
+      expiresAt: number;
+    }
+  | null = null;
+
+let cachedBluesSongSuggestions:
+  | {
+      results: SongSearchResult[];
+      expiresAt: number;
+    }
+  | null = null;
+
+let cachedBluesAlbumSuggestions:
+  | {
+      results: AlbumSearchResult[];
+      expiresAt: number;
+    }
+  | null = null;
+
+let cachedJazzSongSuggestions:
+  | {
+      results: SongSearchResult[];
+      expiresAt: number;
+    }
+  | null = null;
+
+let cachedJazzAlbumSuggestions:
+  | {
+      results: AlbumSearchResult[];
+      expiresAt: number;
+    }
+  | null = null;
 
 const cachedAlbumCharts =
   new Map<
@@ -1162,6 +1316,147 @@ function songMatchesTopic(
   );
 }
 
+function albumStronglyMatchesQuery(
+  album: RankedAlbum,
+  query: string
+): boolean {
+  const normalizedQuery =
+    normalizeText(query);
+
+  if (!normalizedQuery) {
+    return false;
+  }
+
+  const normalizedTitle =
+    normalizeText(album.title);
+
+  const normalizedArtist =
+    normalizeText(
+      album.artistName
+    );
+
+  const normalizedCombined =
+    normalizeText(
+      `${album.title} ${album.artistName}`
+    );
+
+  if (
+    normalizedTitle ===
+      normalizedQuery ||
+    normalizedTitle.startsWith(
+      normalizedQuery
+    ) ||
+    normalizedTitle.includes(
+      normalizedQuery
+    ) ||
+    normalizedArtist ===
+      normalizedQuery ||
+    normalizedArtist.startsWith(
+      normalizedQuery
+    ) ||
+    normalizedArtist.includes(
+      normalizedQuery
+    ) ||
+    normalizedCombined ===
+      normalizedQuery
+  ) {
+    return true;
+  }
+
+  const queryWords =
+    getWords(query);
+
+  if (queryWords.length === 0) {
+    return false;
+  }
+
+  const combinedWords =
+    new Set(
+      getWords(
+        `${album.title} ${album.artistName}`
+      )
+    );
+
+  return (
+    getTokenCoverage(
+      queryWords,
+      combinedWords
+    ) >= 0.75
+  );
+}
+
+function songStronglyMatchesQuery(
+  song: RankedSong,
+  query: string
+): boolean {
+  const normalizedQuery =
+    normalizeText(query);
+
+  if (!normalizedQuery) {
+    return false;
+  }
+
+  const normalizedTitle =
+    normalizeText(song.title);
+
+  const normalizedArtist =
+    normalizeText(
+      song.artistName
+    );
+
+  const normalizedCombined =
+    normalizeText(
+      `${song.title} ${song.artistName}`
+    );
+
+  if (
+    normalizedTitle ===
+      normalizedQuery ||
+    normalizedTitle.startsWith(
+      normalizedQuery
+    ) ||
+    normalizedTitle.includes(
+      normalizedQuery
+    ) ||
+    normalizedArtist ===
+      normalizedQuery ||
+    normalizedArtist.startsWith(
+      normalizedQuery
+    ) ||
+    normalizedArtist.includes(
+      normalizedQuery
+    ) ||
+    normalizedCombined ===
+      normalizedQuery
+  ) {
+    return true;
+  }
+
+  const queryWords =
+    getWords(query);
+
+  if (
+    queryWords.length === 0
+  ) {
+    return false;
+  }
+
+  const combinedWords =
+    new Set([
+      ...getWords(song.title),
+      ...getWords(
+        song.artistName
+      ),
+    ]);
+
+  return (
+    getTokenCoverage(
+      queryWords,
+      combinedWords
+    ) >= 0.75
+  );
+}
+
 function titleHasVariant(
   title: string
 ): boolean {
@@ -1206,6 +1501,31 @@ function getTokenCoverage(
   );
 }
 
+function getSongTitleForSearchScoring(
+  title: string
+): string {
+  /*
+   * Featured-artist credits are useful metadata, but
+   * they should not make the song title itself look
+   * like an exact/strong match for that featured
+   * artist.
+   *
+   * This affects ranking only. The original title is
+   * still displayed to the user and remains available
+   * to the soft query gate in songStronglyMatchesQuery().
+   */
+  return title
+    .replace(
+      /\s*[\(\[]\s*(?:feat(?:uring)?|ft)\.?\s+[^\)\]]+[\)\]]/gi,
+      " "
+    )
+    .replace(
+      /\s+/g,
+      " "
+    )
+    .trim();
+}
+
 function getSongScore(
   song: RankedSong,
   query: string
@@ -1213,8 +1533,15 @@ function getSongScore(
   const normalizedQuery =
     normalizeText(query);
 
+  const titleForSearchScoring =
+    getSongTitleForSearchScoring(
+      song.title
+    );
+
   const normalizedTitle =
-    normalizeText(song.title);
+    normalizeText(
+      titleForSearchScoring
+    );
 
   const normalizedArtist =
     normalizeText(
@@ -1223,7 +1550,7 @@ function getSongScore(
 
   const normalizedCombined =
     normalizeText(
-      `${song.title} ${song.artistName}`
+      `${titleForSearchScoring} ${song.artistName}`
     );
 
   const queryWords =
@@ -1231,7 +1558,9 @@ function getSongScore(
 
   const titleWords =
     new Set(
-      getWords(song.title)
+      getWords(
+        titleForSearchScoring
+      )
     );
 
   const artistWords =
@@ -1271,6 +1600,45 @@ function getSongScore(
     )
   ) {
     score += 700;
+  }
+
+  /*
+   * Artist intent needs its own strong signal.
+   *
+   * Without this, a query such as "Dylan" can rank
+   * unrelated songs titled "Dylan" above Bob Dylan,
+   * and "Noah Kahan" can rank a featured-title
+   * mention above Noah Kahan's own songs.
+   *
+   * Exact artist matches are strongest. A query that
+   * matches a meaningful portion of the artist name
+   * still receives a substantial boost, while the
+   * selected genre/topic continues to break ambiguous
+   * cases in rankAndDeduplicateSongs().
+   */
+  if (
+    normalizedArtist ===
+    normalizedQuery
+  ) {
+    score += 1800;
+  } else if (
+    normalizedArtist.startsWith(
+      `${normalizedQuery} `
+    )
+  ) {
+    score += 1350;
+  } else if (
+    normalizedArtist.endsWith(
+      ` ${normalizedQuery}`
+    )
+  ) {
+    score += 1250;
+  } else if (
+    normalizedArtist.includes(
+      ` ${normalizedQuery} `
+    )
+  ) {
+    score += 1200;
   }
 
   const combinedCoverage =
@@ -1596,11 +1964,67 @@ async function getAlbumTopResultIds(
     );
 }
 
+function getAlbumScore(
+  album: RankedAlbum,
+  query: string
+): number {
+  const normalizedQuery =
+    normalizeText(query);
+
+  const normalizedArtist =
+    normalizeText(
+      album.artistName
+    );
+
+  let score =
+    getResourceScore(
+      album.title,
+      album.artistName,
+      query,
+      album.originalIndex
+    );
+
+  /*
+   * Artist searches should prefer that artist's albums
+   * even when Apple classifies an individual album under
+   * an adjacent genre. This mirrors the successful Song
+   * search behaviour without changing generic resource
+   * scoring elsewhere.
+   */
+  if (
+    normalizedArtist ===
+    normalizedQuery
+  ) {
+    score += 1800;
+  } else if (
+    normalizedArtist.startsWith(
+      `${normalizedQuery} `
+    )
+  ) {
+    score += 1350;
+  } else if (
+    normalizedArtist.endsWith(
+      ` ${normalizedQuery}`
+    )
+  ) {
+    score += 1250;
+  } else if (
+    normalizedArtist.includes(
+      ` ${normalizedQuery} `
+    )
+  ) {
+    score += 1200;
+  }
+
+  return score;
+}
+
 function rankAndDeduplicateAlbums(
   albums: RankedAlbum[],
   query: string,
   chartAlbumIds: string[] = [],
-  topResultAlbumIds: string[] = []
+  topResultAlbumIds: string[] = [],
+  topic?: string
 ): AlbumSearchResult[] {
   const chartPositions =
     new Map<string, number>();
@@ -1693,11 +2117,17 @@ function rankAndDeduplicateAlbums(
         return {
           ...album,
           score:
-            getResourceScore(
-              album.title,
-              album.artistName,
-              query,
-              album.originalIndex
+            getAlbumScore(
+              album,
+              query
+            ) +
+            (
+              albumMatchesTopic(
+                album,
+                topic
+              )
+                ? 450
+                : 0
             ) +
             exactTitleBoost +
             canonicalResultBoost +
@@ -1904,10 +2334,32 @@ function getVariantGroupKey(
   ].join("|");
 }
 
+function getAlbumVariantGroupKey(
+  album: RankedAlbum
+): string {
+  const baseTitle =
+    normalizeText(
+      album.title
+        .split(/[[(]/, 1)[0]
+        .replace(
+          /\s*[-–—]\s*(?:deluxe|expanded|legacy|anniversary|remaster(?:ed)?|bonus track|mono|stereo).*$/i,
+          ""
+        )
+    );
+
+  return [
+    baseTitle,
+    normalizeText(
+      album.artistName
+    ),
+  ].join("|");
+}
+
 function rankAndDeduplicateSongs(
   songs: RankedSong[],
   query: string,
-  chartSongIds: string[] = []
+  chartSongIds: string[] = [],
+  topic?: string
 ): SongSearchResult[] {
   const chartPositions =
     new Map<string, number>();
@@ -1953,6 +2405,23 @@ function rankAndDeduplicateSongs(
           }
         }
 
+        /*
+         * Genre relevance is now a ranking signal
+         * rather than an absolute typed-search gate.
+         *
+         * This lets a strong exact song/artist query
+         * survive imperfect Apple genre metadata,
+         * while still preferring results whose
+         * metadata matches the selected Top 3 topic.
+         */
+        const topicBoost =
+          songMatchesTopic(
+            song,
+            topic
+          )
+            ? 450
+            : 0;
+
         return {
           ...song,
           score:
@@ -1960,6 +2429,7 @@ function rankAndDeduplicateSongs(
               song,
               query
             ) +
+            topicBoost +
             popularityBoost,
         };
       })
@@ -2071,6 +2541,1314 @@ function getPopularResultLimit(
   );
 }
 
+async function fetchAppleMusicPlaylistTracks(
+  developerToken: string,
+  playlistId: string,
+  maximumTracks = 100
+): Promise<AppleMusicSong[]> {
+  const results:
+    AppleMusicSong[] = [];
+
+  let nextUrl:
+    string | undefined =
+    `${APPLE_MUSIC_API_BASE_URL}/catalog/${DEFAULT_STOREFRONT}/playlists/${playlistId}/tracks?limit=100`;
+
+  while (
+    nextUrl &&
+    results.length < maximumTracks
+  ) {
+    const response =
+      await fetch(
+        nextUrl,
+        {
+          method: "GET",
+          headers: {
+            Accept:
+              "application/json",
+            Authorization:
+              `Bearer ${developerToken}`,
+          },
+        }
+      );
+
+    if (!response.ok) {
+      throw new Error(
+        `Apple Music playlist track lookup failed with status ${response.status}.`
+      );
+    }
+
+    const data =
+      await response.json() as AppleMusicPlaylistTracksResponse;
+
+    for (
+      const track of data.data ?? []
+    ) {
+      if (
+        track.type &&
+        track.type !== "songs"
+      ) {
+        continue;
+      }
+
+      results.push(track);
+
+      if (
+        results.length >=
+        maximumTracks
+      ) {
+        break;
+      }
+    }
+
+    if (
+      !data.next ||
+      results.length >= maximumTracks
+    ) {
+      break;
+    }
+
+    nextUrl =
+      new URL(
+        data.next,
+        APPLE_MUSIC_API_BASE_URL
+      ).toString();
+  }
+
+  return results;
+}
+
+async function fetchSongsWithAlbumRelationships(
+  developerToken: string,
+  songIds: string[]
+): Promise<Map<string, AppleMusicSong>> {
+  const uniqueSongIds =
+    Array.from(
+      new Set(
+        songIds
+          .map((id) => id.trim())
+          .filter(Boolean)
+      )
+    );
+
+  if (
+    uniqueSongIds.length === 0
+  ) {
+    return new Map();
+  }
+
+  const url =
+    new URL(
+      `${APPLE_MUSIC_API_BASE_URL}/catalog/${DEFAULT_STOREFRONT}/songs`
+    );
+
+  url.searchParams.set(
+    "ids",
+    uniqueSongIds.join(",")
+  );
+
+  /*
+   * We only need album identifiers here. `relate=albums`
+   * requests the relationship IDs without pulling full
+   * album resources into every Song object.
+   */
+  url.searchParams.set(
+    "relate",
+    "albums"
+  );
+
+  const response =
+    await fetch(
+      url.toString(),
+      {
+        method: "GET",
+        headers: {
+          Accept:
+            "application/json",
+          Authorization:
+            `Bearer ${developerToken}`,
+        },
+      }
+    );
+
+  if (!response.ok) {
+    throw new Error(
+      `Apple Music song-album relationship lookup failed with status ${response.status}.`
+    );
+  }
+
+  const data =
+    await response.json() as {
+      data?: AppleMusicSong[];
+    };
+
+  return new Map(
+    (
+      data.data ?? []
+    )
+      .map(
+        (song) => [
+          song.id?.trim() ?? "",
+          song,
+        ] as const
+      )
+      .filter(
+        ([id]) =>
+          Boolean(id)
+      )
+  );
+}
+
+async function getPopularJazzSongs(
+  developerToken: string,
+  limit: number
+): Promise<SongSearchResult[]> {
+  const now =
+    Date.now();
+
+  if (
+    cachedJazzSongSuggestions &&
+    now <
+      cachedJazzSongSuggestions.expiresAt
+  ) {
+    return cachedJazzSongSuggestions
+      .results
+      .slice(
+        0,
+        limit
+      );
+  }
+
+  const playlistResults =
+    await Promise.allSettled(
+      JAZZ_SONG_PLAYLIST_SOURCES.map(
+        async (source) => ({
+          source,
+          tracks:
+            await fetchAppleMusicPlaylistTracks(
+              developerToken,
+              source.id
+            ),
+        })
+      )
+    );
+
+  type JazzCandidate = {
+    song: RankedSong;
+    sourceScore: number;
+    sourceCount: number;
+    bestPosition: number;
+  };
+
+  const candidates =
+    new Map<
+      string,
+      JazzCandidate
+    >();
+
+  playlistResults.forEach(
+    (result) => {
+      if (
+        result.status !==
+        "fulfilled"
+      ) {
+        console.warn(
+          "Apple Music Jazz playlist lookup failed; continuing with remaining Jazz sources:",
+          result.reason
+        );
+
+        return;
+      }
+
+      const {
+        source,
+        tracks,
+      } =
+        result.value;
+
+      tracks.forEach(
+        (
+          track,
+          trackIndex
+        ) => {
+          const mappedSong =
+            mapSong(
+              track,
+              trackIndex
+            );
+
+          if (!mappedSong) {
+            return;
+          }
+
+          const key =
+            getDeduplicationKey(
+              mappedSong
+            );
+
+          const positionStrength =
+            Math.max(
+              0,
+              300 -
+                trackIndex * 6
+            );
+
+          const contribution =
+            source.weight +
+            positionStrength;
+
+          const existing =
+            candidates.get(key);
+
+          if (existing) {
+            existing.sourceScore +=
+              contribution;
+
+            existing.sourceCount += 1;
+
+            existing.bestPosition =
+              Math.min(
+                existing.bestPosition,
+                trackIndex
+              );
+
+            if (
+              !existing.song.previewUrl &&
+              mappedSong.previewUrl
+            ) {
+              existing.song =
+                mappedSong;
+            }
+
+            return;
+          }
+
+          candidates.set(
+            key,
+            {
+              song:
+                mappedSong,
+              sourceScore:
+                contribution,
+              sourceCount: 1,
+              bestPosition:
+                trackIndex,
+            }
+          );
+        }
+      );
+    }
+  );
+
+  if (
+    candidates.size === 0
+  ) {
+    /*
+     * Never silently substitute the general Canadian
+     * chart for Jazz. If the fixed editorial sources
+     * are unavailable, return no Jazz suggestions and
+     * let the app's normal empty-state handling apply.
+     */
+    return [];
+  }
+
+  const rankedCandidates =
+    Array.from(
+      candidates.values()
+    )
+      .map(
+        (candidate) => ({
+          ...candidate,
+          suggestionScore:
+            candidate.sourceScore +
+            Math.max(
+              0,
+              candidate.sourceCount -
+                1
+            ) *
+              500,
+        })
+      )
+      .sort(
+        (first, second) =>
+          second.suggestionScore -
+            first.suggestionScore ||
+          second.sourceCount -
+            first.sourceCount ||
+          first.bestPosition -
+            second.bestPosition
+      );
+
+  const results:
+    SongSearchResult[] = [];
+
+  const seenVariantGroups =
+    new Set<string>();
+
+  const seenArtists =
+    new Set<string>();
+
+  for (
+    const candidate of rankedCandidates
+  ) {
+    const variantGroupKey =
+      getVariantGroupKey(
+        candidate.song
+      );
+
+    if (
+      seenVariantGroups.has(
+        variantGroupKey
+      )
+    ) {
+      continue;
+    }
+
+    const artistKey =
+      normalizeText(
+        candidate.song.artistName
+      );
+
+    if (
+      artistKey &&
+      seenArtists.has(
+        artistKey
+      )
+    ) {
+      continue;
+    }
+
+    seenVariantGroups.add(
+      variantGroupKey
+    );
+
+    if (artistKey) {
+      seenArtists.add(
+        artistKey
+      );
+    }
+
+    results.push({
+      id:
+        candidate.song.id,
+      title:
+        candidate.song.title,
+      subtitle:
+        candidate.song.subtitle,
+      imageUrl:
+        candidate.song.imageUrl,
+      previewUrl:
+        candidate.song.previewUrl,
+      appleMusicUrl:
+        candidate.song.appleMusicUrl,
+    });
+
+    if (
+      results.length >=
+      MAX_POPULAR_RESULT_LIMIT
+    ) {
+      break;
+    }
+  }
+
+  cachedJazzSongSuggestions = {
+    results,
+    expiresAt:
+      now +
+      JAZZ_SUGGESTION_CACHE_TTL_MS,
+  };
+
+  return results.slice(
+    0,
+    limit
+  );
+}
+
+
+async function getPopularBluesSongs(
+  developerToken: string,
+  limit: number
+): Promise<SongSearchResult[]> {
+  const now =
+    Date.now();
+
+  if (
+    cachedBluesSongSuggestions &&
+    now <
+      cachedBluesSongSuggestions.expiresAt
+  ) {
+    return cachedBluesSongSuggestions
+      .results
+      .slice(
+        0,
+        limit
+      );
+  }
+
+  const playlistResults =
+    await Promise.allSettled(
+      BLUES_SONG_PLAYLIST_SOURCES.map(
+        async (source) => ({
+          source,
+          tracks:
+            await fetchAppleMusicPlaylistTracks(
+              developerToken,
+              source.id
+            ),
+        })
+      )
+    );
+
+  type BluesCandidate = {
+    song: RankedSong;
+    score: number;
+    bestPosition: number;
+  };
+
+  const candidates =
+    new Map<
+      string,
+      BluesCandidate
+    >();
+
+  playlistResults.forEach(
+    (result) => {
+      if (
+        result.status !==
+        "fulfilled"
+      ) {
+        console.warn(
+          "Apple Music Blues playlist lookup failed; continuing with remaining Blues sources:",
+          result.reason
+        );
+
+        return;
+      }
+
+      const {
+        source,
+        tracks,
+      } =
+        result.value;
+
+      tracks.forEach(
+        (
+          track,
+          trackIndex
+        ) => {
+          const mappedSong =
+            mapSong(
+              track,
+              trackIndex
+            );
+
+          if (!mappedSong) {
+            return;
+          }
+
+          /*
+           * Electric Blues Essentials is itself the
+           * authoritative Blues editorial source, so
+           * trust its curation even when an individual
+           * Apple catalog record is tagged Rock.
+           *
+           * Roadhouse is intentionally broader, so its
+           * candidates must carry Blues-related metadata.
+           */
+          if (
+            source.requiresBluesMetadata &&
+            !songMatchesTopic(
+              mappedSong,
+              "blues"
+            )
+          ) {
+            return;
+          }
+
+          const key =
+            getDeduplicationKey(
+              mappedSong
+            );
+
+          const positionStrength =
+            Math.max(
+              0,
+              300 -
+                trackIndex * 8
+            );
+
+          const contribution =
+            source.weight +
+            positionStrength;
+
+          const existing =
+            candidates.get(key);
+
+          if (existing) {
+            existing.score +=
+              contribution;
+
+            existing.bestPosition =
+              Math.min(
+                existing.bestPosition,
+                trackIndex
+              );
+
+            if (
+              !existing.song.previewUrl &&
+              mappedSong.previewUrl
+            ) {
+              existing.song =
+                mappedSong;
+            }
+
+            return;
+          }
+
+          candidates.set(
+            key,
+            {
+              song:
+                mappedSong,
+              score:
+                contribution,
+              bestPosition:
+                trackIndex,
+            }
+          );
+        }
+      );
+    }
+  );
+
+  if (
+    candidates.size === 0
+  ) {
+    /*
+     * Never silently substitute the general Canadian
+     * chart for Blues. If both fixed editorial sources
+     * are unavailable, return no Blues suggestions and
+     * let the app's normal empty-state handling apply.
+     */
+    return [];
+  }
+
+  const rankedCandidates =
+    Array.from(
+      candidates.values()
+    )
+      .sort(
+        (first, second) =>
+          second.score -
+            first.score ||
+          first.bestPosition -
+            second.bestPosition
+      );
+
+  const results:
+    SongSearchResult[] = [];
+
+  const seenVariantGroups =
+    new Set<string>();
+
+  const seenArtists =
+    new Set<string>();
+
+  for (
+    const candidate of rankedCandidates
+  ) {
+    const variantGroupKey =
+      getVariantGroupKey(
+        candidate.song
+      );
+
+    if (
+      seenVariantGroups.has(
+        variantGroupKey
+      )
+    ) {
+      continue;
+    }
+
+    const artistKey =
+      normalizeText(
+        candidate.song.artistName
+      );
+
+    if (
+      artistKey &&
+      seenArtists.has(
+        artistKey
+      )
+    ) {
+      continue;
+    }
+
+    seenVariantGroups.add(
+      variantGroupKey
+    );
+
+    if (artistKey) {
+      seenArtists.add(
+        artistKey
+      );
+    }
+
+    results.push({
+      id:
+        candidate.song.id,
+      title:
+        candidate.song.title,
+      subtitle:
+        candidate.song.subtitle,
+      imageUrl:
+        candidate.song.imageUrl,
+      previewUrl:
+        candidate.song.previewUrl,
+      appleMusicUrl:
+        candidate.song.appleMusicUrl,
+    });
+
+    if (
+      results.length >=
+      MAX_POPULAR_RESULT_LIMIT
+    ) {
+      break;
+    }
+  }
+
+  cachedBluesSongSuggestions = {
+    results,
+    expiresAt:
+      now +
+      BLUES_SUGGESTION_CACHE_TTL_MS,
+  };
+
+  return results.slice(
+    0,
+    limit
+  );
+}
+
+
+async function getPopularFolkSongs(
+  developerToken: string,
+  limit: number
+): Promise<SongSearchResult[]> {
+  const now =
+    Date.now();
+
+  if (
+    cachedFolkSongSuggestions &&
+    now <
+      cachedFolkSongSuggestions.expiresAt
+  ) {
+    return cachedFolkSongSuggestions
+      .results
+      .slice(
+        0,
+        limit
+      );
+  }
+
+  const playlistResults =
+    await Promise.allSettled(
+      FOLK_SONG_PLAYLIST_SOURCES.map(
+        async (source) => ({
+          source,
+          tracks:
+            await fetchAppleMusicPlaylistTracks(
+              developerToken,
+              source.id
+            ),
+        })
+      )
+    );
+
+  type FolkCandidate = {
+    song: RankedSong;
+    sourceScore: number;
+    sourceCount: number;
+    bestPosition: number;
+    folkEssentialsPosition?: number;
+    indieFolkPosition?: number;
+    classicSingerSongwriterPosition?: number;
+  };
+
+  const candidates =
+    new Map<
+      string,
+      FolkCandidate
+    >();
+
+  playlistResults.forEach(
+    (result) => {
+      if (
+        result.status !==
+        "fulfilled"
+      ) {
+        console.warn(
+          "Apple Music Folk playlist lookup failed; continuing with remaining Folk sources:",
+          result.reason
+        );
+
+        return;
+      }
+
+      const {
+        source,
+        tracks,
+      } =
+        result.value;
+
+      tracks.forEach(
+        (
+          track,
+          trackIndex
+        ) => {
+          const mappedSong =
+            mapSong(
+              track,
+              trackIndex
+            );
+
+          if (!mappedSong) {
+            return;
+          }
+
+          const key =
+            getDeduplicationKey(
+              mappedSong
+            );
+
+          const positionStrength =
+            Math.max(
+              0,
+              200 -
+                trackIndex * 4
+            );
+
+          const contribution =
+            source.weight +
+            positionStrength;
+
+          const existing =
+            candidates.get(key);
+
+          if (existing) {
+            existing.sourceScore +=
+              contribution;
+
+            existing.sourceCount += 1;
+
+            existing.bestPosition =
+              Math.min(
+                existing.bestPosition,
+                trackIndex
+              );
+
+            const sourcePosition =
+              trackIndex + 1;
+
+            if (
+              source.name ===
+              "Folk Essentials"
+            ) {
+              existing.folkEssentialsPosition =
+                Math.min(
+                  existing.folkEssentialsPosition ??
+                    sourcePosition,
+                  sourcePosition
+                );
+            }
+
+            if (
+              source.name ===
+              "Indie Folk"
+            ) {
+              existing.indieFolkPosition =
+                Math.min(
+                  existing.indieFolkPosition ??
+                    sourcePosition,
+                  sourcePosition
+                );
+            }
+
+            if (
+              source.name ===
+              "Classic Singer-Songwriter Essentials"
+            ) {
+              existing.classicSingerSongwriterPosition =
+                Math.min(
+                  existing.classicSingerSongwriterPosition ??
+                    sourcePosition,
+                  sourcePosition
+                );
+            }
+
+            if (
+              !existing.song.previewUrl &&
+              mappedSong.previewUrl
+            ) {
+              existing.song =
+                mappedSong;
+            }
+
+            return;
+          }
+
+          const sourcePosition =
+            trackIndex + 1;
+
+          candidates.set(
+            key,
+            {
+              song:
+                mappedSong,
+              sourceScore:
+                contribution,
+              sourceCount: 1,
+              bestPosition:
+                trackIndex,
+              folkEssentialsPosition:
+                source.name ===
+                "Folk Essentials"
+                  ? sourcePosition
+                  : undefined,
+              indieFolkPosition:
+                source.name ===
+                "Indie Folk"
+                  ? sourcePosition
+                  : undefined,
+              classicSingerSongwriterPosition:
+                source.name ===
+                "Classic Singer-Songwriter Essentials"
+                  ? sourcePosition
+                  : undefined,
+            }
+          );
+        }
+      );
+    }
+  );
+
+  if (
+    candidates.size === 0
+  ) {
+    /*
+     * Singer/Songwriter is the closest Canadian
+     * Apple Music chart ecosystem to Folk.
+     *
+     * Use it only as a failure fallback if all
+     * fixed editorial Folk playlists are
+     * unavailable. This avoids ever presenting
+     * the general Canadian chart as Folk.
+     */
+    return getPopularAppleMusicSongs(
+      "singer-songwriter",
+      limit
+    );
+  }
+
+  const singerSongwriterChartPositionsById =
+    new Map<string, number>();
+
+  const singerSongwriterChartPositionsByVariant =
+    new Map<string, number>();
+
+  try {
+    const singerSongwriterChartIds =
+      await getSongChartIds(
+        developerToken,
+        "singer-songwriter"
+      );
+
+    singerSongwriterChartIds.forEach(
+      (
+        songId,
+        index
+      ) => {
+        singerSongwriterChartPositionsById.set(
+          `apple-music-song-${songId}`,
+          index + 1
+        );
+      }
+    );
+
+    const singerSongwriterCacheKey = [
+      DEFAULT_STOREFRONT,
+      "singer songwriter",
+    ].join("|");
+
+    const singerSongwriterChartSongs =
+      cachedSongCharts.get(
+        singerSongwriterCacheKey
+      )?.songs ?? [];
+
+    const explicitFolkGenreAliases = [
+      "folk",
+      "contemporary folk",
+      "alternative folk",
+      "indie folk",
+      "traditional folk",
+      "folk rock",
+      "americana",
+    ];
+
+    singerSongwriterChartSongs.forEach(
+      (
+        song,
+        index
+      ) => {
+        const mappedSong =
+          mapSong(
+            song,
+            index
+          );
+
+        if (!mappedSong) {
+          return;
+        }
+
+        const variantKey =
+          getVariantGroupKey(
+            mappedSong
+          );
+
+        if (
+          !singerSongwriterChartPositionsByVariant.has(
+            variantKey
+          )
+        ) {
+          singerSongwriterChartPositionsByVariant.set(
+            variantKey,
+            index + 1
+          );
+        }
+
+        /*
+         * The Singer/Songwriter chart is also a
+         * secondary candidate source for Folk, but
+         * chart-only additions must carry explicit
+         * Folk-related Apple genre metadata.
+         *
+         * Songs already present in the editorial
+         * ecosystem do not need this test; their
+         * chart position still acts as a recognition
+         * boost below.
+         */
+        const hasExplicitFolkMetadata =
+          mappedSong.genreNames.some(
+            (genreName) => {
+              const normalizedGenre =
+                normalizeText(
+                  genreName
+                );
+
+              return explicitFolkGenreAliases.some(
+                (acceptedGenre) =>
+                  normalizedGenre ===
+                    acceptedGenre ||
+                  normalizedGenre.startsWith(
+                    `${acceptedGenre} `
+                  )
+              );
+            }
+          );
+
+        if (!hasExplicitFolkMetadata) {
+          return;
+        }
+
+        const candidateKey =
+          getDeduplicationKey(
+            mappedSong
+          );
+
+        const existing =
+          candidates.get(
+            candidateKey
+          );
+
+        if (existing) {
+          if (
+            !existing.song.previewUrl &&
+            mappedSong.previewUrl
+          ) {
+            existing.song =
+              mappedSong;
+          }
+
+          return;
+        }
+
+        /*
+         * Chart-only candidates start with no
+         * editorial source score. Their value comes
+         * from the recognition boost plus explicit
+         * Folk metadata, so they cannot overpower
+         * strongly supported editorial songs merely
+         * by being on the broader chart.
+         */
+        candidates.set(
+          candidateKey,
+          {
+            song:
+              mappedSong,
+            sourceScore: 0,
+            sourceCount: 0,
+            bestPosition:
+              Number.MAX_SAFE_INTEGER,
+          }
+        );
+      }
+    );
+  } catch (error) {
+    console.warn(
+      "Apple Music Singer/Songwriter chart lookup failed; Folk suggestions will continue with editorial sources only:",
+      error
+    );
+  }
+
+  const currentYear =
+    new Date().getUTCFullYear();
+
+  const rankedCandidates =
+    Array.from(
+      candidates.values()
+    )
+      .map((candidate) => {
+        const releaseYear =
+          Number.parseInt(
+            candidate.song.releaseDate
+              .slice(0, 4),
+            10
+          );
+
+        const ageInYears =
+          Number.isFinite(
+            releaseYear
+          )
+            ? Math.max(
+                0,
+                currentYear -
+                  releaseYear
+              )
+            : 0;
+
+        /*
+         * The Folk ecosystem establishes genre
+         * relevance. The Singer/Songwriter chart is
+         * used only as a recognition signal so more
+         * familiar Folk touchstones can rise without
+         * turning the pool back into a generic chart.
+         */
+        const recognitionPosition =
+          singerSongwriterChartPositionsById.get(
+            candidate.song.id
+          ) ??
+          singerSongwriterChartPositionsByVariant.get(
+            getVariantGroupKey(
+              candidate.song
+            )
+          );
+
+        let recognitionBoost = 0;
+
+        if (
+          recognitionPosition !== undefined
+        ) {
+          if (
+            recognitionPosition <= 10
+          ) {
+            recognitionBoost = 1000;
+          } else if (
+            recognitionPosition <= 25
+          ) {
+            recognitionBoost = 800;
+          } else if (
+            recognitionPosition <= 50
+          ) {
+            recognitionBoost = 600;
+          } else if (
+            recognitionPosition <= 100
+          ) {
+            recognitionBoost = 400;
+          } else if (
+            recognitionPosition <= 200
+          ) {
+            recognitionBoost = 250;
+          }
+        }
+
+        /*
+         * Longevity remains useful, but it is now a
+         * modest supporting signal rather than a
+         * strong advantage for older archival tracks.
+         */
+        const longevityStrength =
+          Math.min(
+            ageInYears,
+            50
+          ) * 2;
+
+        const folkMetadataBoost =
+          songMatchesTopic(
+            candidate.song,
+            "folk"
+          )
+            ? 200
+            : 0;
+
+        const multiSourceBoost =
+          Math.max(
+            0,
+            candidate.sourceCount -
+              1
+          ) * 300;
+
+        /*
+         * A song is high-confidence for the Top 3
+         * suggestion pool only when Apple gives us
+         * corroborating evidence: either it appears
+         * in multiple Folk editorial sources or it
+         * also carries Singer/Songwriter chart
+         * recognition.
+         *
+         * High placement in Folk Essentials alone
+         * is deliberately no longer enough. That
+         * removes historically important but obscure
+         * single-source deep cuts from Shuffle.
+         */
+        const isHighConfidence =
+          candidate.sourceCount >= 2 ||
+          recognitionPosition !== undefined;
+
+        return {
+          ...candidate,
+          isHighConfidence,
+          suggestionScore:
+            candidate.sourceScore +
+            recognitionBoost +
+            longevityStrength +
+            folkMetadataBoost +
+            multiSourceBoost,
+        };
+      })
+      .sort(
+        (first, second) =>
+          second.suggestionScore -
+            first.suggestionScore ||
+          second.sourceCount -
+            first.sourceCount ||
+          first.bestPosition -
+            second.bestPosition
+      );
+
+  /*
+   * Prefer a smaller, stronger pool over a larger
+   * pool padded with low-confidence deep cuts.
+   * If Apple gives us fewer than 10 strong
+   * candidates, gracefully fall back to the full
+   * ranked ecosystem rather than returning too
+   * little variety.
+   */
+  const highConfidenceCandidates =
+    rankedCandidates.filter(
+      (candidate) =>
+        candidate.isHighConfidence
+    );
+
+  const candidatesForSuggestionPool =
+    highConfidenceCandidates.length >= 10
+      ? highConfidenceCandidates
+      : rankedCandidates;
+
+  const results:
+    SongSearchResult[] = [];
+
+  const seenVariantGroups =
+    new Set<string>();
+
+  const seenArtists =
+    new Set<string>();
+
+  for (
+    const candidate of candidatesForSuggestionPool
+  ) {
+    const variantGroupKey =
+      getVariantGroupKey(
+        candidate.song
+      );
+
+    if (
+      seenVariantGroups.has(
+        variantGroupKey
+      )
+    ) {
+      continue;
+    }
+
+    const artistKey =
+      normalizeText(
+        candidate.song.artistName
+      );
+
+    if (
+      artistKey &&
+      seenArtists.has(
+        artistKey
+      )
+    ) {
+      continue;
+    }
+
+    seenVariantGroups.add(
+      variantGroupKey
+    );
+
+    if (artistKey) {
+      seenArtists.add(
+        artistKey
+      );
+    }
+
+    results.push({
+      id:
+        candidate.song.id,
+      title:
+        candidate.song.title,
+      subtitle:
+        candidate.song.subtitle,
+      imageUrl:
+        candidate.song.imageUrl,
+      previewUrl:
+        candidate.song.previewUrl,
+      appleMusicUrl:
+        candidate.song.appleMusicUrl,
+    });
+
+    if (
+      results.length >=
+      MAX_POPULAR_RESULT_LIMIT
+    ) {
+      break;
+    }
+  }
+
+  cachedFolkSongSuggestions = {
+    results,
+    expiresAt:
+      now +
+      FOLK_SUGGESTION_CACHE_TTL_MS,
+  };
+
+  return results.slice(
+    0,
+    limit
+  );
+}
+
+
 async function getPopularAppleMusicSongs(
   topic: string | undefined,
   limit: number
@@ -2078,14 +3856,41 @@ async function getPopularAppleMusicSongs(
   const developerToken =
     await getDeveloperToken();
 
+  const normalizedTopic =
+    normalizeText(topic ?? "") ||
+    "general";
+
+  if (
+    normalizedTopic === "folk"
+  ) {
+    return getPopularFolkSongs(
+      developerToken,
+      limit
+    );
+  }
+
+  if (
+    normalizedTopic === "blues"
+  ) {
+    return getPopularBluesSongs(
+      developerToken,
+      limit
+    );
+  }
+
+  if (
+    normalizedTopic === "jazz"
+  ) {
+    return getPopularJazzSongs(
+      developerToken,
+      limit
+    );
+  }
+
   await getSongChartIds(
     developerToken,
     topic
   );
-
-  const normalizedTopic =
-    normalizeText(topic ?? "") ||
-    "general";
 
   const cacheKey = [
     DEFAULT_STOREFRONT,
@@ -2309,12 +4114,1091 @@ async function fetchAlbumsWithTracks(
   );
 }
 
+async function getPopularBluesAlbums(
+  developerToken: string,
+  limit: number
+): Promise<AlbumSearchResult[]> {
+  const now =
+    Date.now();
+
+  if (
+    cachedBluesAlbumSuggestions &&
+    now <
+      cachedBluesAlbumSuggestions.expiresAt
+  ) {
+    return cachedBluesAlbumSuggestions
+      .results
+      .slice(
+        0,
+        limit
+      );
+  }
+
+  const playlistResults =
+    await Promise.allSettled(
+      BLUES_SONG_PLAYLIST_SOURCES.map(
+        async (source) => ({
+          source,
+          tracks:
+            await fetchAppleMusicPlaylistTracks(
+              developerToken,
+              source.id,
+              50
+            ),
+        })
+      )
+    );
+
+  const fulfilledSources =
+    playlistResults
+      .filter(
+        (
+          result
+        ): result is PromiseFulfilledResult<{
+          source:
+            typeof BLUES_SONG_PLAYLIST_SOURCES[number];
+          tracks: AppleMusicSong[];
+        }> =>
+          result.status ===
+          "fulfilled"
+      )
+      .map(
+        (result) =>
+          result.value
+      );
+
+  playlistResults.forEach(
+    (result) => {
+      if (
+        result.status ===
+        "rejected"
+      ) {
+        console.warn(
+          "Apple Music Blues Album source lookup failed; continuing with remaining Blues sources:",
+          result.reason
+        );
+      }
+    }
+  );
+
+  if (
+    fulfilledSources.length === 0
+  ) {
+    /*
+     * Blues has no usable Apple Music Canada Album chart
+     * genre. Never silently substitute the general chart.
+     */
+    return [];
+  }
+
+  const playlistSongIds =
+    fulfilledSources
+      .flatMap(
+        ({ tracks }) =>
+          tracks.map(
+            (track) =>
+              track.id?.trim() ?? ""
+          )
+      )
+      .filter(Boolean);
+
+  const songsWithAlbums =
+    await fetchSongsWithAlbumRelationships(
+      developerToken,
+      playlistSongIds
+    );
+
+  type BluesAlbumSourceEvidence = {
+    weight: number;
+    requiresBluesMetadata: boolean;
+    bestTrackPosition: number;
+    trackCount: number;
+  };
+
+  type BluesAlbumEvidence = {
+    albumId: string;
+    sources: Map<
+      string,
+      BluesAlbumSourceEvidence
+    >;
+  };
+
+  const evidenceByAlbumId =
+    new Map<
+      string,
+      BluesAlbumEvidence
+    >();
+
+  for (
+    const {
+      source,
+      tracks,
+    } of fulfilledSources
+  ) {
+    tracks.forEach(
+      (
+        playlistTrack,
+        trackIndex
+      ) => {
+        const songId =
+          playlistTrack.id?.trim();
+
+        if (!songId) {
+          return;
+        }
+
+        const albumIds =
+          songsWithAlbums
+            .get(songId)
+            ?.relationships
+            ?.albums
+            ?.data
+            ?.map(
+              (album) =>
+                album.id?.trim() ?? ""
+            )
+            .filter(Boolean) ?? [];
+
+        for (
+          const albumId of albumIds
+        ) {
+          let albumEvidence =
+            evidenceByAlbumId.get(
+              albumId
+            );
+
+          if (!albumEvidence) {
+            albumEvidence = {
+              albumId,
+              sources:
+                new Map(),
+            };
+
+            evidenceByAlbumId.set(
+              albumId,
+              albumEvidence
+            );
+          }
+
+          const existingSource =
+            albumEvidence.sources.get(
+              source.id
+            );
+
+          if (existingSource) {
+            existingSource.bestTrackPosition =
+              Math.min(
+                existingSource.bestTrackPosition,
+                trackIndex
+              );
+
+            existingSource.trackCount +=
+              1;
+
+            continue;
+          }
+
+          albumEvidence.sources.set(
+            source.id,
+            {
+              weight:
+                source.weight,
+              requiresBluesMetadata:
+                source.requiresBluesMetadata,
+              bestTrackPosition:
+                trackIndex,
+              trackCount: 1,
+            }
+          );
+        }
+      }
+    );
+  }
+
+  if (
+    evidenceByAlbumId.size === 0
+  ) {
+    return [];
+  }
+
+  let albumsWithTracks =
+    new Map<
+      string,
+      AppleMusicAlbum
+    >();
+
+  try {
+    albumsWithTracks =
+      await fetchAlbumsWithTracks(
+        developerToken,
+        Array.from(
+          evidenceByAlbumId.keys()
+        )
+      );
+  } catch (error) {
+    console.warn(
+      "Apple Music Blues Album lookup failed:",
+      error
+    );
+
+    return [];
+  }
+
+  const today =
+    new Date();
+
+  const todayTimestamp =
+    Date.UTC(
+      today.getUTCFullYear(),
+      today.getUTCMonth(),
+      today.getUTCDate()
+    );
+
+  const rankedAlbums =
+    Array.from(
+      evidenceByAlbumId.values()
+    )
+      .map(
+        (
+          evidence,
+          originalIndex
+        ) => {
+          const appleAlbum =
+            albumsWithTracks.get(
+              evidence.albumId
+            );
+
+          if (!appleAlbum) {
+            return null;
+          }
+
+          const mappedAlbum =
+            mapAlbum(
+              appleAlbum,
+              originalIndex
+            );
+
+          if (!mappedAlbum) {
+            return null;
+          }
+
+          const normalizedTitle =
+            normalizeText(
+              mappedAlbum.title
+            );
+
+          if (
+            normalizedTitle.endsWith(
+              " single"
+            )
+          ) {
+            return null;
+          }
+
+          const releaseDate =
+            mappedAlbum.releaseDate
+              .trim();
+
+          if (releaseDate) {
+            const releaseTimestamp =
+              Date.parse(
+                releaseDate
+              );
+
+            if (
+              Number.isFinite(
+                releaseTimestamp
+              ) &&
+              releaseTimestamp >
+                todayTimestamp +
+                  24 * 60 * 60 * 1000 -
+                  1
+            ) {
+              return null;
+            }
+          }
+
+          const sourceEvidence =
+            Array.from(
+              evidence.sources.values()
+            );
+
+          const hasAuthoritativeSource =
+            sourceEvidence.some(
+              (source) =>
+                !source
+                  .requiresBluesMetadata
+            );
+
+          if (
+            !hasAuthoritativeSource &&
+            !albumMatchesTopic(
+              mappedAlbum,
+              "blues"
+            )
+          ) {
+            return null;
+          }
+
+          const sourceScore =
+            sourceEvidence.reduce(
+              (
+                total,
+                source
+              ) => {
+                const positionStrength =
+                  Math.max(
+                    0,
+                    250 -
+                      source
+                        .bestTrackPosition *
+                        8
+                  );
+
+                return (
+                  total +
+                  source.weight +
+                  positionStrength
+                );
+              },
+              0
+            );
+
+          const sourceCount =
+            sourceEvidence.length;
+
+          const additionalTrackCount =
+            sourceEvidence.reduce(
+              (
+                total,
+                source
+              ) =>
+                total +
+                Math.max(
+                  0,
+                  source.trackCount -
+                    1
+                ),
+              0
+            );
+
+          const multiSourceBoost =
+            Math.max(
+              0,
+              sourceCount - 1
+            ) * 500;
+
+          const multipleTrackBoost =
+            Math.min(
+              additionalTrackCount,
+              4
+            ) * 100;
+
+          const bestTrackPosition =
+            Math.min(
+              ...sourceEvidence.map(
+                (source) =>
+                  source
+                    .bestTrackPosition
+              )
+            );
+
+          return {
+            album:
+              mappedAlbum,
+            suggestionScore:
+              sourceScore +
+              multiSourceBoost +
+              multipleTrackBoost,
+            sourceCount,
+            bestTrackPosition,
+          };
+        }
+      )
+      .filter(
+        (
+          entry
+        ): entry is {
+          album: RankedAlbum;
+          suggestionScore: number;
+          sourceCount: number;
+          bestTrackPosition: number;
+        } =>
+          entry !== null
+      )
+      .sort(
+        (
+          first,
+          second
+        ) =>
+          second.suggestionScore -
+            first.suggestionScore ||
+          second.sourceCount -
+            first.sourceCount ||
+          first.bestTrackPosition -
+            second.bestTrackPosition
+      );
+
+  const results:
+    AlbumSearchResult[] = [];
+
+  const seenVariantGroups =
+    new Set<string>();
+
+  const seenArtists =
+    new Set<string>();
+
+  for (
+    const entry of rankedAlbums
+  ) {
+    const album =
+      entry.album;
+
+    const variantGroupKey =
+      getAlbumVariantGroupKey(
+        album
+      );
+
+    if (
+      seenVariantGroups.has(
+        variantGroupKey
+      )
+    ) {
+      continue;
+    }
+
+    const artistKey =
+      normalizeText(
+        album.artistName
+      );
+
+    if (
+      artistKey &&
+      seenArtists.has(
+        artistKey
+      )
+    ) {
+      continue;
+    }
+
+    seenVariantGroups.add(
+      variantGroupKey
+    );
+
+    if (artistKey) {
+      seenArtists.add(
+        artistKey
+      );
+    }
+
+    results.push({
+      id:
+        album.id,
+      title:
+        album.title,
+      subtitle:
+        album.subtitle,
+      imageUrl:
+        album.imageUrl,
+      previewUrl:
+        album.previewUrl,
+      appleMusicUrl:
+        album.appleMusicUrl,
+    });
+
+    if (
+      results.length >=
+      MAX_POPULAR_RESULT_LIMIT
+    ) {
+      break;
+    }
+  }
+
+  cachedBluesAlbumSuggestions = {
+    results,
+    expiresAt:
+      now +
+      BLUES_ALBUM_SUGGESTION_CACHE_TTL_MS,
+  };
+
+  return results.slice(
+    0,
+    limit
+  );
+}
+
+async function getPopularJazzAlbums(
+  developerToken: string,
+  limit: number
+): Promise<AlbumSearchResult[]> {
+  const now =
+    Date.now();
+
+  if (
+    cachedJazzAlbumSuggestions &&
+    now <
+      cachedJazzAlbumSuggestions.expiresAt
+  ) {
+    return cachedJazzAlbumSuggestions
+      .results
+      .slice(
+        0,
+        limit
+      );
+  }
+
+  /*
+   * The diagnostic produced 93 distinct Albums from
+   * 25 tracks per source, so 25 gives us a deep pool
+   * without making the relationship lookup needlessly large.
+   */
+  const playlistResults =
+    await Promise.allSettled(
+      JAZZ_SONG_PLAYLIST_SOURCES.map(
+        async (source) => ({
+          source,
+          tracks:
+            await fetchAppleMusicPlaylistTracks(
+              developerToken,
+              source.id,
+              25
+            ),
+        })
+      )
+    );
+
+  const fulfilledSources =
+    playlistResults
+      .filter(
+        (
+          result
+        ): result is PromiseFulfilledResult<{
+          source:
+            typeof JAZZ_SONG_PLAYLIST_SOURCES[number];
+          tracks: AppleMusicSong[];
+        }> =>
+          result.status ===
+          "fulfilled"
+      )
+      .map(
+        (result) =>
+          result.value
+      );
+
+  playlistResults.forEach(
+    (result) => {
+      if (
+        result.status ===
+        "rejected"
+      ) {
+        console.warn(
+          "Apple Music Jazz Album source lookup failed; continuing with remaining Jazz sources:",
+          result.reason
+        );
+      }
+    }
+  );
+
+  if (
+    fulfilledSources.length === 0
+  ) {
+    /*
+     * Jazz has no usable Apple Music Canada Album chart
+     * genre. Never silently substitute the general chart.
+     */
+    return [];
+  }
+
+  const playlistSongIds =
+    fulfilledSources
+      .flatMap(
+        ({ tracks }) =>
+          tracks.map(
+            (track) =>
+              track.id?.trim() ?? ""
+          )
+      )
+      .filter(Boolean);
+
+  const songsWithAlbums =
+    await fetchSongsWithAlbumRelationships(
+      developerToken,
+      playlistSongIds
+    );
+
+  type JazzAlbumSourceEvidence = {
+    weight: number;
+    requiresJazzMetadata: boolean;
+    bestTrackPosition: number;
+    trackCount: number;
+  };
+
+  type JazzAlbumEvidence = {
+    albumId: string;
+    sources: Map<
+      string,
+      JazzAlbumSourceEvidence
+    >;
+  };
+
+  const evidenceByAlbumId =
+    new Map<
+      string,
+      JazzAlbumEvidence
+    >();
+
+  for (
+    const {
+      source,
+      tracks,
+    } of fulfilledSources
+  ) {
+    tracks.forEach(
+      (
+        playlistTrack,
+        trackIndex
+      ) => {
+        const songId =
+          playlistTrack.id?.trim();
+
+        if (!songId) {
+          return;
+        }
+
+        const albumIds =
+          songsWithAlbums
+            .get(songId)
+            ?.relationships
+            ?.albums
+            ?.data
+            ?.map(
+              (album) =>
+                album.id?.trim() ?? ""
+            )
+            .filter(Boolean) ?? [];
+
+        for (
+          const albumId of albumIds
+        ) {
+          let albumEvidence =
+            evidenceByAlbumId.get(
+              albumId
+            );
+
+          if (!albumEvidence) {
+            albumEvidence = {
+              albumId,
+              sources:
+                new Map(),
+            };
+
+            evidenceByAlbumId.set(
+              albumId,
+              albumEvidence
+            );
+          }
+
+          const existingSource =
+            albumEvidence.sources.get(
+              source.id
+            );
+
+          if (existingSource) {
+            existingSource.bestTrackPosition =
+              Math.min(
+                existingSource.bestTrackPosition,
+                trackIndex
+              );
+
+            existingSource.trackCount +=
+              1;
+
+            continue;
+          }
+
+          albumEvidence.sources.set(
+            source.id,
+            {
+              weight:
+                source.weight,
+              requiresJazzMetadata:
+                source.requiresJazzMetadata,
+              bestTrackPosition:
+                trackIndex,
+              trackCount: 1,
+            }
+          );
+        }
+      }
+    );
+  }
+
+  if (
+    evidenceByAlbumId.size === 0
+  ) {
+    return [];
+  }
+
+  let albumsWithTracks =
+    new Map<
+      string,
+      AppleMusicAlbum
+    >();
+
+  try {
+    albumsWithTracks =
+      await fetchAlbumsWithTracks(
+        developerToken,
+        Array.from(
+          evidenceByAlbumId.keys()
+        )
+      );
+  } catch (error) {
+    console.warn(
+      "Apple Music Jazz Album lookup failed:",
+      error
+    );
+
+    return [];
+  }
+
+  const today =
+    new Date();
+
+  const todayTimestamp =
+    Date.UTC(
+      today.getUTCFullYear(),
+      today.getUTCMonth(),
+      today.getUTCDate()
+    );
+
+  const rankedAlbums =
+    Array.from(
+      evidenceByAlbumId.values()
+    )
+      .map(
+        (
+          evidence,
+          originalIndex
+        ) => {
+          const appleAlbum =
+            albumsWithTracks.get(
+              evidence.albumId
+            );
+
+          if (!appleAlbum) {
+            return null;
+          }
+
+          const mappedAlbum =
+            mapAlbum(
+              appleAlbum,
+              originalIndex
+            );
+
+          if (!mappedAlbum) {
+            return null;
+          }
+
+          const normalizedTitle =
+            normalizeText(
+              mappedAlbum.title
+            );
+
+          /*
+           * This Top 3 category is Albums, so explicit
+           * Singles and EPs should not populate suggestions.
+           */
+          if (
+            normalizedTitle.endsWith(
+              " single"
+            ) ||
+            normalizedTitle.endsWith(
+              " ep"
+            )
+          ) {
+            return null;
+          }
+
+          /*
+           * Apple Music can expose forthcoming catalogue
+           * resources. Do not suggest an Album before
+           * its release date.
+           */
+          const releaseDate =
+            mappedAlbum.releaseDate
+              .trim();
+
+          if (releaseDate) {
+            const releaseTimestamp =
+              Date.parse(
+                releaseDate
+              );
+
+            if (
+              Number.isFinite(
+                releaseTimestamp
+              ) &&
+              releaseTimestamp >
+                todayTimestamp +
+                  24 * 60 * 60 * 1000 -
+                  1
+            ) {
+              return null;
+            }
+          }
+
+          const sourceEvidence =
+            Array.from(
+              evidence.sources.values()
+            );
+
+          const hasAuthoritativeSource =
+            sourceEvidence.some(
+              (source) =>
+                !source
+                  .requiresJazzMetadata
+            );
+
+          /*
+           * The three historical Jazz editorial sources
+           * are authoritative. Jazz Currents is broader,
+           * so a Currents-only Album must also carry
+           * Jazz-related Apple genre metadata.
+           */
+          if (
+            !hasAuthoritativeSource &&
+            !albumMatchesTopic(
+              mappedAlbum,
+              "jazz"
+            )
+          ) {
+            return null;
+          }
+
+          /*
+           * Count each playlist's full editorial weight
+           * only once. Additional tracks from the same
+           * Album receive only a modest corroboration bonus.
+           */
+          const sourceScore =
+            sourceEvidence.reduce(
+              (
+                total,
+                source
+              ) => {
+                const positionStrength =
+                  Math.max(
+                    0,
+                    250 -
+                      source
+                        .bestTrackPosition *
+                        6
+                  );
+
+                return (
+                  total +
+                  source.weight +
+                  positionStrength
+                );
+              },
+              0
+            );
+
+          const sourceCount =
+            sourceEvidence.length;
+
+          const additionalTrackCount =
+            sourceEvidence.reduce(
+              (
+                total,
+                source
+              ) =>
+                total +
+                Math.max(
+                  0,
+                  source.trackCount -
+                    1
+                ),
+              0
+            );
+
+          const multiSourceBoost =
+            Math.max(
+              0,
+              sourceCount - 1
+            ) * 500;
+
+          const multipleTrackBoost =
+            Math.min(
+              additionalTrackCount,
+              4
+            ) * 100;
+
+          const bestTrackPosition =
+            Math.min(
+              ...sourceEvidence.map(
+                (source) =>
+                  source
+                    .bestTrackPosition
+              )
+            );
+
+          return {
+            album:
+              mappedAlbum,
+            suggestionScore:
+              sourceScore +
+              multiSourceBoost +
+              multipleTrackBoost,
+            sourceCount,
+            bestTrackPosition,
+          };
+        }
+      )
+      .filter(
+        (
+          entry
+        ): entry is {
+          album: RankedAlbum;
+          suggestionScore: number;
+          sourceCount: number;
+          bestTrackPosition: number;
+        } =>
+          entry !== null
+      )
+      .sort(
+        (
+          first,
+          second
+        ) =>
+          second.suggestionScore -
+            first.suggestionScore ||
+          second.sourceCount -
+            first.sourceCount ||
+          first.bestTrackPosition -
+            second.bestTrackPosition
+      );
+
+  const results:
+    AlbumSearchResult[] = [];
+
+  const seenVariantGroups =
+    new Set<string>();
+
+  const seenArtists =
+    new Set<string>();
+
+  for (
+    const entry of rankedAlbums
+  ) {
+    const album =
+      entry.album;
+
+    const variantGroupKey =
+      getAlbumVariantGroupKey(
+        album
+      );
+
+    if (
+      seenVariantGroups.has(
+        variantGroupKey
+      )
+    ) {
+      continue;
+    }
+
+    const artistKey =
+      normalizeText(
+        album.artistName
+      );
+
+    if (
+      artistKey &&
+      seenArtists.has(
+        artistKey
+      )
+    ) {
+      continue;
+    }
+
+    seenVariantGroups.add(
+      variantGroupKey
+    );
+
+    if (artistKey) {
+      seenArtists.add(
+        artistKey
+      );
+    }
+
+    results.push({
+      id:
+        album.id,
+      title:
+        album.title,
+      subtitle:
+        album.subtitle,
+      imageUrl:
+        album.imageUrl,
+      previewUrl:
+        album.previewUrl,
+      appleMusicUrl:
+        album.appleMusicUrl,
+    });
+
+    if (
+      results.length >=
+      MAX_POPULAR_RESULT_LIMIT
+    ) {
+      break;
+    }
+  }
+
+  cachedJazzAlbumSuggestions = {
+    results,
+    expiresAt:
+      now +
+      JAZZ_ALBUM_SUGGESTION_CACHE_TTL_MS,
+  };
+
+  return results.slice(
+    0,
+    limit
+  );
+}
+
 async function getPopularAppleMusicAlbums(
   topic: string | undefined,
   limit: number
 ): Promise<AlbumSearchResult[]> {
   const developerToken =
     await getDeveloperToken();
+
+  const requestedTopic =
+    normalizeText(
+      topic ?? ""
+    );
+
+  if (
+    requestedTopic ===
+    "blues"
+  ) {
+    return getPopularBluesAlbums(
+      developerToken,
+      limit
+    );
+  }
+
+  if (
+    requestedTopic ===
+    "jazz"
+  ) {
+    return getPopularJazzAlbums(
+      developerToken,
+      limit
+    );
+  }
 
   await getAlbumChartIds(
     developerToken,
@@ -3013,11 +5897,23 @@ async function searchAppleMusicAlbums(
       );
 
   const topicFilteredAlbums =
-    mappedAlbums.filter((album) =>
-      albumMatchesTopic(
-        album,
-        topic
-      )
+    mappedAlbums.filter(
+      (album) =>
+        !normalizeText(
+          album.title
+        ).endsWith(
+          " single"
+        ) &&
+        (
+          albumMatchesTopic(
+            album,
+            topic
+          ) ||
+          albumStronglyMatchesQuery(
+            album,
+            query
+          )
+        )
     );
 
   let chartAlbumIds: string[] = [];
@@ -3039,7 +5935,8 @@ async function searchAppleMusicAlbums(
     topicFilteredAlbums,
     query,
     chartAlbumIds,
-    topResultAlbumIds
+    topResultAlbumIds,
+    topic
   );
 }
 
@@ -3412,12 +6309,27 @@ async function searchAppleMusicSongs(
           song !== null
       );
 
+  /*
+   * Typed Song search should not discard an
+   * otherwise strong result solely because Apple's
+   * genre metadata does not line up perfectly with
+   * the selected Top 3 topic.
+   *
+   * Keep songs that either match the topic OR match
+   * the user's query strongly. Weak query matches
+   * with unrelated genre metadata are still removed.
+   */
   const topicFilteredSongs =
-    mappedSongs.filter((song) =>
-      songMatchesTopic(
-        song,
-        topic
-      )
+    mappedSongs.filter(
+      (song) =>
+        songMatchesTopic(
+          song,
+          topic
+        ) ||
+        songStronglyMatchesQuery(
+          song,
+          query
+        )
     );
 
   let chartSongIds: string[] = [];
@@ -3438,7 +6350,8 @@ async function searchAppleMusicSongs(
   return rankAndDeduplicateSongs(
     topicFilteredSongs,
     query,
-    chartSongIds
+    chartSongIds,
+    topic
   );
 }
 
