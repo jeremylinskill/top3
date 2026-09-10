@@ -2,6 +2,103 @@ CHANGELOG.md
 
 This document records significant milestones in the evolution of Top3.
 
+v3.2 --- V1 Launch Infrastructure & Final Polish
+
+Released: September 10, 2026
+
+This checkpoint records the final V1 launch-preparation work completed after
+the September 1 push-notification milestone. Production Build 6 remains the
+current TestFlight release candidate, while the main branch now contains two
+small, verified post-Build-6 fixes that are being held for a possible
+consolidated Build 7.
+
+Added
+
+Production Website & Authentication Bridge
+
+Launched the production Top 3 website at top3taste.com.
+
+Added the branded HTTPS email-confirmation callback at:
+
+https://top3taste.com/auth-callback/
+
+The confirmation flow now verifies the signup through Supabase, redirects to
+the branded Top 3 callback page, and opens the installed app only after the
+user taps Open Top 3.
+
+Custom Authentication Email Infrastructure
+
+Configured Supabase custom SMTP through Resend using the verified
+email.top3taste.com sending domain.
+
+Installed branded Top 3 email templates for:
+
+Account confirmation
+
+Password reset
+
+Password-changed security notification
+
+The account-confirmation email and branded web callback flow were verified
+end-to-end. Password reset continues to use the existing app recovery
+deep-link flow.
+
+Email Domain Typo Suggestions
+
+Added conservative common-domain typo suggestions to email signup.
+
+High-confidence mistakes such as gmail.con can now trigger a Top 3 ActionSheet
+that offers the likely correction while preserving the user's ability to keep
+the address they entered.
+
+Improved
+
+Search Audio Preview Keyboard Behaviour
+
+Updated the Search audio-preview control so tapping Play or Pause dismisses
+the iOS keyboard before toggling Apple Music preview playback.
+
+This aligns audio-preview interaction with the existing trailer behaviour,
+where trailer playback dismisses the keyboard before opening the player.
+
+Verified
+
+Verified the email-domain typo suggestion flow on a physical iPhone.
+
+Verified the Search audio-preview keyboard-dismiss behaviour on a physical
+iPhone.
+
+Verified npm run typecheck passes after both app-side changes.
+
+Verified the production account-confirmation path from email → Supabase
+verification → branded web callback → Open Top 3 → app auth callback.
+
+Checkpoint
+
+Committed and pushed 150726b --- Add email domain typo suggestions.
+
+Committed and pushed fa8353a --- Dismiss keyboard when playing audio previews.
+
+Release-Candidate State
+
+Production iOS Build 6, version 1.0.0 build number 6, remains the current
+TestFlight release candidate.
+
+Build 6 does not contain commits 150726b or fa8353a.
+
+Build 7 is intentionally being held until the remaining launch-critical checks
+are complete so any additional required fixes can be consolidated into one
+replacement release candidate.
+
+Documentation
+
+Updated CURRENT_STATE.md to version 3.1 and recorded fa8353a as the latest
+verified application checkpoint.
+
+Recorded the production website, branded auth callback, Resend/Supabase email
+configuration, and the two post-Build-6 app fixes as part of the current V1
+launch-readiness state.
+
 v3.1 --- Push Notifications
 
 Released: September 1, 2026
