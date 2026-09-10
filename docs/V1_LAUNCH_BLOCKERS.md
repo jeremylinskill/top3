@@ -554,7 +554,7 @@ Push notification disclosures were added after implementation of Expo Notificati
 
 The public Privacy Policy is live at:
 
-https://jeremylinskill.com/top3-privacy-policy
+https://top3taste.com/privacy
 
 The public policy was updated to include the push-notification disclosures.
 
@@ -578,7 +578,7 @@ Remaining submission task
 
 Enter the live Privacy Policy URL in App Store Connect:
 
-https://jeremylinskill.com/top3-privacy-policy
+https://top3taste.com/privacy
 
 This is tracked under 6.1 Required URLs and contact details and does not represent unfinished app-side Privacy Policy implementation.
 
@@ -680,13 +680,13 @@ on iPhone, including navigation, scrolling, and back navigation.
 Published public pages
 
 Privacy Policy:
-https://jeremylinskill.com/top3-privacy-policy
+https://top3taste.com/privacy
 
 Terms of Use:
-https://jeremylinskill.com/top3-terms-of-use
+https://top3taste.com/terms
 
 Community Standards:
-https://jeremylinskill.com/top3-community-standards
+https://top3taste.com/community-standards
 
 All three public legal pages were confirmed to load normally without
 authentication.
@@ -724,10 +724,25 @@ moderation model. No known Terms/community-standards launch blocker remains.
 
 App Completeness & Reliability --- Guideline 2.1
 
-🟡 4.1 Release-candidate regression test --- REQUIRED
+🟢 4.1 Release-candidate regression test --- VERIFIED FOR BUILD 6
 
 Apple specifically emphasizes crashes, bugs, incomplete information, and
 unfinished experiences during review.
+
+Current release-candidate status
+
+Production iOS Build 6 (Top 3 1.0.0, build 6) completed the release-candidate
+device regression and remains the current TestFlight release candidate.
+
+Build 6 has been submitted for external TestFlight Beta App Review.
+
+The main branch is currently ahead of Build 6 by two verified fixes:
+150726b --- Add email domain typo suggestions and fa8353a --- Dismiss keyboard
+when playing audio previews.
+
+If Build 7 is created before App Store submission, this complete regression
+must be repeated on Build 7 before it replaces Build 6 as the release
+candidate.
 
 Required device test
 
@@ -828,7 +843,12 @@ popup-standardization work.
 This completed audit does not replace the final release-candidate
 regression test above.
 
-🟡 4.2 Empty/error/loading states --- VERIFY
+🟢 4.2 Empty/error/loading states --- VERIFIED
+
+Status: The V1 empty, error, loading, offline, and retry-state review is
+complete for the audited release-candidate experience. Feed, Discover,
+Notifications, search, comments, blocked-user, provider-failure, and
+network-failure states were reviewed and corrected where required.
 
 Confirm production-quality behaviour for:
 
@@ -852,7 +872,12 @@ Image/artwork failure
 
 Media-preview failure
 
-🟡 4.3 Production configuration/secrets --- VERIFY
+🟢 4.3 Production configuration/secrets --- VERIFIED
+
+Status: The V1 production Supabase/RLS/secrets review is complete. Production
+configuration, client-visible credentials, Edge Function secrets, anonymous
+published-content access, and relevant RLS boundaries were audited with no
+known launch-blocking configuration issue remaining.
 
 Verify
 
@@ -882,7 +907,12 @@ INSERT, UPDATE, and DELETE access is not granted.
 
 Content, Metadata & Third-Party Services
 
-🟡 5.1 Third-party content/API compliance --- VERIFY
+🟢 5.1 Third-party content/API compliance --- VERIFIED
+
+Status: The V1 provider-by-provider compliance review is complete for TMDb,
+Google Books/Open Library, IGDB/Twitch, Apple Music, and YouTube trailer
+playback. No known provider-compliance launch blocker remains for the audited
+V1 implementation.
 
 Top 3 uses external data/media providers for ranked-item metadata and
 previews. Verify the V1 implementation complies with each provider's
@@ -912,7 +942,12 @@ Deep links/external playback comply with provider rules.
 
 No unsupported content is being cached or redistributed.
 
-🟡 5.2 App name, icon, screenshots and metadata --- VERIFY
+🟢 5.2 App name, icon, screenshots and metadata --- VERIFIED
+
+Status: The V1 product name, production icon, screenshots, App Store
+description, promotional text, subtitle, keywords, age-rating information,
+and copyright information have been prepared/reviewed for the current
+submission.
 
 Verify
 
@@ -938,25 +973,25 @@ itself is not simply an App Review code requirement.
 
 App Store Connect Submission Readiness
 
-⚪ 6.1 Required URLs and contact details
+⚪ 6.1 Required URLs and contact details --- PREPARED
 
-Before submission:
+Current production values:
 
-Privacy Policy URL
+Privacy Policy URL --- https://top3taste.com/privacy
 
-Support URL
+Support URL --- https://top3taste.com/support
 
-Marketing URL, if used
+Marketing URL --- https://top3taste.com
 
-Current App Review contact information
+Current App Review contact information --- prepared in App Store Connect
 
-All URLs must be live and functional.
+All required public URLs are live and functional.
 
-⚪ 6.2 App Review information
+⚪ 6.2 App Review information --- PREPARED
 
-Prepare:
+Prepared:
 
-Reviewer/demo account credentials
+Reviewer/demo account credentials --- stable App Review account prepared
 
 Clear instructions for testing Top 3's social functionality
 
@@ -967,9 +1002,9 @@ Any required configuration or test data
 
 Contact person who can respond promptly to App Review
 
-⚪ 6.3 Store listing
+⚪ 6.3 Store listing --- PREPARED
 
-Complete and proof:
+Prepared/reviewed:
 
 App name
 
@@ -1057,7 +1092,7 @@ Privacy policy
 🟢 VERIFIED
 
 Public Privacy Policy is live at
-https://jeremylinskill.com/top3-privacy-policy; public, repository, and
+https://top3taste.com/privacy; public, repository, and
 in-app copies are synchronized with push-notification disclosures; updated
 screen verified on iPhone; commit 83aafa7 pushed to origin/main; entering
 the live URL in App Store Connect remains a 6.1 submission task
@@ -1086,39 +1121,40 @@ services; typecheck passes
 
 Release regression testing
 
-🟡 VERIFY
+🟢 VERIFIED
 
-Required on final build
+Build 6 passed the release-candidate regression; repeat if Build 7 replaces it
 
 Error/empty/loading states
 
-🟡 VERIFY
+🟢 VERIFIED
 
-Final UX pass required
+V1 UX/error-state pass completed
 
 Production security/config
 
-🟡 VERIFY
+🟢 VERIFIED
 
-Final Supabase/RLS/secrets audit required
+Production Supabase/RLS/secrets audit completed
 
 Third-party API/content compliance
 
-🟡 VERIFY
+🟢 VERIFIED
 
-Provider-by-provider audit required
+Provider-by-provider V1 compliance audit completed
 
 App metadata/assets
 
-🟡 VERIFY
+🟢 VERIFIED
 
-Finalize before submission
+Current V1 App Store metadata and production assets prepared/reviewed
 
 App Store Connect submission data
 
 ⚪ SUBMISSION TASK
 
-Complete after app-side blockers are closed
+Required URLs, reviewer access/instructions, and listing data are prepared;
+final App Store submission remains pending
 
 Latest verification checkpoint
 
@@ -1157,7 +1193,7 @@ public website, docs/PRIVACY_POLICY.md, and app/privacy-policy.tsx.
 
 Public URL confirmed live:
 
-https://jeremylinskill.com/top3-privacy-policy
+https://top3taste.com/privacy
 
 Updated in-app Privacy Policy verified successfully on iPhone.
 
@@ -1194,14 +1230,41 @@ confirmed to load normally without authentication.
 The published Community Standards were confirmed to support the implemented
 V1 reporting, blocking, prohibited-content filtering, and moderation model.
 
+September 10, 2026
+
+V1 launch-readiness checkpoint updated.
+
+Production Build 6 remains the current TestFlight release candidate and has
+been submitted for external TestFlight Beta App Review.
+
+The production Top 3 site is live at top3taste.com, including Support,
+Privacy, Terms, Community Standards, and the branded
+https://top3taste.com/auth-callback/ email-confirmation bridge.
+
+Supabase custom SMTP is configured through Resend using the verified
+email.top3taste.com sending domain. Branded account-confirmation,
+password-reset, and password-changed security email templates are installed.
+
+The account-confirmation flow has been verified through email → Supabase
+verification → branded web callback → Open Top 3 → app auth callback.
+
+Two app-side fixes exist on main after Build 6:
+150726b --- Add email domain typo suggestions.
+fa8353a --- Dismiss keyboard when playing audio previews.
+Both pass npm run typecheck and were verified on a physical iPhone.
+
+Build 7 is intentionally on hold until the remaining launch-critical checks
+are complete.
+
 Immediate Next Step
 
-Proceed to 4.1 Release-candidate regression test.
+Complete the remaining end-to-end verification of the newly branded password
+reset and password-changed security emails.
 
-Run the complete final-build device regression checklist, including fresh
-install, authentication/onboarding, Lists, social features, moderation,
-sharing/deep links, account lifecycle, media previews, session persistence,
-and critical failure/network behaviour.
+If no additional launch-critical issue is found, decide whether the two
+post-Build-6 fixes warrant a consolidated Build 7. If Build 7 is created,
+repeat the full release-candidate regression before final App Store
+submission.
 
 Definition of V1 Launch-Ready
 
