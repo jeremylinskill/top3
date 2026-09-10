@@ -1,5 +1,6 @@
 import ActionSheet from '@/components/action-sheet';
 import Chip from '@/components/chip';
+import { MediaPreviewItemButton } from '@/components/media-preview-button';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
 import SearchInput from '@/components/search-input';
@@ -8,11 +9,10 @@ import { getCategoryArtworkRule } from '@/constants/category-artwork-rules';
 import { COLORS } from '@/constants/colors';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { TYPOGRAPHY } from '@/constants/typography';
-import { useAudioPreview } from '@/context/audio-preview-context';
 import { useOnboardingCollection } from '@/context/onboarding-collection-context';
 import { useTop3 } from '@/context/top3-context';
-import { useTrailerPreview } from '@/context/trailer-preview-context';
 import { trackAnalyticsEvent } from '@/lib/analytics';
+import { stopAllMediaPreviewsFromCoordinator } from '@/lib/media-preview-coordinator';
 import {
   getPopularSuggestionsByCategory,
   getSearchProvider,
@@ -175,10 +175,6 @@ export default function SearchScreen() {
   const [searchError, setSearchError] =
     useState<string | null>(null);
   const [
-    loadingTrailerItemId,
-    setLoadingTrailerItemId,
-  ] = useState<string | null>(null);
-  const [
     suggestionPool,
     setSuggestionPool,
   ] = useState<Top3Item[]>([]);
@@ -197,19 +193,6 @@ export default function SearchScreen() {
     seenSuggestionIds,
     setSeenSuggestionIds,
   ] = useState<string[]>([]);
-
-  const {
-    activePreviewItemId,
-    isPreviewPlaying,
-    togglePreview,
-    stopPreview,
-  } = useAudioPreview();
-
-  const {
-    activeTrailerItem,
-    openTrailer,
-    closeTrailer,
-  } = useTrailerPreview();
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const suggestionsOpacity =
@@ -845,32 +828,6 @@ function chooseSuggestion(
   );
 }
 
-  async function playTrailer(item: Top3Item) {
-    const category =
-      activeCollection?.category === 'movies' ||
-      activeCollection?.category === 'tv' ||
-      activeCollection?.category === 'games'
-        ? activeCollection.category
-        : null;
-
-    if (!category) {
-      return;
-    }
-
-    Keyboard.dismiss();
-    setLoadingTrailerItemId(item.id);
-
-    try {
-      await openTrailer(item, category);
-    } finally {
-      setLoadingTrailerItemId((currentItemId) =>
-        currentItemId === item.id
-          ? null
-          : currentItemId
-      );
-    }
-  }
-
   function selectItem(item: Top3Item) {
     const selectedRank = Number(rank);
 
@@ -890,8 +847,7 @@ function chooseSuggestion(
       return;
     }
 
-    stopPreview();
-    closeTrailer();
+    stopAllMediaPreviewsFromCoordinator();
 
     if (isOnboardingSearch) {
       setOnboardingItemAtRank(
@@ -1180,97 +1136,14 @@ const searchTitle = selectedType
                         </Text>
                       </View>
 
-                      {(activeCollection?.category === 'movies' &&
-                        /^movie-\d+$/.test(item.id)) ||
-                      (activeCollection?.category === 'tv' &&
-                        /^tv-\d+$/.test(item.id)) ||
-                      (activeCollection?.category === 'games' &&
-                        Boolean(item.trailerVideoId)) ? (
-                        <Pressable
-                          style={({ pressed }) => [
-                            styles.previewButton,
-                            pressed &&
-                              styles.previewButtonPressed,
-                          ]}
-                          onPress={(event) => {
-                            event.stopPropagation();
-
-                            if (
-                              activeTrailerItem?.id === item.id
-                            ) {
-                              closeTrailer();
-                              return;
-                            }
-
-                            void playTrailer(item);
-                          }}
-                          disabled={
-                            loadingTrailerItemId === item.id
-                          }
-                          hitSlop={6}
-                          accessibilityRole="button"
-                          accessibilityLabel={
-                            activeTrailerItem?.id === item.id
-                              ? `Close trailer for ${item.title}`
-                              : `Play trailer for ${item.title}`
-                          }>
-                          <Ionicons
-                            name={
-                              activeTrailerItem?.id === item.id
-                                ? 'close'
-                                : loadingTrailerItemId === item.id
-                                  ? 'ellipsis-horizontal'
-                                  : 'play'
-                            }
-                            size={17}
-                            color="#555555"
-                            style={
-                              activeTrailerItem?.id === item.id ||
-                              loadingTrailerItemId === item.id
-                                ? undefined
-                                : styles.previewPlayIcon
-                            }
-                          />
-                        </Pressable>
-                      ) : null}
-
-                      {item.previewUrl ? (
-                        <Pressable
-                          style={({ pressed }) => [
-                            styles.previewButton,
-                            pressed &&
-                              styles.previewButtonPressed,
-                          ]}
-                          onPress={(event) => {
-                            event.stopPropagation();
-                            Keyboard.dismiss();
-                            void togglePreview(item);
-                          }}
-                          hitSlop={6}
-                          accessibilityRole="button"
-                          accessibilityLabel={
-                            activePreviewItemId === item.id &&
-                            isPreviewPlaying
-                              ? `Pause preview of ${item.title}`
-                              : `Play preview of ${item.title}`
-                          }>
-                          <Ionicons
-                            name={
-                              activePreviewItemId === item.id &&
-                              isPreviewPlaying
-                                ? 'pause'
-                                : 'play'
-                            }
-                            size={17}
-                            color="#555555"
-                            style={
-                              activePreviewItemId === item.id &&
-                              isPreviewPlaying
-                                ? undefined
-                                : styles.previewPlayIcon
-                            }
-                          />
-                        </Pressable>
+                      {activeCollection?.category ? (
+                        <MediaPreviewItemButton
+                          item={item}
+                          category={activeCollection.category}
+                          style={styles.previewButton}
+                          onBeforePress={Keyboard.dismiss}
+                          checkTrailerAvailability={false}
+                        />
                       ) : null}
                     </Pressable>
                   ))}
@@ -1418,14 +1291,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#F1F1F1',
-  },
-
-  previewPlayIcon: {
-    transform: [{ translateX: 1 }],
-  },
-
-  previewButtonPressed: {
-    opacity: 0.75,
   },
 
   imagePlaceholder: {

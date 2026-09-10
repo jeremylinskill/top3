@@ -34,9 +34,14 @@ export type MediaPreviewController = {
   onPress: () => Promise<void>;
 };
 
+type MediaPreviewOptions = {
+  checkTrailerAvailability?: boolean;
+};
+
 type MediaPreviewButtonProps = {
   preview: MediaPreviewController;
   style?: StyleProp<ViewStyle>;
+  onBeforePress?: () => void;
 };
 
 function getTrailerItemId(
@@ -68,8 +73,12 @@ function getTrailerItemId(
 
 export function useMediaPreview(
   item: Top3Item | null,
-  category: string
+  category: string,
+  options: MediaPreviewOptions = {}
 ): MediaPreviewController {
+  const checkTrailerAvailability =
+    options.checkTrailerAvailability ?? true;
+
   const {
     activePreviewItemId,
     isPreviewPlaying,
@@ -116,7 +125,10 @@ export function useMediaPreview(
 
   const canPlayTrailer =
     canCheckTrailer &&
-    trailerAvailability === true;
+    (
+      !checkTrailerAvailability ||
+      trailerAvailability === true
+    );
 
   const hasAudioPreview =
     Boolean(item?.previewUrl);
@@ -139,11 +151,23 @@ export function useMediaPreview(
 
   const trailerLoading =
     isLoadingTrailer ||
-    isTrailerLoading;
+    (
+      checkTrailerAvailability &&
+      isTrailerLoading
+    );
 
   useEffect(() => {
     if (!item) {
       setTrailerAvailability(undefined);
+      return;
+    }
+
+    if (!checkTrailerAvailability) {
+      setTrailerAvailability(
+        canCheckTrailer
+          ? true
+          : undefined
+      );
       return;
     }
 
@@ -222,7 +246,9 @@ export function useMediaPreview(
       isMounted = false;
     };
   }, [
+    canCheckTrailer,
     category,
+    checkTrailerAvailability,
     item?.id,
     item?.trailerVideoId,
     trailerItemId,
@@ -309,6 +335,7 @@ export function useMediaPreview(
 export default function MediaPreviewButton({
   preview,
   style,
+  onBeforePress,
 }: MediaPreviewButtonProps) {
   if (!preview.available) {
     return null;
@@ -323,6 +350,7 @@ export default function MediaPreviewButton({
       ]}
       onPress={(event) => {
         event.stopPropagation();
+        onBeforePress?.();
         void preview.onPress();
       }}
       disabled={preview.disabled}
@@ -350,23 +378,31 @@ type MediaPreviewItemButtonProps = {
   item: Top3Item;
   category: string;
   style?: StyleProp<ViewStyle>;
+  onBeforePress?: () => void;
+  checkTrailerAvailability?: boolean;
 };
 
 export function MediaPreviewItemButton({
   item,
   category,
   style,
+  onBeforePress,
+  checkTrailerAvailability,
 }: MediaPreviewItemButtonProps) {
   const preview =
     useMediaPreview(
       item,
-      category
+      category,
+      {
+        checkTrailerAvailability,
+      }
     );
 
   return (
     <MediaPreviewButton
       preview={preview}
       style={style}
+      onBeforePress={onBeforePress}
     />
   );
 }

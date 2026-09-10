@@ -34,3 +34,8 @@ export function stopAudioPreviewFromCoordinator() {
 export function stopTrailerPreviewFromCoordinator() {
   stopTrailerPreviewHandler?.();
 }
+
+export function stopAllMediaPreviewsFromCoordinator() {
+  stopAudioPreviewFromCoordinator();
+  stopTrailerPreviewFromCoordinator();
+}
