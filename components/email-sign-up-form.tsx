@@ -35,8 +35,65 @@ type ValidationSheet = {
   message: string;
 };
 
+type EmailSuggestion = {
+  originalEmail: string;
+  suggestedEmail: string;
+  originalDomain: string;
+  suggestedDomain: string;
+};
+
+const COMMON_EMAIL_DOMAIN_CORRECTIONS: Record<
+  string,
+  string
+> = {
+  'gmail.con': 'gmail.com',
+  'gmial.com': 'gmail.com',
+  'gmaill.com': 'gmail.com',
+  'outlook.con': 'outlook.com',
+  'outlok.com': 'outlook.com',
+  'hotmail.con': 'hotmail.com',
+  'hotnail.com': 'hotmail.com',
+  'icloud.con': 'icloud.com',
+  'iclod.com': 'icloud.com',
+  'yahoo.con': 'yahoo.com',
+  'yahho.com': 'yahoo.com',
+  'protonmail.con': 'protonmail.com',
+};
+
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function getEmailSuggestion(
+  value: string
+): EmailSuggestion | null {
+  const atIndex = value.lastIndexOf('@');
+
+  if (atIndex <= 0) {
+    return null;
+  }
+
+  const localPart = value.slice(0, atIndex);
+  const originalDomain = value
+    .slice(atIndex + 1)
+    .toLowerCase();
+
+  const suggestedDomain =
+    COMMON_EMAIL_DOMAIN_CORRECTIONS[
+      originalDomain
+    ];
+
+  if (!suggestedDomain) {
+    return null;
+  }
+
+  return {
+    originalEmail: value,
+    suggestedEmail:
+      `${localPart}@${suggestedDomain}`,
+    originalDomain,
+    suggestedDomain,
+  };
 }
 
 export default function EmailSignUpForm({
@@ -76,6 +133,11 @@ export default function EmailSignUpForm({
     validationSheet,
     setValidationSheet,
   ] = useState<ValidationSheet | null>(null);
+
+  const [
+    emailSuggestion,
+    setEmailSuggestion,
+  ] = useState<EmailSuggestion | null>(null);
 
   const [
     isNetworkErrorSheetVisible,
@@ -149,15 +211,9 @@ export default function EmailSignUpForm({
     return true;
   }
 
-  async function handleSubmit() {
-    if (!validateForm()) {
-      return;
-    }
-
-    const normalizedEmail = email
-      .trim()
-      .toLowerCase();
-
+  async function createAccount(
+    normalizedEmail: string
+  ) {
     try {
       setIsSubmitting(true);
 
@@ -207,6 +263,54 @@ export default function EmailSignUpForm({
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  async function handleSubmit() {
+    if (!validateForm()) {
+      return;
+    }
+
+    const normalizedEmail = email
+      .trim()
+      .toLowerCase();
+
+    const suggestion =
+      getEmailSuggestion(normalizedEmail);
+
+    if (suggestion) {
+      setEmailSuggestion(suggestion);
+
+      return;
+    }
+
+    await createAccount(normalizedEmail);
+  }
+
+  async function useSuggestedEmail() {
+    if (!emailSuggestion) {
+      return;
+    }
+
+    const suggestedEmail =
+      emailSuggestion.suggestedEmail;
+
+    setEmail(suggestedEmail);
+    setEmailSuggestion(null);
+
+    await createAccount(suggestedEmail);
+  }
+
+  async function keepEnteredEmail() {
+    if (!emailSuggestion) {
+      return;
+    }
+
+    const originalEmail =
+      emailSuggestion.originalEmail;
+
+    setEmailSuggestion(null);
+
+    await createAccount(originalEmail);
   }
 
   return (
@@ -380,6 +484,37 @@ export default function EmailSignUpForm({
         ]}
         onClose={() => {
           setValidationSheet(null);
+        }}
+      />
+
+      <ActionSheet
+        visible={emailSuggestion !== null}
+        title="Check your email address"
+        message={
+          emailSuggestion
+            ? `Did you mean ${emailSuggestion.suggestedEmail}?`
+            : ''
+        }
+        actions={[
+          {
+            label: emailSuggestion
+              ? `Use ${emailSuggestion.suggestedDomain}`
+              : 'Use suggested address',
+            onPress: () => {
+              void useSuggestedEmail();
+            },
+          },
+          {
+            label: emailSuggestion
+              ? `Keep ${emailSuggestion.originalDomain}`
+              : 'Keep my address',
+            onPress: () => {
+              void keepEnteredEmail();
+            },
+          },
+        ]}
+        onClose={() => {
+          setEmailSuggestion(null);
         }}
       />
 
