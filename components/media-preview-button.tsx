@@ -42,6 +42,9 @@ type MediaPreviewButtonProps = {
   preview: MediaPreviewController;
   style?: StyleProp<ViewStyle>;
   onBeforePress?: () => void;
+  iconSize?: number;
+  iconColor?: string;
+  offsetPlayIcon?: boolean;
 };
 
 function getTrailerItemId(
@@ -336,6 +339,9 @@ export default function MediaPreviewButton({
   preview,
   style,
   onBeforePress,
+  iconSize = 17,
+  iconColor = '#555555',
+  offsetPlayIcon = true,
 }: MediaPreviewButtonProps) {
   if (!preview.available) {
     return null;
@@ -361,10 +367,11 @@ export default function MediaPreviewButton({
       }>
       <Ionicons
         name={preview.iconName}
-        size={17}
-        color="#555555"
+        size={iconSize}
+        color={iconColor}
         style={
-          preview.iconName === 'play'
+          preview.iconName === 'play' &&
+          offsetPlayIcon
             ? styles.previewPlayIcon
             : undefined
         }
@@ -380,6 +387,9 @@ type MediaPreviewItemButtonProps = {
   style?: StyleProp<ViewStyle>;
   onBeforePress?: () => void;
   checkTrailerAvailability?: boolean;
+  iconSize?: number;
+  iconColor?: string;
+  offsetPlayIcon?: boolean;
 };
 
 export function MediaPreviewItemButton({
@@ -388,6 +398,9 @@ export function MediaPreviewItemButton({
   style,
   onBeforePress,
   checkTrailerAvailability,
+  iconSize,
+  iconColor,
+  offsetPlayIcon,
 }: MediaPreviewItemButtonProps) {
   const preview =
     useMediaPreview(
@@ -403,6 +416,9 @@ export function MediaPreviewItemButton({
       preview={preview}
       style={style}
       onBeforePress={onBeforePress}
+      iconSize={iconSize}
+      iconColor={iconColor}
+      offsetPlayIcon={offsetPlayIcon}
     />
   );
 }
