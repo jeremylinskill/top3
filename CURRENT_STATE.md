@@ -1,13 +1,13 @@
 CURRENT_STATE.md
 
-Project: Top3 Version: 3.0 Status: Active Development Last Updated:
-September 1, 2026 Current Branch: main
+Project: Top3 Version: 3.1 Status: V1 Launch Readiness Last Updated:
+September 10, 2026 Current Branch: main
 
 Last Verified Commit
 
-7759102
+fa8353a
 
-Use dedicated webhook secret for push notifications
+Dismiss keyboard when playing audio previews
 
 Dashboard
 
@@ -17,85 +17,47 @@ Project Status
 
 Current Feature
 
-Push notifications are implemented and verified end-to-end for Likes,
-Comments, and Follows. Expo Notifications registers device push tokens,
-Supabase persists them per authenticated user, notification INSERT
-events invoke the send-push-notification Edge Function through a
-Database Webhook, and Expo Push Service delivers the notification to the
-device. Tapping Like or Comment pushes opens the relevant published
-List, while Follow pushes open the follower's public profile.
+V1 App Store launch readiness and final release-candidate validation.
 
-Notification permission is introduced intentionally during onboarding
-and can also be managed from Settings. Push-token ownership follows the
-authenticated account across sign-in, account switching, and sign-out.
-Like and Comment state refreshes when the app becomes active so
-notification-driven navigation shows current social state. Uploaded
-comment-author avatars are also preserved in comment enrichment.
+Production iOS Build 6 (version 1.0.0, build number 6) remains the
+current TestFlight release candidate. It has been submitted for external
+TestFlight Beta App Review. Build 7 is intentionally being held until
+the remaining launch-critical checks are complete so any final fixes can
+be consolidated into one replacement build.
 
-Relike and refollow behavior has been verified: unlike → like and
-unfollow → follow each create a genuinely new notification and push.
-Permanent notification-level uniqueness indexes for Like and Follow were
-removed so historical notifications do not suppress later legitimate
-events; the active likes and follows relationships remain responsible
-for preventing duplicate active actions.
+The main branch is currently ahead of Build 6 by two verified app-side
+fixes:
 
-The push Database Webhook authenticates the Edge Function with the
-dedicated named secret key push_notification_webhook. The previously
-exposed key was revoked after the replacement key was deployed and
-verified.
+• 150726b --- Add email domain typo suggestions
 
-The redesigned onboarding and account flow is implemented end-to-end.
+• fa8353a --- Dismiss keyboard when playing audio previews
 
-New signed-out users can begin by creating their first Top 3 list before
-account creation. Email confirmation preserves the pending list,
-establishes the authenticated session through the auth callback,
-publishes the list, and continues into onboarding education for Lists,
-Overall rankings, and Taste Match.
+Both changes pass npm run typecheck and have been verified on a physical
+iPhone. Build 6 does not contain these two fixes.
 
-Account deletion is implemented through a Supabase Edge Function and
-resets local onboarding / welcome state so a deleted user returns to the
-beginning of the onboarding experience. Sign in with Apple accounts also
-capture the Apple authorization code during sign-in, exchange it
-server-side for an Apple refresh token, and store that token in the
-protected apple_auth_tokens table. The permanent delete-account Edge
-Function revokes the stored Apple authorization with Apple before
-deleting the Top3 account.
+The production Top 3 website is live at top3taste.com. The site provides
+the public launch/support surfaces and a branded HTTPS authentication
+callback at https://top3taste.com/auth-callback/. Supabase email
+confirmation verifies the signup first, then redirects to that branded
+page. The app is opened only when the user taps the Open Top 3 button,
+which forwards the verified Supabase session into the existing
+top3:///auth-callback flow.
 
-User-generated-content moderation is implemented for reported lists and
-comments. Moderators can review reports and remove reported content
-through the moderation workflow. Removed collections are excluded from
-normal collection / published-post queries through removed_at filtering.
+Custom Supabase SMTP is configured through Resend using the verified
+email.top3taste.com sending domain. Branded email templates are in place
+for account confirmation, password reset, and password-changed security
+notification. Password recovery continues to use the existing direct
+recovery deep-link flow.
 
-V1 prohibited-content filtering is implemented and verified for comments
-and the free-form profile fields display name, username, and bio.
-Enforcement is server-side in Supabase. A shared content_filter_terms
-table contains a conservative 49-term production hard-block list, and
-contains_blocked_content(text) normalizes case and punctuation before
-whole-term / phrase matching. Expected content rejections use the
-established Top3-styled ActionSheet experience and preserve entered text
-for correction.
+Email signup now performs a conservative common-domain typo check before
+account creation. High-confidence mistakes such as gmail.con can trigger
+a Top 3 ActionSheet that offers the suggested domain while still
+allowing the user to keep the address they entered.
 
-Creator-side moderation removal propagation is implemented through the
-shared Supabase Realtime helper and the moderation_content_removals
-event table. Authenticated users can select only their own removal-event
-rows through RLS. When one of the authenticated user's published lists
-is removed by moderation, Top3Provider evicts that collection and its
-corresponding post from local state and clears currentListId when
-necessary, preventing removed content from being reopened through stale
-Create state.
-
-Blocked-user filtering is now applied across the Top3 experience.
-Content and people associated with blocked relationships are excluded
-from the relevant Feed, list / ranking, social discovery, Taste Match,
-notification, and profile surfaces so blocking behaves consistently
-rather than only at the point where the block action is initiated.
-
-The V1 popup review is complete. Native Alert.alert usage has been
-removed from app, components, context, and services and the reviewed
-confirmation, destructive, success, error, validation, authentication,
-collection, reporting, and moderation flows now use the shared Top3
-ActionSheet pattern. The final project-wide Alert.alert audit returned
-zero matches and npm run typecheck passes.
+On Search, tapping an Apple Music audio-preview play/pause control now
+dismisses the iOS keyboard before toggling playback. Movie, TV, and
+Video Game trailer playback already dismisses the keyboard before
+opening the trailer experience.
 
 Design System & Startup Polish
 
@@ -123,10 +85,15 @@ behaviour.
 
 Current Priority
 
-Prioritize V1 launch readiness and App Store preparation while
-continuing to monitor startup authentication stability and fixing
-launch-blocking issues in safety, privacy, security, moderation,
-reliability, and data integrity.
+Complete the remaining V1 launch-critical validation while keeping Build
+6 as the current TestFlight release candidate. Avoid creating Build 7
+until the remaining checks are complete; consolidate any additional
+launch-critical fixes into that next build if one is required.
+
+Continue validating authentication email flows, release-candidate
+behaviour, App Store Connect submission details, production
+configuration, and final regression coverage. Fix only launch-relevant
+issues before the V1 release.
 
 The current Feed architecture is acceptable for initial low-volume
 launch and real-user validation, but it is not the intended large-scale
@@ -348,8 +315,8 @@ Provider-specific retry, fallback, filtering, ranking, and API behavior
 remains inside each provider rather than being forced into the shared
 registry.
 
-The search screen uses a reusable 300 ms debounce hook and maintains an
-in-memory result cache.
+The Search screen uses a 200 ms delayed provider-search trigger and
+maintains an in-memory result cache.
 
 Audio Preview Architecture
 
@@ -600,6 +567,12 @@ Email verification flow
 
 Email confirmation deep-link callback
 
+Branded HTTPS email-confirmation bridge at top3taste.com/auth-callback/
+
+Conservative common-domain typo suggestions during email signup
+
+Custom Resend / Supabase account-confirmation email template
+
 Forgot-password entry from Email Sign In
 
 Password-reset email request through Supabase Auth
@@ -609,6 +582,10 @@ Open Email App action after requesting a reset
 Password-recovery deep-link session handling
 
 Dedicated Reset Password screen
+
+Custom Resend / Supabase password-reset email template
+
+Password-changed security notification email template
 
 Friendly same-password validation without a development error overlay
 
@@ -1088,8 +1065,8 @@ Collection title generation is centralized in
 utils/build-collection-title.ts and uses the shared Top 3 Category •
 Topic format for topic-specific collections.
 
-Reusable useDebouncedValue hook provides a 300 ms search debounce across
-all search categories.
+Search uses a 200 ms delayed provider-search trigger across the current
+category providers.
 
 Video game search uses IGDB through a Supabase Edge Function, including
 prefix fallback and relevance scoring for partial-title searches.
@@ -1137,9 +1114,10 @@ SELECT access for published, non-removed collections through table
 grants plus Row Level Security. Drafts remain inaccessible to anonymous
 users.
 
-Universal Links and a public web fallback for recipients who do not have
-Top3 installed are deferred until the production Top3 domain is
-confirmed.
+Universal Links and a public web fallback for shared Lists / Overall
+rankings remain deferred until post-launch. The production domain is now
+top3taste.com; V1 sharing continues to use the existing Top3 custom URL
+scheme for installed-app recipients.
 
 Amplitude analytics is implemented for the current V1 event scope. The
 collection_shared event is recorded only when the native Share Sheet
@@ -1357,6 +1335,36 @@ post-launch and classified as a high-priority scalability initiative
 
 Recent Milestones
 
+September 10, 2026
+
+V1 Launch Infrastructure & Final Polish
+
+Production iOS Build 6 remains the current TestFlight release candidate
+and has been submitted for external TestFlight Beta App Review. Build 7
+is intentionally deferred until remaining launch-critical checks are
+complete.
+
+Launched the production Top 3 website at top3taste.com, including the
+support/legal launch surfaces and the branded HTTPS email-confirmation
+callback at top3taste.com/auth-callback/.
+
+Configured custom Supabase SMTP through Resend using the verified
+email.top3taste.com sending domain and added branded account-confirmation,
+password-reset, and password-changed email templates.
+
+Verified the account-confirmation flow from email → Supabase verification
+→ branded web callback → user-triggered Open Top 3 action → existing app
+auth callback.
+
+Added conservative common-domain typo suggestions during email signup.
+Verified the ActionSheet correction flow on-device. Committed and pushed
+150726b --- Add email domain typo suggestions.
+
+Updated Search so tapping an Apple Music audio preview dismisses the
+keyboard before toggling playback. Verified on-device and with npm run
+typecheck. Committed and pushed fa8353a --- Dismiss keyboard when playing
+audio previews.
+
 September 1, 2026
 
 Push Notifications
@@ -1501,8 +1509,9 @@ Events.
 
 Verified npm run typecheck passes after the sharing analytics rollout.
 
-Universal Links / public web fallback remain deferred until the
-production Top3 domain is confirmed.
+Universal Links / public web fallback for shared Lists / Overall rankings
+remain intentionally deferred until post-launch; the production domain is
+top3taste.com.
 
 August 21, 2026
 
@@ -2504,6 +2513,21 @@ deferred until the production domain is confirmed.
 
 Do not recommend migrating Following again---it has already been
 completed.
+
+Remember that production iOS Build 6 is the current TestFlight release
+candidate. The main branch contains two verified post-Build-6 fixes:
+150726b (email-domain typo suggestions) and fa8353a (Search audio-preview
+keyboard dismissal). Do not assume those fixes are present in Build 6.
+
+Remember that the production Top 3 domain is top3taste.com. Email signup
+confirmation uses the branded HTTPS bridge at
+https://top3taste.com/auth-callback/ and opens the app only after the user
+taps Open Top 3.
+
+Remember that Supabase custom SMTP is configured through Resend using the
+verified email.top3taste.com sending domain. Branded account-confirmation,
+password-reset, and password-changed email templates are part of the V1
+production authentication configuration.
 
 Document Purpose
 
