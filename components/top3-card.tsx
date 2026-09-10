@@ -1,4 +1,7 @@
 import FollowButton from '@/components/follow-button';
+import {
+  MediaPreviewItemButton,
+} from '@/components/media-preview-button';
 import TasteMatchBadge from '@/components/taste-match-badge';
 import UserAvatar from '@/components/user-avatar';
 import {
@@ -10,24 +13,13 @@ import {
 } from '@/constants/colors';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { TYPOGRAPHY } from '@/constants/typography';
-import { useAudioPreview } from '@/context/audio-preview-context';
 import { useComments } from '@/context/comment-context';
 import { useLike } from '@/context/like-context';
-import { useTrailerPreview } from '@/context/trailer-preview-context';
-import {
-  getCachedTrailerAvailability,
-  getMovieTrailerUrl,
-  getTvShowTrailerUrl,
-} from '@/providers/movies-and-tv';
 import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
 import { formatRelativeTime } from '@/utils/format-relative-time';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import {
-  useEffect,
-  useState,
-} from 'react';
 import {
   Image,
   Pressable,
@@ -92,28 +84,6 @@ export default function Top3Card({
     isLoading: isLoadingComments,
   } = useComments();
 
-  const {
-    activePreviewItemId,
-    isPreviewPlaying,
-    togglePreview,
-    stopPreview,
-  } = useAudioPreview();
-
-  const {
-    activeTrailerItem,
-    isTrailerLoading,
-    openTrailer,
-    closeTrailer,
-  } = useTrailerPreview();
-
-  const [
-    loadingTrailerItemId,
-    setLoadingTrailerItemId,
-  ] = useState<string | null>(null);
-  const [
-    trailerAvailability,
-    setTrailerAvailability,
-  ] = useState<Record<string, boolean | undefined>>({});
 
 
   const category = TOP3_CATEGORIES.find(
@@ -202,206 +172,6 @@ export default function Top3Card({
   }
 
 
-  function getTrailerItemId(
-    itemId?: string
-  ): number | undefined {
-    if (!itemId) {
-      return undefined;
-    }
-
-    const itemIdMatch =
-      post.collection.category === 'movies'
-        ? /^movie-(\d+)$/.exec(itemId)
-        : post.collection.category === 'tv'
-          ? /^tv-(\d+)$/.exec(itemId)
-          : null;
-
-    if (!itemIdMatch) {
-      return undefined;
-    }
-
-    const numericItemId =
-      Number(itemIdMatch[1]);
-
-    return Number.isFinite(numericItemId)
-      ? numericItemId
-      : undefined;
-  }
-
-
-
-  useEffect(() => {
-    const categoryId =
-      post.collection.category;
-
-    if (categoryId === 'games') {
-      const updates: Record<
-        string,
-        boolean | undefined
-      > = {};
-
-      post.collection.items.forEach((item) => {
-        if (!item) {
-          return;
-        }
-
-        updates[item.id] =
-          Boolean(item.trailerVideoId);
-      });
-
-      setTrailerAvailability((current) => ({
-        ...current,
-        ...updates,
-      }));
-
-      return;
-    }
-
-    if (
-      categoryId !== 'movies' &&
-      categoryId !== 'tv'
-    ) {
-      return;
-    }
-
-    const trailerCategoryId:
-      'movies' | 'tv' = categoryId;
-
-    let isMounted = true;
-
-    async function loadTrailerAvailability() {
-      const updates: Record<
-        string,
-        boolean | undefined
-      > = {};
-
-      await Promise.all(
-        post.collection.items.map(
-          async (item) => {
-            if (!item) {
-              return;
-            }
-
-            const itemId =
-              getTrailerItemId(item.id);
-
-            if (itemId === undefined) {
-              updates[item.id] = false;
-              return;
-            }
-
-            const cachedAvailability =
-              getCachedTrailerAvailability(
-                trailerCategoryId,
-                itemId
-              );
-
-            if (
-              cachedAvailability !==
-              undefined
-            ) {
-              updates[item.id] =
-                cachedAvailability;
-              return;
-            }
-
-            try {
-              const trailerUrl =
-                trailerCategoryId === 'movies'
-                  ? await getMovieTrailerUrl(
-                      itemId
-                    )
-                  : await getTvShowTrailerUrl(
-                      itemId
-                    );
-
-              updates[item.id] =
-                Boolean(trailerUrl);
-            } catch (error) {
-              if (__DEV__) {
-                console.log(
-                  `Failed to check trailer availability for ${item.title}:`,
-                  error
-                );
-              }
-
-              updates[item.id] =
-                undefined;
-            }
-          }
-        )
-      );
-
-      if (isMounted) {
-        setTrailerAvailability(
-          (current) => ({
-            ...current,
-            ...updates,
-          })
-        );
-      }
-    }
-
-    void loadTrailerAvailability();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [
-    post.collection.category,
-    post.collection.items,
-  ]);
-
-
-
-  async function playTrailer(
-    item: NonNullable<Post['collection']['items'][number]>
-  ) {
-    const trailerCategory =
-      post.collection.category === 'movies' ||
-      post.collection.category === 'tv' ||
-      post.collection.category === 'games'
-        ? post.collection.category
-        : null;
-
-    if (!trailerCategory) {
-      return;
-    }
-
-    if (trailerCategory !== 'games') {
-      const itemId =
-        getTrailerItemId(item.id);
-
-      if (itemId === undefined) {
-        return;
-      }
-    } else if (!item.trailerVideoId) {
-      return;
-    }
-
-    setLoadingTrailerItemId(item.id);
-
-    try {
-      stopPreview();
-
-      const didOpen =
-        await openTrailer(
-          item,
-          trailerCategory
-        );
-
-      setTrailerAvailability(
-        (current) => ({
-          ...current,
-          [item.id]: didOpen,
-        })
-      );
-    } finally {
-      setLoadingTrailerItemId((currentItemId) =>
-        currentItemId === item.id ? null : currentItemId
-      );
-    }
-  }
 
   return (
     <View style={styles.card}>
@@ -729,100 +499,12 @@ export default function Top3Card({
                     ) : null}
                   </View>
 
-                  {item &&
-                  trailerAvailability[item.id] === true ? (
-                    <Pressable
-                      style={({ pressed }) => [
-                        styles.previewButton,
-                        pressed &&
-                          styles.previewButtonPressed,
-                      ]}
-                      onPress={(event) => {
-                        event.stopPropagation();
-
-                        if (
-                          activeTrailerItem?.id === item.id
-                        ) {
-                          closeTrailer();
-                          return;
-                        }
-
-                        void playTrailer(item);
-                      }}
-                      disabled={
-                        activeTrailerItem?.id !== item.id &&
-                        (
-                          loadingTrailerItemId === item.id ||
-                          isTrailerLoading
-                        )
-                      }
-                      hitSlop={6}
-                      accessibilityRole="button"
-                      accessibilityLabel={
-                        activeTrailerItem?.id === item.id
-                          ? `Close trailer for ${item.title}`
-                          : `Play trailer for ${item.title}`
-                      }>
-                      <Ionicons
-                        name={
-                          activeTrailerItem?.id === item.id
-                            ? 'close'
-                            : loadingTrailerItemId === item.id ||
-                                isTrailerLoading
-                              ? 'ellipsis-horizontal'
-                              : 'play'
-                        }
-                        size={17}
-                        color="#555555"
-                        style={
-                          activeTrailerItem?.id === item.id ||
-                          loadingTrailerItemId === item.id ||
-                          isTrailerLoading
-                            ? undefined
-                            : styles.previewPlayIcon
-                        }
-                      />
-                    </Pressable>
-                  ) : item?.previewUrl &&
-                  (
-                    !item.id.startsWith('apple-music-') ||
-                    Boolean(item.appleMusicUrl)
-                  ) ? (
-                    <Pressable
-                      style={({ pressed }) => [
-                        styles.previewButton,
-                        pressed &&
-                          styles.previewButtonPressed,
-                      ]}
-                      onPress={(event) => {
-                        event.stopPropagation();
-                        void togglePreview(item);
-                      }}
-                      hitSlop={6}
-                      accessibilityRole="button"
-                      accessibilityLabel={
-                        activePreviewItemId === item.id &&
-                        isPreviewPlaying
-                          ? `Pause preview of ${item.title}`
-                          : `Play preview of ${item.title}`
-                      }>
-                      <Ionicons
-                        name={
-                          activePreviewItemId === item.id &&
-                          isPreviewPlaying
-                            ? 'pause'
-                            : 'play'
-                        }
-                        size={17}
-                        color="#555555"
-                        style={
-                          activePreviewItemId === item.id &&
-                          isPreviewPlaying
-                            ? undefined
-                            : styles.previewPlayIcon
-                        }
-                      />
-                    </Pressable>
+                  {item ? (
+                    <MediaPreviewItemButton
+                      item={item}
+                      category={post.collection.category}
+                      style={styles.previewButton}
+                    />
                   ) : null}
 
                 </View>
@@ -1164,13 +846,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
 
-  previewPlayIcon: {
-    transform: [{ translateX: 1 }],
-  },
-
-  previewButtonPressed: {
-    opacity: 0.75,
-  },
 
   itemDetails: {
     flex: 1,
