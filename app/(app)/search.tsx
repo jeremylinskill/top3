@@ -1243,6 +1243,7 @@ const searchTitle = selectedType
                           ]}
                           onPress={(event) => {
                             event.stopPropagation();
+                            Keyboard.dismiss();
                             void togglePreview(item);
                           }}
                           hitSlop={6}
