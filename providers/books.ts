@@ -170,6 +170,7 @@ function mapGoogleBook(
       info.title ?? 'Untitled',
     subtitle: authors,
     imageUrl,
+    googleBooksVolumeId: book.id,
   };
 }
 

@@ -7,4 +7,5 @@ export type Top3Item = {
   previewUrl?: string;
   appleMusicUrl?: string;
   trailerVideoId?: string;
+  googleBooksVolumeId?: string;
 };
