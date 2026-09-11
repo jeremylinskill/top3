@@ -1,21 +1,21 @@
 import { CategoryId } from '@/constants/top3-categories';
 import {
-    registerTrailerPreviewStopper,
-    stopAudioPreviewFromCoordinator,
+  registerTrailerPreviewStopper,
+  stopOtherMediaPreviewsFromCoordinator,
 } from '@/lib/media-preview-coordinator';
 import {
-    getMovieTrailerUrl,
-    getTvShowTrailerUrl,
+  getMovieTrailerUrl,
+  getTvShowTrailerUrl,
 } from '@/providers/movies-and-tv';
 import { Top3Item } from '@/types/top3-item';
 import {
-    createContext,
-    ReactNode,
-    useCallback,
-    useContext,
-    useEffect,
-    useRef,
-    useState,
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
 } from 'react';
 
 type TrailerPreviewContextValue = {
@@ -121,7 +121,9 @@ export function TrailerPreviewProvider({
       trailerRequestIdRef.current + 1;
     trailerRequestIdRef.current = requestId;
 
-    stopAudioPreviewFromCoordinator();
+    stopOtherMediaPreviewsFromCoordinator(
+      'trailer'
+    );
     setIsTrailerLoading(true);
 
     try {

@@ -1,6 +1,6 @@
 import {
   registerAudioPreviewStopper,
-  stopTrailerPreviewFromCoordinator,
+  stopOtherMediaPreviewsFromCoordinator,
 } from '@/lib/media-preview-coordinator';
 import { Top3Item } from '@/types/top3-item';
 import {
@@ -140,7 +140,9 @@ export function AudioPreviewProvider({
         previewActionIdRef.current + 1;
       previewActionIdRef.current = actionId;
 
-      stopTrailerPreviewFromCoordinator();
+      stopOtherMediaPreviewsFromCoordinator(
+        'audio'
+      );
 
       if (
         previewStatus.didJustFinish ||
@@ -166,7 +168,9 @@ export function AudioPreviewProvider({
 
     previewActionIdRef.current += 1;
 
-    stopTrailerPreviewFromCoordinator();
+    stopOtherMediaPreviewsFromCoordinator(
+      'audio'
+    );
 
     previewPlayer.pause();
     previewPlayer.replace(item.previewUrl);
