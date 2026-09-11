@@ -1,7 +1,9 @@
 import AppleMusicPreviewSheet from '@/components/apple-music-preview-sheet';
+import BookPreviewSheet from '@/components/book-preview-sheet';
 import TrailerPreviewSheet from '@/components/trailer-preview-sheet';
 import { AudioPreviewProvider } from '@/context/audio-preview-context';
 import { BlockProvider } from '@/context/block-context';
+import { BookPreviewProvider } from '@/context/book-preview-context';
 import { CommentProvider } from '@/context/comment-context';
 import { FollowProvider } from '@/context/follow-context';
 import { LikeProvider } from '@/context/like-context';
@@ -169,42 +171,45 @@ export default function RootLayout() {
                         <Top3Provider>
                           <AudioPreviewProvider>
                             <TrailerPreviewProvider>
-                              <ThemeProvider
-                                value={
-                                  colorScheme === 'dark'
-                                    ? DarkTheme
-                                    : DefaultTheme
-                                }>
-                                <NotificationResponseController />
+                              <BookPreviewProvider>
+                                <ThemeProvider
+                                  value={
+                                    colorScheme === 'dark'
+                                      ? DarkTheme
+                                      : DefaultTheme
+                                  }>
+                                  <NotificationResponseController />
 
-                                <Stack
-                                  screenOptions={{
-                                    headerShown: false,
-                                  }}>
-                                  <Stack.Screen name="index" />
-                                  <Stack.Screen
-                                    name="onboarding"
-                                    options={{
-                                      animation: 'none',
-                                    }}
-                                  />
-                                  <Stack.Screen name="onboarding-published" />
-                                  <Stack.Screen name="onboarding-overall-top3" />
-                                  <Stack.Screen name="onboarding-taste-match" />
-                                  <Stack.Screen name="onboarding-notifications" />
-                                  <Stack.Screen name="(app)" />
-                                  <Stack.Screen
-                                    name="modal"
-                                    options={{
-                                      presentation: 'modal',
-                                    }}
-                                  />
-                                </Stack>
+                                  <Stack
+                                    screenOptions={{
+                                      headerShown: false,
+                                    }}>
+                                    <Stack.Screen name="index" />
+                                    <Stack.Screen
+                                      name="onboarding"
+                                      options={{
+                                        animation: 'none',
+                                      }}
+                                    />
+                                    <Stack.Screen name="onboarding-published" />
+                                    <Stack.Screen name="onboarding-overall-top3" />
+                                    <Stack.Screen name="onboarding-taste-match" />
+                                    <Stack.Screen name="onboarding-notifications" />
+                                    <Stack.Screen name="(app)" />
+                                    <Stack.Screen
+                                      name="modal"
+                                      options={{
+                                        presentation: 'modal',
+                                      }}
+                                    />
+                                  </Stack>
 
-                                <AppleMusicPreviewSheet />
-                                <TrailerPreviewSheet />
-                                <StatusBar style="auto" />
-                              </ThemeProvider>
+                                  <AppleMusicPreviewSheet />
+                                  <TrailerPreviewSheet />
+                                  <BookPreviewSheet />
+                                  <StatusBar style="auto" />
+                                </ThemeProvider>
+                              </BookPreviewProvider>
                             </TrailerPreviewProvider>
                           </AudioPreviewProvider>
                         </Top3Provider>
