@@ -3,7 +3,7 @@ import {
     stopOtherMediaPreviewsFromCoordinator,
 } from '@/lib/media-preview-coordinator';
 import {
-    getBookPreviewAvailability,
+    getBookDescription,
 } from '@/providers/books';
 import { Top3Item } from '@/types/top3-item';
 import {
@@ -18,7 +18,7 @@ import {
 
 type BookPreviewContextValue = {
   activeBookItem: Top3Item | null;
-  activeBookVolumeId: string | null;
+  activeBookDescription: string | null;
   isBookLoading: boolean;
   openBookPreview: (
     item: Top3Item
@@ -35,6 +35,28 @@ type BookPreviewProviderProps = {
   children: ReactNode;
 };
 
+function getBookVolumeId(
+  item: Top3Item
+): string | undefined {
+  const explicitVolumeId =
+    item.googleBooksVolumeId?.trim();
+
+  if (explicitVolumeId) {
+    return explicitVolumeId;
+  }
+
+  const legacyItemId = item.id.trim();
+
+  if (
+    !legacyItemId ||
+    legacyItemId.startsWith('curated-book-')
+  ) {
+    return undefined;
+  }
+
+  return legacyItemId;
+}
+
 export function BookPreviewProvider({
   children,
 }: BookPreviewProviderProps) {
@@ -44,8 +66,8 @@ export function BookPreviewProvider({
   ] = useState<Top3Item | null>(null);
 
   const [
-    activeBookVolumeId,
-    setActiveBookVolumeId,
+    activeBookDescription,
+    setActiveBookDescription,
   ] = useState<string | null>(null);
 
   const [
@@ -58,7 +80,7 @@ export function BookPreviewProvider({
   const closeBookPreview = useCallback(() => {
     bookRequestIdRef.current += 1;
     setActiveBookItem(null);
-    setActiveBookVolumeId(null);
+    setActiveBookDescription(null);
     setIsBookLoading(false);
   }, []);
 
@@ -72,7 +94,7 @@ export function BookPreviewProvider({
     item: Top3Item
   ): Promise<boolean> {
     const volumeId =
-      item.googleBooksVolumeId?.trim();
+      getBookVolumeId(item);
 
     if (!volumeId) {
       return false;
@@ -88,8 +110,8 @@ export function BookPreviewProvider({
     setIsBookLoading(true);
 
     try {
-      const isAvailable =
-        await getBookPreviewAvailability(
+      const description =
+        await getBookDescription(
           volumeId
         );
 
@@ -99,12 +121,14 @@ export function BookPreviewProvider({
         return false;
       }
 
-      if (!isAvailable) {
+      if (!description) {
         return false;
       }
 
       setActiveBookItem(item);
-      setActiveBookVolumeId(volumeId);
+      setActiveBookDescription(
+        description
+      );
 
       return true;
     } catch (error) {
@@ -113,7 +137,7 @@ export function BookPreviewProvider({
         __DEV__
       ) {
         console.log(
-          `Failed to open book preview for ${item.title}:`,
+          `Failed to load book description for ${item.title}:`,
           error
         );
       }
@@ -132,7 +156,7 @@ export function BookPreviewProvider({
     <BookPreviewContext.Provider
       value={{
         activeBookItem,
-        activeBookVolumeId,
+        activeBookDescription,
         isBookLoading,
         openBookPreview,
         closeBookPreview,

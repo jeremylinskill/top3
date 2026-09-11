@@ -1,6 +1,11 @@
 import { CategoryId } from '@/constants/top3-categories';
 import { useAudioPreview } from '@/context/audio-preview-context';
+import { useBookPreview } from '@/context/book-preview-context';
 import { useTrailerPreview } from '@/context/trailer-preview-context';
+import {
+    getBookDescription,
+    getCachedBookDescription,
+} from '@/providers/books';
 import {
     getCachedTrailerAvailability,
     getMovieTrailerUrl,
@@ -10,6 +15,7 @@ import { Top3Item } from '@/types/top3-item';
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import {
+    Image,
     Pressable,
     StyleProp,
     StyleSheet,
@@ -18,6 +24,7 @@ import {
 
 type MediaPreviewKind =
   | 'audio'
+  | 'book'
   | 'trailer'
   | null;
 
@@ -27,6 +34,7 @@ export type MediaPreviewController = {
   disabled: boolean;
   iconName:
     | 'close'
+    | 'information'
     | 'ellipsis-horizontal'
     | 'pause'
     | 'play';
@@ -74,6 +82,33 @@ function getTrailerItemId(
     : undefined;
 }
 
+function getBookVolumeId(
+  item: Top3Item | null,
+  category: string
+): string | undefined {
+  if (!item || category !== 'books') {
+    return undefined;
+  }
+
+  const explicitVolumeId =
+    item.googleBooksVolumeId?.trim();
+
+  if (explicitVolumeId) {
+    return explicitVolumeId;
+  }
+
+  const legacyItemId = item.id.trim();
+
+  if (
+    !legacyItemId ||
+    legacyItemId.startsWith('curated-book-')
+  ) {
+    return undefined;
+  }
+
+  return legacyItemId;
+}
+
 export function useMediaPreview(
   item: Top3Item | null,
   category: string,
@@ -90,11 +125,28 @@ export function useMediaPreview(
   } = useAudioPreview();
 
   const {
+    activeBookItem,
+    openBookPreview,
+    closeBookPreview,
+  } = useBookPreview();
+
+  const {
     activeTrailerItem,
     openTrailer,
     closeTrailer,
-    isTrailerLoading,
   } = useTrailerPreview();
+
+  const [
+    isLoadingBook,
+    setIsLoadingBook,
+  ] = useState(false);
+
+  const [
+    bookAvailability,
+    setBookAvailability,
+  ] = useState<boolean | undefined>(
+    undefined
+  );
 
   const [
     isLoadingTrailer,
@@ -108,6 +160,12 @@ export function useMediaPreview(
     undefined
   );
 
+  const bookVolumeId =
+    getBookVolumeId(
+      item,
+      category
+    );
+
   const trailerItemId =
     getTrailerItemId(
       item,
@@ -120,6 +178,14 @@ export function useMediaPreview(
     category === 'games'
       ? category
       : null;
+
+  const canCheckBook =
+    category === 'books' &&
+    Boolean(bookVolumeId);
+
+  const canDescribeBook =
+    canCheckBook &&
+    bookAvailability === true;
 
   const canCheckTrailer =
     category === 'games'
@@ -141,23 +207,95 @@ export function useMediaPreview(
       ? 'trailer'
       : hasAudioPreview
         ? 'audio'
-        : null;
+        : canDescribeBook
+          ? 'book'
+          : null;
 
   const isCurrentAudioPreviewPlaying =
     Boolean(item) &&
     activePreviewItemId === item?.id &&
     isPreviewPlaying;
 
+  const isCurrentBook =
+    Boolean(item) &&
+    activeBookItem?.id === item?.id;
+
   const isCurrentTrailer =
     Boolean(item) &&
     activeTrailerItem?.id === item?.id;
 
+  const bookLoading =
+    isLoadingBook;
+
   const trailerLoading =
-    isLoadingTrailer ||
-    (
-      checkTrailerAvailability &&
-      isTrailerLoading
-    );
+    isLoadingTrailer;
+
+  useEffect(() => {
+    if (
+      !item ||
+      category !== 'books' ||
+      !bookVolumeId
+    ) {
+      setBookAvailability(undefined);
+      return;
+    }
+
+    const resolvedBookVolumeId =
+      bookVolumeId;
+
+    const cachedDescription =
+      getCachedBookDescription(
+        resolvedBookVolumeId
+      );
+
+    if (cachedDescription !== undefined) {
+      setBookAvailability(
+        Boolean(cachedDescription)
+      );
+      return;
+    }
+
+    setBookAvailability(undefined);
+
+    let isMounted = true;
+    const itemTitle = item.title;
+
+    async function loadBookAvailability() {
+      try {
+        const description =
+          await getBookDescription(
+            resolvedBookVolumeId
+          );
+
+        if (isMounted) {
+          setBookAvailability(
+            Boolean(description)
+          );
+        }
+      } catch (error) {
+        if (__DEV__) {
+          console.log(
+            `Failed to check book description availability for ${itemTitle}:`,
+            error
+          );
+        }
+
+        if (isMounted) {
+          setBookAvailability(undefined);
+        }
+      }
+    }
+
+    void loadBookAvailability();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    bookVolumeId,
+    category,
+    item?.id,
+  ]);
 
   useEffect(() => {
     if (!item) {
@@ -267,6 +405,32 @@ export function useMediaPreview(
       return;
     }
 
+    if (kind === 'book') {
+      if (isCurrentBook) {
+        closeBookPreview();
+        return;
+      }
+
+      if (!bookVolumeId) {
+        return;
+      }
+
+      setIsLoadingBook(true);
+
+      try {
+        const didOpen =
+          await openBookPreview(item);
+
+        setBookAvailability(
+          didOpen
+        );
+      } finally {
+        setIsLoadingBook(false);
+      }
+
+      return;
+    }
+
     if (isCurrentTrailer) {
       closeTrailer();
       return;
@@ -301,29 +465,46 @@ export function useMediaPreview(
   const accessibilityLabel =
     !item
       ? 'Media preview'
-      : kind === 'trailer'
-        ? isCurrentTrailer
-          ? `Close trailer for ${item.title}`
-          : `Play trailer for ${item.title}`
-        : isCurrentAudioPreviewPlaying
-          ? `Pause preview of ${item.title}`
-          : `Play preview of ${item.title}`;
+      : kind === 'book'
+        ? isCurrentBook
+          ? `Close details for ${item.title}`
+          : `About ${item.title}`
+        : kind === 'trailer'
+          ? isCurrentTrailer
+            ? `Close trailer for ${item.title}`
+            : `Play trailer for ${item.title}`
+          : isCurrentAudioPreviewPlaying
+            ? `Pause preview of ${item.title}`
+            : `Play preview of ${item.title}`;
 
   const iconName =
-    kind === 'trailer'
-      ? isCurrentTrailer
+    kind === 'book'
+      ? isCurrentBook
         ? 'close' as const
-        : trailerLoading
+        : bookLoading
           ? 'ellipsis-horizontal' as const
-          : 'play' as const
-      : isCurrentAudioPreviewPlaying
-        ? 'pause' as const
-        : 'play' as const;
+          : 'information' as const
+      : kind === 'trailer'
+        ? isCurrentTrailer
+          ? 'close' as const
+          : trailerLoading
+            ? 'ellipsis-horizontal' as const
+            : 'play' as const
+        : isCurrentAudioPreviewPlaying
+          ? 'pause' as const
+          : 'play' as const;
 
   const disabled =
-    kind === 'trailer' &&
-    !isCurrentTrailer &&
-    trailerLoading;
+    (
+      kind === 'book' &&
+      !isCurrentBook &&
+      bookLoading
+    ) ||
+    (
+      kind === 'trailer' &&
+      !isCurrentTrailer &&
+      trailerLoading
+    );
 
   return {
     available: kind !== null,
@@ -334,6 +515,11 @@ export function useMediaPreview(
     onPress: handlePress,
   };
 }
+
+
+const BOOK_PREVIEW_ICON = require(
+  '../assets/images/book-preview-icon.png'
+);
 
 export default function MediaPreviewButton({
   preview,
@@ -365,21 +551,35 @@ export default function MediaPreviewButton({
       accessibilityLabel={
         preview.accessibilityLabel
       }>
-      <Ionicons
-        name={preview.iconName}
-        size={iconSize}
-        color={iconColor}
-        style={
-          preview.iconName === 'play' &&
-          offsetPlayIcon
-            ? styles.previewPlayIcon
-            : undefined
-        }
-      />
+      {preview.kind === 'book' &&
+      preview.iconName === 'information' ? (
+        <Image
+          source={BOOK_PREVIEW_ICON}
+          style={[
+            styles.bookPreviewIcon,
+            {
+              width: iconSize + 8,
+              height: iconSize + 8,
+            },
+          ]}
+          resizeMode="contain"
+        />
+      ) : (
+        <Ionicons
+          name={preview.iconName}
+          size={iconSize}
+          color={iconColor}
+          style={
+            preview.iconName === 'play' &&
+            offsetPlayIcon
+              ? styles.previewPlayIcon
+              : undefined
+          }
+        />
+      )}
     </Pressable>
   );
 }
-
 
 type MediaPreviewItemButtonProps = {
   item: Top3Item;
@@ -424,6 +624,10 @@ export function MediaPreviewItemButton({
 }
 
 const styles = StyleSheet.create({
+  bookPreviewIcon: {
+    transform: [{ translateY: 0.5 }],
+  },
+
   previewPlayIcon: {
     transform: [{ translateX: 1 }],
   },

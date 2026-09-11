@@ -1,11 +1,12 @@
 import { useAudioPreview } from '@/context/audio-preview-context';
 import { Ionicons } from '@expo/vector-icons';
 import {
-    Linking,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  Image,
+  Linking,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -101,8 +102,8 @@ export default function AppleMusicPreviewSheet() {
         },
       ]}>
       <View style={styles.sheet}>
-        <View style={styles.contentRow}>
-          <View style={styles.details}>
+        <View style={styles.header}>
+          <View style={styles.headerDetails}>
             <Text
               style={styles.eyebrow}
               numberOfLines={1}>
@@ -124,39 +125,58 @@ export default function AppleMusicPreviewSheet() {
             ) : null}
           </View>
 
-          <View style={styles.actions}>
-            <Pressable
-              style={({ pressed }) => [
-                styles.link,
-                pressed && styles.linkPressed,
-              ]}
-              onPress={() => {
-                void openAppleMusic();
-              }}
-              hitSlop={6}
-              accessibilityRole="link"
-              accessibilityLabel={`Open ${activePreviewItem.title} in Apple Music`}>
-              <Text style={styles.linkText}>
-                Apple Music ↗
-              </Text>
-            </Pressable>
+          <Pressable
+            style={({ pressed }) => [
+              styles.closeButton,
+              pressed && styles.closeButtonPressed,
+            ]}
+            onPress={stopPreview}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={`Close preview for ${activePreviewItem.title}`}>
+            <Ionicons
+              name="close"
+              size={20}
+              color="#FFFFFF"
+            />
+          </Pressable>
+        </View>
 
-            <Pressable
-              style={({ pressed }) => [
-                styles.pauseButton,
-                pressed && styles.pauseButtonPressed,
-              ]}
-              onPress={stopPreview}
-              hitSlop={6}
-              accessibilityRole="button"
-              accessibilityLabel={`Stop preview for ${activePreviewItem.title}`}>
+        <View style={styles.mediaRow}>
+          {activePreviewItem.imageUrl ? (
+            <Image
+              source={{
+                uri: activePreviewItem.imageUrl,
+              }}
+              style={styles.artwork}
+              resizeMode="cover"
+              accessibilityIgnoresInvertColors
+            />
+          ) : (
+            <View style={styles.artworkPlaceholder}>
               <Ionicons
-                name="pause"
-                size={18}
-                color="#FFFFFF"
+                name="musical-note"
+                size={28}
+                color="#8A8A8A"
               />
-            </Pressable>
-          </View>
+            </View>
+          )}
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.link,
+              pressed && styles.linkPressed,
+            ]}
+            onPress={() => {
+              void openAppleMusic();
+            }}
+            hitSlop={6}
+            accessibilityRole="link"
+            accessibilityLabel={`Open ${activePreviewItem.title} in Apple Music`}>
+            <Text style={styles.linkText}>
+              Apple Music ↗
+            </Text>
+          </Pressable>
         </View>
 
         <View style={styles.progressSection}>
@@ -219,23 +239,56 @@ const styles = StyleSheet.create({
     elevation: 12,
   },
 
-  contentRow: {
+  header: {
+    minWidth: 0,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
 
-  details: {
+  headerDetails: {
     flex: 1,
     minWidth: 0,
     paddingRight: 12,
   },
 
-  actions: {
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     flexShrink: 0,
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
+    backgroundColor: '#2A2A2A',
   },
+
+  closeButtonPressed: {
+    opacity: 0.65,
+  },
+
+  mediaRow: {
+    marginTop: 12,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+  },
+
+  artwork: {
+    width: 88,
+    height: 88,
+    borderRadius: 6,
+    backgroundColor: '#2A2A2A',
+  },
+
+  artworkPlaceholder: {
+    width: 88,
+    height: 88,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#2A2A2A',
+  },
+
+
 
   eyebrow: {
     fontSize: 9,
@@ -246,21 +299,21 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '700',
     color: '#FFFFFF',
   },
 
   subtitle: {
-    marginTop: 2,
-    fontSize: 12,
+    marginTop: 3,
+    fontSize: 13,
     color: '#D0D0D0',
   },
 
   link: {
     flexShrink: 0,
     minHeight: 36,
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     paddingHorizontal: 4,
   },
 
@@ -274,21 +327,8 @@ const styles = StyleSheet.create({
     opacity: 0.65,
   },
 
-  pauseButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#2A2A2A',
-  },
-
-  pauseButtonPressed: {
-    opacity: 0.65,
-  },
-
   progressSection: {
-    marginTop: 10,
+    marginTop: 12,
   },
 
   progressTrack: {

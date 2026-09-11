@@ -8,13 +8,11 @@ type GoogleBooksVolume = {
     title?: string;
     authors?: string[];
     publishedDate?: string;
+    description?: string;
     imageLinks?: {
       thumbnail?: string;
       smallThumbnail?: string;
     };
-  };
-  accessInfo?: {
-    embeddable?: boolean;
   };
 };
 
@@ -28,8 +26,8 @@ const API_BASE_URL =
 const API_KEY =
   process.env.EXPO_PUBLIC_GOOGLE_BOOKS_API_KEY;
 
-const bookPreviewAvailabilityCache =
-  new Map<string, boolean>();
+const bookDescriptionCache =
+  new Map<string, string | null>();
 
 const RETRYABLE_STATUS_CODES = new Set([
   429,
@@ -169,11 +167,6 @@ function mapGoogleBook(
         'https://'
       )
     : undefined;
-
-  bookPreviewAvailabilityCache.set(
-    book.id,
-    Boolean(book.accessInfo?.embeddable)
-  );
 
   return {
     id: book.id,
@@ -586,7 +579,7 @@ function buildRequestUrl(
   maxResults = 10
 ) {
   const fields =
-    'items(id,volumeInfo(title,authors,publishedDate,imageLinks/thumbnail,imageLinks/smallThumbnail),accessInfo(embeddable))';
+    'items(id,volumeInfo(title,authors,publishedDate,imageLinks/thumbnail,imageLinks/smallThumbnail))';
 
   return (
     `${API_BASE_URL}?q=${encodeURIComponent(
@@ -602,74 +595,102 @@ function buildRequestUrl(
   );
 }
 
-function buildBookPreviewAvailabilityUrl(
+function normalizeBookDescription(
+  value?: string
+): string | null {
+  const trimmedValue = value?.trim();
+
+  if (!trimmedValue) {
+    return null;
+  }
+
+  const plainText = trimmedValue
+    .replace(/<\s*br\s*\/?>/gi, '\n')
+    .replace(/<\/\s*p\s*>/gi, '\n\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&apos;/gi, "'")
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/\r/g, '')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/[ \t]{2,}/g, ' ')
+    .trim();
+
+  return plainText || null;
+}
+
+function buildBookDescriptionUrl(
   volumeId: string
 ) {
   const fields =
-    'id,accessInfo(embeddable)';
+    'id,volumeInfo(description)';
 
   return (
     `${API_BASE_URL}/${encodeURIComponent(
       volumeId
     )}` +
-    `?projection=lite` +
-    `&fields=${encodeURIComponent(
+    `?fields=${encodeURIComponent(
       fields
     )}` +
     `&key=${API_KEY}`
   );
 }
 
-export function getCachedBookPreviewAvailability(
+export function getCachedBookDescription(
   volumeId: string
-): boolean | undefined {
+): string | null | undefined {
   const trimmedVolumeId =
     volumeId.trim();
 
   if (!trimmedVolumeId) {
-    return false;
+    return null;
   }
 
-  return bookPreviewAvailabilityCache.get(
+  return bookDescriptionCache.get(
     trimmedVolumeId
   );
 }
 
-export async function getBookPreviewAvailability(
+export async function getBookDescription(
   volumeId: string,
   signal?: AbortSignal
-): Promise<boolean> {
+): Promise<string | null> {
   const trimmedVolumeId =
     volumeId.trim();
 
   if (!trimmedVolumeId || !API_KEY) {
-    return false;
+    return null;
   }
 
-  const cachedAvailability =
-    getCachedBookPreviewAvailability(
+  const cachedDescription =
+    getCachedBookDescription(
       trimmedVolumeId
     );
 
-  if (cachedAvailability !== undefined) {
-    return cachedAvailability;
+  if (cachedDescription !== undefined) {
+    return cachedDescription;
   }
 
   const response =
     await fetchWithRetry(
-      buildBookPreviewAvailabilityUrl(
+      buildBookDescriptionUrl(
         trimmedVolumeId
       ),
       signal
     );
 
   if (response.status === 404) {
-    bookPreviewAvailabilityCache.set(
+    bookDescriptionCache.set(
       trimmedVolumeId,
-      false
+      null
     );
 
-    return false;
+    return null;
   }
 
   if (!response.ok) {
@@ -677,24 +698,25 @@ export async function getBookPreviewAvailability(
       await response.text();
 
     throw new Error(
-      `Google Books preview availability request failed: ${response.status}\n${errorBody}`
+      `Google Books description request failed: ${response.status}\n${errorBody}`
     );
   }
 
   const book =
     (await response.json()) as GoogleBooksVolume;
 
-  const isAvailable =
-    book.accessInfo?.embeddable === true;
+  const description =
+    normalizeBookDescription(
+      book.volumeInfo?.description
+    );
 
-  bookPreviewAvailabilityCache.set(
+  bookDescriptionCache.set(
     trimmedVolumeId,
-    isAvailable
+    description
   );
 
-  return isAvailable;
+  return description;
 }
-
 
 async function requestGoogleBooks(
   query: string,

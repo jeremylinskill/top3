@@ -766,7 +766,7 @@ const styles = StyleSheet.create({
     fontSize: 38,
     lineHeight: BRAND_HEIGHT,
     fontWeight: '800',
-    color: '#5928ED',
+    color: '#222222',
     textAlign: 'center',
   },
 

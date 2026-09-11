@@ -1,134 +1,58 @@
 import { useBookPreview } from '@/context/book-preview-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useEffect, useRef } from 'react';
 import {
+    Image,
     Pressable,
+    ScrollView,
     StyleSheet,
     Text,
     useWindowDimensions,
     View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { WebView } from 'react-native-webview';
-
-function getGoogleBooksEmbedHtml(
-  volumeId: string
-): string {
-  const serializedVolumeId =
-    JSON.stringify(volumeId);
-
-  return `
-<!doctype html>
-<html>
-  <head>
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
-    />
-    <meta charset="utf-8" />
-    <script
-      type="text/javascript"
-      src="https://www.google.com/books/jsapi.js">
-    </script>
-    <style>
-      html,
-      body,
-      #viewerCanvas {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        background: #FFFFFF;
-      }
-
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      }
-
-      #viewerError {
-        display: none;
-        box-sizing: border-box;
-        width: 100%;
-        height: 100%;
-        padding: 24px;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        color: #777777;
-        font-size: 14px;
-        line-height: 20px;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="viewerCanvas"></div>
-    <div id="viewerError">
-      This preview is currently unavailable.
-    </div>
-
-    <script type="text/javascript">
-      function showError() {
-        document.getElementById('viewerCanvas').style.display = 'none';
-        document.getElementById('viewerError').style.display = 'flex';
-      }
-
-      function initialize() {
-        try {
-          var viewer = new google.books.DefaultViewer(
-            document.getElementById('viewerCanvas')
-          );
-
-          viewer.load(
-            ${serializedVolumeId},
-            null,
-            showError
-          );
-        } catch (error) {
-          showError();
-        }
-      }
-
-      if (
-        window.google &&
-        google.books
-      ) {
-        google.books.load();
-        google.books.setOnLoadCallback(initialize);
-      } else {
-        showError();
-      }
-    </script>
-  </body>
-</html>
-  `.trim();
-}
 
 export default function BookPreviewSheet() {
   const {
     activeBookItem,
-    activeBookVolumeId,
+    activeBookDescription,
     closeBookPreview,
   } = useBookPreview();
 
   const insets = useSafeAreaInsets();
-  const { height: windowHeight } =
-    useWindowDimensions();
+  const { height } = useWindowDimensions();
+  const descriptionScrollRef =
+    useRef<ScrollView>(null);
+
+  useEffect(() => {
+    if (
+      !activeBookItem ||
+      !activeBookDescription
+    ) {
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      descriptionScrollRef.current
+        ?.flashScrollIndicators();
+    }, 350);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [
+    activeBookItem,
+    activeBookDescription,
+  ]);
 
   if (
     !activeBookItem ||
-    !activeBookVolumeId
+    !activeBookDescription
   ) {
     return null;
   }
 
-  const readerHeight =
-    Math.min(
-      Math.max(
-        Math.round(windowHeight * 0.58),
-        360
-      ),
-      560
-    );
+  const bookItem = activeBookItem;
 
   return (
     <View
@@ -142,26 +66,36 @@ export default function BookPreviewSheet() {
           ),
         },
       ]}>
-      <View style={styles.sheet}>
+      <View
+        style={[
+          styles.sheet,
+          {
+            height: Math.min(
+              620,
+              Math.max(
+                460,
+                height * 0.68
+              )
+            ),
+          },
+        ]}>
         <View style={styles.header}>
-          <View style={styles.details}>
-            <Text
-              style={styles.eyebrow}
-              numberOfLines={1}>
-              READ PREVIEW
+          <View style={styles.headerText}>
+            <Text style={styles.eyebrow}>
+              ABOUT THIS BOOK
             </Text>
 
             <Text
               style={styles.title}
-              numberOfLines={1}>
-              {activeBookItem.title}
+              numberOfLines={2}>
+              {bookItem.title}
             </Text>
 
-            {activeBookItem.subtitle ? (
+            {bookItem.subtitle ? (
               <Text
                 style={styles.subtitle}
-                numberOfLines={1}>
-                {activeBookItem.subtitle}
+                numberOfLines={2}>
+                {bookItem.subtitle}
               </Text>
             ) : null}
           </View>
@@ -175,40 +109,45 @@ export default function BookPreviewSheet() {
             onPress={closeBookPreview}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel={`Close preview of ${activeBookItem.title}`}>
+            accessibilityLabel={`Close details for ${bookItem.title}`}>
             <Ionicons
               name="close"
               size={20}
-              color="#555555"
+              color="#FFFFFF"
             />
           </Pressable>
         </View>
 
-        <View style={styles.readerInset}>
-          <View
-            style={[
-              styles.reader,
-              {
-                height: readerHeight,
-              },
-            ]}>
-            <WebView
+        <View style={styles.divider} />
+
+        <View style={styles.body}>
+          {bookItem.imageUrl ? (
+            <Image
               source={{
-                html: getGoogleBooksEmbedHtml(
-                  activeBookVolumeId
-                ),
-                baseUrl:
-                  'https://books.google.com',
+                uri: bookItem.imageUrl,
               }}
-              style={styles.webView}
-              javaScriptEnabled
-              domStorageEnabled
-              originWhitelist={[
-                'https://*',
-              ]}
-              setSupportMultipleWindows={false}
+              style={styles.cover}
+              resizeMode="cover"
+              accessibilityLabel={`Cover of ${bookItem.title}`}
             />
-          </View>
+          ) : null}
+
+          <ScrollView
+            ref={descriptionScrollRef}
+            style={styles.descriptionScroll}
+            contentContainerStyle={
+              styles.descriptionContent
+            }
+            showsVerticalScrollIndicator={true}
+            indicatorStyle="white">
+            <Text style={styles.description}>
+              {activeBookDescription}
+            </Text>
+
+            <Text style={styles.source}>
+              Description from Google Books
+            </Text>
+          </ScrollView>
         </View>
       </View>
     </View>
@@ -224,52 +163,55 @@ const styles = StyleSheet.create({
   },
 
   sheet: {
-    backgroundColor: '#FFFFFF',
+    overflow: 'hidden',
+    backgroundColor: '#111111',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E2E2E2',
+    borderColor: '#2A2A2A',
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
       height: 5,
     },
-    shadowOpacity: 0.20,
+    shadowOpacity: 0.2,
     shadowRadius: 18,
     elevation: 12,
   },
 
   header: {
-    minHeight: 72,
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    alignItems: 'flex-start',
+    paddingVertical: 14,
+    paddingLeft: 16,
+    paddingRight: 12,
   },
 
-  details: {
+  headerText: {
     flex: 1,
     minWidth: 0,
     paddingRight: 12,
   },
 
   eyebrow: {
-    marginBottom: 3,
-    fontSize: 9,
+    marginBottom: 4,
+    fontSize: 10,
     fontWeight: '700',
-    letterSpacing: 0.7,
-    color: '#888888',
+    letterSpacing: 0.8,
+    color: '#B8B8B8',
   },
 
   title: {
-    fontSize: 14,
+    fontSize: 18,
+    lineHeight: 22,
     fontWeight: '700',
-    color: '#222222',
+    color: '#FFFFFF',
   },
 
   subtitle: {
-    marginTop: 2,
-    fontSize: 12,
-    color: '#777777',
+    marginTop: 3,
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#D0D0D0',
   },
 
   closeButton: {
@@ -279,30 +221,56 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F2F2F2',
+    backgroundColor: '#2A2A2A',
   },
 
   closeButtonPressed: {
     opacity: 0.65,
   },
 
-  readerInset: {
-    paddingLeft: 14,
-    paddingRight: 14,
-    paddingBottom: 14,
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: '#2A2A2A',
   },
 
-  reader: {
-    width: '100%',
-    overflow: 'hidden',
-    borderRadius: 10,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#E2E2E2',
-    backgroundColor: '#FFFFFF',
-  },
-
-  webView: {
+  body: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    minHeight: 0,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: 16,
+  },
+
+  cover: {
+    width: 76,
+    height: 114,
+    flexShrink: 0,
+    marginRight: 16,
+    borderRadius: 7,
+    backgroundColor: '#2A2A2A',
+  },
+
+  descriptionScroll: {
+    flex: 1,
+    minHeight: 0,
+    marginRight: -6,
+  },
+
+  descriptionContent: {
+    paddingRight: 12,
+    paddingBottom: 4,
+  },
+
+  description: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: '#F2F2F2',
+  },
+
+  source: {
+    marginTop: 16,
+    fontSize: 11,
+    lineHeight: 15,
+    color: '#A8A8A8',
   },
 });
