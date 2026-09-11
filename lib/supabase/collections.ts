@@ -400,17 +400,29 @@ export async function updateCollection(
 }
 
 export async function publishCollection(
-  collectionId: string
+  collectionId: string,
+  items?: Top3List['items']
 ): Promise<Top3List> {
   const now = new Date().toISOString();
 
+  const updates: {
+    status: 'published';
+    published_at: string;
+    updated_at: string;
+    items?: Top3List['items'];
+  } = {
+    status: 'published',
+    published_at: now,
+    updated_at: now,
+  };
+
+  if (items !== undefined) {
+    updates.items = items;
+  }
+
   const { data, error } = await supabase
     .from('collections')
-    .update({
-      status: 'published',
-      published_at: now,
-      updated_at: now,
-    })
+    .update(updates)
     .eq('id', collectionId)
     .select()
     .single();

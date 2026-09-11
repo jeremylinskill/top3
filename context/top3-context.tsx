@@ -15,6 +15,7 @@ import { Top3List } from '@/types/top3-list';
 import {
   createContext,
   ReactNode,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -44,6 +45,9 @@ type Top3ContextValue = {
   ) => void;
   removeItemAtRank: (rank: number) => void;
   setItems: (items: Top3List['items']) => void;
+  discardPublishedListChanges: (
+    listId: string
+  ) => void;
   publishCurrentList: () => Promise<void>;
   deleteCurrentList: () => Promise<void>;
 };
@@ -62,6 +66,15 @@ const Top3Context =
   createContext<Top3ContextValue | undefined>(
     undefined
   );
+
+function cloneTop3List(list: Top3List): Top3List {
+  return {
+    ...list,
+    items: [
+      ...list.items,
+    ] as Top3List['items'],
+  };
+}
 
 function createPostsFromPublishedLists(
   lists: Top3List[],
@@ -128,6 +141,11 @@ export function Top3Provider({
       new Map()
     );
 
+  const publishedListSnapshotsRef =
+    useRef<Map<string, Top3List>>(
+      new Map()
+    );
+
   const currentList = useMemo(
     () =>
       lists.find(
@@ -149,6 +167,7 @@ export function Top3Provider({
       setPosts([]);
       setCurrentListId('');
       setHasCollectionsLoadError(false);
+      publishedListSnapshotsRef.current.clear();
 
       if (!user) {
         return;
@@ -169,6 +188,20 @@ export function Top3Provider({
           createPostsFromPublishedLists(
             savedLists,
             userId
+          );
+
+        publishedListSnapshotsRef.current =
+          new Map(
+            savedLists
+              .filter((list) =>
+                Boolean(list.publishedAt)
+              )
+              .map(
+                (list): [string, Top3List] => [
+                  list.id,
+                  cloneTop3List(list),
+                ]
+              )
           );
 
         setLists(savedLists);
@@ -194,6 +227,7 @@ export function Top3Provider({
         setCurrentListId('');
         setLoadedUserId(null);
         setHasCollectionsLoadError(true);
+        publishedListSnapshotsRef.current.clear();
       }
     }
 
@@ -248,6 +282,10 @@ export function Top3Provider({
         ) {
           return;
         }
+
+        publishedListSnapshotsRef.current.delete(
+          targetId
+        );
 
         setLists((currentLists) =>
           currentLists.filter(
@@ -328,6 +366,13 @@ export function Top3Provider({
               : list
           )
         );
+
+        if (savedList.publishedAt) {
+          publishedListSnapshotsRef.current.set(
+            existingListId,
+            cloneTop3List(savedList)
+          );
+        }
       }
 
       setCurrentListId(existingListId);
@@ -494,24 +539,26 @@ export function Top3Provider({
       )
     );
 
-    queueCollectionItemsSave(
-      collectionId,
-      nextItems,
-      (savedList) => {
-        if (
-          !wasComplete &&
-          isNowComplete
-        ) {
-          trackAnalyticsEvent(
-            'collection_completed',
-            {
-              category:
-                savedList.category,
-            }
-          );
+    if (!currentList.publishedAt) {
+      queueCollectionItemsSave(
+        collectionId,
+        nextItems,
+        (savedList) => {
+          if (
+            !wasComplete &&
+            isNowComplete
+          ) {
+            trackAnalyticsEvent(
+              'collection_completed',
+              {
+                category:
+                  savedList.category,
+              }
+            );
+          }
         }
-      }
-    );
+      );
+    }
   }
 
   function removeItemAtRank(rank: number) {
@@ -551,10 +598,12 @@ export function Top3Provider({
       )
     );
 
-    queueCollectionItemsSave(
-      collectionId,
-      nextItems
-    );
+    if (!currentList.publishedAt) {
+      queueCollectionItemsSave(
+        collectionId,
+        nextItems
+      );
+    }
   }
 
   function setItems(
@@ -579,11 +628,35 @@ export function Top3Provider({
       )
     );
 
-    queueCollectionItemsSave(
-      collectionId,
-      items
-    );
+    if (!currentList.publishedAt) {
+      queueCollectionItemsSave(
+        collectionId,
+        items
+      );
+    }
   }
+
+  const discardPublishedListChanges = useCallback(
+    (listId: string) => {
+      const snapshot =
+        publishedListSnapshotsRef.current.get(
+          listId
+        );
+
+      if (!snapshot) {
+        return;
+      }
+
+      setLists((currentLists) =>
+        currentLists.map((list) =>
+          list.id === listId
+            ? cloneTop3List(snapshot)
+            : list
+        )
+      );
+    },
+    []
+  );
 
   async function publishCurrentList(): Promise<void> {
     if (!currentList) {
@@ -596,8 +669,18 @@ export function Top3Provider({
     const wasAlreadyPublished =
       Boolean(currentList.publishedAt);
 
+    const pendingItemsSave =
+      collectionItemSaveQueuesRef.current.get(
+        collectionId
+      );
+
+    if (pendingItemsSave) {
+      await pendingItemsSave;
+    }
+
     const savedList = await publishCollection(
-      collectionId
+      collectionId,
+      currentList.items
     );
 
     if (!savedList.publishedAt) {
@@ -605,6 +688,11 @@ export function Top3Provider({
         'Published collection is missing its published date.'
       );
     }
+
+    publishedListSnapshotsRef.current.set(
+      collectionId,
+      cloneTop3List(savedList)
+    );
 
     setLists((currentLists) =>
       currentLists.map((list) =>
@@ -688,6 +776,10 @@ export function Top3Provider({
 
     await deleteCollection(collectionId);
 
+    publishedListSnapshotsRef.current.delete(
+      collectionId
+    );
+
     setLists((currentLists) =>
       currentLists.filter(
         (list) => list.id !== collectionId
@@ -718,6 +810,7 @@ export function Top3Provider({
         setItemAtRank,
         removeItemAtRank,
         setItems,
+        discardPublishedListChanges,
         publishCurrentList,
         deleteCurrentList,
       }}>

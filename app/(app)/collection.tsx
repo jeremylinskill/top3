@@ -21,6 +21,7 @@ import * as Haptics from 'expo-haptics';
 import {
   router,
   useLocalSearchParams,
+  useNavigation,
 } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
@@ -69,6 +70,7 @@ export default function CollectionScreen() {
     selectList,
     setItems: setCurrentListItems,
     removeItemAtRank: removeCurrentListItemAtRank,
+    discardPublishedListChanges,
     publishCurrentList,
     deleteCurrentList,
   } = useTop3();
@@ -152,6 +154,8 @@ export default function CollectionScreen() {
   const [isPublishing, setIsPublishing] =
     useState(false);
 
+  const navigation = useNavigation();
+
   const [
     collectionActionSheet,
     setCollectionActionSheet,
@@ -184,6 +188,32 @@ export default function CollectionScreen() {
   const canPublish =
     selectedItemCount === 3 &&
     hasUnpublishedChanges;
+
+  const publishedCollectionId =
+    persistedCollection?.publishedAt
+      ? persistedCollection.id
+      : null;
+
+  useEffect(() => {
+    if (!publishedCollectionId) {
+      return;
+    }
+
+    const unsubscribe = navigation.addListener(
+      'beforeRemove',
+      () => {
+        discardPublishedListChanges(
+          publishedCollectionId
+        );
+      }
+    );
+
+    return unsubscribe;
+  }, [
+    discardPublishedListChanges,
+    navigation,
+    publishedCollectionId,
+  ]);
 
 
   useEffect(() => {
@@ -808,7 +838,9 @@ function openSearch(rank: number) {
           title={
             isPublishing
               ? 'Publishing…'
-              : 'Publish Top 3'
+              : persistedCollection?.publishedAt
+                ? 'Publish Update'
+                : 'Publish Top 3'
           }
           onPress={publishCollection}
           disabled={
