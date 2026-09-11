@@ -13,6 +13,9 @@ type GoogleBooksVolume = {
       smallThumbnail?: string;
     };
   };
+  accessInfo?: {
+    embeddable?: boolean;
+  };
 };
 
 type GoogleBooksResponse = {
@@ -24,6 +27,9 @@ const API_BASE_URL =
 
 const API_KEY =
   process.env.EXPO_PUBLIC_GOOGLE_BOOKS_API_KEY;
+
+const bookPreviewAvailabilityCache =
+  new Map<string, boolean>();
 
 const RETRYABLE_STATUS_CODES = new Set([
   429,
@@ -163,6 +169,11 @@ function mapGoogleBook(
         'https://'
       )
     : undefined;
+
+  bookPreviewAvailabilityCache.set(
+    book.id,
+    Boolean(book.accessInfo?.embeddable)
+  );
 
   return {
     id: book.id,
@@ -575,7 +586,7 @@ function buildRequestUrl(
   maxResults = 10
 ) {
   const fields =
-    'items(id,volumeInfo(title,authors,publishedDate,imageLinks/thumbnail,imageLinks/smallThumbnail))';
+    'items(id,volumeInfo(title,authors,publishedDate,imageLinks/thumbnail,imageLinks/smallThumbnail),accessInfo(embeddable))';
 
   return (
     `${API_BASE_URL}?q=${encodeURIComponent(
@@ -590,6 +601,100 @@ function buildRequestUrl(
     `&key=${API_KEY}`
   );
 }
+
+function buildBookPreviewAvailabilityUrl(
+  volumeId: string
+) {
+  const fields =
+    'id,accessInfo(embeddable)';
+
+  return (
+    `${API_BASE_URL}/${encodeURIComponent(
+      volumeId
+    )}` +
+    `?projection=lite` +
+    `&fields=${encodeURIComponent(
+      fields
+    )}` +
+    `&key=${API_KEY}`
+  );
+}
+
+export function getCachedBookPreviewAvailability(
+  volumeId: string
+): boolean | undefined {
+  const trimmedVolumeId =
+    volumeId.trim();
+
+  if (!trimmedVolumeId) {
+    return false;
+  }
+
+  return bookPreviewAvailabilityCache.get(
+    trimmedVolumeId
+  );
+}
+
+export async function getBookPreviewAvailability(
+  volumeId: string,
+  signal?: AbortSignal
+): Promise<boolean> {
+  const trimmedVolumeId =
+    volumeId.trim();
+
+  if (!trimmedVolumeId || !API_KEY) {
+    return false;
+  }
+
+  const cachedAvailability =
+    getCachedBookPreviewAvailability(
+      trimmedVolumeId
+    );
+
+  if (cachedAvailability !== undefined) {
+    return cachedAvailability;
+  }
+
+  const response =
+    await fetchWithRetry(
+      buildBookPreviewAvailabilityUrl(
+        trimmedVolumeId
+      ),
+      signal
+    );
+
+  if (response.status === 404) {
+    bookPreviewAvailabilityCache.set(
+      trimmedVolumeId,
+      false
+    );
+
+    return false;
+  }
+
+  if (!response.ok) {
+    const errorBody =
+      await response.text();
+
+    throw new Error(
+      `Google Books preview availability request failed: ${response.status}\n${errorBody}`
+    );
+  }
+
+  const book =
+    (await response.json()) as GoogleBooksVolume;
+
+  const isAvailable =
+    book.accessInfo?.embeddable === true;
+
+  bookPreviewAvailabilityCache.set(
+    trimmedVolumeId,
+    isAvailable
+  );
+
+  return isAvailable;
+}
+
 
 async function requestGoogleBooks(
   query: string,
