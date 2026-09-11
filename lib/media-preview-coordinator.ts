@@ -1,41 +1,87 @@
 type StopMediaPreview = () => void;
 
-let stopAudioPreviewHandler: StopMediaPreview | null = null;
-let stopTrailerPreviewHandler: StopMediaPreview | null = null;
+export type MediaPreviewChannel =
+  | 'audio'
+  | 'trailer'
+  | 'book';
+
+const stopHandlers:
+  Partial<Record<MediaPreviewChannel, StopMediaPreview>> = {};
+
+function registerMediaPreviewStopper(
+  channel: MediaPreviewChannel,
+  handler: StopMediaPreview
+) {
+  stopHandlers[channel] = handler;
+
+  return () => {
+    if (stopHandlers[channel] === handler) {
+      delete stopHandlers[channel];
+    }
+  };
+}
+
+function stopMediaPreviewFromCoordinator(
+  channel: MediaPreviewChannel
+) {
+  stopHandlers[channel]?.();
+}
 
 export function registerAudioPreviewStopper(
   handler: StopMediaPreview
 ) {
-  stopAudioPreviewHandler = handler;
-
-  return () => {
-    if (stopAudioPreviewHandler === handler) {
-      stopAudioPreviewHandler = null;
-    }
-  };
+  return registerMediaPreviewStopper(
+    'audio',
+    handler
+  );
 }
 
 export function registerTrailerPreviewStopper(
   handler: StopMediaPreview
 ) {
-  stopTrailerPreviewHandler = handler;
+  return registerMediaPreviewStopper(
+    'trailer',
+    handler
+  );
+}
 
-  return () => {
-    if (stopTrailerPreviewHandler === handler) {
-      stopTrailerPreviewHandler = null;
-    }
-  };
+export function registerBookPreviewStopper(
+  handler: StopMediaPreview
+) {
+  return registerMediaPreviewStopper(
+    'book',
+    handler
+  );
 }
 
 export function stopAudioPreviewFromCoordinator() {
-  stopAudioPreviewHandler?.();
+  stopMediaPreviewFromCoordinator('audio');
 }
 
 export function stopTrailerPreviewFromCoordinator() {
-  stopTrailerPreviewHandler?.();
+  stopMediaPreviewFromCoordinator('trailer');
+}
+
+export function stopBookPreviewFromCoordinator() {
+  stopMediaPreviewFromCoordinator('book');
+}
+
+export function stopOtherMediaPreviewsFromCoordinator(
+  activeChannel: MediaPreviewChannel
+) {
+  (
+    Object.keys(stopHandlers) as MediaPreviewChannel[]
+  ).forEach((channel) => {
+    if (channel !== activeChannel) {
+      stopHandlers[channel]?.();
+    }
+  });
 }
 
 export function stopAllMediaPreviewsFromCoordinator() {
-  stopAudioPreviewFromCoordinator();
-  stopTrailerPreviewFromCoordinator();
+  (
+    Object.keys(stopHandlers) as MediaPreviewChannel[]
+  ).forEach((channel) => {
+    stopHandlers[channel]?.();
+  });
 }
