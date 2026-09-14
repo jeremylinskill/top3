@@ -120,6 +120,7 @@ export const TOP3_CATEGORIES: Top3Category[] = [
       { id: 'action', name: 'Action', icon: '💥', searchItemName: 'action movie', tmdbGenreId: 28 },
       { id: 'adventure', name: 'Adventure', icon: '🗺️', searchItemName: 'adventure movie', tmdbGenreId: 12 },
       { id: 'comedy', name: 'Comedy', icon: '😂', searchItemName: 'comedy movie', tmdbGenreId: 35 },
+      { id: 'documentary', name: 'Documentary', icon: '🎥', searchItemName: 'documentary movie', tmdbGenreId: 99 },
       { id: 'drama', name: 'Drama', icon: '🎭', searchItemName: 'drama movie', tmdbGenreId: 18 },
       { id: 'fantasy', name: 'Fantasy', icon: '🐉', searchItemName: 'fantasy movie', tmdbGenreId: 14 },
       { id: 'horror', name: 'Horror', icon: '👻', searchItemName: 'horror movie', tmdbGenreId: 27 },
