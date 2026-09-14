@@ -2,6 +2,11 @@ import { useBlock } from '@/context/block-context';
 import { useAuth } from '@/hooks/use-auth';
 import { trackAnalyticsEvent } from '@/lib/analytics';
 import {
+  createCommentLike,
+  deleteCommentLike,
+  getLikedCommentIds as getSupabaseLikedCommentIds,
+} from '@/lib/supabase/comment-likes';
+import {
   CommentRecord,
   createComment,
   deleteComment as deleteSupabaseComment,
@@ -46,6 +51,7 @@ type CommentCounts = Record<string, number>;
 type CommentContextValue = {
   comments: Comment[];
   commentCounts: CommentCounts;
+  likedCommentIds: string[];
   activeCollectionId: string | null;
   isLoading: boolean;
   hasLoadError: boolean;
@@ -64,6 +70,12 @@ type CommentContextValue = {
     collectionId: string,
     baseCount?: number
   ) => number;
+  isCommentLiked: (
+    commentId: string
+  ) => boolean;
+  toggleCommentLike: (
+    commentId: string
+  ) => Promise<void>;
   addComment: (
     input: AddCommentInput
   ) => Promise<Comment | null>;
@@ -85,6 +97,14 @@ function createOptimisticCommentId() {
   return `optimistic-comment-${Date.now()}-${Math.random()
     .toString(36)
     .slice(2, 9)}`;
+}
+
+function isPersistedCommentId(
+  commentId: string
+): boolean {
+  return !commentId.startsWith(
+    'optimistic-comment-'
+  );
 }
 
 function mapCommentRecord(
@@ -142,6 +162,11 @@ export function CommentProvider({
     useState<CommentCounts>({});
 
   const [
+    likedCommentIds,
+    setLikedCommentIds,
+  ] = useState<string[]>([]);
+
+  const [
     activeCollectionId,
     setActiveCollectionId,
   ] = useState<string | null>(null);
@@ -165,15 +190,19 @@ export function CommentProvider({
     useRef<string | null>(null);
   const trackedCollectionIdsRef =
     useRef<string[]>([]);
+  const commentLikeMutationIdsRef =
+    useRef<Set<string>>(new Set());
 
   const clearCommentsForCollection =
     useCallback(() => {
       commentsRequestIdRef.current += 1;
 
       setComments([]);
+      setLikedCommentIds([]);
       setActiveCollectionId(null);
       setHasLoadError(false);
       setIsLoading(false);
+      commentLikeMutationIdsRef.current.clear();
     }, []);
 
   useEffect(() => {
@@ -182,10 +211,12 @@ export function CommentProvider({
 
     setComments([]);
     setCommentCounts({});
+    setLikedCommentIds([]);
     setActiveCollectionId(null);
     setHasLoadError(false);
     setIsLoading(false);
     setIsLoadingCommentCounts(false);
+    commentLikeMutationIdsRef.current.clear();
   }, [user?.id]);
 
   useEffect(() => {
@@ -210,6 +241,51 @@ export function CommentProvider({
       [blockedUserIds]
     );
 
+  const loadLikedCommentIdsForComments =
+    useCallback(
+      async (
+        sourceComments: Comment[]
+      ): Promise<string[]> => {
+        const currentUserId = user?.id;
+
+        if (!currentUserId) {
+          return [];
+        }
+
+        const commentIds =
+          sourceComments
+            .filter((comment) =>
+              isPersistedCommentId(
+                comment.id
+              )
+            )
+            .map(
+              (comment) => comment.id
+            );
+
+        if (commentIds.length === 0) {
+          return [];
+        }
+
+        try {
+          return await getSupabaseLikedCommentIds(
+            currentUserId,
+            commentIds
+          );
+        } catch (error) {
+          if (__DEV__) {
+            console.log(
+              'Failed to load comment likes:',
+              error
+            );
+          }
+
+          return [];
+        }
+      },
+      [user?.id]
+    );
+
   const loadCommentsForCollection =
     useCallback(
       async (collectionId: string) => {
@@ -226,6 +302,7 @@ export function CommentProvider({
 
         setActiveCollectionId(collectionId);
         setComments([]);
+        setLikedCommentIds([]);
         setHasLoadError(false);
         setIsLoading(true);
 
@@ -254,7 +331,22 @@ export function CommentProvider({
               mappedComments
             );
 
+          const loadedLikedCommentIds =
+            await loadLikedCommentIdsForComments(
+              visibleComments
+            );
+
+          if (
+            commentsRequestIdRef.current !==
+            requestId
+          ) {
+            return;
+          }
+
           setComments(mappedComments);
+          setLikedCommentIds(
+            loadedLikedCommentIds
+          );
           setHasLoadError(false);
 
           setCommentCounts(
@@ -294,6 +386,7 @@ export function CommentProvider({
         user?.id,
         clearCommentsForCollection,
         getVisibleComments,
+        loadLikedCommentIdsForComments,
       ]
     );
 
@@ -412,7 +505,22 @@ export function CommentProvider({
             mappedComments
           );
 
+        const loadedLikedCommentIds =
+          await loadLikedCommentIdsForComments(
+            visibleComments
+          );
+
+        if (
+          activeCollectionIdRef.current !==
+          collectionId
+        ) {
+          return;
+        }
+
         setComments(mappedComments);
+        setLikedCommentIds(
+          loadedLikedCommentIds
+        );
         setCommentCounts(
           (currentCounts) => ({
             ...currentCounts,
@@ -429,6 +537,7 @@ export function CommentProvider({
     }, [
       user?.id,
       getVisibleComments,
+      loadLikedCommentIdsForComments,
     ]);
 
   const refreshCommentCountsFromRealtime =
@@ -584,6 +693,111 @@ export function CommentProvider({
       commentCounts,
       comments,
       getVisibleComments,
+    ]
+  );
+
+  const isCommentLiked = useCallback(
+    (commentId: string) =>
+      likedCommentIds.includes(commentId),
+    [likedCommentIds]
+  );
+
+  const toggleCommentLike = useCallback(
+    async (commentId: string) => {
+      const currentUserId = user?.id;
+
+      if (
+        !currentUserId ||
+        !commentId ||
+        !isPersistedCommentId(commentId) ||
+        commentLikeMutationIdsRef.current.has(
+          commentId
+        )
+      ) {
+        return;
+      }
+
+      const wasLiked =
+        likedCommentIds.includes(commentId);
+
+      commentLikeMutationIdsRef.current.add(
+        commentId
+      );
+
+      setLikedCommentIds(
+        (currentLikedCommentIds) => {
+          if (wasLiked) {
+            return currentLikedCommentIds.filter(
+              (likedCommentId) =>
+                likedCommentId !== commentId
+            );
+          }
+
+          if (
+            currentLikedCommentIds.includes(
+              commentId
+            )
+          ) {
+            return currentLikedCommentIds;
+          }
+
+          return [
+            ...currentLikedCommentIds,
+            commentId,
+          ];
+        }
+      );
+
+      try {
+        if (wasLiked) {
+          await deleteCommentLike(
+            currentUserId,
+            commentId
+          );
+        } else {
+          await createCommentLike(
+            currentUserId,
+            commentId
+          );
+        }
+      } catch (error) {
+        console.error(
+          'Failed to toggle comment like:',
+          error
+        );
+
+        setLikedCommentIds(
+          (currentLikedCommentIds) => {
+            if (wasLiked) {
+              if (
+                currentLikedCommentIds.includes(
+                  commentId
+                )
+              ) {
+                return currentLikedCommentIds;
+              }
+
+              return [
+                ...currentLikedCommentIds,
+                commentId,
+              ];
+            }
+
+            return currentLikedCommentIds.filter(
+              (likedCommentId) =>
+                likedCommentId !== commentId
+            );
+          }
+        );
+      } finally {
+        commentLikeMutationIdsRef.current.delete(
+          commentId
+        );
+      }
+    },
+    [
+      user?.id,
+      likedCommentIds,
     ]
   );
 
@@ -756,11 +970,22 @@ export function CommentProvider({
       const collectionId =
         deletedComment.postId;
 
+      const wasCommentLiked =
+        likedCommentIds.includes(commentId);
+
       setComments((currentComments) =>
         currentComments.filter(
           (comment) =>
             comment.id !== commentId
         )
+      );
+
+      setLikedCommentIds(
+        (currentLikedCommentIds) =>
+          currentLikedCommentIds.filter(
+            (likedCommentId) =>
+              likedCommentId !== commentId
+          )
       );
 
       setCommentCounts(
@@ -813,6 +1038,25 @@ export function CommentProvider({
             ]);
           });
 
+          if (wasCommentLiked) {
+            setLikedCommentIds(
+              (currentLikedCommentIds) => {
+                if (
+                  currentLikedCommentIds.includes(
+                    commentId
+                  )
+                ) {
+                  return currentLikedCommentIds;
+                }
+
+                return [
+                  ...currentLikedCommentIds,
+                  commentId,
+                ];
+              }
+            );
+          }
+
           setCommentCounts(
             (currentCounts) => ({
               ...currentCounts,
@@ -827,13 +1071,17 @@ export function CommentProvider({
 
       void removeComment();
     },
-    [comments]
+    [
+      comments,
+      likedCommentIds,
+    ]
   );
 
   const value = useMemo(
     () => ({
       comments,
       commentCounts,
+      likedCommentIds,
       activeCollectionId,
       isLoading,
       hasLoadError,
@@ -843,12 +1091,15 @@ export function CommentProvider({
       loadCommentCounts,
       getCommentsForPost,
       getCommentCount,
+      isCommentLiked,
+      toggleCommentLike,
       addComment,
       deleteComment,
     }),
     [
       comments,
       commentCounts,
+      likedCommentIds,
       activeCollectionId,
       isLoading,
       hasLoadError,
@@ -858,6 +1109,8 @@ export function CommentProvider({
       loadCommentCounts,
       getCommentsForPost,
       getCommentCount,
+      isCommentLiked,
+      toggleCommentLike,
       addComment,
       deleteComment,
     ]

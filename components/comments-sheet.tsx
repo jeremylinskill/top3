@@ -103,6 +103,8 @@ export default function CommentsSheet({
     addComment,
     deleteComment,
     getCommentsForPost,
+    isCommentLiked,
+    toggleCommentLike,
     loadCommentsForCollection,
     clearCommentsForCollection,
     isLoading,
@@ -886,6 +888,14 @@ export default function CommentsSheet({
                           comment.authorId ===
                           profile.id
                         }
+                        isLiked={isCommentLiked(
+                          comment.id
+                        )}
+                        onLikePress={() => {
+                          void toggleCommentLike(
+                            comment.id
+                          );
+                        }}
                         onMenuPress={() =>
                           openCommentActions(
                             comment
@@ -986,12 +996,16 @@ export default function CommentsSheet({
 type CommentRowProps = {
   comment: Comment;
   isOwnComment: boolean;
+  isLiked: boolean;
+  onLikePress: () => void;
   onMenuPress: () => void;
 };
 
 function CommentRow({
   comment,
   isOwnComment,
+  isLiked,
+  onLikePress,
   onMenuPress,
 }: CommentRowProps) {
   const createdAtText =
@@ -999,6 +1013,11 @@ function CommentRow({
       comment.createdAt
     )?.replace(/^Updated\s+/i, '') ??
     'Just now';
+
+  const canLike =
+    !comment.id.startsWith(
+      'optimistic-comment-'
+    );
 
   return (
     <View style={styles.commentRow}>
@@ -1009,23 +1028,37 @@ function CommentRow({
         fontSize={16}
       />
 
-      <View style={styles.commentBody}>
-        <View
-          style={styles.commentTopRow}>
+      <View style={styles.commentContent}>
+        <View style={styles.commentBody}>
           <View
-            style={styles.commentMeta}>
-            <Text
-              style={styles.commentAuthor}
-              numberOfLines={1}>
-              {comment.authorDisplayName}
-            </Text>
+            style={styles.commentTopRow}>
+            <View
+              style={styles.commentMeta}>
+              <Text
+                style={styles.commentAuthor}
+                numberOfLines={1}>
+                {comment.authorDisplayName}
+              </Text>
 
-            <Text
-              style={styles.commentTime}>
-              {createdAtText}
-            </Text>
+              <Text
+                style={styles.commentTime}>
+                {createdAtText}
+              </Text>
+            </View>
           </View>
 
+          <Text
+            style={styles.commentUsername}>
+            @{comment.authorUsername}
+          </Text>
+
+          <Text style={styles.commentText}>
+            {comment.text}
+          </Text>
+        </View>
+
+        <View
+          style={styles.commentActionsColumn}>
           <Pressable
             style={({ pressed }) => [
               styles.commentMenuButton,
@@ -1048,16 +1081,44 @@ function CommentRow({
               }
             />
           </Pressable>
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.commentLikeButton,
+              pressed &&
+                canLike &&
+                styles.pressed,
+              !canLike &&
+                styles.commentLikeButtonDisabled,
+            ]}
+            onPress={onLikePress}
+            disabled={!canLike}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityState={{
+              selected: isLiked,
+              disabled: !canLike,
+            }}
+            accessibilityLabel={
+              isLiked
+                ? 'Unlike comment'
+                : 'Like comment'
+            }>
+            <Ionicons
+              name={
+                isLiked
+                  ? 'heart'
+                  : 'heart-outline'
+              }
+              size={17}
+              color={
+                isLiked
+                  ? '#FF3B30'
+                  : '#777777'
+              }
+            />
+          </Pressable>
         </View>
-
-        <Text
-          style={styles.commentUsername}>
-          @{comment.authorUsername}
-        </Text>
-
-        <Text style={styles.commentText}>
-          {comment.text}
-        </Text>
       </View>
     </View>
   );
@@ -1160,8 +1221,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
 
-  commentBody: {
+  commentContent: {
     flex: 1,
+    flexDirection: 'row',
     marginLeft: 12,
     paddingBottom: 16,
     borderBottomWidth:
@@ -1170,12 +1232,14 @@ const styles = StyleSheet.create({
       COLORS.border,
   },
 
+  commentBody: {
+    flex: 1,
+    minWidth: 0,
+  },
+
   commentTopRow: {
-    minHeight: 24,
     flexDirection: 'row',
     alignItems: 'flex-start',
-    justifyContent:
-      'space-between',
   },
 
   commentMeta: {
@@ -1199,18 +1263,23 @@ const styles = StyleSheet.create({
     color: '#999999',
   },
 
+  commentActionsColumn: {
+    width: 30,
+    marginLeft: 8,
+    alignItems: 'center',
+  },
+
   commentMenuButton: {
     width: 30,
     height: 26,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: -4,
-    marginRight: -4,
   },
 
   commentUsername: {
     ...TYPOGRAPHY.metadata,
-    marginTop: 1,
+    marginTop: -1,
     color: '#888888',
   },
 
@@ -1218,6 +1287,18 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.body,
     marginTop: 7,
     color: '#333333',
+  },
+
+  commentLikeButton: {
+    marginTop: 18,
+    width: 30,
+    height: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  commentLikeButtonDisabled: {
+    opacity: 0.45,
   },
 
   emptyState: {

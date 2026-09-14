@@ -63,7 +63,8 @@ function routeFromNotificationData(
 
   if (
     (type === 'like' ||
-      type === 'comment') &&
+      type === 'comment' ||
+      type === 'comment_like') &&
     collectionId
   ) {
     router.push({

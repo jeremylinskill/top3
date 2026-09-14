@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 export type NotificationType =
   | 'like'
   | 'comment'
+  | 'comment_like'
   | 'follow'
   | 'follow_request_accepted';
 

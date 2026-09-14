@@ -8,6 +8,7 @@ const EXPO_PUSH_URL =
 type NotificationType =
   | "like"
   | "comment"
+  | "comment_like"
   | "follow"
   | "follow_request_accepted";
 
@@ -96,6 +97,17 @@ function getPushCopy({
       body: pushCollectionTitle
         ? `${actorName} commented on your ${pushCollectionTitle}.`
         : `${actorName} commented on your Top 3.`,
+    };
+  }
+
+  if (
+    notification.type ===
+    "comment_like"
+  ) {
+    return {
+      title,
+      body:
+        `${actorName} liked your comment.`,
     };
   }
 

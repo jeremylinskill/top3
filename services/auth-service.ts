@@ -39,6 +39,67 @@ if (googleIosClientId && googleWebClientId) {
   });
 }
 
+async function clearGoogleSignInState() {
+  if (!GoogleSignin.hasPreviousSignIn()) {
+    return;
+  }
+
+  try {
+    await GoogleSignin.signOut();
+  } catch (error) {
+    if (__DEV__) {
+      console.log(
+        'Failed to clear previous Google sign-in state:',
+        error
+      );
+    }
+  }
+}
+
+function isInvalidRefreshTokenError(
+  error: unknown
+): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const authError = error as {
+    code?: unknown;
+    message?: unknown;
+  };
+
+  const code =
+    typeof authError.code === 'string'
+      ? authError.code.toLowerCase()
+      : '';
+
+  const message =
+    typeof authError.message === 'string'
+      ? authError.message.toLowerCase()
+      : '';
+
+  return (
+    code === 'refresh_token_not_found' ||
+    message.includes(
+      'invalid refresh token'
+    ) ||
+    message.includes(
+      'refresh token not found'
+    )
+  );
+}
+
+async function clearLocalAuthSession() {
+  const { error } =
+    await supabase.auth.signOut({
+      scope: 'local',
+    });
+
+  if (error) {
+    throw error;
+  }
+}
+
 export async function signUpWithEmail({
   email,
   password,
@@ -318,6 +379,13 @@ export async function signInWithGoogle() {
     );
   }
 
+  /*
+   * Clear any Google user state left from an earlier
+   * native sign-in before starting a new interactive
+   * sign-in. This avoids reusing stale iOS credentials.
+   */
+  await clearGoogleSignInState();
+
   const response = await GoogleSignin.signIn();
 
   if (!isSuccessResponse(response)) {
@@ -357,6 +425,15 @@ export async function getSession(): Promise<
   } = await supabase.auth.getSession();
 
   if (sessionError) {
+    if (
+      isInvalidRefreshTokenError(
+        sessionError
+      )
+    ) {
+      await clearLocalAuthSession();
+      return null;
+    }
+
     throw sessionError;
   }
 
@@ -375,6 +452,15 @@ export async function getSession(): Promise<
   );
 
   if (refreshError) {
+    if (
+      isInvalidRefreshTokenError(
+        refreshError
+      )
+    ) {
+      await clearLocalAuthSession();
+      return null;
+    }
+
     throw refreshError;
   }
 
@@ -382,6 +468,14 @@ export async function getSession(): Promise<
 }
 
 export async function signOut() {
+  /*
+   * Clear the native Google sign-in state as well as
+   * the Supabase session. Google cleanup is best-effort
+   * so it cannot prevent the user from signing out of
+   * Top 3.
+   */
+  await clearGoogleSignInState();
+
   const { error } =
     await supabase.auth.signOut();
 

@@ -45,6 +45,9 @@ function getNotificationMessage(
         ? `commented on your ${collectionTitle}.`
         : 'commented on your list.';
 
+    case 'comment_like':
+      return 'liked your comment.';
+
     case 'follow':
       return 'started following you.';
 
@@ -614,6 +617,9 @@ export default function NotificationsScreen() {
                                 </Text>
                                 .
                               </>
+                            ) : notification.type ===
+                              'comment_like' ? (
+                              'liked your comment.'
                             ) : notification.type ===
                               'follow' ? (
                               'started following you.'
