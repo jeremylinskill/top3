@@ -3,10 +3,6 @@ import { useAudioPreview } from '@/context/audio-preview-context';
 import { useBookPreview } from '@/context/book-preview-context';
 import { useTrailerPreview } from '@/context/trailer-preview-context';
 import {
-    getBookDescription,
-    getCachedBookDescription,
-} from '@/providers/books';
-import {
     getCachedTrailerAvailability,
     getMovieTrailerUrl,
     getTvShowTrailerUrl,
@@ -142,13 +138,6 @@ export function useMediaPreview(
   ] = useState(false);
 
   const [
-    bookAvailability,
-    setBookAvailability,
-  ] = useState<boolean | undefined>(
-    undefined
-  );
-
-  const [
     isLoadingTrailer,
     setIsLoadingTrailer,
   ] = useState(false);
@@ -184,8 +173,7 @@ export function useMediaPreview(
     Boolean(bookVolumeId);
 
   const canDescribeBook =
-    canCheckBook &&
-    bookAvailability === true;
+    canCheckBook;
 
   const canCheckTrailer =
     category === 'games'
@@ -229,73 +217,6 @@ export function useMediaPreview(
 
   const trailerLoading =
     isLoadingTrailer;
-
-  useEffect(() => {
-    if (
-      !item ||
-      category !== 'books' ||
-      !bookVolumeId
-    ) {
-      setBookAvailability(undefined);
-      return;
-    }
-
-    const resolvedBookVolumeId =
-      bookVolumeId;
-
-    const cachedDescription =
-      getCachedBookDescription(
-        resolvedBookVolumeId
-      );
-
-    if (cachedDescription !== undefined) {
-      setBookAvailability(
-        Boolean(cachedDescription)
-      );
-      return;
-    }
-
-    setBookAvailability(undefined);
-
-    let isMounted = true;
-    const itemTitle = item.title;
-
-    async function loadBookAvailability() {
-      try {
-        const description =
-          await getBookDescription(
-            resolvedBookVolumeId
-          );
-
-        if (isMounted) {
-          setBookAvailability(
-            Boolean(description)
-          );
-        }
-      } catch (error) {
-        if (__DEV__) {
-          console.log(
-            `Failed to check book description availability for ${itemTitle}:`,
-            error
-          );
-        }
-
-        if (isMounted) {
-          setBookAvailability(undefined);
-        }
-      }
-    }
-
-    void loadBookAvailability();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [
-    bookVolumeId,
-    category,
-    item?.id,
-  ]);
 
   useEffect(() => {
     if (!item) {
@@ -418,12 +339,7 @@ export function useMediaPreview(
       setIsLoadingBook(true);
 
       try {
-        const didOpen =
-          await openBookPreview(item);
-
-        setBookAvailability(
-          didOpen
-        );
+        await openBookPreview(item);
       } finally {
         setIsLoadingBook(false);
       }

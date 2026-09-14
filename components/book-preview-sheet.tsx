@@ -2,6 +2,7 @@ import { useBookPreview } from '@/context/book-preview-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useRef } from 'react';
 import {
+    ActivityIndicator,
     Image,
     Pressable,
     ScrollView,
@@ -16,6 +17,8 @@ export default function BookPreviewSheet() {
   const {
     activeBookItem,
     activeBookDescription,
+    activeBookDescriptionSource,
+    isBookLoading,
     closeBookPreview,
   } = useBookPreview();
 
@@ -45,14 +48,17 @@ export default function BookPreviewSheet() {
     activeBookDescription,
   ]);
 
-  if (
-    !activeBookItem ||
-    !activeBookDescription
-  ) {
+  if (!activeBookItem) {
     return null;
   }
 
   const bookItem = activeBookItem;
+
+  const sourceLabel =
+    activeBookDescriptionSource ===
+    'open-library'
+      ? 'Description from Open Library'
+      : 'Description from Google Books';
 
   return (
     <View
@@ -132,22 +138,43 @@ export default function BookPreviewSheet() {
             />
           ) : null}
 
-          <ScrollView
-            ref={descriptionScrollRef}
-            style={styles.descriptionScroll}
-            contentContainerStyle={
-              styles.descriptionContent
-            }
-            showsVerticalScrollIndicator={true}
-            indicatorStyle="white">
-            <Text style={styles.description}>
-              {activeBookDescription}
-            </Text>
+          {isBookLoading ? (
+            <View style={styles.status}>
+              <ActivityIndicator
+                size="small"
+                color="#F2F2F2"
+              />
+              <Text style={styles.statusText}>
+                Loading description…
+              </Text>
+            </View>
+          ) : activeBookDescription ? (
+            <ScrollView
+              ref={descriptionScrollRef}
+              style={styles.descriptionScroll}
+              contentContainerStyle={
+                styles.descriptionContent
+              }
+              showsVerticalScrollIndicator={true}
+              indicatorStyle="white">
+              <Text style={styles.description}>
+                {activeBookDescription}
+              </Text>
 
-            <Text style={styles.source}>
-              Description from Google Books
-            </Text>
-          </ScrollView>
+              <Text style={styles.source}>
+                {sourceLabel}
+              </Text>
+            </ScrollView>
+          ) : (
+            <View style={styles.status}>
+              <Text style={styles.unavailableTitle}>
+                Description unavailable
+              </Text>
+              <Text style={styles.unavailableText}>
+                No description is available for this book.
+              </Text>
+            </View>
+          )}
         </View>
       </View>
     </View>
@@ -271,6 +298,34 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 11,
     lineHeight: 15,
+    color: '#A8A8A8',
+  },
+
+  status: {
+    flex: 1,
+    minHeight: 114,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+  },
+
+  statusText: {
+    marginTop: 10,
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#D0D0D0',
+  },
+
+  unavailableTitle: {
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '600',
+    color: '#F2F2F2',
+  },
+
+  unavailableText: {
+    marginTop: 4,
+    fontSize: 13,
+    lineHeight: 19,
     color: '#A8A8A8',
   },
 });

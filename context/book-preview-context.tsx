@@ -3,7 +3,8 @@ import {
     stopOtherMediaPreviewsFromCoordinator,
 } from '@/lib/media-preview-coordinator';
 import {
-    getBookDescription,
+    BookDescriptionSource,
+    getBookDescriptionResult,
 } from '@/providers/books';
 import { Top3Item } from '@/types/top3-item';
 import {
@@ -19,6 +20,8 @@ import {
 type BookPreviewContextValue = {
   activeBookItem: Top3Item | null;
   activeBookDescription: string | null;
+  activeBookDescriptionSource:
+    BookDescriptionSource | null;
   isBookLoading: boolean;
   openBookPreview: (
     item: Top3Item
@@ -35,28 +38,6 @@ type BookPreviewProviderProps = {
   children: ReactNode;
 };
 
-function getBookVolumeId(
-  item: Top3Item
-): string | undefined {
-  const explicitVolumeId =
-    item.googleBooksVolumeId?.trim();
-
-  if (explicitVolumeId) {
-    return explicitVolumeId;
-  }
-
-  const legacyItemId = item.id.trim();
-
-  if (
-    !legacyItemId ||
-    legacyItemId.startsWith('curated-book-')
-  ) {
-    return undefined;
-  }
-
-  return legacyItemId;
-}
-
 export function BookPreviewProvider({
   children,
 }: BookPreviewProviderProps) {
@@ -71,6 +52,13 @@ export function BookPreviewProvider({
   ] = useState<string | null>(null);
 
   const [
+    activeBookDescriptionSource,
+    setActiveBookDescriptionSource,
+  ] = useState<BookDescriptionSource | null>(
+    null
+  );
+
+  const [
     isBookLoading,
     setIsBookLoading,
   ] = useState(false);
@@ -81,6 +69,7 @@ export function BookPreviewProvider({
     bookRequestIdRef.current += 1;
     setActiveBookItem(null);
     setActiveBookDescription(null);
+    setActiveBookDescriptionSource(null);
     setIsBookLoading(false);
   }, []);
 
@@ -93,13 +82,6 @@ export function BookPreviewProvider({
   async function openBookPreview(
     item: Top3Item
   ): Promise<boolean> {
-    const volumeId =
-      getBookVolumeId(item);
-
-    if (!volumeId) {
-      return false;
-    }
-
     const requestId =
       bookRequestIdRef.current + 1;
     bookRequestIdRef.current = requestId;
@@ -107,12 +89,16 @@ export function BookPreviewProvider({
     stopOtherMediaPreviewsFromCoordinator(
       'book'
     );
+
+    setActiveBookItem(item);
+    setActiveBookDescription(null);
+    setActiveBookDescriptionSource(null);
     setIsBookLoading(true);
 
     try {
-      const description =
-        await getBookDescription(
-          volumeId
+      const result =
+        await getBookDescriptionResult(
+          item
         );
 
       if (
@@ -121,13 +107,15 @@ export function BookPreviewProvider({
         return false;
       }
 
-      if (!description) {
+      if (!result) {
         return false;
       }
 
-      setActiveBookItem(item);
       setActiveBookDescription(
-        description
+        result.description
+      );
+      setActiveBookDescriptionSource(
+        result.source
       );
 
       return true;
@@ -157,6 +145,7 @@ export function BookPreviewProvider({
       value={{
         activeBookItem,
         activeBookDescription,
+        activeBookDescriptionSource,
         isBookLoading,
         openBookPreview,
         closeBookPreview,

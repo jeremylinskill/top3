@@ -20,14 +20,61 @@ type GoogleBooksResponse = {
   items?: GoogleBooksVolume[];
 };
 
+type OpenLibrarySearchDocument = {
+  key?: string;
+  title?: string;
+  author_name?: string[];
+};
+
+type OpenLibrarySearchResponse = {
+  docs?: OpenLibrarySearchDocument[];
+};
+
+type OpenLibraryWork = {
+  description?:
+    | string
+    | {
+        value?: string;
+      };
+};
+
+export type BookDescriptionSource =
+  | 'google-books'
+  | 'open-library';
+
+export type BookDescriptionResult = {
+  description: string;
+  source: BookDescriptionSource;
+};
+
 const API_BASE_URL =
   'https://www.googleapis.com/books/v1/volumes';
 
 const API_KEY =
   process.env.EXPO_PUBLIC_GOOGLE_BOOKS_API_KEY;
 
+const OPEN_LIBRARY_SEARCH_URL =
+  'https://openlibrary.org/search.json';
+
+const OPEN_LIBRARY_BASE_URL =
+  'https://openlibrary.org';
+
+const OPEN_LIBRARY_REQUEST_HEADERS = {
+  'User-Agent':
+    'Top 3 (support@top3taste.com)',
+};
+
 const bookDescriptionCache =
   new Map<string, string | null>();
+
+const bookDescriptionSourceCache =
+  new Map<
+    string,
+    BookDescriptionSource
+  >();
+
+let isGoogleBookDescriptionQuotaExhausted =
+  false;
 
 const RETRYABLE_STATUS_CODES = new Set([
   429,
@@ -641,6 +688,272 @@ function buildBookDescriptionUrl(
   );
 }
 
+function getBookVolumeId(
+  item: Top3Item
+): string | undefined {
+  const explicitVolumeId =
+    item.googleBooksVolumeId?.trim();
+
+  if (explicitVolumeId) {
+    return explicitVolumeId;
+  }
+
+  const legacyItemId =
+    item.id.trim();
+
+  if (
+    !legacyItemId ||
+    legacyItemId.startsWith(
+      'curated-book-'
+    )
+  ) {
+    return undefined;
+  }
+
+  return legacyItemId;
+}
+
+function getBookAuthorText(
+  item: Top3Item
+): string {
+  return (
+    item.subtitle
+      ?.split('·')[0]
+      .trim() ?? ''
+  );
+}
+
+function getBookAuthorCandidates(
+  item: Top3Item
+): string[] {
+  const authorText =
+    getBookAuthorText(item);
+
+  if (
+    !authorText ||
+    normalizeText(authorText) ===
+      'author unknown'
+  ) {
+    return [];
+  }
+
+  return authorText
+    .split(',')
+    .map((author) =>
+      normalizeText(author)
+    )
+    .filter(Boolean);
+}
+
+function getBookDescriptionCacheKey(
+  item: Top3Item
+): string | null {
+  const normalizedTitle =
+    normalizeEditionFamilyTitle(
+      item.title
+    );
+
+  const normalizedAuthors =
+    getBookAuthorCandidates(
+      item
+    );
+
+  if (
+    !normalizedTitle ||
+    normalizedAuthors.length === 0
+  ) {
+    return null;
+  }
+
+  return (
+    `book:${normalizedTitle}|` +
+    normalizedAuthors.join('|')
+  );
+}
+
+function doesOpenLibraryAuthorMatch(
+  document:
+    OpenLibrarySearchDocument,
+  item: Top3Item
+): boolean {
+  const itemAuthors =
+    getBookAuthorCandidates(
+      item
+    );
+
+  if (itemAuthors.length === 0) {
+    return false;
+  }
+
+  const documentAuthors =
+    (document.author_name ?? [])
+      .map((author) =>
+        normalizeText(author)
+      )
+      .filter(Boolean);
+
+  return itemAuthors.some(
+    (itemAuthor) =>
+      documentAuthors.some(
+        (documentAuthor) =>
+          documentAuthor ===
+            itemAuthor ||
+          documentAuthor.includes(
+            itemAuthor
+          ) ||
+          itemAuthor.includes(
+            documentAuthor
+          )
+      )
+  );
+}
+
+function getOpenLibraryDescription(
+  work: OpenLibraryWork
+): string | null {
+  if (
+    typeof work.description ===
+    'string'
+  ) {
+    return normalizeBookDescription(
+      work.description
+    );
+  }
+
+  if (
+    work.description &&
+    typeof work.description ===
+      'object'
+  ) {
+    return normalizeBookDescription(
+      work.description.value
+    );
+  }
+
+  return null;
+}
+
+async function getOpenLibraryBookDescription(
+  item: Top3Item,
+  signal?: AbortSignal
+): Promise<string | null> {
+  const title =
+    item.title.trim();
+
+  const author =
+    getBookAuthorText(item);
+
+  if (
+    !title ||
+    !author ||
+    getBookAuthorCandidates(
+      item
+    ).length === 0
+  ) {
+    return null;
+  }
+
+  const searchUrl =
+    `${OPEN_LIBRARY_SEARCH_URL}` +
+    `?title=${encodeURIComponent(
+      title
+    )}` +
+    `&author=${encodeURIComponent(
+      author
+    )}` +
+    `&fields=${encodeURIComponent(
+      'key,title,author_name'
+    )}` +
+    `&limit=10`;
+
+  const searchResponse =
+    await fetch(
+      searchUrl,
+      {
+        signal,
+        headers:
+          OPEN_LIBRARY_REQUEST_HEADERS,
+      }
+    );
+
+  if (!searchResponse.ok) {
+    const errorBody =
+      await searchResponse.text();
+
+    throw new Error(
+      `Open Library description search failed: ${searchResponse.status}\n${errorBody}`
+    );
+  }
+
+  const searchData =
+    (await searchResponse.json()) as
+      OpenLibrarySearchResponse;
+
+  const normalizedItemTitle =
+    normalizeEditionFamilyTitle(
+      title
+    );
+
+  const matchingDocument =
+    (searchData.docs ?? []).find(
+      (document) =>
+        Boolean(document.key) &&
+        normalizeEditionFamilyTitle(
+          document.title ?? ''
+        ) ===
+          normalizedItemTitle &&
+        doesOpenLibraryAuthorMatch(
+          document,
+          item
+        )
+    );
+
+  const workKey =
+    matchingDocument?.key?.trim();
+
+  if (
+    !workKey ||
+    !workKey.startsWith(
+      '/works/'
+    )
+  ) {
+    return null;
+  }
+
+  const workResponse =
+    await fetch(
+      `${OPEN_LIBRARY_BASE_URL}${workKey}.json`,
+      {
+        signal,
+        headers:
+          OPEN_LIBRARY_REQUEST_HEADERS,
+      }
+    );
+
+  if (
+    workResponse.status === 404
+  ) {
+    return null;
+  }
+
+  if (!workResponse.ok) {
+    const errorBody =
+      await workResponse.text();
+
+    throw new Error(
+      `Open Library work request failed: ${workResponse.status}\n${errorBody}`
+    );
+  }
+
+  const work =
+    (await workResponse.json()) as
+      OpenLibraryWork;
+
+  return getOpenLibraryDescription(
+    work
+  );
+}
+
 export function getCachedBookDescription(
   volumeId: string
 ): string | null | undefined {
@@ -656,14 +969,18 @@ export function getCachedBookDescription(
   );
 }
 
-export async function getBookDescription(
+async function getGoogleBookDescription(
   volumeId: string,
   signal?: AbortSignal
 ): Promise<string | null> {
   const trimmedVolumeId =
     volumeId.trim();
 
-  if (!trimmedVolumeId || !API_KEY) {
+  if (
+    !trimmedVolumeId ||
+    !API_KEY ||
+    isGoogleBookDescriptionQuotaExhausted
+  ) {
     return null;
   }
 
@@ -676,13 +993,29 @@ export async function getBookDescription(
     return cachedDescription;
   }
 
+  /*
+   * Description requests are user-triggered and
+   * have an immediate Open Library fallback.
+   * Do not retry a daily quota 429 three times.
+   */
   const response =
-    await fetchWithRetry(
+    await fetch(
       buildBookDescriptionUrl(
         trimmedVolumeId
       ),
-      signal
+      {
+        signal,
+      }
     );
+
+  if (response.status === 429) {
+    isGoogleBookDescriptionQuotaExhausted =
+      true;
+
+    throw new Error(
+      'Google Books description quota exhausted.'
+    );
+  }
 
   if (response.status === 404) {
     bookDescriptionCache.set(
@@ -703,7 +1036,8 @@ export async function getBookDescription(
   }
 
   const book =
-    (await response.json()) as GoogleBooksVolume;
+    (await response.json()) as
+      GoogleBooksVolume;
 
   const description =
     normalizeBookDescription(
@@ -715,7 +1049,232 @@ export async function getBookDescription(
     description
   );
 
+  if (description) {
+    bookDescriptionSourceCache.set(
+      trimmedVolumeId,
+      'google-books'
+    );
+  }
+
   return description;
+}
+
+async function getBookDescriptionForItem(
+  item: Top3Item,
+  signal?: AbortSignal
+): Promise<BookDescriptionResult | null> {
+  const volumeId =
+    getBookVolumeId(item);
+
+  const itemCacheKey =
+    getBookDescriptionCacheKey(
+      item
+    );
+
+  if (itemCacheKey) {
+    const cachedFinalDescription =
+      bookDescriptionCache.get(
+        itemCacheKey
+      );
+
+    const cachedFinalSource =
+      bookDescriptionSourceCache.get(
+        itemCacheKey
+      );
+
+    if (
+      cachedFinalDescription &&
+      cachedFinalSource
+    ) {
+      return {
+        description:
+          cachedFinalDescription,
+        source:
+          cachedFinalSource,
+      };
+    }
+  }
+
+  if (volumeId) {
+    const cachedGoogleDescription =
+      getCachedBookDescription(
+        volumeId
+      );
+
+    const cachedGoogleSource =
+      bookDescriptionSourceCache.get(
+        volumeId
+      );
+
+    if (
+      typeof cachedGoogleDescription ===
+        'string' &&
+      cachedGoogleSource
+    ) {
+      if (itemCacheKey) {
+        bookDescriptionCache.set(
+          itemCacheKey,
+          cachedGoogleDescription
+        );
+
+        bookDescriptionSourceCache.set(
+          itemCacheKey,
+          cachedGoogleSource
+        );
+      }
+
+      return {
+        description:
+          cachedGoogleDescription,
+        source:
+          cachedGoogleSource,
+      };
+    }
+
+    if (
+      cachedGoogleDescription !== null &&
+      !isGoogleBookDescriptionQuotaExhausted
+    ) {
+      try {
+        const googleDescription =
+          await getGoogleBookDescription(
+            volumeId,
+            signal
+          );
+
+        if (googleDescription) {
+          if (itemCacheKey) {
+            bookDescriptionCache.set(
+              itemCacheKey,
+              googleDescription
+            );
+
+            bookDescriptionSourceCache.set(
+              itemCacheKey,
+              'google-books'
+            );
+          }
+
+          return {
+            description:
+              googleDescription,
+            source:
+              'google-books',
+          };
+        }
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          error.name === 'AbortError'
+        ) {
+          throw error;
+        }
+
+        if (__DEV__) {
+          console.log(
+            'Google Books description unavailable. Using Open Library.',
+            error
+          );
+        }
+      }
+    }
+  }
+
+  try {
+    const openLibraryDescription =
+      await getOpenLibraryBookDescription(
+        item,
+        signal
+      );
+
+    if (!openLibraryDescription) {
+      if (itemCacheKey) {
+        bookDescriptionCache.set(
+          itemCacheKey,
+          null
+        );
+      }
+
+      return null;
+    }
+
+    if (itemCacheKey) {
+      bookDescriptionCache.set(
+        itemCacheKey,
+        openLibraryDescription
+      );
+
+      bookDescriptionSourceCache.set(
+        itemCacheKey,
+        'open-library'
+      );
+    }
+
+    if (volumeId) {
+      bookDescriptionCache.set(
+        volumeId,
+        openLibraryDescription
+      );
+
+      bookDescriptionSourceCache.set(
+        volumeId,
+        'open-library'
+      );
+    }
+
+    return {
+      description:
+        openLibraryDescription,
+      source:
+        'open-library',
+    };
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.name === 'AbortError'
+    ) {
+      throw error;
+    }
+
+    if (__DEV__) {
+      console.log(
+        'Open Library description fallback failed.',
+        error
+      );
+    }
+
+    return null;
+  }
+}
+
+export async function getBookDescriptionResult(
+  item: Top3Item,
+  signal?: AbortSignal
+): Promise<BookDescriptionResult | null> {
+  return getBookDescriptionForItem(
+    item,
+    signal
+  );
+}
+
+export async function getBookDescription(
+  book: string | Top3Item,
+  signal?: AbortSignal
+): Promise<string | null> {
+  if (typeof book === 'string') {
+    return getGoogleBookDescription(
+      book,
+      signal
+    );
+  }
+
+  const result =
+    await getBookDescriptionForItem(
+      book,
+      signal
+    );
+
+  return result?.description ?? null;
 }
 
 async function requestGoogleBooks(
