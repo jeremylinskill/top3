@@ -88,17 +88,64 @@ function formatUsername(
   return formattedUsername || 'top3user';
 }
 
+function getEmailUsername(
+  email?: string
+) {
+  return (
+    email?.split('@')[0]?.trim() ||
+    'top3user'
+  );
+}
+
+function getAuthDisplayName(
+  userMetadata?: Record<string, unknown>
+) {
+  if (!userMetadata) {
+    return undefined;
+  }
+
+  const fullName =
+    typeof userMetadata.full_name === 'string'
+      ? userMetadata.full_name.trim()
+      : '';
+
+  if (fullName) {
+    return fullName;
+  }
+
+  const givenName =
+    typeof userMetadata.given_name === 'string'
+      ? userMetadata.given_name.trim()
+      : '';
+
+  const familyName =
+    typeof userMetadata.family_name === 'string'
+      ? userMetadata.family_name.trim()
+      : '';
+
+  const combinedName = [
+    givenName,
+    familyName,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+
+  return combinedName || undefined;
+}
+
 function createDefaultProfile(
   userId: string,
-  email?: string
+  email?: string,
+  authDisplayName?: string
 ): UserProfile {
   const emailUsername =
-    email?.split('@')[0]?.trim() ||
-    'top3user';
+    getEmailUsername(email);
 
   return {
     id: userId,
     displayName:
+      authDisplayName ||
       formatDisplayName(emailUsername),
     username: formatUsername(emailUsername),
     bio: '',
@@ -190,6 +237,17 @@ export function ProfileProvider({
   const userId = user?.id;
   const userEmail = user?.email;
 
+  const userProvider =
+    typeof user?.app_metadata?.provider ===
+    'string'
+      ? user.app_metadata.provider
+      : undefined;
+
+  const authDisplayName =
+    getAuthDisplayName(
+      user?.user_metadata
+    );
+
   const isProfileLoading =
     Boolean(userId) &&
     loadedUserId !== userId;
@@ -209,7 +267,13 @@ export function ProfileProvider({
       const defaultProfile =
         createDefaultProfile(
           userId,
-          userEmail
+          userEmail,
+          authDisplayName
+        );
+
+      const legacyGeneratedDisplayName =
+        formatDisplayName(
+          getEmailUsername(userEmail)
         );
 
       try {
@@ -242,8 +306,69 @@ export function ProfileProvider({
         }
 
         if (existingProfile) {
+          let resolvedProfile =
+            existingProfile;
+
+          const shouldRepairAppleDisplayName =
+            userProvider === 'apple' &&
+            Boolean(authDisplayName) &&
+            existingProfile.display_name ===
+              legacyGeneratedDisplayName &&
+            existingProfile.display_name !==
+              authDisplayName;
+
+          if (
+            shouldRepairAppleDisplayName &&
+            authDisplayName
+          ) {
+            const {
+              data: repairedProfile,
+              error: repairError,
+            } = await supabase
+              .from('profiles')
+              .update({
+                display_name:
+                  authDisplayName,
+                updated_at:
+                  new Date().toISOString(),
+              })
+              .eq('id', userId)
+              .eq(
+                'display_name',
+                legacyGeneratedDisplayName
+              )
+              .select(
+                `
+                  id,
+                  username,
+                  display_name,
+                  bio,
+                  avatar_url,
+                  is_public,
+                  has_completed_onboarding,
+                  is_admin
+                `
+              )
+              .maybeSingle<ProfileRow>();
+
+            if (repairError) {
+              throw repairError;
+            }
+
+            if (isCancelled) {
+              return;
+            }
+
+            if (repairedProfile) {
+              resolvedProfile =
+                repairedProfile;
+            }
+          }
+
           setProfile(
-            mapRowToProfile(existingProfile)
+            mapRowToProfile(
+              resolvedProfile
+            )
           );
 
           setLoadedUserId(userId);
@@ -372,6 +497,8 @@ export function ProfileProvider({
   }, [
     userId,
     userEmail,
+    userProvider,
+    authDisplayName,
     loadAttempt,
   ]);
 
