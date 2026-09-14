@@ -134,10 +134,35 @@ function getAuthDisplayName(
   return combinedName || undefined;
 }
 
+function getAuthAvatarUrl(
+  userMetadata?: Record<string, unknown>
+) {
+  if (!userMetadata) {
+    return undefined;
+  }
+
+  const avatarUrl =
+    typeof userMetadata.avatar_url === 'string'
+      ? userMetadata.avatar_url.trim()
+      : '';
+
+  if (avatarUrl) {
+    return avatarUrl;
+  }
+
+  const picture =
+    typeof userMetadata.picture === 'string'
+      ? userMetadata.picture.trim()
+      : '';
+
+  return picture || undefined;
+}
+
 function createDefaultProfile(
   userId: string,
   email?: string,
-  authDisplayName?: string
+  authDisplayName?: string,
+  authAvatarUrl?: string
 ): UserProfile {
   const emailUsername =
     getEmailUsername(email);
@@ -149,7 +174,7 @@ function createDefaultProfile(
       formatDisplayName(emailUsername),
     username: formatUsername(emailUsername),
     bio: '',
-    avatarUrl: undefined,
+    avatarUrl: authAvatarUrl,
     visibility: 'public',
     hasCompletedOnboarding: false,
     isAdmin: false,
@@ -248,6 +273,13 @@ export function ProfileProvider({
       user?.user_metadata
     );
 
+  const authAvatarUrl =
+    userProvider === 'google'
+      ? getAuthAvatarUrl(
+          user?.user_metadata
+        )
+      : undefined;
+
   const isProfileLoading =
     Boolean(userId) &&
     loadedUserId !== userId;
@@ -268,7 +300,8 @@ export function ProfileProvider({
         createDefaultProfile(
           userId,
           userEmail,
-          authDisplayName
+          authDisplayName,
+          authAvatarUrl
         );
 
       const legacyGeneratedDisplayName =
@@ -499,6 +532,7 @@ export function ProfileProvider({
     userEmail,
     userProvider,
     authDisplayName,
+    authAvatarUrl,
     loadAttempt,
   ]);
 
