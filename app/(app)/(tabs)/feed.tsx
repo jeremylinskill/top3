@@ -36,8 +36,8 @@ import {
   useState,
 } from 'react';
 import {
+  FlatList,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -198,18 +198,27 @@ export default function FeedScreen() {
 
     void hydrateMissingArtworkInPosts(
       sourcePosts
-    ).then((hydratedPosts) => {
-      if (
-        hydrationRun !==
-        artworkHydrationRunRef.current
-      ) {
-        return;
-      }
+    )
+      .then((hydratedPosts) => {
+        if (
+          hydrationRun !==
+          artworkHydrationRunRef.current
+        ) {
+          return;
+        }
 
-      setFeedPosts(
-        hydratedPosts
-      );
-    });
+        setFeedPosts(
+          hydratedPosts
+        );
+      })
+      .catch((error) => {
+        if (__DEV__) {
+          console.log(
+            'Failed to hydrate feed artwork:',
+            error
+          );
+        }
+      });
   }
 
   useEffect(() => {
@@ -224,17 +233,20 @@ export default function FeedScreen() {
       return;
     }
 
+    if (!profile.id) {
+      return;
+    }
+
     let isMounted = true;
 
     async function loadFeedPosts() {
       setIsLoadingFeed(true);
 
-
       try {
         const nextPosts =
           await getPublishedPosts({
-          hydrateMissingArtwork: false,
-        });
+            hydrateMissingArtwork: false,
+          });
 
         const authorIds = Array.from(
           new Set(
@@ -268,7 +280,6 @@ export default function FeedScreen() {
           hydrateFeedArtworkInBackground(
             nextPosts
           );
-
         }
       } catch (error) {
         if (__DEV__) {
@@ -1125,7 +1136,6 @@ export default function FeedScreen() {
       hydrateFeedArtworkInBackground(
         nextPosts
       );
-
     } catch (error) {
       if (__DEV__) {
         console.log(
@@ -1138,6 +1148,116 @@ export default function FeedScreen() {
     }
   }
 
+  function renderFeedItem({
+    item,
+  }: {
+    item: (typeof personalizedFeed)[number];
+  }) {
+    const {
+      post,
+      isSuggested,
+      suggestionReason,
+      sharedItemTitles,
+    } = item;
+
+    const author =
+      getPostAuthor(
+        post.authorId
+      );
+
+    if (!author) {
+      return null;
+    }
+
+    const isCurrentUserPost =
+      post.authorId ===
+      profile.id;
+
+    const authorIsFollowed =
+      isFollowing(
+        post.authorId
+      );
+
+    return (
+      <View style={styles.feedItem}>
+        <Top3Card
+          post={post}
+          author={author}
+          showAuthor
+          recommendationTitle={
+            isSuggested
+              ? 'Recommended for you'
+              : undefined
+          }
+          recommendationReason={
+            isSuggested
+              ? formatSuggestionReason(
+                  suggestionReason
+                )
+              : undefined
+          }
+          tasteMatchItemTitles={
+            sharedItemTitles
+          }
+          showFollowButton={
+            isSuggested &&
+            !isCurrentUserPost
+          }
+          isFollowingAuthor={
+            authorIsFollowed
+          }
+          isFollowLoading={
+            isLoadingFollowState
+          }
+          onFollowPress={
+            isSuggested &&
+            !isCurrentUserPost
+              ? () =>
+                  toggleAuthorFollow(
+                    post.authorId
+                  )
+              : undefined
+          }
+          onAuthorPress={() =>
+            openAuthorProfile(
+              post.authorId
+            )
+          }
+          onTitlePress={() =>
+            openCollectionFeed(
+              post
+            )
+          }
+          onPress={() =>
+            openPost(post)
+          }
+          onEditPress={
+            isCurrentUserPost
+              ? () =>
+                  editCollection(
+                    post
+                  )
+              : undefined
+          }
+          onMorePress={
+            !isCurrentUserPost
+              ? () =>
+                  openPostActions(
+                    post
+                  )
+              : undefined
+          }
+          onCommentsPress={() =>
+            openComments(post)
+          }
+          onSharePress={() => {
+            void shareCollection(post);
+          }}
+        />
+      </View>
+    );
+  }
+
   return (
     <SafeAreaView
       style={styles.container}
@@ -1148,38 +1268,20 @@ export default function FeedScreen() {
       ]}>
       <ScreenHeader />
 
-      <ScrollView
-        contentContainerStyle={
-          styles.content
-        }
-        showsVerticalScrollIndicator={
-          false
-        }
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={refreshFeed}
-          />
-        }>
-        {isLoadingFeed ? (
-          <View
-            style={styles.loadingState}>
-            <Text
-              style={styles.loadingText}>
-              Loading feed…
-            </Text>
-          </View>
-        ) : personalizedFeed.length ===
-          0 ? (
-          <View
-            style={styles.emptyState}>
-            <Text
-              style={styles.emptyTitle}>
+      {isLoadingFeed ? (
+        <View style={styles.loadingState}>
+          <Text style={styles.loadingText}>
+            Loading feed…
+          </Text>
+        </View>
+      ) : personalizedFeed.length === 0 ? (
+        <View style={styles.content}>
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>
               Nothing published
             </Text>
 
-            <Text
-              style={styles.emptyText}>
+            <Text style={styles.emptyText}>
               Publish a Top 3 to see it here.
             </Text>
 
@@ -1189,118 +1291,32 @@ export default function FeedScreen() {
               style={styles.emptyAction}
             />
           </View>
-        ) : (
-          personalizedFeed.map(
-            ({
-              post,
-              isSuggested,
-              suggestionReason,
-              sharedItemTitles,
-            }) => {
-              const author =
-                getPostAuthor(
-                  post.authorId
-                );
-
-              if (!author) {
-                return null;
-              }
-
-              const isCurrentUserPost =
-                post.authorId ===
-                profile.id;
-
-              const authorIsFollowed =
-                isFollowing(
-                  post.authorId
-                );
-
-              return (
-                <View
-                  key={post.id}
-                  style={
-                    styles.feedItem
-                  }>
-                  <Top3Card
-                    post={post}
-                    author={author}
-                    showAuthor
-                    recommendationTitle={
-                      isSuggested
-                        ? 'Recommended for you'
-                        : undefined
-                    }
-                    recommendationReason={
-                      isSuggested
-                        ? formatSuggestionReason(
-                            suggestionReason
-                          )
-                        : undefined
-                    }
-                    tasteMatchItemTitles={
-                      sharedItemTitles
-                    }
-                    showFollowButton={
-                      isSuggested &&
-                      !isCurrentUserPost
-                    }
-                    isFollowingAuthor={
-                      authorIsFollowed
-                    }
-                    isFollowLoading={
-                      isLoadingFollowState
-                    }
-                    onFollowPress={
-                      isSuggested &&
-                      !isCurrentUserPost
-                        ? () =>
-                            toggleAuthorFollow(
-                              post.authorId
-                            )
-                        : undefined
-                    }
-                    onAuthorPress={() =>
-                      openAuthorProfile(
-                        post.authorId
-                      )
-                    }
-                    onTitlePress={() =>
-                      openCollectionFeed(
-                        post
-                      )
-                    }
-                    onPress={() =>
-                      openPost(post)
-                    }
-                    onEditPress={
-                      isCurrentUserPost
-                        ? () =>
-                            editCollection(
-                              post
-                            )
-                        : undefined
-                    }
-                    onMorePress={
-                      !isCurrentUserPost
-                        ? () =>
-                            openPostActions(
-                              post
-                            )
-                        : undefined
-                    }
-                    onCommentsPress={() =>
-                      openComments(post)
-                    }
-                    onSharePress={() => {
-                      void shareCollection(post);
-                    }}
-                  />
-                </View>
-              );
-            }
-          )
-        )}
-      </ScrollView>
+        </View>
+      ) : (
+        <FlatList
+          data={personalizedFeed}
+          keyExtractor={({ post }) =>
+            post.id
+          }
+          renderItem={renderFeedItem}
+          contentContainerStyle={
+            styles.content
+          }
+          showsVerticalScrollIndicator={
+            false
+          }
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={refreshFeed}
+            />
+          }
+          initialNumToRender={3}
+          maxToRenderPerBatch={4}
+          updateCellsBatchingPeriod={50}
+          windowSize={5}
+        />
+      )}
 
       <ActionSheet
         visible={reportSheet !== null}

@@ -34,10 +34,6 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import 'react-native-reanimated';
 
-export const unstable_settings = {
-  anchor: '(app)',
-};
-
 type NotificationRouteData = {
   type?: unknown;
   actorUserId?: unknown;
