@@ -15,11 +15,18 @@ import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { TYPOGRAPHY } from '@/constants/typography';
 import { useComments } from '@/context/comment-context';
 import { useLike } from '@/context/like-context';
+import {
+  repairCollectionArtwork,
+} from '@/lib/supabase/artwork-repair';
 import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
 import { formatRelativeTime } from '@/utils/format-relative-time';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import {
+  useRef,
+  useState,
+} from 'react';
 import {
   Image,
   Pressable,
@@ -27,6 +34,44 @@ import {
   Text,
   View,
 } from 'react-native';
+
+function getRenderableArtworkUrl(
+  imageUrl?: string
+): string | null {
+  const trimmedImageUrl =
+    imageUrl?.trim() ?? '';
+
+  if (!trimmedImageUrl) {
+    return null;
+  }
+
+  if (
+    !/^https:\/\/covers\.openlibrary\.org\//i.test(
+      trimmedImageUrl
+    )
+  ) {
+    return trimmedImageUrl;
+  }
+
+  if (
+    /[?&]default=/i.test(
+      trimmedImageUrl
+    )
+  ) {
+    return trimmedImageUrl.replace(
+      /([?&])default=[^&]*/i,
+      '$1default=false'
+    );
+  }
+
+  return (
+    trimmedImageUrl +
+    (trimmedImageUrl.includes('?')
+      ? '&'
+      : '?') +
+    'default=false'
+  );
+}
 
 type Top3CardProps = {
   post: Post;
@@ -84,7 +129,24 @@ export default function Top3Card({
     isLoading: isLoadingComments,
   } = useComments();
 
+  const [
+    artworkOverrides,
+    setArtworkOverrides,
+  ] = useState<Record<string, string>>(
+    {}
+  );
 
+  const [
+    failedArtworkKeys,
+    setFailedArtworkKeys,
+  ] = useState<Set<string>>(
+    () => new Set()
+  );
+
+  const attemptedArtworkRepairKeysRef =
+    useRef<Set<string>>(
+      new Set()
+    );
 
   const category = TOP3_CATEGORIES.find(
     (item) =>
@@ -171,7 +233,88 @@ export default function Top3Card({
     });
   }
 
+  function handleArtworkLoadError(
+    itemId: string,
+    failedImageUrl: string
+  ) {
+    const failureKey =
+      `${itemId}:${failedImageUrl}`;
 
+    setFailedArtworkKeys(
+      (currentKeys) => {
+        if (
+          currentKeys.has(
+            failureKey
+          )
+        ) {
+          return currentKeys;
+        }
+
+        const nextKeys =
+          new Set(currentKeys);
+
+        nextKeys.add(
+          failureKey
+        );
+
+        return nextKeys;
+      }
+    );
+
+    if (
+      post.collection.category !==
+      'books'
+    ) {
+      return;
+    }
+
+    const repairKey =
+      `${post.collection.id}:${itemId}`;
+
+    if (
+      attemptedArtworkRepairKeysRef.current.has(
+        repairKey
+      )
+    ) {
+      return;
+    }
+
+    attemptedArtworkRepairKeysRef.current.add(
+      repairKey
+    );
+
+    void repairCollectionArtwork(
+      post.collection.id,
+      itemId,
+      {
+        replaceExisting: true,
+      }
+    )
+      .then((result) => {
+        if (
+          !result.repaired ||
+          !result.imageUrl
+        ) {
+          return;
+        }
+
+        setArtworkOverrides(
+          (currentOverrides) => ({
+            ...currentOverrides,
+            [itemId]:
+              result.imageUrl as string,
+          })
+        );
+      })
+      .catch((error) => {
+        if (__DEV__) {
+          console.log(
+            'Failed to repair broken book artwork:',
+            error
+          );
+        }
+      });
+  }
 
   return (
     <View style={styles.card}>
@@ -385,6 +528,31 @@ export default function Top3Card({
                 isSearchHighlighted ||
                 isTasteMatch;
 
+              const artworkUrl =
+                item
+                  ? artworkOverrides[
+                      item.id
+                    ] ??
+                    item.imageUrl
+                  : undefined;
+
+              const renderableArtworkUrl =
+                getRenderableArtworkUrl(
+                  artworkUrl
+                );
+
+              const artworkFailureKey =
+                item &&
+                renderableArtworkUrl
+                  ? `${item.id}:${renderableArtworkUrl}`
+                  : null;
+
+              const artworkHasFailed =
+                artworkFailureKey
+                  ? failedArtworkKeys.has(
+                      artworkFailureKey
+                    )
+                  : false;
 
               return (
                 <View
@@ -419,10 +587,13 @@ export default function Top3Card({
                         height: artworkRule.height,
                       },
                     ]}>
-                    {item?.imageUrl ? (
+                    {item &&
+                    renderableArtworkUrl &&
+                    !artworkHasFailed ? (
                       <Image
                         source={{
-                          uri: item.imageUrl,
+                          uri:
+                            renderableArtworkUrl,
                         }}
                         style={[
                           styles.itemImage,
@@ -432,6 +603,12 @@ export default function Top3Card({
                           },
                         ]}
                         resizeMode="cover"
+                        onError={() => {
+                          handleArtworkLoadError(
+                            item.id,
+                            renderableArtworkUrl
+                          );
+                        }}
                       />
                     ) : (
                       <View

@@ -1,3 +1,4 @@
+import { repairCollectionArtwork } from '@/lib/supabase/artwork-repair';
 import {
   getPublishedPostsByUser as getPublishedPostsByUserFromSupabase,
   getPublishedPosts as getPublishedPostsFromSupabase,
@@ -11,6 +12,28 @@ const hydratedItemCache = new Map<
   string,
   Top3Item | null
 >();
+
+const inFlightHydratedItemCache = new Map<
+  string,
+  Promise<Top3Item | null>
+>();
+
+const repairedBookArtworkCache = new Map<
+  string,
+  string | null
+>();
+
+const inFlightBookArtworkRepairCache = new Map<
+  string,
+  Promise<string | null>
+>();
+
+
+type PublishedPostsOptions = {
+  hydrateMissingArtwork?: boolean;
+};
+
+
 
 function normalizeTitle(title: string) {
   return title.trim().toLowerCase();
@@ -45,6 +68,7 @@ async function hydrateItem(
   )}`;
 
   if (hydratedItemCache.has(cacheKey)) {
+
     const cachedItem =
       hydratedItemCache.get(cacheKey);
 
@@ -57,47 +81,228 @@ async function hydrateItem(
       : item;
   }
 
-  try {
-    const results =
-      await searchByCategory(
-        category,
-        item.title
-      );
-
-    const matchingItem = findBestMatch(
-      item,
-      results
+  let lookupPromise =
+    inFlightHydratedItemCache.get(
+      cacheKey
     );
 
-    hydratedItemCache.set(
+  if (!lookupPromise) {
+    lookupPromise = (async () => {
+      try {
+        const results =
+          await searchByCategory(
+            category,
+            item.title
+          );
+
+        const matchingItem =
+          findBestMatch(
+            item,
+            results
+          );
+
+
+        hydratedItemCache.set(
+          cacheKey,
+          matchingItem
+        );
+
+
+        return matchingItem;
+      } catch (error) {
+
+        if (__DEV__) {
+          console.log(
+            'Artwork lookup failed:',
+            {
+              title: item.title,
+              category,
+              itemId: item.id,
+              error,
+            }
+          );
+        }
+
+        hydratedItemCache.set(
+          cacheKey,
+          null
+        );
+
+        return null;
+      } finally {
+        inFlightHydratedItemCache.delete(
+          cacheKey
+        );
+      }
+    })();
+
+    inFlightHydratedItemCache.set(
       cacheKey,
-      matchingItem
+      lookupPromise
     );
+  }
 
-    if (!matchingItem) {
-      return item;
-    }
+  const matchingItem =
+    await lookupPromise;
 
-    return {
-      ...item,
-      subtitle:
-        matchingItem.subtitle ?? item.subtitle,
-      imageUrl: matchingItem.imageUrl,
-      rating: matchingItem.rating,
-    };
-  } catch (error) {
-    if (__DEV__) {
-      console.log(
-        `Failed to load artwork for ${item.title}:`,
-        error
-      );
-    }
-
-    hydratedItemCache.set(cacheKey, null);
-
+  if (!matchingItem) {
     return item;
   }
+
+  return {
+    ...item,
+    ...matchingItem,
+    id: item.id,
+    subtitle:
+      matchingItem.subtitle ?? item.subtitle,
+    imageUrl:
+      matchingItem.imageUrl ?? item.imageUrl,
+    rating:
+      matchingItem.rating ?? item.rating,
+  };
 }
+
+async function repairBookArtworkItem(
+  collectionId: string,
+  item: Top3Item
+): Promise<Top3Item> {
+  if (item.imageUrl) {
+    return item;
+  }
+
+  const cacheKey =
+    `${collectionId}:${item.id}`;
+
+  if (
+    repairedBookArtworkCache.has(
+      cacheKey
+    )
+  ) {
+
+    const cachedImageUrl =
+      repairedBookArtworkCache.get(
+        cacheKey
+      );
+
+    return cachedImageUrl
+      ? {
+          ...item,
+          imageUrl:
+            cachedImageUrl,
+        }
+      : item;
+  }
+
+  let repairPromise =
+    inFlightBookArtworkRepairCache.get(
+      cacheKey
+    );
+
+  if (!repairPromise) {
+    repairPromise = (async () => {
+      try {
+        const result =
+          await repairCollectionArtwork(
+            collectionId,
+            item.id
+          );
+
+        const imageUrl =
+          result.imageUrl?.trim() ||
+          null;
+
+
+        repairedBookArtworkCache.set(
+          cacheKey,
+          imageUrl
+        );
+
+
+        return imageUrl;
+      } catch (error) {
+
+        if (__DEV__) {
+          console.log(
+            'Book artwork repair failed:',
+            {
+              collectionId,
+              itemId: item.id,
+              title: item.title,
+              error,
+            }
+          );
+        }
+
+        repairedBookArtworkCache.set(
+          cacheKey,
+          null
+        );
+
+        return null;
+      } finally {
+        inFlightBookArtworkRepairCache.delete(
+          cacheKey
+        );
+      }
+    })();
+
+    inFlightBookArtworkRepairCache.set(
+      cacheKey,
+      repairPromise
+    );
+  }
+
+  const imageUrl =
+    await repairPromise;
+
+  return imageUrl
+    ? {
+        ...item,
+        imageUrl,
+      }
+    : item;
+}
+
+async function hydrateFeedPostArtwork(
+  post: Post
+): Promise<Post> {
+  const isBookCollection =
+    post.collection.category ===
+    'books';
+
+  const hydratedItems =
+    await Promise.all(
+      post.collection.items.map(
+        (item) => {
+          if (!item) {
+            return Promise.resolve(
+              null
+            );
+          }
+
+          return isBookCollection
+            ? repairBookArtworkItem(
+                post.collection.id,
+                item
+              )
+            : hydrateItem(
+                item,
+                post.collection.category
+              );
+        }
+      )
+    );
+
+  return {
+    ...post,
+    collection: {
+      ...post.collection,
+      items:
+        hydratedItems as Top3List['items'],
+    },
+  };
+}
+
 
 async function hydratePost(
   post: Post
@@ -133,15 +338,39 @@ function sortPostsByPublishedDate(
   );
 }
 
-export async function getPublishedPosts(): Promise<
-  Post[]
-> {
+export async function hydrateMissingArtworkInPosts(
+  posts: Post[]
+): Promise<Post[]> {
+  return Promise.all(
+    posts.map((post) =>
+      hydrateFeedPostArtwork(
+        post
+      )
+    )
+  );
+}
+
+export async function getPublishedPosts(
+  options: PublishedPostsOptions = {}
+): Promise<Post[]> {
+  const {
+    hydrateMissingArtwork = true,
+  } = options;
+
   const publishedPosts =
     await getPublishedPostsFromSupabase();
 
+  if (!hydrateMissingArtwork) {
+    return sortPostsByPublishedDate(
+      publishedPosts
+    );
+  }
+
   const hydratedPosts = await Promise.all(
     publishedPosts.map((post) =>
-      hydratePost(post)
+      hydratePost(
+        post
+      )
     )
   );
 
@@ -166,7 +395,9 @@ export async function getPublishedPostsByUser(
 
   const hydratedPosts = await Promise.all(
     publishedPosts.map((post) =>
-      hydratePost(post)
+      hydratePost(
+        post
+      )
     )
   );
 

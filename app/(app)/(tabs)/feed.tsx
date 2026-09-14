@@ -21,7 +21,10 @@ import {
   createUserReport,
   ReportReason,
 } from '@/lib/supabase/reports';
-import { getPublishedPosts } from '@/services/post-service';
+import {
+  getPublishedPosts,
+  hydrateMissingArtworkInPosts,
+} from '@/services/post-service';
 import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
 import { buildPersonalizedFeed } from '@/utils/build-personalized-feed';
@@ -29,6 +32,7 @@ import { router } from 'expo-router';
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import {
@@ -43,6 +47,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 function normalizeTopic(topic?: string) {
   return topic?.trim().toLowerCase() || 'general';
 }
+
 
 function formatSuggestionReason(
   suggestionReason?: string
@@ -150,6 +155,11 @@ export default function FeedScreen() {
     posts,
   } = useTop3();
 
+  const postsRef =
+    useRef(posts);
+
+  postsRef.current = posts;
+
   const { loadCommentCounts } =
     useComments();
 
@@ -166,6 +176,10 @@ export default function FeedScreen() {
   const [isRefreshing, setIsRefreshing] =
     useState(false);
 
+  const artworkHydrationRunRef =
+    useRef(0);
+
+
   const [
     selectedCommentsPost,
     setSelectedCommentsPost,
@@ -175,6 +189,28 @@ export default function FeedScreen() {
     reportSheet,
     setReportSheet,
   ] = useState<FeedReportSheet>(null);
+
+  function hydrateFeedArtworkInBackground(
+    sourcePosts: Post[]
+  ) {
+    const hydrationRun =
+      ++artworkHydrationRunRef.current;
+
+    void hydrateMissingArtworkInPosts(
+      sourcePosts
+    ).then((hydratedPosts) => {
+      if (
+        hydrationRun !==
+        artworkHydrationRunRef.current
+      ) {
+        return;
+      }
+
+      setFeedPosts(
+        hydratedPosts
+      );
+    });
+  }
 
   useEffect(() => {
     if (isAuthLoading) {
@@ -193,9 +229,12 @@ export default function FeedScreen() {
     async function loadFeedPosts() {
       setIsLoadingFeed(true);
 
+
       try {
         const nextPosts =
-          await getPublishedPosts();
+          await getPublishedPosts({
+          hydrateMissingArtwork: false,
+        });
 
         const authorIds = Array.from(
           new Set(
@@ -225,6 +264,11 @@ export default function FeedScreen() {
         if (isMounted) {
           setFeedPosts(nextPosts);
           setFeedAuthors(nextFeedAuthors);
+
+          hydrateFeedArtworkInBackground(
+            nextPosts
+          );
+
         }
       } catch (error) {
         if (__DEV__) {
@@ -235,7 +279,9 @@ export default function FeedScreen() {
         }
 
         if (isMounted) {
-          setFeedPosts(posts);
+          setFeedPosts(
+            postsRef.current
+          );
           setFeedAuthors({});
         }
       } finally {
@@ -253,7 +299,6 @@ export default function FeedScreen() {
   }, [
     isAuthenticated,
     isAuthLoading,
-    posts,
     profile.id,
   ]);
 
@@ -272,13 +317,13 @@ export default function FeedScreen() {
   );
 
   const personalizedFeed = useMemo(
-  () =>
-    buildPersonalizedFeed({
-      posts: visibleFeedPosts,
-      profilesByUserId: feedAuthors,
-      currentUserId: profile.id,
-      followedUserIds,
-    }),
+    () =>
+      buildPersonalizedFeed({
+        posts: visibleFeedPosts,
+        profilesByUserId: feedAuthors,
+        currentUserId: profile.id,
+        followedUserIds,
+      }),
     [
       visibleFeedPosts,
       feedAuthors,
@@ -1045,7 +1090,9 @@ export default function FeedScreen() {
 
     try {
       const nextPosts =
-        await getPublishedPosts();
+        await getPublishedPosts({
+          hydrateMissingArtwork: false,
+        });
 
       const authorIds = Array.from(
         new Set(
@@ -1074,6 +1121,11 @@ export default function FeedScreen() {
 
       setFeedPosts(nextPosts);
       setFeedAuthors(nextFeedAuthors);
+
+      hydrateFeedArtworkInBackground(
+        nextPosts
+      );
+
     } catch (error) {
       if (__DEV__) {
         console.log(
