@@ -10,7 +10,11 @@ import { useBlock } from '@/context/block-context';
 import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
-import { getProfilesByIds } from '@/lib/supabase/profiles';
+import { getFollowSnapshot } from '@/lib/supabase/follows';
+import {
+  getProfileById,
+  getProfilesByIds,
+} from '@/lib/supabase/profiles';
 import { getPublishedPosts } from '@/services/post-service';
 import { getTasteRecommendationForUser } from '@/services/taste-recommendation-service';
 import { Post } from '@/types/post';
@@ -58,6 +62,7 @@ function buildProfileRecord(
 export default function SocialScreen() {
   const params = useLocalSearchParams<{
     tab?: string | string[];
+    userId?: string | string[];
   }>();
 
   const { profile } = useProfile();
@@ -73,6 +78,18 @@ export default function SocialScreen() {
     initialTabParam === 'followers'
       ? 'followers'
       : 'following';
+
+  const requestedUserIdParam = Array.isArray(
+    params.userId
+  )
+    ? params.userId[0]
+    : params.userId;
+
+  const socialOwnerId =
+    requestedUserIdParam?.trim() || profile.id;
+
+  const isOwnSocialProfile =
+    !socialOwnerId || socialOwnerId === profile.id;
 
   const { blockedUserIds } = useBlock();
 
@@ -131,6 +148,46 @@ export default function SocialScreen() {
     setProfileLoadAttempt,
   ] = useState(0);
 
+  const [
+    socialOwnerProfile,
+    setSocialOwnerProfile,
+  ] = useState<UserProfile | null>(null);
+
+  const [
+    isLoadingSocialOwner,
+    setIsLoadingSocialOwner,
+  ] = useState(false);
+
+  const [
+    hasSocialOwnerLoadError,
+    setHasSocialOwnerLoadError,
+  ] = useState(false);
+
+  const [
+    viewedFollowedUserIds,
+    setViewedFollowedUserIds,
+  ] = useState<string[]>([]);
+
+  const [
+    viewedFollowerUserIds,
+    setViewedFollowerUserIds,
+  ] = useState<string[]>([]);
+
+  const [
+    isLoadingViewedConnections,
+    setIsLoadingViewedConnections,
+  ] = useState(false);
+
+  const [
+    hasViewedConnectionsLoadError,
+    setHasViewedConnectionsLoadError,
+  ] = useState(false);
+
+  const [
+    socialLoadAttempt,
+    setSocialLoadAttempt,
+  ] = useState(0);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -172,11 +229,196 @@ export default function SocialScreen() {
   useEffect(() => {
     let isMounted = true;
 
+    async function loadSocialOwner() {
+      if (isOwnSocialProfile) {
+        setSocialOwnerProfile(null);
+        setHasSocialOwnerLoadError(false);
+        setIsLoadingSocialOwner(false);
+        return;
+      }
+
+      if (!socialOwnerId) {
+        setSocialOwnerProfile(null);
+        setHasSocialOwnerLoadError(true);
+        setIsLoadingSocialOwner(false);
+        return;
+      }
+
+      setHasSocialOwnerLoadError(false);
+      setIsLoadingSocialOwner(true);
+
+      try {
+        const ownerProfile =
+          await getProfileById(socialOwnerId);
+
+        if (!ownerProfile) {
+          throw new Error(
+            'The requested profile could not be found.'
+          );
+        }
+
+        if (isMounted) {
+          setSocialOwnerProfile(ownerProfile);
+        }
+      } catch (error) {
+        if (__DEV__) {
+          console.log(
+            'Failed to load social profile owner:',
+            error
+          );
+        }
+
+        if (isMounted) {
+          setSocialOwnerProfile(null);
+          setHasSocialOwnerLoadError(true);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingSocialOwner(false);
+        }
+      }
+    }
+
+    void loadSocialOwner();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    isOwnSocialProfile,
+    socialLoadAttempt,
+    socialOwnerId,
+  ]);
+
+  const resolvedSocialOwnerProfile =
+    isOwnSocialProfile
+      ? profile
+      : socialOwnerProfile;
+
+  const isApprovedFollowerOfOwner =
+    !isOwnSocialProfile &&
+    Boolean(socialOwnerId) &&
+    followedUserIds.includes(socialOwnerId);
+
+  const canViewSocialConnections =
+    isOwnSocialProfile ||
+    resolvedSocialOwnerProfile?.visibility ===
+      'public' ||
+    isApprovedFollowerOfOwner;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadViewedConnections() {
+      if (isOwnSocialProfile) {
+        setViewedFollowedUserIds([]);
+        setViewedFollowerUserIds([]);
+        setHasViewedConnectionsLoadError(false);
+        setIsLoadingViewedConnections(false);
+        return;
+      }
+
+      if (
+        !socialOwnerId ||
+        !resolvedSocialOwnerProfile
+      ) {
+        setViewedFollowedUserIds([]);
+        setViewedFollowerUserIds([]);
+        setHasViewedConnectionsLoadError(false);
+        setIsLoadingViewedConnections(false);
+        return;
+      }
+
+      if (
+        resolvedSocialOwnerProfile.visibility ===
+          'private' &&
+        isLoading
+      ) {
+        setIsLoadingViewedConnections(true);
+        return;
+      }
+
+      if (!canViewSocialConnections) {
+        setViewedFollowedUserIds([]);
+        setViewedFollowerUserIds([]);
+        setHasViewedConnectionsLoadError(false);
+        setIsLoadingViewedConnections(false);
+        return;
+      }
+
+      setHasViewedConnectionsLoadError(false);
+      setIsLoadingViewedConnections(true);
+
+      try {
+        const snapshot =
+          await getFollowSnapshot(socialOwnerId);
+
+        if (isMounted) {
+          setViewedFollowedUserIds(
+            snapshot.followedUserIds
+          );
+          setViewedFollowerUserIds(
+            snapshot.followerUserIds
+          );
+        }
+      } catch (error) {
+        if (__DEV__) {
+          console.log(
+            'Failed to load viewed profile connections:',
+            error
+          );
+        }
+
+        if (isMounted) {
+          setViewedFollowedUserIds([]);
+          setViewedFollowerUserIds([]);
+          setHasViewedConnectionsLoadError(true);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingViewedConnections(false);
+        }
+      }
+    }
+
+    void loadViewedConnections();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    canViewSocialConnections,
+    isLoading,
+    isOwnSocialProfile,
+    resolvedSocialOwnerProfile,
+    socialLoadAttempt,
+    socialOwnerId,
+  ]);
+
+  const displayedFollowedUserIds =
+    isOwnSocialProfile
+      ? followedUserIds
+      : viewedFollowedUserIds;
+
+  const displayedFollowerUserIds =
+    isOwnSocialProfile
+      ? followerUserIds
+      : viewedFollowerUserIds;
+
+  useEffect(() => {
+    socialProfilesByIdRef.current = {};
+    setSocialProfilesById({});
+    setSearchQuery('');
+  }, [socialOwnerId]);
+
+  useEffect(() => {
+    let isMounted = true;
+
     async function loadSocialProfiles() {
       const socialUserIds = Array.from(
         new Set([
-          ...followedUserIds,
-          ...followerUserIds,
+          ...displayedFollowedUserIds,
+          ...displayedFollowerUserIds,
         ])
       );
 
@@ -276,15 +518,15 @@ export default function SocialScreen() {
       isMounted = false;
     };
   }, [
-    followedUserIds,
-    followerUserIds,
+    displayedFollowedUserIds,
+    displayedFollowerUserIds,
     profileLoadAttempt,
   ]);
 
   const followingUsers = useMemo<
     UserProfile[]
   >(() => {
-    return followedUserIds
+    return displayedFollowedUserIds
       .map(
         (userId) =>
           socialProfilesById[userId]
@@ -300,7 +542,7 @@ export default function SocialScreen() {
         )
       );
   }, [
-    followedUserIds,
+    displayedFollowedUserIds,
     blockedUserIds,
     socialProfilesById,
   ]);
@@ -308,7 +550,7 @@ export default function SocialScreen() {
   const followerUsers = useMemo<
     UserProfile[]
   >(() => {
-    return followerUserIds
+    return displayedFollowerUserIds
       .map(
         (userId) =>
           socialProfilesById[userId]
@@ -324,7 +566,7 @@ export default function SocialScreen() {
         )
       );
   }, [
-    followerUserIds,
+    displayedFollowerUserIds,
     blockedUserIds,
     socialProfilesById,
   ]);
@@ -339,6 +581,29 @@ export default function SocialScreen() {
     activeTab === 'following'
       ? followingUsers
       : followerUsers;
+
+  const socialOwnerDisplayName =
+    isOwnSocialProfile
+      ? profile.displayName || 'You'
+      : resolvedSocialOwnerProfile
+          ?.displayName || 'This user';
+
+  const isLoadingConnections =
+    isLoading ||
+    isLoadingSocialOwner ||
+    isLoadingViewedConnections;
+
+  const hasConnectionsLoadError =
+    hasLoadError ||
+    (!isOwnSocialProfile &&
+      (hasSocialOwnerLoadError ||
+        hasViewedConnectionsLoadError));
+
+  const isConnectionsRestricted =
+    !isOwnSocialProfile &&
+    Boolean(resolvedSocialOwnerProfile) &&
+    !canViewSocialConnections &&
+    !isLoadingConnections;
 
   const filteredUsers = useMemo(() => {
     const normalizedQuery =
@@ -458,6 +723,12 @@ export default function SocialScreen() {
       return 'No matching people';
     }
 
+    if (!isOwnSocialProfile) {
+      return activeTab === 'following'
+        ? `${socialOwnerDisplayName} isn’t following anyone yet`
+        : `${socialOwnerDisplayName} has no followers yet`;
+    }
+
     if (activeTab === 'following') {
       return 'You’re not following anyone yet';
     }
@@ -470,9 +741,17 @@ export default function SocialScreen() {
       searchQuery.trim();
 
     if (trimmedQuery) {
+      if (!isOwnSocialProfile) {
+        return 'Try another name or username.';
+      }
+
       return activeTab === 'following'
         ? `No one you follow matches “${trimmedQuery}”.`
         : `None of your followers match “${trimmedQuery}”.`;
+    }
+
+    if (!isOwnSocialProfile) {
+      return 'There’s no one to show here yet.';
     }
 
     if (activeTab === 'following') {
@@ -489,11 +768,15 @@ export default function SocialScreen() {
   }
 
   function getSearchPlaceholder() {
-    if (activeTab === 'following') {
-      return 'Search people you follow';
+    if (isOwnSocialProfile) {
+      return activeTab === 'following'
+        ? 'Search people you follow'
+        : 'Search people who follow you';
     }
 
-    return 'Search people who follow you';
+    return activeTab === 'following'
+      ? `Search people ${socialOwnerDisplayName} follows`
+      : `Search ${socialOwnerDisplayName} followers`;
   }
 
   return (
@@ -536,8 +819,10 @@ export default function SocialScreen() {
             : 'on-drag'
         }
         onScrollBeginDrag={Keyboard.dismiss}>
-        {!isLoading &&
+        {!isLoadingConnections &&
+        !isLoadingPosts &&
         !isLoadingProfiles &&
+        canViewSocialConnections &&
         activeUsers.length > 0 ? (
           <View style={styles.searchWrapper}>
             <SearchInput
@@ -550,7 +835,7 @@ export default function SocialScreen() {
           </View>
         ) : null}
 
-        {isLoading ||
+        {isLoadingConnections ||
         isLoadingPosts ||
         isLoadingProfiles ? (
           <View style={styles.stateContainer}>
@@ -558,7 +843,7 @@ export default function SocialScreen() {
               Loading…
             </Text>
           </View>
-        ) : hasLoadError ||
+        ) : hasConnectionsLoadError ||
         hasProfileLoadError ? (
           <View style={styles.emptyState}>
             <Ionicons
@@ -568,7 +853,7 @@ export default function SocialScreen() {
             />
 
             <Text style={styles.emptyTitle}>
-              Couldn’t load your connections
+              Couldn’t load connections
             </Text>
 
             <Text style={styles.emptyText}>
@@ -580,12 +865,34 @@ export default function SocialScreen() {
               onPress={() => {
                 retryFollowState();
 
+                setSocialLoadAttempt(
+                  (current) => current + 1
+                );
+
                 setProfileLoadAttempt(
                   (current) => current + 1
                 );
               }}
               style={styles.retryButton}
             />
+          </View>
+        ) : isConnectionsRestricted ? (
+          <View style={styles.emptyState}>
+            <Ionicons
+              name="lock-closed-outline"
+              size={34}
+              color="#999999"
+            />
+
+            <Text style={styles.emptyTitle}>
+              Connections are private
+            </Text>
+
+            <Text style={styles.emptyText}>
+              Follow {socialOwnerDisplayName} and wait
+              for their approval to view their followers
+              and following.
+            </Text>
           </View>
         ) : filteredUsers.length === 0 ? (
           <View style={styles.emptyState}>
@@ -680,7 +987,8 @@ export default function SocialScreen() {
                     </View>
                   </Pressable>
 
-                  {activeTab === 'following' ? (
+                  {isOwnSocialProfile &&
+                  activeTab === 'following' ? (
                     <Pressable
                       style={({ pressed }) => [
                         styles.followingButton,
@@ -698,7 +1006,8 @@ export default function SocialScreen() {
                         Following
                       </Text>
                     </Pressable>
-                  ) : (
+                  ) : user.id === profile.id ? null :
+                  isOwnSocialProfile ? (
                     <View style={styles.followerActions}>
                       <Pressable
                         style={({ pressed }) => [
@@ -754,6 +1063,42 @@ export default function SocialScreen() {
                         />
                       </Pressable>
                     </View>
+                  ) : (
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.followerActionButton,
+                        !usesSecondaryActionStyle &&
+                          styles.followButton,
+                        pressed && styles.pressed,
+                      ]}
+                      onPress={() =>
+                        handleFollowToggle(user)
+                      }
+                      accessibilityRole="button"
+                      accessibilityState={{
+                        selected:
+                          userIsFollowed ||
+                          userHasRequested,
+                      }}
+                      accessibilityLabel={
+                        userIsFollowed
+                          ? `Unfollow ${user.displayName}`
+                          : userHasRequested
+                            ? `Cancel follow request for ${user.displayName}`
+                            : user.visibility === 'private'
+                              ? `Request to follow ${user.displayName}`
+                              : `Follow ${user.displayName}`
+                      }>
+                      <Text
+                        style={[
+                          styles.followerActionText,
+                          !usesSecondaryActionStyle &&
+                            styles.followButtonText,
+                        ]}
+                        numberOfLines={1}>
+                        {followerActionLabel}
+                      </Text>
+                    </Pressable>
                   )}
                 </View>
               );

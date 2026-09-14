@@ -255,6 +255,9 @@ export default function ProfileScreen({
     isCurrentUser ||
     userIsFollowed;
 
+  const canViewSocialConnections =
+    canViewPosts;
+
   const currentUserFollowingCount =
     getFollowingCount();
 
@@ -795,19 +798,35 @@ export default function ProfileScreen({
   }
 
   function openFollowing() {
+    if (
+      !viewedUserId ||
+      !canViewSocialConnections
+    ) {
+      return;
+    }
+
     router.push({
       pathname: '/social',
       params: {
         tab: 'following',
+        userId: viewedUserId,
       },
     });
   }
 
   function openFollowers() {
+    if (
+      !viewedUserId ||
+      !canViewSocialConnections
+    ) {
+      return;
+    }
+
     router.push({
       pathname: '/social',
       params: {
         tab: 'followers',
+        userId: viewedUserId,
       },
     });
   }
@@ -1361,12 +1380,12 @@ export default function ProfileScreen({
               : undefined
           }
           onFollowersPress={
-            isCurrentUser
+            canViewSocialConnections
               ? openFollowers
               : undefined
           }
           onFollowingPress={
-            isCurrentUser
+            canViewSocialConnections
               ? openFollowing
               : undefined
           }
