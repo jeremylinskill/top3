@@ -331,7 +331,7 @@ export const BOOK_SUGGESTIONS: Record<
       search: 'Good Strategy Bad Strategy Richard Rumelt',
     },
   ],
-  'childrens': [
+  "children's": [
     {
       title: 'Charlotte\'s Web',
       search: 'Charlotte\'s Web E B White',
@@ -815,6 +815,168 @@ export const BOOK_SUGGESTIONS: Record<
     {
       title: 'The Dutch House',
       search: 'The Dutch House Ann Patchett',
+    },
+  ],
+  'graphic novel': [
+    {
+      title: 'Maus',
+      search: 'Maus Art Spiegelman',
+    },
+    {
+      title: 'Watchmen',
+      search: 'Watchmen Alan Moore Dave Gibbons',
+    },
+    {
+      title: 'Persepolis',
+      search: 'Persepolis Marjane Satrapi',
+    },
+    {
+      title: 'Fun Home',
+      search: 'Fun Home Alison Bechdel',
+    },
+    {
+      title: 'Blankets',
+      search: 'Blankets Craig Thompson',
+    },
+    {
+      title: 'V for Vendetta',
+      search: 'V for Vendetta Alan Moore David Lloyd',
+    },
+    {
+      title: 'Batman: The Dark Knight Returns',
+      search: 'Batman The Dark Knight Returns Frank Miller',
+    },
+    {
+      title: 'Batman: Year One',
+      search: 'Batman Year One Frank Miller David Mazzucchelli',
+    },
+    {
+      title: 'The Sandman: Preludes & Nocturnes',
+      search: 'The Sandman Preludes and Nocturnes Neil Gaiman',
+    },
+    {
+      title: 'Saga, Volume One',
+      search: 'Saga Volume One Brian K Vaughan Fiona Staples',
+    },
+    {
+      title: 'Daytripper',
+      search: 'Daytripper Fabio Moon Gabriel Ba',
+    },
+    {
+      title: 'Ghost World',
+      search: 'Ghost World Daniel Clowes',
+    },
+    {
+      title: 'Jimmy Corrigan: The Smartest Kid on Earth',
+      search: 'Jimmy Corrigan The Smartest Kid on Earth Chris Ware',
+    },
+    {
+      title: 'My Favorite Thing Is Monsters',
+      search: 'My Favorite Thing Is Monsters Emil Ferris',
+    },
+    {
+      title: 'March: Book One',
+      search: 'March Book One John Lewis Andrew Aydin Nate Powell',
+    },
+    {
+      title: 'They Called Us Enemy',
+      search: 'They Called Us Enemy George Takei',
+    },
+    {
+      title: 'Ducks: Two Years in the Oil Sands',
+      search: 'Ducks Two Years in the Oil Sands Kate Beaton',
+    },
+    {
+      title: 'The Arrival',
+      search: 'The Arrival Shaun Tan',
+    },
+    {
+      title: 'American Born Chinese',
+      search: 'American Born Chinese Gene Luen Yang',
+    },
+    {
+      title: 'Nimona',
+      search: 'Nimona ND Stevenson',
+    },
+    {
+      title: 'Heartstopper: Volume One',
+      search: 'Heartstopper Volume One Alice Oseman',
+    },
+    {
+      title: 'Smile',
+      search: 'Smile Raina Telgemeier',
+    },
+    {
+      title: 'This One Summer',
+      search: 'This One Summer Mariko Tamaki Jillian Tamaki',
+    },
+    {
+      title: 'The Prince and the Dressmaker',
+      search: 'The Prince and the Dressmaker Jen Wang',
+    },
+    {
+      title: 'On a Sunbeam',
+      search: 'On a Sunbeam Tillie Walden',
+    },
+    {
+      title: 'Spinning',
+      search: 'Spinning Tillie Walden',
+    },
+    {
+      title: 'The Best We Could Do',
+      search: 'The Best We Could Do Thi Bui',
+    },
+    {
+      title: 'The Magic Fish',
+      search: 'The Magic Fish Trung Le Nguyen',
+    },
+    {
+      title: 'Through the Woods',
+      search: 'Through the Woods Emily Carroll',
+    },
+    {
+      title: 'Black Hole',
+      search: 'Black Hole Charles Burns',
+    },
+    {
+      title: 'From Hell',
+      search: 'From Hell Alan Moore Eddie Campbell',
+    },
+    {
+      title: 'Asterios Polyp',
+      search: 'Asterios Polyp David Mazzucchelli',
+    },
+    {
+      title: 'The Sculptor',
+      search: 'The Sculptor Scott McCloud',
+    },
+    {
+      title: 'The Incal',
+      search: 'The Incal Alejandro Jodorowsky Moebius',
+    },
+    {
+      title: 'Akira, Vol. 1',
+      search: 'Akira Vol 1 Katsuhiro Otomo',
+    },
+    {
+      title: 'Bone: Out from Boneville',
+      search: 'Bone Out from Boneville Jeff Smith',
+    },
+    {
+      title: 'Scott Pilgrim\'s Precious Little Life',
+      search: 'Scott Pilgrim Precious Little Life Bryan Lee O Malley',
+    },
+    {
+      title: 'Y: The Last Man, Vol. 1: Unmanned',
+      search: 'Y The Last Man Vol 1 Unmanned Brian K Vaughan Pia Guerra',
+    },
+    {
+      title: 'Paper Girls, Vol. 1',
+      search: 'Paper Girls Vol 1 Brian K Vaughan Cliff Chiang',
+    },
+    {
+      title: 'The Walking Dead, Vol. 1: Days Gone Bye',
+      search: 'The Walking Dead Vol 1 Days Gone Bye Robert Kirkman Tony Moore',
     },
   ],
   'history': [

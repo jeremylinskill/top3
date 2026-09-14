@@ -103,6 +103,7 @@ export const TOP3_CATEGORIES: Top3Category[] = [
       { id: 'childrens', name: "Children's", icon: '🧸', searchItemName: "children's book" },
       { id: 'fantasy', name: 'Fantasy', icon: '🐉', searchItemName: 'fantasy book' },
       { id: 'fiction', name: 'Fiction', icon: '📖', searchItemName: 'fiction book' },
+      { id: 'graphic-novel', name: 'Graphic Novel', icon: '💬', searchItemName: 'graphic novel' },
       { id: 'history', name: 'History', icon: '🏛️', searchItemName: 'history book' },
       { id: 'mystery', name: 'Mystery', icon: '🔎', searchItemName: 'mystery book' },
       { id: 'non-fiction', name: 'Non-Fiction', icon: '🧠', searchItemName: 'non-fiction book' },
