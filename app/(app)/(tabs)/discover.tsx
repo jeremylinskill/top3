@@ -449,7 +449,15 @@ export default function DiscoverScreen() {
           post.collection.category
         );
 
-        if (!categoryId) {
+        const postTopic =
+          normalizeValue(
+            post.collection.topic
+          ) || 'general';
+
+        if (
+          !categoryId ||
+          postTopic !== 'general'
+        ) {
           return;
         }
 
@@ -1032,6 +1040,13 @@ export default function DiscoverScreen() {
     >();
 
     visiblePosts.forEach((post) => {
+      const collectionTitleMatches =
+        normalizeValue(
+          post.collection.title
+        ).includes(
+          normalizedSearchQuery
+        );
+
       const itemMatches =
         post.collection.items.some((item) => {
           if (!item) {
@@ -1050,7 +1065,10 @@ export default function DiscoverScreen() {
           );
         });
 
-      if (!itemMatches) {
+      if (
+        !collectionTitleMatches &&
+        !itemMatches
+      ) {
         return;
       }
 
@@ -1136,16 +1154,22 @@ export default function DiscoverScreen() {
     ]
   );
 
+  const displayedMatchingCollections =
+    filteredCategories.length === 0 &&
+    filteredTopics.length === 0
+      ? matchingCollections
+      : [];
+
   const resultCount =
     filteredCategories.length +
     filteredTopics.length +
-    matchingCollections.length +
+    displayedMatchingCollections.length +
     filteredPeople.length;
 
   const resultCaption = formatResultCaption(
     filteredCategories.length,
     filteredTopics.length,
-    matchingCollections.length,
+    displayedMatchingCollections.length,
     filteredPeople.length
   );
 
@@ -1651,7 +1675,7 @@ export default function DiscoverScreen() {
                           )
                         }
                         accessibilityRole="button"
-                        accessibilityLabel={`Browse ${category.name} Top 3 lists`}>
+                        accessibilityLabel={`Browse All ${category.name} Top 3 lists`}>
                         <View
                           style={
                             styles.iconContainer
@@ -1670,7 +1694,7 @@ export default function DiscoverScreen() {
                             style={
                               styles.categoryName
                             }>
-                            {category.name}
+                            All {category.name}
                           </Text>
 
                           <View
@@ -1712,7 +1736,7 @@ export default function DiscoverScreen() {
             {filteredTopics.length > 0 ? (
               <View style={styles.resultSection}>
                 <Text style={styles.sectionTitle}>
-                  Topics
+                  Genres
                 </Text>
 
                 <View style={styles.topicList}>
@@ -1772,7 +1796,7 @@ export default function DiscoverScreen() {
               </View>
             ) : null}
 
-            {matchingCollections.length > 0 ? (
+            {displayedMatchingCollections.length > 0 ? (
               <View style={styles.resultSection}>
                 <Text style={styles.sectionTitle}>
                   Lists containing “
@@ -1781,7 +1805,7 @@ export default function DiscoverScreen() {
 
                 <View
                   style={styles.collectionList}>
-                  {matchingCollections.map(
+                  {displayedMatchingCollections.map(
                     (collection) => (
                       <Pressable
                         key={collection.id}
@@ -1928,7 +1952,7 @@ export default function DiscoverScreen() {
                     styles.searchPlaceholderText
                   }>
                   Try searching for another
-                  category, topic, ranked item, or
+                  category, genre, ranked item, or
                   person.
                 </Text>
               </View>
