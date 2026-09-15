@@ -24,6 +24,7 @@ const CATEGORY_ORDER: CategoryId[] = [
   'artists',
   'books',
   'movies',
+  'podcasts',
   'songs',
   'tv',
   'games',

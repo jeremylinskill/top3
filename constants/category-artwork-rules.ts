@@ -29,6 +29,11 @@ export const CATEGORY_ARTWORK_RULES = {
     height: 96,
   },
 
+  podcasts: {
+    width: 64,
+    height: 64,
+  },
+
   songs: {
     width: 64,
     height: 64,

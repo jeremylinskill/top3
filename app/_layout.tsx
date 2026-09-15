@@ -1,4 +1,4 @@
-import AppleMusicPreviewSheet from '@/components/apple-music-preview-sheet';
+import AudioPreviewSheet from '@/components/audio-preview-sheet';
 import BookPreviewSheet from '@/components/book-preview-sheet';
 import TrailerPreviewSheet from '@/components/trailer-preview-sheet';
 import { AudioPreviewProvider } from '@/context/audio-preview-context';
@@ -201,7 +201,7 @@ export default function RootLayout() {
                                     />
                                   </Stack>
 
-                                  <AppleMusicPreviewSheet />
+                                  <AudioPreviewSheet />
                                   <TrailerPreviewSheet />
                                   <BookPreviewSheet />
                                   <StatusBar style="auto" />

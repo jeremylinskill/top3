@@ -1,40 +1,56 @@
 import { useAudioPreview } from '@/context/audio-preview-context';
 import { Ionicons } from '@expo/vector-icons';
 import {
-  Image,
-  Linking,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
+    Image,
+    Linking,
+    Pressable,
+    StyleSheet,
+    Text,
+    View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 function isAppleMusicItemId(
   itemId: string
 ): boolean {
-  return (
-    itemId.startsWith('apple-music-album-') ||
-    itemId.startsWith('apple-music-artist-') ||
-    itemId.startsWith('apple-music-song-')
+  return itemId.startsWith(
+    'apple-music-'
+  );
+}
+
+function isApplePodcastItemId(
+  itemId: string
+): boolean {
+  return itemId.startsWith(
+    'apple-podcast-'
   );
 }
 
 function formatTime(seconds: number): string {
-  if (!Number.isFinite(seconds) || seconds <= 0) {
+  if (
+    !Number.isFinite(seconds) ||
+    seconds <= 0
+  ) {
     return '0:00';
   }
 
-  const wholeSeconds = Math.floor(seconds);
-  const minutes = Math.floor(wholeSeconds / 60);
-  const remainingSeconds = wholeSeconds % 60;
+  const wholeSeconds =
+    Math.floor(seconds);
+
+  const minutes =
+    Math.floor(
+      wholeSeconds / 60
+    );
+
+  const remainingSeconds =
+    wholeSeconds % 60;
 
   return `${minutes}:${remainingSeconds
     .toString()
     .padStart(2, '0')}`;
 }
 
-export default function AppleMusicPreviewSheet() {
+export default function AudioPreviewSheet() {
   const {
     activePreviewItem,
     isPreviewVisible,
@@ -44,45 +60,69 @@ export default function AppleMusicPreviewSheet() {
     stopPreview,
   } = useAudioPreview();
 
-  const insets = useSafeAreaInsets();
+  const insets =
+    useSafeAreaInsets();
+
+  const itemId =
+    activePreviewItem?.id ?? '';
+
+  const isAppleMusic =
+    isAppleMusicItemId(itemId);
+
+  const isApplePodcast =
+    isApplePodcastItemId(itemId);
 
   const shouldShow =
     Boolean(
       activePreviewItem &&
         isPreviewVisible &&
-        activePreviewItem.appleMusicUrl &&
-        isAppleMusicItemId(activePreviewItem.id)
+        (
+          isAppleMusic ||
+          isApplePodcast
+        )
     );
 
   if (
     !shouldShow ||
-    !activePreviewItem?.appleMusicUrl
+    !activePreviewItem
   ) {
     return null;
   }
 
-  async function openAppleMusic() {
-    if (
-      !activePreviewItem ||
-      !activePreviewItem.appleMusicUrl
-    ) {
+  const previewItem =
+    activePreviewItem;
+
+  const externalUrl =
+    isApplePodcast
+      ? previewItem.applePodcastsUrl
+      : previewItem.appleMusicUrl;
+
+  const externalLabel =
+    isApplePodcast
+      ? 'Apple Podcasts'
+      : 'Apple Music';
+
+  const placeholderIcon =
+    isApplePodcast
+      ? 'mic' as const
+      : 'musical-note' as const;
+
+  async function openExternalItem() {
+    if (!externalUrl) {
       return;
     }
 
-    const appleMusicUrl =
-      activePreviewItem.appleMusicUrl;
-
     const itemTitle =
-      activePreviewItem.title;
+      previewItem.title;
 
     try {
       await Linking.openURL(
-        appleMusicUrl
+        externalUrl
       );
     } catch (error) {
       if (__DEV__) {
         console.log(
-          `Failed to open Apple Music for ${itemTitle}:`,
+          `Failed to open ${externalLabel} for ${itemTitle}:`,
           error
         );
       }
@@ -98,12 +138,18 @@ export default function AppleMusicPreviewSheet() {
       style={[
         styles.positioner,
         {
-          bottom: Math.max(insets.bottom - 2, 4),
+          bottom: Math.max(
+            insets.bottom - 2,
+            4
+          ),
         },
       ]}>
       <View style={styles.sheet}>
         <View style={styles.header}>
-          <View style={styles.headerDetails}>
+          <View
+            style={
+              styles.headerDetails
+            }>
             <Text
               style={styles.eyebrow}
               numberOfLines={1}>
@@ -113,14 +159,18 @@ export default function AppleMusicPreviewSheet() {
             <Text
               style={styles.title}
               numberOfLines={1}>
-              {activePreviewItem.title}
+              {
+                activePreviewItem.title
+              }
             </Text>
 
             {activePreviewItem.subtitle ? (
               <Text
                 style={styles.subtitle}
                 numberOfLines={1}>
-                {activePreviewItem.subtitle}
+                {
+                  activePreviewItem.subtitle
+                }
               </Text>
             ) : null}
           </View>
@@ -128,7 +178,8 @@ export default function AppleMusicPreviewSheet() {
           <Pressable
             style={({ pressed }) => [
               styles.closeButton,
-              pressed && styles.closeButtonPressed,
+              pressed &&
+                styles.closeButtonPressed,
             ]}
             onPress={stopPreview}
             hitSlop={8}
@@ -146,65 +197,88 @@ export default function AppleMusicPreviewSheet() {
           {activePreviewItem.imageUrl ? (
             <Image
               source={{
-                uri: activePreviewItem.imageUrl,
+                uri:
+                  activePreviewItem.imageUrl,
               }}
               style={styles.artwork}
               resizeMode="cover"
               accessibilityIgnoresInvertColors
             />
           ) : (
-            <View style={styles.artworkPlaceholder}>
+            <View
+              style={
+                styles.artworkPlaceholder
+              }>
               <Ionicons
-                name="musical-note"
+                name={placeholderIcon}
                 size={28}
                 color="#8A8A8A"
               />
             </View>
           )}
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.link,
-              pressed && styles.linkPressed,
-            ]}
-            onPress={() => {
-              void openAppleMusic();
-            }}
-            hitSlop={6}
-            accessibilityRole="link"
-            accessibilityLabel={`Open ${activePreviewItem.title} in Apple Music`}>
-            <Text style={styles.linkText}>
-              Apple Music ↗
-            </Text>
-          </Pressable>
+          {externalUrl ? (
+            <Pressable
+              style={({ pressed }) => [
+                styles.link,
+                pressed &&
+                  styles.linkPressed,
+              ]}
+              onPress={() => {
+                void openExternalItem();
+              }}
+              hitSlop={6}
+              accessibilityRole="link"
+              accessibilityLabel={`Open ${activePreviewItem.title} in ${externalLabel}`}>
+              <Text
+                style={styles.linkText}>
+                {externalLabel} ↗
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
 
-        <View style={styles.progressSection}>
+        <View
+          style={
+            styles.progressSection
+          }>
           <View
-            style={styles.progressTrack}
+            style={
+              styles.progressTrack
+            }
             accessibilityRole="progressbar"
             accessibilityValue={{
               min: 0,
               max: 100,
-              now: Math.round(previewProgress * 100),
+              now: Math.round(
+                previewProgress * 100
+              ),
             }}>
             <View
               style={[
                 styles.progressFill,
                 {
-                  width: progressWidth,
+                  width:
+                    progressWidth,
                 },
               ]}
             />
           </View>
 
-          <View style={styles.timeRow}>
-            <Text style={styles.timeText}>
-              {formatTime(previewCurrentTime)}
+          <View
+            style={styles.timeRow}>
+            <Text
+              style={styles.timeText}>
+              {formatTime(
+                previewCurrentTime
+              )}
             </Text>
 
-            <Text style={styles.timeText}>
-              {formatTime(previewDuration)}
+            <Text
+              style={styles.timeText}>
+              {formatTime(
+                previewDuration
+              )}
             </Text>
           </View>
         </View>
@@ -288,8 +362,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#2A2A2A',
   },
 
-
-
   eyebrow: {
     fontSize: 9,
     fontWeight: '700',
@@ -354,6 +426,8 @@ const styles = StyleSheet.create({
   timeText: {
     fontSize: 9,
     color: '#B8B8B8',
-    fontVariant: ['tabular-nums'],
+    fontVariant: [
+      'tabular-nums',
+    ],
   },
 });

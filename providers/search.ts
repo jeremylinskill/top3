@@ -1,13 +1,15 @@
 import { Top3Item } from '@/types/top3-item';
 
 import {
-  getPopularGames,
-  searchGames,
-} from './video-games';
-import {
   getPopularBooks,
   searchBooks,
 } from './books';
+import {
+  getPopularMovies,
+  getPopularTvShows,
+  searchMovies,
+  searchTvShows,
+} from './movies-and-tv';
 import {
   getPopularAlbums,
   getPopularArtists,
@@ -17,11 +19,13 @@ import {
   searchSongs,
 } from './music';
 import {
-  getPopularMovies,
-  getPopularTvShows,
-  searchMovies,
-  searchTvShows,
-} from './movies-and-tv';
+  getPopularPodcasts,
+  searchPodcasts,
+} from './podcasts';
+import {
+  getPopularGames,
+  searchGames,
+} from './video-games';
 
 export type SearchProvider = (
   query: string,
@@ -44,6 +48,7 @@ const SEARCH_PROVIDERS: Record<
   books: searchBooks,
   games: searchGames,
   movies: searchMovies,
+  podcasts: searchPodcasts,
   songs: searchSongs,
   tv: searchTvShows,
 };
@@ -59,6 +64,7 @@ const POPULAR_SUGGESTIONS_PROVIDERS: Partial<
   books: getPopularBooks,
   games: getPopularGames,
   movies: getPopularMovies,
+  podcasts: getPopularPodcasts,
   songs: getPopularSongs,
   tv: getPopularTvShows,
 };
