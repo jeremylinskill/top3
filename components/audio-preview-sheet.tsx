@@ -2,40 +2,56 @@ import { useAudioPreview } from '@/context/audio-preview-context';
 import { usePreviewSheetColors } from '@/hooks/use-preview-sheet-colors';
 import { Ionicons } from '@expo/vector-icons';
 import {
-  Image,
-  Linking,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
+    Image,
+    Linking,
+    Pressable,
+    StyleSheet,
+    Text,
+    View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 function isAppleMusicItemId(
   itemId: string
 ): boolean {
-  return (
-    itemId.startsWith('apple-music-album-') ||
-    itemId.startsWith('apple-music-artist-') ||
-    itemId.startsWith('apple-music-song-')
+  return itemId.startsWith(
+    'apple-music-'
+  );
+}
+
+function isApplePodcastItemId(
+  itemId: string
+): boolean {
+  return itemId.startsWith(
+    'apple-podcast-'
   );
 }
 
 function formatTime(seconds: number): string {
-  if (!Number.isFinite(seconds) || seconds <= 0) {
+  if (
+    !Number.isFinite(seconds) ||
+    seconds <= 0
+  ) {
     return '0:00';
   }
 
-  const wholeSeconds = Math.floor(seconds);
-  const minutes = Math.floor(wholeSeconds / 60);
-  const remainingSeconds = wholeSeconds % 60;
+  const wholeSeconds =
+    Math.floor(seconds);
+
+  const minutes =
+    Math.floor(
+      wholeSeconds / 60
+    );
+
+  const remainingSeconds =
+    wholeSeconds % 60;
 
   return `${minutes}:${remainingSeconds
     .toString()
     .padStart(2, '0')}`;
 }
 
-export default function AppleMusicPreviewSheet() {
+export default function AudioPreviewSheet() {
   const {
     activePreviewItem,
     isPreviewVisible,
@@ -49,43 +65,66 @@ export default function AppleMusicPreviewSheet() {
   const previewColors =
     usePreviewSheetColors();
 
+  const itemId =
+    activePreviewItem?.id ?? '';
+
+  const isAppleMusic =
+    isAppleMusicItemId(itemId);
+
+  const isApplePodcast =
+    isApplePodcastItemId(itemId);
+
   const shouldShow =
     Boolean(
       activePreviewItem &&
         isPreviewVisible &&
-        activePreviewItem.appleMusicUrl &&
-        isAppleMusicItemId(activePreviewItem.id)
+        (
+          isAppleMusic ||
+          isApplePodcast
+        )
     );
 
   if (
     !shouldShow ||
-    !activePreviewItem?.appleMusicUrl
+    !activePreviewItem
   ) {
     return null;
   }
 
-  async function openAppleMusic() {
-    if (
-      !activePreviewItem ||
-      !activePreviewItem.appleMusicUrl
-    ) {
+  const previewItem =
+    activePreviewItem;
+
+  const externalUrl =
+    isApplePodcast
+      ? previewItem.applePodcastsUrl
+      : previewItem.appleMusicUrl;
+
+  const externalLabel =
+    isApplePodcast
+      ? 'Apple Podcasts'
+      : 'Apple Music';
+
+  const placeholderIcon =
+    isApplePodcast
+      ? 'mic' as const
+      : 'musical-note' as const;
+
+  async function openExternalItem() {
+    if (!externalUrl) {
       return;
     }
 
-    const appleMusicUrl =
-      activePreviewItem.appleMusicUrl;
-
     const itemTitle =
-      activePreviewItem.title;
+      previewItem.title;
 
     try {
       await Linking.openURL(
-        appleMusicUrl
+        externalUrl
       );
     } catch (error) {
       if (__DEV__) {
         console.log(
-          `Failed to open Apple Music for ${itemTitle}:`,
+          `Failed to open ${externalLabel} for ${itemTitle}:`,
           error
         );
       }
@@ -113,7 +152,10 @@ export default function AppleMusicPreviewSheet() {
         style={[
           styles.positioner,
         {
-          bottom: Math.max(insets.bottom - 2, 4),
+          bottom: Math.max(
+            insets.bottom - 2,
+            4
+          ),
         },
       ]}>
       <View
@@ -127,7 +169,10 @@ export default function AppleMusicPreviewSheet() {
           },
         ]}>
         <View style={styles.header}>
-          <View style={styles.headerDetails}>
+          <View
+            style={
+              styles.headerDetails
+            }>
             <Text
               style={[
                 styles.eyebrow,
@@ -149,7 +194,9 @@ export default function AppleMusicPreviewSheet() {
                 },
               ]}
               numberOfLines={1}>
-              {activePreviewItem.title}
+              {
+                activePreviewItem.title
+              }
             </Text>
 
             {activePreviewItem.subtitle ? (
@@ -162,7 +209,9 @@ export default function AppleMusicPreviewSheet() {
                   },
                 ]}
                 numberOfLines={1}>
-                {activePreviewItem.subtitle}
+                {
+                  activePreviewItem.subtitle
+                }
               </Text>
             ) : null}
           </View>
@@ -195,7 +244,8 @@ export default function AppleMusicPreviewSheet() {
           {activePreviewItem.imageUrl ? (
             <Image
               source={{
-                uri: activePreviewItem.imageUrl,
+                uri:
+                  activePreviewItem.imageUrl,
               }}
               style={[
                 styles.artwork,
@@ -217,7 +267,7 @@ export default function AppleMusicPreviewSheet() {
                 },
               ]}>
               <Ionicons
-                name="musical-note"
+                name={placeholderIcon}
                 size={28}
                 color={
                   previewColors.placeholderIcon
@@ -226,31 +276,37 @@ export default function AppleMusicPreviewSheet() {
             </View>
           )}
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.link,
-              pressed && styles.linkPressed,
-            ]}
-            onPress={() => {
-              void openAppleMusic();
-            }}
-            hitSlop={6}
-            accessibilityRole="link"
-            accessibilityLabel={`Open ${activePreviewItem.title} in Apple Music`}>
-            <Text
-              style={[
-                styles.linkText,
-                {
-                  color:
-                    previewColors.primaryText,
-                },
-              ]}>
-              Apple Music ↗
-            </Text>
-          </Pressable>
+          {externalUrl ? (
+            <Pressable
+              style={({ pressed }) => [
+                styles.link,
+                pressed &&
+                  styles.linkPressed,
+              ]}
+              onPress={() => {
+                void openExternalItem();
+              }}
+              hitSlop={6}
+              accessibilityRole="link"
+              accessibilityLabel={`Open ${activePreviewItem.title} in ${externalLabel}`}>
+              <Text
+                style={[
+                  styles.linkText,
+                  {
+                    color:
+                      previewColors.primaryText,
+                  },
+                ]}>
+                {externalLabel} ↗
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
 
-        <View style={styles.progressSection}>
+        <View
+          style={
+            styles.progressSection
+          }>
           <View
             style={[
               styles.progressTrack,
@@ -263,7 +319,9 @@ export default function AppleMusicPreviewSheet() {
             accessibilityValue={{
               min: 0,
               max: 100,
-              now: Math.round(previewProgress * 100),
+              now: Math.round(
+                previewProgress * 100
+              ),
             }}>
             <View
               style={[

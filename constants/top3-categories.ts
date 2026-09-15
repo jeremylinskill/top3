@@ -6,6 +6,7 @@ export type CategoryId =
   | 'books'
   | 'games'
   | 'movies'
+  | 'podcasts'
   | 'songs'
   | 'tv';
 
@@ -128,6 +129,26 @@ export const TOP3_CATEGORIES: Top3Category[] = [
       { id: 'romance', name: 'Romance', icon: '❤️', searchItemName: 'romance movie', tmdbGenreId: 10749 },
       { id: 'sci-fi', name: 'Sci-Fi', icon: '🚀', searchItemName: 'science fiction movie', tmdbGenreId: 878 },
       { id: 'thriller', name: 'Thriller', icon: '😰', searchItemName: 'thriller movie', tmdbGenreId: 53 },
+    ],
+  },
+  {
+    id: 'podcasts',
+    name: 'Podcasts',
+    icon: '🎙️',
+    placeholderIcon: 'mic-outline',
+    topics: [
+      { id: 'arts', name: 'Arts', icon: '🎨', searchItemName: 'arts podcast' },
+      { id: 'business', name: 'Business', icon: '💼', searchItemName: 'business podcast' },
+      { id: 'comedy', name: 'Comedy', icon: '😂', searchItemName: 'comedy podcast' },
+      { id: 'education', name: 'Education', icon: '🎓', searchItemName: 'education podcast' },
+      { id: 'health-and-fitness', name: 'Health & Fitness', icon: '💪', searchItemName: 'health and fitness podcast' },
+      { id: 'history', name: 'History', icon: '🏛️', searchItemName: 'history podcast' },
+      { id: 'music', name: 'Music', icon: '🎵', searchItemName: 'music podcast' },
+      { id: 'news', name: 'News', icon: '📰', searchItemName: 'news podcast' },
+      { id: 'science', name: 'Science', icon: '🔬', searchItemName: 'science podcast' },
+      { id: 'society-and-culture', name: 'Society & Culture', icon: '🌎', searchItemName: 'society and culture podcast' },
+      { id: 'sports', name: 'Sports', icon: '🏆', searchItemName: 'sports podcast' },
+      { id: 'true-crime', name: 'True Crime', icon: '🕵️', searchItemName: 'true crime podcast' },
     ],
   },
   {

@@ -2,6 +2,7 @@ import {
   registerAudioPreviewStopper,
   stopOtherMediaPreviewsFromCoordinator,
 } from '@/lib/media-preview-coordinator';
+import { getPodcastEpisodePreview } from '@/providers/podcasts';
 import { Top3Item } from '@/types/top3-item';
 import {
   setAudioModeAsync,
@@ -37,8 +38,15 @@ type AudioPreviewProviderProps = {
   children: ReactNode;
 };
 
+const PODCAST_PREVIEW_START_SECONDS = 180;
+const PODCAST_PREVIEW_DURATION_SECONDS = 45;
+
 function isAppleMusicItem(item: Top3Item) {
   return item.id.startsWith('apple-music-');
+}
+
+function isApplePodcastItem(item: Top3Item) {
+  return item.id.startsWith('apple-podcast-');
 }
 
 export function AudioPreviewProvider({
@@ -56,15 +64,50 @@ export function AudioPreviewProvider({
   const activePreviewItemId =
     activePreviewItem?.id ?? null;
 
-  const previewCurrentTime =
+  const isPodcastPreview =
+    Boolean(
+      activePreviewItem &&
+        isApplePodcastItem(activePreviewItem)
+    );
+
+  const rawPreviewCurrentTime =
     Number.isFinite(previewStatus.currentTime)
       ? Math.max(previewStatus.currentTime, 0)
       : 0;
 
-  const previewDuration =
+  const rawPreviewDuration =
     Number.isFinite(previewStatus.duration)
       ? Math.max(previewStatus.duration, 0)
       : 0;
+
+  const podcastAvailableDuration =
+    rawPreviewDuration >
+    PODCAST_PREVIEW_START_SECONDS
+      ? rawPreviewDuration -
+        PODCAST_PREVIEW_START_SECONDS
+      : 0;
+
+  const previewDuration =
+    isPodcastPreview
+      ? podcastAvailableDuration > 0
+        ? Math.min(
+            podcastAvailableDuration,
+            PODCAST_PREVIEW_DURATION_SECONDS
+          )
+        : PODCAST_PREVIEW_DURATION_SECONDS
+      : rawPreviewDuration;
+
+  const previewCurrentTime =
+    isPodcastPreview
+      ? Math.min(
+          Math.max(
+            rawPreviewCurrentTime -
+              PODCAST_PREVIEW_START_SECONDS,
+            0
+          ),
+          previewDuration
+        )
+      : rawPreviewCurrentTime;
 
   const previewProgress =
     previewDuration > 0
@@ -106,16 +149,30 @@ export function AudioPreviewProvider({
   }, [previewPlayer]);
 
   useEffect(() => {
+    if (
+      !activePreviewItem ||
+      !isApplePodcastItem(activePreviewItem) ||
+      rawPreviewCurrentTime <
+        PODCAST_PREVIEW_START_SECONDS +
+          PODCAST_PREVIEW_DURATION_SECONDS
+    ) {
+      return;
+    }
+
+    stopPreview();
+  }, [
+    activePreviewItem,
+    rawPreviewCurrentTime,
+    stopPreview,
+  ]);
+
+  useEffect(() => {
     return registerAudioPreviewStopper(
       stopPreview
     );
   }, [stopPreview]);
 
   async function togglePreview(item: Top3Item) {
-    if (!item.previewUrl) {
-      return;
-    }
-
     if (
       isAppleMusicItem(item) &&
       !item.appleMusicUrl
@@ -166,16 +223,93 @@ export function AudioPreviewProvider({
       return;
     }
 
-    previewActionIdRef.current += 1;
+    let playableItem = item;
 
-    stopOtherMediaPreviewsFromCoordinator(
-      'audio'
+    if (
+      isApplePodcastItem(item) &&
+      !item.previewUrl
+    ) {
+      const actionId =
+        previewActionIdRef.current + 1;
+      previewActionIdRef.current = actionId;
+
+      stopOtherMediaPreviewsFromCoordinator(
+        'audio'
+      );
+
+      previewPlayer.pause();
+
+      try {
+        const podcastPreview =
+          await getPodcastEpisodePreview(item);
+
+        if (
+          previewActionIdRef.current !== actionId
+        ) {
+          return;
+        }
+
+        if (!podcastPreview) {
+          return;
+        }
+
+        playableItem = {
+          ...item,
+          previewUrl:
+            podcastPreview.audioUrl,
+          applePodcastsUrl:
+            item.applePodcastsUrl ??
+            podcastPreview.applePodcastsUrl,
+        };
+      } catch (error) {
+        if (
+          previewActionIdRef.current !== actionId
+        ) {
+          return;
+        }
+
+        if (__DEV__) {
+          console.log(
+            `Failed to load podcast preview for ${item.title}:`,
+            error
+          );
+        }
+
+        return;
+      }
+    } else {
+      if (!item.previewUrl) {
+        return;
+      }
+
+      previewActionIdRef.current += 1;
+
+      stopOtherMediaPreviewsFromCoordinator(
+        'audio'
+      );
+
+      previewPlayer.pause();
+    }
+
+    if (!playableItem.previewUrl) {
+      return;
+    }
+
+    previewPlayer.replace(
+      playableItem.previewUrl
     );
 
-    previewPlayer.pause();
-    previewPlayer.replace(item.previewUrl);
+    if (
+      isApplePodcastItem(playableItem)
+    ) {
+      await previewPlayer.seekTo(
+        PODCAST_PREVIEW_START_SECONDS
+      );
+    }
 
-    setActivePreviewItem(item);
+    setActivePreviewItem(
+      playableItem
+    );
     setIsPreviewVisible(true);
 
     previewPlayer.play();

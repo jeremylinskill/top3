@@ -188,8 +188,18 @@ export function useMediaPreview(
       trailerAvailability === true
     );
 
+  const hasOnDemandPodcastPreview =
+    category === 'podcasts' &&
+    Boolean(
+      item?.applePodcastId ||
+        item?.id.startsWith(
+          'apple-podcast-'
+        )
+    );
+
   const hasAudioPreview =
-    Boolean(item?.previewUrl);
+    Boolean(item?.previewUrl) ||
+    hasOnDemandPodcastPreview;
 
   const kind: MediaPreviewKind =
     canPlayTrailer
