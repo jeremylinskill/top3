@@ -2,7 +2,7 @@ Top 3 Privacy Policy
 
 Effective Date: August 25, 2026
 
-Last Updated: September 3, 2026
+Last Updated: September 16, 2026
 
 Top 3 is a social discovery app that lets people create and share ranked Top 3 lists, discover people with similar tastes, and interact with other members of the Top 3 community.
 
@@ -140,7 +140,9 @@ Google Books for books;
 
 Open Library as a book-search source or fallback;
 
-Apple Music for songs, albums, and artists; and
+Apple Music for songs, albums, and artists;
+
+Apple services, including iTunes Search and Lookup services and Apple Podcasts chart data, for podcasts; and
 
 IGDB/Twitch for video games.
 
@@ -156,11 +158,13 @@ Top 3 may allow you to play media associated with items displayed in the app.
 
 For example:
 
-music previews may be provided using Apple Music media; and
+music previews may be provided using Apple Music media;
+
+podcast previews may use playable episode media identified through Apple's podcast services, and the audio itself may be delivered by the podcast publisher or another media host; and
 
 movie and television trailers may be discovered through TMDb and played using YouTube.
 
-When you choose to play external media, your device may communicate with the relevant media provider to retrieve or play that content.
+When you choose to play external media, your device may communicate with the relevant media provider, podcast publisher, or media host to retrieve or play that content.
 
 Those providers may process technical information associated with the request according to their own privacy practices.
 
@@ -342,7 +346,7 @@ Used for application infrastructure and delivery of push notifications where tho
 
 Apple
 
-Used when you choose Sign in with Apple, for Apple platform or content services used by Top 3, and for delivery of push notifications through Apple Push Notification service.
+Used when you choose Sign in with Apple, for Apple platform and content services used by Top 3, including Apple Music and podcast discovery services, and for delivery of push notifications through Apple Push Notification service.
 
 Google
 
@@ -368,9 +372,13 @@ Open Library;
 
 Apple Music;
 
-IGDB/Twitch; and
+Apple podcast discovery services, including iTunes Search and Lookup and Apple Podcasts chart data;
 
-YouTube.
+IGDB/Twitch;
+
+YouTube; and
+
+podcast publishers or media hosts when a podcast audio preview is played.
 
 Top 3 does not intentionally provide these content providers with your Top 3 password or your complete Top 3 social profile merely to perform a content search or retrieve media.
 

@@ -1,8 +1,8 @@
 Top3 Product Roadmap
 
-Version: 2.8 Status: Active Development Owner: Jeremy Linskill Last
-Updated: September 1, 2026 Last Verified Commit: 7759102 --- Use
-dedicated webhook secret for push notifications
+Version: 2.9 Status: Active Development Owner: Jeremy Linskill Last
+Updated: September 16, 2026 Last Verified Commit: 92106eb --- Unify
+Discover search result cards
 
 Purpose
 
@@ -45,7 +45,8 @@ Top3's core community platform is now in place.
 Authentication, profiles, list persistence, social interactions, private
 accounts, follow requests, in-app and push notifications, realtime
 synchronization, Settings, search providers, Feed, Discover, Taste
-Match, Apple Music previews, Movie / TV trailer playback, and the
+Match, Apple Music previews, Apple Podcasts search and audio previews,
+Movie / TV trailer playback, system-aware light / dark mode, and the
 redesigned first-list onboarding and account lifecycle, including email
 password recovery, provide a stable foundation for the next stage of the
 product.
@@ -59,6 +60,12 @@ for refresh tokens, and Apple authorization is revoked before an
 Apple-authenticated Top3 account is deleted. The architectural changes
 required for Top3's Feed to scale well beyond the initial launch
 population have also been identified.
+
+Production iOS Build 8 remains the current TestFlight release candidate.
+The current feature/dark-mode branch contains verified post-Build-8 work
+for system-aware dark mode, inverted preview-sheet themes, shared
+authentication-button presentation, Podcasts, improved Discover search
+matching, and shared Discover result cards. Build 9 has not been created.
 
 The current milestone is to prepare a stable, safe, polished V1 for App
 Store release and begin gathering real-user behaviour before investing
@@ -110,26 +117,34 @@ Match, notification, and profile surfaces• Shared Top3 ActionSheet popup
 pattern across reviewed confirmation, destructive, success, error,
 validation, authentication, collection, reporting, and moderation flows•
 Zero remaining Alert.alert matches across app, components, context, and
-services
+services• System-aware light / dark application theming through shared
+semantic colours and AppText• Intentional inverted preview-sheet theming
+for Book, trailer, and audio previews• Podcasts category and Apple
+Podcasts search / lookup / chart integration• Apple Podcasts episode
+audio previews through the shared AudioPreviewProvider and
+audio-preview-sheet presentation• Automatic onboarding category
+derivation from TOP3_CATEGORIES• Shared DiscoverListCard presentation
+for category and genre suggestion / search rows
 
 Current Priorities
 
-• Complete a V1 launch-readiness audit• Fix App Store launch blockers
-before adding major new product scope• Continue validating onboarding
-completion and authentication reliability• Treat the verified Sign in
-with Apple revocation path as the production account-deletion
-foundation• Verify remaining reporting, moderation, privacy, security,
-and account-deletion requirements• Treat blocked-user filtering and
-popup standardization as completed V1 launch-readiness foundations•
-Continue performance and stability optimization where it affects launch
-quality• Preserve the current Feed and Taste Match experience for
-initial real-user validation• Defer cursor-paginated Feed migration,
-server-side recommendation candidate generation, and other large-scale
-Feed infrastructure until post-launch• Continue search-quality and
+• Complete the current documentation sweep against the verified
+feature/dark-mode state• Keep Production Build 8 as the current TestFlight
+release candidate while documentation and regression validation are
+completed• Do not create Build 9 until the current documentation /
+regression checkpoint is complete and a replacement build is actually
+required• Regress onboarding, authentication, Podcasts, Discover,
+light / dark presentation, inverted preview sheets, media previews,
+sharing, notifications, moderation, and account deletion on device•
+Fix App Store launch blockers before adding major new product scope•
+Preserve the current Feed and Taste Match experience for initial real-user
+validation• Defer cursor-paginated Feed migration, server-side
+recommendation candidate generation, and other large-scale Feed
+infrastructure until post-launch• Continue search-quality and
 provider-resiliency improvements when they affect launch reliability•
-Treat the completed push-notification system as part of the V1
-social-engagement foundation and include it in release-candidate
-regression testing
+Treat the completed push-notification system, system-aware dark mode,
+Podcasts support, and shared Discover presentation as part of the V1
+release-candidate regression surface
 
 V1 Launch Readiness
 
@@ -153,11 +168,15 @@ authorization revocation path and complete final account-deletion
 regression testing for the release candidate• Verify core onboarding,
 Create, publish, Feed, Profile, Discover, Search, Likes, Comments,
 Following, in-app notifications, push notifications, notification tap
-routing, Taste Match, and media-preview flows on device• Confirm
-production configuration and provider credentials• Review App Store
-metadata, privacy disclosures, permissions, and required support /
-policy surfaces• Perform final performance and reliability testing•
-Update project documentation to match the release candidate
+routing, Taste Match, sharing, Podcasts, and media-preview flows on
+device• Verify the active application in both light and dark appearance,
+including the intentional inverted preview-sheet treatment• Confirm
+production configuration and provider credentials, including Apple
+Podcasts public-provider behaviour• Review App Store metadata, privacy
+disclosures, permissions, and required support / policy surfaces•
+Perform final performance and reliability testing• Complete project
+documentation against the release candidate before creating a
+replacement TestFlight build
 
 Launch Decision --- Feed Scalability
 
@@ -217,7 +236,10 @@ and Artists• Evergreen Apple Music suggestion pools• Artist
 canonical-result ranking and deduplication• Album and Artist
 representative-track previews• TMDb Movie and TV trailer playback inside
 Top3• Availability-aware Movie / TV trailer controls• Improved
-partial-title and relevance-ranked game search• Feed pull-to-refresh
+partial-title and relevance-ranked game search• Feed pull-to-refresh•
+Podcasts category with Apple Podcasts search, suggestions, and audio
+preview support• Improved Discover category / genre matching• Shared
+DiscoverListCard presentation across suggestion and search-result rows
 
 Near-Term Priorities
 
@@ -225,8 +247,9 @@ Near-Term Priorities
 signals• Expand Discover browsing and filtering• Improve profile
 discovery• Refine recommendation explanations where useful• Continue
 improving search relevance across providers• Gracefully handle external
-API failures across TMDb, Google Books, Open Library, IGDB, and Apple
-Music• Continue improving trailer resiliency without introducing
+API failures across TMDb, Google Books, Open Library, IGDB, Apple
+Music, and Apple Podcasts / iTunes public endpoints• Continue improving
+trailer resiliency without introducing
 unnecessary location permissions• Expand conversation tools around
 discovered content• Continue performance optimization
 
@@ -382,10 +405,12 @@ category_feed, published_detail, and overall.
 
 Future Sharing Work
 
-Universal Links / HTTPS web fallback should be implemented once the
-production Top3 domain is confirmed. This will allow recipients without
-the app installed to receive a useful web destination instead of relying
-only on the custom top3:// scheme.
+The production Top3 domain is now established at top3taste.com.
+
+Universal Links / HTTPS web fallback remains post-launch work. It should
+use the production domain so recipients without the app installed can
+receive a useful web destination instead of relying only on the custom
+top3:// scheme.
 
 Analytics should now be driven by real product questions and observed
 usage rather than adding events speculatively before launch.
@@ -456,7 +481,8 @@ Current Providers
 • TMDb --- Movies• TMDb --- TV Shows• Google Books --- Books• Open
 Library --- Book fallback• IGDB --- Video Games• Twitch OAuth ---
 Server-side IGDB authentication• Apple Music --- Songs, Albums, and
-Artists
+Artists• Apple iTunes Search / Lookup --- Podcasts• Apple Podcasts chart
+feed --- Podcast suggestions
 
 Current Direction
 
@@ -468,7 +494,9 @@ Prefer evergreen, long-term recognizable music suggestions over
 short-term chart popularity where appropriate• Use canonical provider
 results to improve exact artist matching, ranking, artwork, genre
 metadata, and deduplication• Enrich music results with representative
-preview audio where the provider supports it• Preserve distinct works
+preview audio where the provider supports it• Keep Podcast search,
+ranking, deduplication, chart suggestions, and episode-preview lookup
+inside the Podcasts provider• Preserve distinct works
 while intelligently deduplicating editions or duplicate records•
 Gracefully handle provider outages and degraded responses• Avoid
 exposing provider secrets to the mobile client• Keep Movie / TV trailer
@@ -628,6 +656,28 @@ The long-term goal is not to maximize content creation or passive
 engagement, but to create meaningful connections through shared taste.
 
 Revision History
+
+Version 2.9 --- September 16, 2026
+
+Updated the roadmap to reflect the current post-Build-8 launch-readiness
+checkpoint through commit 92106eb.
+
+Key changes:
+
+• Recorded Production Build 8 as the current TestFlight release
+candidate and Build 9 as not yet created.• Recorded system-aware light /
+dark mode and intentional inverted preview-sheet themes as completed V1
+presentation foundations.• Added Podcasts and Apple Podcasts search /
+lookup / chart integration to the active provider strategy.• Recorded
+shared Apple Music / Apple Podcasts audio preview presentation.• Recorded
+automatic onboarding category derivation from TOP3_CATEGORIES.• Recorded
+improved Discover matching and shared DiscoverListCard presentation.•
+Updated launch regression priorities to include Podcasts and light /
+dark presentation.• Updated Universal Links / HTTPS fallback to reflect
+that top3taste.com is now the established production domain while the
+web fallback itself remains post-launch.• Updated the last verified
+repository checkpoint to 92106eb.• Preserved V1 Launch Readiness as the
+current product milestone.
 
 Version 2.8 --- September 1, 2026
 

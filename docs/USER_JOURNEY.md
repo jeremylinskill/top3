@@ -1,77 +1,72 @@
 # Top3 User Journey
 
-**Version:** 0.1 (Draft)  
-**Status:** Active  
-**Owner:** Jeremy Linskill  
-**Last Updated:** July 28, 2026
+Version: 0.2
+Status: Active
+Owner: Jeremy Linskill
+Last Updated: September 16, 2026
 
 ---
 
 # Document Purpose
 
-This document describes the ideal experience of a Top3 user from the moment they discover the app through becoming an engaged member of the community.
+This document describes the intended experience of a Top3 user from first discovery through becoming an engaged member of the community.
 
 Unlike the Product Vision, which defines **why** Top3 exists, this document defines **how users experience that vision**.
 
-Every major feature should contribute to moving users smoothly from one stage of the journey to the next.
+Unlike `FEATURES.md`, which inventories what the product can do today, this document focuses on the sequence, expectations, emotions, and transitions that make the experience feel coherent.
+
+Every major feature should help move users naturally from one meaningful stage to the next.
 
 ---
 
 ## Revision History
 
 | Version | Date | Author | Summary |
-|----------|------------|------------------|--------------------------------------------------------------|
+| --- | --- | --- | --- |
 | 0.1 | July 28, 2026 | Jeremy Linskill | Initial user journey documenting the ideal end-to-end experience for a Top3 user. |
+| 0.2 | September 16, 2026 | Jeremy Linskill | Updated the journey to reflect signed-out first-List onboarding, authentication at the publish boundary, post-publish Overall education, Taste Match onboarding, current discovery and social loops, sharing, notifications, and returning-user behaviour. |
 
 ---
 
 # Journey Overview
 
-```
+```text
 Hear about Top3
-
-↓
-
-Download
-
-↓
-
-Create Profile
-
-↓
-
-Publish First Top3
-
-↓
-
-Discover Similar People
-
-↓
-
-Follow
-
-↓
-
-Compare Taste
-
-↓
-
-Join Conversations
-
-↓
-
+      ↓
+Download / Open
+      ↓
+Understand the idea
+      ↓
+Choose a category
+      ↓
+Build first Top 3 List while signed out
+      ↓
+Reach Publish
+      ↓
+Create account or sign in
+      ↓
+Publish first List
+      ↓
+Understand Lists → Overall
+      ↓
+Understand Taste Match
+      ↓
+Explore people, Lists, categories and recommendations
+      ↓
+Follow / Like / Comment / Share
+      ↓
+Receive social activity
+      ↓
 Return
-
-↓
-
-Build Reputation
-
-↓
-
-Become Part of the Community
+      ↓
+Publish more Lists
+      ↓
+Build trusted connections through shared taste
 ```
 
 Every stage should naturally encourage the next.
+
+The journey should demonstrate the product before asking the user to invest heavily in setup.
 
 ---
 
@@ -83,248 +78,585 @@ Help someone immediately understand what Top3 is.
 
 ### User Thoughts
 
-> "This sounds different."
+> “This sounds different.”
 
-> "I'd love to compare my favourites."
+> “I’d love to compare my favourites.”
 
-> "I wonder who has similar taste."
+> “I wonder who has similar taste.”
 
 ### Product Goal
 
-Communicate one simple message:
+Communicate one simple idea:
 
 > **Discover people through shared taste.**
 
----
-
-# Stage 2 — Installation
-
-## Goal
-
-Reduce friction.
-
-The user should reach the product experience as quickly as possible.
-
-Avoid unnecessary decisions.
+The product should feel social, personal, and entertainment-focused without requiring a long explanation.
 
 ---
 
-# Stage 3 — Welcome
+# Stage 2 — Installation / First Open
 
 ## Goal
 
-Create excitement.
+Reduce friction and reach the product experience quickly.
 
-The app should explain itself in seconds.
+The user should not be forced through profile setup before understanding what Top3 does.
 
-Example messaging:
+The native splash should hand off directly into the branded onboarding experience without a generic loading interruption.
 
-> **What are your Top 3?**
+### Experience Principle
 
-Movies.
-
-Books.
-
-Music.
-
-Travel.
-
-Food.
-
-Discover people who love the same things you do.
+**Show the product before asking for commitment.**
 
 ---
 
-# Stage 4 — Create Profile
+# Stage 3 — Branded Introduction
 
 ## Goal
 
-Create identity.
+Create curiosity and confidence within seconds.
 
-The profile should feel lightweight.
+The opening should establish the Top3 identity and transition quickly into choosing something the user already has opinions about.
 
-Required
+The user does not need to understand every social feature yet.
 
-- Display name
-- Username
+They only need to understand:
 
-Optional
-
-- Avatar
-- Bio
-
-The user should never feel blocked by unnecessary profile setup.
+> **Pick something you care about. Rank your Top 3.**
 
 ---
 
-# Stage 5 — Publish First Top3
+# Stage 4 — Choose a Category
 
 ## Goal
 
-Help the user express themselves.
+Make the first action obvious and low-risk.
 
-Publishing should feel easy.
+The user chooses from the current Top3 category set:
 
-The first category should be simple and familiar.
-
-Recommended first categories:
-
-- Movies
-- TV Shows
+- Albums
+- Artists
 - Books
+- Movies
+- Podcasts
+- Songs
+- TV Shows
+- Video Games
 
-The experience should feel rewarding rather than like filling out a form.
+Categories are derived from the shared product registry and displayed alphabetically.
+
+Where a category uses topics or genres, the user chooses one before building the List.
+
+### User Thought
+
+> “I already know what I’d pick.”
+
+### Product Goal
+
+Move the user from curiosity into self-expression as quickly as possible.
 
 ---
 
-# Stage 6 — Celebrate
+# Stage 5 — Build the First Top 3
 
-Publishing deserves recognition.
+## Goal
 
-The app should acknowledge the milestone.
+Let the user experience the core product before authentication.
 
-Example:
+The signed-out user can:
 
-> 🎉
+- search for items;
+- browse suggestions;
+- preview supported media;
+- add three items;
+- rank them;
+- reorder them;
+- remove and replace them.
 
-Your first Top3 is now live.
+The first List should feel like making a choice, not filling out a form.
+
+### Important Product Rule
+
+The user may **create** the first List while signed out.
+
+They may not **publish** it until authenticated.
+
+The List must survive the authentication handoff.
+
+### User Thought
+
+> “This is already mine.”
 
 ---
 
-# Stage 7 — The Magic Moment
+# Stage 6 — Publish Boundary
 
-This is the most important moment in the product.
+## Goal
 
-The user immediately discovers people with similar taste.
+Ask for authentication only when the user has something worth saving.
 
-Example:
+When the user chooses to publish, Top3 explains that an account is required to publish the List and participate in the community.
 
-```
-You already have amazing taste in common.
+The user can choose:
 
+- Apple
+- Google
+- Email
+
+Returning users can choose Sign In instead of creating a new account.
+
+### Product Goal
+
+Make authentication feel like the natural next step in preserving and publishing work the user has already created.
+
+### Experience Principle
+
+**Authentication should protect momentum, not interrupt it.**
+
+---
+
+# Stage 7 — Account Creation / Sign In
+
+## Goal
+
+Establish identity with minimal friction.
+
+### Account Creation
+
+The account system supports:
+
+- Apple
+- Google
+- Email
+
+Email users may need to confirm their email before the first List can be published.
+
+The pending first List remains intact while authentication completes.
+
+### Profile Identity
+
+Top3 can establish the account before requiring extensive profile customization.
+
+Profile information can be refined later through Edit Profile.
+
+### Returning Users
+
+A returning user who chooses Sign In should return to their existing account experience rather than continue through new-user product education.
+
+---
+
+# Stage 8 — First Publish
+
+## Goal
+
+Deliver the first meaningful commitment to the community.
+
+After authentication succeeds, the pending onboarding List is published.
+
+The user should understand that their personal Top 3 now contributes to the community.
+
+### Emotional Goal
+
+**Pride.**
+
+The user has expressed something personal and made it part of the product.
+
+---
+
+# Stage 9 — Lists → Overall Education
+
+## Goal
+
+Explain how individual taste becomes community insight.
+
+Immediately after the first publish, Top3 shows the relationship between:
+
+1. the user’s personal Top 3 List;
+2. the community’s aggregated Overall Top 3.
+
+The transition should feel like a transformation of the same information rather than a separate feature explanation.
+
+### User Thought
+
+> “My List is part of something bigger.”
+
+### Product Goal
+
+Help the user understand why publishing matters beyond their own profile.
+
+---
+
+# Stage 10 — Taste Match Education
+
+## Goal
+
+Introduce the social value of ranked taste.
+
+After Lists → Overall education, Top3 introduces Taste Match.
+
+The user learns that shared ranked picks can be used to compare taste with other people.
+
+The percentage animation and shared-pick presentation should make the concept understandable without requiring a detailed explanation of the calculation.
+
+### User Thought
+
+> “There are people here who like the same things I do.”
+
+### Emotional Goal
+
+**Recognition and connection.**
+
+---
+
+# Stage 11 — The Magic Moment
+
+This is the central emotional payoff of Top3.
+
+The user encounters another person whose ranked taste meaningfully overlaps with their own.
+
+The product should make the connection explainable through actual shared picks.
+
+Examples:
+
+```text
 Sarah
-
 86% Taste Match
-
-Alex
-
-81% Taste Match
-
-Olivia
-
-74% Taste Match
+3 shared ranked picks
 ```
 
 The user should think:
 
-> **"Wait...there are people like me."**
+> **“Wait…there are people like me.”**
 
-This is the emotional payoff of the onboarding experience.
+This moment can occur through onboarding, a public profile, Similar Taste, Discover, or a personalized Feed recommendation.
 
----
+The exact surface may evolve.
 
-# Stage 8 — Explore
-
-The user begins browsing.
-
-They discover:
-
-- Profiles
-- Top3s
-- Recommendations
-- Categories
-
-Curiosity should naturally guide exploration.
+The emotional outcome should remain the same.
 
 ---
 
-# Stage 9 — Connect
+# Stage 12 — Explore
 
-The user follows people whose recommendations consistently resonate.
+## Goal
 
-Following is not about popularity.
+Turn the initial Taste Match idea into curiosity.
 
-It is about trust.
+The user begins exploring:
 
-The user begins building a personalized network.
+- Feed Lists;
+- Discover;
+- Trending Categories;
+- genres / topics;
+- Category Feed;
+- Community Top3;
+- Overall Top3;
+- public profiles;
+- Similar Taste;
+- personalized recommendations;
+- published Lists.
+
+Supported media previews reduce the friction of remembering or evaluating an item.
+
+Examples include:
+
+- Movie and TV trailers;
+- Apple Music previews;
+- Apple Podcasts previews;
+- Book previews.
+
+### User Thought
+
+> “What else do people like me recommend?”
 
 ---
 
-# Stage 10 — Compare
+# Stage 13 — Connect
 
-Taste Match reinforces why the app exists.
+## Goal
 
-Users compare:
+Turn discovery into a trusted personal network.
 
-- Shared picks
-- Different rankings
-- Categories
-- Topics
+Users follow people whose Lists and recommendations consistently resonate.
 
-Every comparison should encourage conversation.
+Following is about relevance, not popularity.
+
+### Public Accounts
+
+The user can follow immediately.
+
+### Private Accounts
+
+The user sends a follow request.
+
+The private user can accept or decline it.
+
+### Experience Principle
+
+**Privacy should never be bypassed for discovery.**
+
+Private profiles should not be exposed through recommendation behaviour that ignores their visibility settings.
 
 ---
 
-# Stage 11 — Participate
+# Stage 14 — Compare
 
-The user becomes part of the community.
+## Goal
+
+Reinforce why the relationship is interesting.
+
+Taste Match allows users to compare:
+
+- shared ranked picks;
+- different rankings;
+- overlap across Lists;
+- the percentage representation of shared taste.
+
+Recommendation explanations should be grounded in shared ranked items.
+
+### User Thought
+
+> “We agree on these, but rank them differently.”
+
+That difference can be as interesting as agreement.
+
+---
+
+# Stage 15 — Participate
+
+## Goal
+
+Move from browsing into community participation.
+
+Users can:
+
+- like Lists;
+- unlike Lists;
+- comment;
+- follow;
+- accept or decline follow requests;
+- publish more Lists;
+- edit their own Lists;
+- share Lists;
+- share Overall rankings.
+
+Participation should feel attached to real content and taste rather than generic engagement mechanics.
+
+---
+
+# Stage 16 — Share
+
+## Goal
+
+Let users take meaningful Top3 content outside the app.
+
+Users can share:
+
+- published Lists;
+- community Overall rankings.
+
+For V1, installed-app recipients can open supported shared content through the current Top3 link flow.
+
+A broader Universal Link / public web fallback remains a later enhancement.
+
+### User Thought
+
+> “You need to see this List.”
+
+Sharing should extend discovery without making sharing a prerequisite for product value.
+
+---
+
+# Stage 17 — Receive Activity
+
+## Goal
+
+Make social participation feel alive.
+
+Users may receive:
+
+- Like notifications;
+- Comment notifications;
+- Follow notifications;
+- Follow-request notifications;
+- follow-request acceptance notifications in-app.
+
+Supported social events may also generate push notifications when the user has enabled them.
+
+### Product Goal
+
+Bring the user back because something meaningful happened around their content or relationships.
+
+Notifications should not become noise.
+
+---
+
+# Stage 18 — Return
+
+## Goal
+
+Give the user a worthwhile reason to reopen Top3.
 
 Examples:
 
-- Like Top3s
-- Comment
-- Publish more lists
-- Follow more people
+- new Lists from people they follow;
+- new comments or Likes;
+- new followers;
+- new Taste Match recommendations;
+- new Discover activity;
+- a new category or topic they want to rank;
+- a shared List they want to revisit.
 
-The user should feel increasingly invested.
-
----
-
-# Stage 12 — Return
-
-A successful user returns because there is something new to discover.
-
-Examples:
-
-- New Top3s
-- New recommendations
-- New Taste Matches
-- New conversations
-
-The app should reward curiosity rather than habit.
+The app should reward curiosity rather than manufacture habitual checking.
 
 ---
 
-# Long-Term Engagement
+# Stage 19 — Publish More Lists
 
-Over time users should:
+## Goal
 
-Publish more categories.
+Deepen the user’s taste profile over time.
 
-Refine their profile.
+The user creates Lists across more categories and topics.
 
-Build trusted connections.
+Each new published List:
 
-Become known for their taste.
+- expresses more of the user’s identity;
+- contributes to community Overall rankings;
+- creates more opportunities for shared picks;
+- improves the richness of Taste Match;
+- gives followers more to discover.
 
-The goal is not to maximize time spent in the app.
+The user should not need to manage a separate “collection library” to understand their content.
 
-The goal is to make every visit feel worthwhile.
+Published Lists remain visible through the appropriate profile and discovery experiences.
+
+---
+
+# Stage 20 — Build Trusted Connections
+
+Over time, the user should:
+
+- publish across more interests;
+- refine their profile;
+- follow people whose taste they trust;
+- become recognizable through their Lists;
+- participate in conversations;
+- share discoveries;
+- revisit people with strong Taste Match;
+- discover entertainment through the community.
+
+The goal is not to maximize time spent in Top3.
+
+The goal is to make each visit feel worthwhile.
+
+---
+
+# Returning-User Journey
+
+A returning user should not replay first-time onboarding.
+
+The typical returning flow is:
+
+```text
+Open Top3
+   ↓
+Restore authenticated session
+   ↓
+Feed / primary app experience
+   ↓
+Browse new activity
+   ↓
+Discover / Search / Profile / Notifications / Create
+```
+
+If signed out, a returning user should be able to reach Sign In directly.
+
+The app should preserve the distinction between:
+
+- a new user creating a first List before account creation;
+- an existing user returning to their account.
+
+---
+
+# Private-Account Journey
+
+A user may choose a private account from Privacy settings.
+
+For private accounts:
+
+```text
+Another user opens profile
+        ↓
+Requests to follow
+        ↓
+Private user receives request
+        ↓
+Accept or Decline
+        ↓
+Accepted relationship unlocks appropriate private-profile access
+```
+
+The pending request state should remain visible and understandable.
+
+Declined requests may be sent again later.
+
+Privacy rules should remain consistent across profiles, recommendations, followers, following, and related discovery experiences.
+
+---
+
+# Safety / Moderation Journey
+
+Users should be able to participate without being forced to manage every problem themselves.
+
+Available safety mechanisms include:
+
+- blocking;
+- reporting;
+- prohibited-content filtering for supported free-form fields;
+- moderation removal of reported Lists.
+
+Expected content-filter rejection should explain what happened without losing the user’s typed input.
+
+If moderation removes a creator’s published List, the app should reflect that removal without leaving stale local content visible.
+
+---
+
+# Appearance Journey
+
+Top3 follows the device’s light / dark appearance automatically.
+
+The experience should feel like the same product in both themes.
+
+Users should not need to configure a separate in-app appearance setting.
+
+Book, trailer, and audio preview sheets intentionally invert the surrounding application theme to create a distinct media-preview layer.
+
+The inversion should feel deliberate rather than inconsistent.
 
 ---
 
 # Emotional Journey
 
-| Stage | Emotion |
-|---------|----------|
+| Stage | Intended Emotion |
+| --- | --- |
 | Discover | Curious |
-| Welcome | Interested |
-| Publish | Proud |
+| First Open | Interested |
+| Choose Category | Confident |
+| Build First List | Engaged |
+| Publish Boundary | Invested |
+| First Publish | Proud |
+| Lists → Overall | Surprised |
 | First Taste Match | Excited |
+| Explore | Curious Again |
 | Follow | Connected |
-| Compare | Surprised |
-| Comment | Engaged |
+| Compare | Recognized |
+| Comment / Like | Participating |
+| Share | Enthusiastic |
+| Notification | Acknowledged |
 | Return | Curious Again |
+| More Lists | Expressive |
+| Long-Term Community | Belonging |
 
 The emotional journey is as important as the functional journey.
 
@@ -332,33 +664,50 @@ The emotional journey is as important as the functional journey.
 
 # Product Principles
 
-Every step should answer one question before introducing the next.
+Every stage should answer one question before introducing the next.
 
 Avoid overwhelming users.
 
 Avoid unnecessary forms.
 
-Avoid unnecessary decisions.
+Avoid asking for information before the user understands why it matters.
 
-Progress should always feel natural.
+Preserve work across authentication.
+
+Use real shared taste to explain recommendations.
+
+Respect private-account boundaries.
+
+Prefer recognition over instruction.
+
+Make social participation contextual to Lists.
+
+Let content remain the hero.
+
+Progress should feel natural.
 
 ---
 
 # Success Metrics
 
-A successful onboarding experience should enable a user to:
+A successful first-use journey should enable a user to:
 
-✓ Create a profile.
+- ✓ understand the Top3 concept;
+- ✓ choose a category;
+- ✓ build a first List before account creation;
+- ✓ complete authentication at the publish boundary;
+- ✓ successfully publish the first List;
+- ✓ understand the relationship between Lists and Overall;
+- ✓ understand what Taste Match means;
+- ✓ encounter at least one meaningful person / taste connection;
+- ✓ continue into the main product.
 
-✓ Publish their first Top3.
+Longer-term success includes:
 
-✓ Discover at least one meaningful Taste Match.
-
-✓ Follow another user.
-
-✓ Return to the app.
-
-If these milestones are achieved, the user has experienced the core value of Top3.
+- following another user;
+- receiving or creating meaningful social activity;
+- publishing additional Lists;
+- returning to discover something worthwhile.
 
 ---
 
@@ -366,30 +715,37 @@ If these milestones are achieved, the user has experienced the core value of Top
 
 Potential areas of friction include:
 
-- Too many setup steps.
-- Empty feeds.
-- Too few recommendations.
-- Difficulty creating the first Top3.
-- Lack of explanation.
-- No immediate sense of community.
+- authentication interrupting the first List;
+- email confirmation failing to return cleanly to the app;
+- losing the pending onboarding List;
+- weak first-item search results;
+- poor media-provider coverage;
+- empty or low-volume discovery surfaces;
+- too few meaningful Taste Matches;
+- unclear distinction between personal Lists and Overall rankings;
+- private-account states that are difficult to understand;
+- notification overload;
+- shared links that do not work for recipients without Top3 installed;
+- Feed architecture that becomes too slow as content volume grows.
 
-Future iterations should focus on reducing these points of friction.
+Future iterations should reduce these points of friction without adding unnecessary onboarding steps.
 
 ---
 
 # Future Journey Enhancements
 
-Examples include:
+Possible enhancements include:
 
-- Guided onboarding.
-- Suggested first categories.
-- Suggested users to follow.
-- Achievement milestones.
-- Weekly recommendations.
-- Personalized discovery.
-- Better notifications.
+- Universal Links and public web fallback for shared content;
+- stronger personalized discovery;
+- improved recommendation ranking;
+- server-generated paginated Feed delivery;
+- richer new-user recommendation seeding;
+- more contextual re-engagement;
+- additional content categories;
+- carefully scoped AI-assisted discovery.
 
-These enhancements should reinforce—not replace—the core journey.
+These should reinforce—not replace—the core journey.
 
 ---
 
@@ -397,11 +753,11 @@ These enhancements should reinforce—not replace—the core journey.
 
 When someone recommends Top3 to a friend, we hope they say:
 
-> "It's like finding people who already love the same things you do."
+> “It’s like finding people who already love the same things you do.”
 
 That sentence captures the experience Top3 is trying to create.
 
-Every improvement to the product should make that statement feel more true.
+Every improvement should make that statement feel more true.
 
 ---
 
@@ -409,6 +765,12 @@ Every improvement to the product should make that statement feel more true.
 
 The user journey should evolve as the product evolves.
 
-Whenever a new stage is added—or an existing stage changes significantly—this document should be updated to reflect the intended experience.
+Whenever a major stage changes—particularly onboarding, authentication, publishing, discovery, social connection, or returning-user behaviour—this document should be updated.
 
-The journey should remain simple, intentional, and always aligned with the Product Vision.
+The journey should remain simple, intentional, and aligned with the Product Vision.
+
+Current feature availability belongs in `FEATURES.md`.
+
+Implementation detail belongs in `CURRENT_STATE.md`.
+
+Durable product rules belong in `DECISIONS.md`.

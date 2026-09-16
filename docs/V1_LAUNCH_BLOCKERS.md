@@ -4,8 +4,10 @@ Document purpose: Single source of truth for requirements that must be
 implemented, verified, or completed before submitting Top 3 V1 to Apple
 App Review.
 
-Audit baseline: Apple App Review Guidelines current as of August 20,
-2026 (Apple lists the guidelines as last updated June 8, 2026).
+Audit baseline: Apple App Review Guidelines rechecked September 16,
+2026. Apple continues to list the guidelines as last updated June 8,
+2026. September 2026 App Store Connect submission changes are tracked
+separately below where they affect Top 3.
 
 Status key
 
@@ -536,69 +538,76 @@ Privacy, Legal & Data Handling
 
 🟢 3.1 Privacy policy --- VERIFIED
 
-Status: Policy content, public-web publication, repository copy, and in-app access are implemented, synchronized, and verified. Entering the live Privacy Policy URL in App Store Connect remains a submission task tracked under 6.1.
+Status: The V1 Privacy Policy has been reviewed against the current
+Podcasts implementation and is synchronized across the repository,
+in-app policy screen, and public website.
 
-Completed
+Verified September 16, 2026
 
-The V1 Privacy Policy has been audited against Top 3's current implementation and is maintained at docs/PRIVACY_POLICY.md.
+The repository policy at docs/PRIVACY_POLICY.md was updated to describe:
 
-The policy describes the current V1 account/authentication, profile, social/UGC, search, media, analytics, moderation, push notification, retention, and account deletion practices.
+Apple iTunes Search and Lookup services used for podcast discovery;
 
-Supabase/auth/profile/social data practices are represented based on the audited implementation.
+Apple Podcasts chart data used for podcast suggestions;
 
-Relevant third-party services are accounted for, including Supabase, Amplitude, Expo, Apple, Google, TMDb, Google Books, Open Library, Apple Music, IGDB/Twitch, and YouTube where applicable to the current V1 experience.
+podcast preview media identified through Apple's podcast services; and
 
-The policy reflects the implemented account-deletion flow, including server-side account/data deletion, profile-image removal where applicable, push notification token removal, Amplitude deletion requests, Sign in with Apple authorization revocation where applicable, and clearing the deleted account's locally stored recent searches on the device used for deletion.
+the possibility that podcast preview audio is delivered by the podcast
+publisher or another media host.
 
-Push notification disclosures were added after implementation of Expo Notifications and Apple Push Notification service delivery. The policy explains the push notification token, its association with the user's device and Top 3 account, notification delivery purposes, applicable service-provider processing, notification preferences, and token removal.
+The native policy at app/privacy-policy.tsx was updated with the same
+September 16 disclosures.
 
-The public Privacy Policy is live at:
+npm run typecheck passes after the in-app policy update.
+
+The public Privacy Policy was updated and deployed through Wrangler at:
 
 https://top3taste.com/privacy
 
-The public policy was updated to include the push-notification disclosures.
+Live verification confirmed:
 
-docs/PRIVACY_POLICY.md was updated to match the approved public policy.
+Last Updated: September 16, 2026;
 
-The native Privacy Policy screen at app/privacy-policy.tsx was updated to match the approved policy.
+the Apple iTunes Search / Lookup and Apple Podcasts chart disclosure; and
 
-Settings includes a Privacy Policy row in the App section and opens the native policy screen.
+the podcast-preview publisher / media-host disclosure.
 
-The updated Settings → Privacy Policy flow was verified successfully on iPhone, including the September 3, 2026 Last Updated date, Push Notifications subsection, navigation, full-policy scrolling, and visual presentation.
+The public, repository, and in-app copies are therefore synchronized for
+the current provider set.
 
-npm run typecheck passes after the updated Privacy Policy implementation.
+Release-candidate note
 
-Latest privacy-policy checkpoint
-
-Commit 83aafa7 --- Update privacy policy for push notifications.
-
-The commit was pushed successfully to origin/main.
+Re-open Settings → Privacy Policy once on the final release-candidate build
+to guard against a presentation or build regression. This is a regression
+check rather than unresolved policy content.
 
 Remaining submission task
 
-Enter the live Privacy Policy URL in App Store Connect:
+Enter / reconfirm the live Privacy Policy URL in App Store Connect:
 
 https://top3taste.com/privacy
 
-This is tracked under 6.1 Required URLs and contact details and does not represent unfinished app-side Privacy Policy implementation.
-
 V1 conclusion
 
-Closed for the Privacy Policy implementation and publication requirement. The public, repository, and in-app policy copies are synchronized and verified. No known app-side Privacy Policy launch blocker remains.
+Closed. The Privacy Policy now reflects the current Podcasts implementation
+and no known app-side or public-policy launch blocker remains.
 
 🟢 3.2 App Privacy disclosures --- VERIFIED
 
-Status: The existing App Store Connect App Privacy disclosures were reviewed against the audited Top 3 V1 implementation, including account/profile/social/UGC data, Amplitude product analytics, push notifications, and installed native SDK privacy manifests.
+Status: The existing App Store Connect App Privacy disclosures have been
+re-reviewed against the current Podcasts implementation and remain
+appropriate for V1.
 
-Verified App Store Connect disclosures
+Verified September 16, 2026
 
-The currently published App Privacy configuration contains eight collected data types, all classified as Data Linked to You:
+The current App Store Connect configuration contains eight collected data
+types, all classified as Data Linked to You:
 
 Name --- App Functionality.
 
 Email Address --- App Functionality.
 
-Contacts --- Product Personalization and App Functionality. Apple's Contacts category includes a user's social graph; Top 3's following/follower relationships fit this use without implying access to the device address book.
+Contacts --- Product Personalization and App Functionality.
 
 Photos or Videos --- App Functionality.
 
@@ -610,53 +619,42 @@ Device ID --- Analytics.
 
 Product Interaction --- Analytics.
 
-No Top 3 data type is declared as being used for tracking.
+Podcasts audit
 
-Push-notification review
+Podcast search requests are sent directly to Apple's public iTunes Search
+services to retrieve results.
 
-The addition of push notifications does not require a new App Privacy data-type disclosure based on the audited V1 implementation.
+Top 3 does not persist raw podcast search queries in its backend.
 
-Top 3 stores an Expo push notification token associated with the applicable device and Top 3 account for notification delivery.
+The search_performed Amplitude event records only the applicable category
+and does not send the user's raw search text.
 
-The token is used for app functionality rather than advertising or cross-company tracking.
+The analytics event-property schema does not include a search-query or
+search-term property.
 
-Push-notification handling is disclosed in the synchronized public, repository, and in-app Privacy Policy copies under 3.1.
+Top 3's limited recent-search history remains stored locally on the device.
 
-Amplitude analytics review
+The Podcasts provider uses in-memory preview caching and does not introduce
+server-side search-history persistence.
 
-The installed analytics SDK is @amplitude/analytics-react-native@1.6.9.
+Based on the audited implementation, Podcasts does not introduce a new
+App Store Connect data type or collection purpose.
 
-Top 3's Amplitude integration is centralized in lib/analytics.ts.
+The existing Amplitude and installed native privacy-manifest review remains
+applicable because the Podcasts work did not add a new analytics SDK or
+native provider SDK.
 
-The SDK is configured with trackingOptions that disable automatic collection of ad ID, carrier, device manufacturer, device model, IP address, language, OS name, OS version, and platform.
+Release-candidate note
 
-No Amplitude Session Replay integration was identified.
-
-Authenticated analytics users are associated through setUserId().
-
-The audited event set is limited to defined product-interaction events such as account creation, onboarding, collection activity, search, item addition, Discover/profile views, follows, likes, comments, Taste Match, collection views/shares, and notification opens.
-
-Audited event properties are limited to category, source, rank, and rankCount.
-
-The existing User ID, Device ID, and Product Interaction analytics disclosures remain appropriate.
-
-No advertising or cross-company tracking use was identified in the audited Amplitude configuration.
-
-Privacy-manifest / Required Reason API review
-
-app.json does not contain an explicit ios.privacyManifests block.
-
-Installed native dependencies that use Apple's Required Reason APIs provide PrivacyInfo.xcprivacy manifests, including Expo Application, Expo File System, React Native, Expo Notifications, Expo Constants, Expo System UI, and AsyncStorage.
-
-The installed manifests declare applicable reasons for File Timestamp, Disk Space, System Boot Time, and UserDefaults access.
-
-The inspected manifests that explicitly declare tracking set NSPrivacyTracking to false.
-
-No additional custom ios.privacyManifests configuration was identified as necessary based on the audited V1 dependencies and configuration.
+Reconfirm the App Privacy questionnaire against the final submitted binary
+if analytics, search persistence, provider SDKs, or other data-handling
+behaviour changes before submission.
 
 V1 conclusion
 
-Closed. The existing App Store Connect App Privacy disclosures remain appropriate for the audited Top 3 V1 release implementation, including Amplitude analytics and push notifications. No undeclared tracking or known privacy-manifest launch blocker was identified. Reconfirm these disclosures against the final release-candidate dependency set if native SDKs are added or materially changed before submission.
+Closed. No additional App Privacy disclosure is required based on the
+current Podcasts implementation, and the existing eight disclosed data
+types remain appropriate for the audited V1 implementation.
 
 🟢 3.3 Terms / community standards --- VERIFIED
 
@@ -724,65 +722,108 @@ moderation model. No known Terms/community-standards launch blocker remains.
 
 App Completeness & Reliability --- Guideline 2.1
 
-🟢 4.1 Release-candidate regression test --- VERIFIED FOR BUILD 6
+🟡 4.1 Release-candidate regression test --- FINAL BUILD VERIFY
 
 Apple specifically emphasizes crashes, bugs, incomplete information, and
 unfinished experiences during review.
 
 Current release-candidate status
 
-Production iOS Build 6 (Top 3 1.0.0, build 6) completed the release-candidate
-device regression and remains the current TestFlight release candidate.
+Production iOS Build 8 remains the current TestFlight release candidate.
 
-Build 6 has been submitted for external TestFlight Beta App Review.
+The current feature/dark-mode branch is ahead of Build 8 by five verified
+application commits:
 
-The main branch is currently ahead of Build 6 by two verified fixes:
-150726b --- Add email domain typo suggestions and fa8353a --- Dismiss keyboard
-when playing audio previews.
+c5362d8 --- Add dark mode and inverted preview themes.
 
-If Build 7 is created before App Store submission, this complete regression
-must be repeated on Build 7 before it replaces Build 6 as the release
-candidate.
+dca2bab --- Refine auth buttons and restore onboarding flow.
+
+6b2acfa --- Add podcast category and previews.
+
+ccee6d7 --- Improve Discover search matching.
+
+92106eb --- Unify Discover search result cards.
+
+Build 9 has not been created.
+
+Build 8 remains the release candidate while documentation and regression
+review continue. If the five post-Build-8 changes are intended for the V1
+App Store binary, a replacement build must complete the full release-
+candidate regression before replacing Build 8.
 
 Required device test
 
 Fresh install
 
-New account/onboarding
+Native splash → onboarding handoff
+
+New account / signed-out first-List onboarding
+
+Onboarding category layout, including Podcasts
 
 Existing account sign-in
 
-Sign-out/sign-in
+Apple authentication
 
-Create collection
+Google authentication
 
-Search each supported V1 category
+Email authentication / confirmation callback
 
-Rank/reorder items
+Password recovery / reset
 
-Save/resume draft
+Sign-out / sign-in
 
-Publish collection
+Sequential account switching
 
-Edit published collection where supported
+Create List
+
+Search each supported V1 category:
+
+Albums
+
+Artists
+
+Books
+
+Movies
+
+Podcasts
+
+Songs
+
+TV Shows
+
+Video Games
+
+Rank / reorder items
+
+Save / resume draft
+
+Publish List
+
+Edit published List where supported
 
 Feed rendering
 
 Discover
 
+Discover category and genre search matching
+
 Category feeds
 
 Public profiles
 
-Follow/unfollow
+Follow / unfollow
 
-Private-profile/follow-request flow if included in V1
+Private-profile / follow-request flow
 
 Likes
 
-Comments: create/edit/delete as applicable
+Comments: create / delete as applicable
 
-Notifications
+In-app notifications
+
+Push-notification permission and tap routing
 
 Taste Match
 
@@ -790,20 +831,33 @@ User search
 
 Report content
 
-Block/unblock
+Block / unblock
 
 Settings
 
-Delete account
+Delete account, including Apple authorization revocation where applicable
 
-External media previews/trailers/music previews included in V1
+Apple Music previews
+
+Apple Podcasts previews
+
+Movie / TV trailers
+
+Book previews
+
+Verify preview-sheet theme inversion:
+
+Light app → Dark preview
+
+Dark app → Light preview
+
+Verify normal application surfaces in both light and dark appearance
 
 Share an individual published List from each supported sharing surface
 
 Share a community Overall ranking
 
-Open a shared published-List deep link and confirm the intended List
-opens
+Open a shared published-List deep link and confirm the intended List opens
 
 Open a shared Overall-ranking deep link and confirm the intended Overall
 ranking opens
@@ -811,9 +865,9 @@ ranking opens
 While signed out, open shared public published content and confirm it
 remains viewable without exposing draft or removed content
 
-App relaunch/session persistence
+App relaunch / session persistence
 
-Poor/failed network behaviour for critical flows
+Poor / failed network behaviour for critical flows
 
 Acceptance
 
@@ -821,27 +875,36 @@ No reproducible crash.
 
 No blocking error alert during ordinary use.
 
-No placeholder/unfinished screens accessible in V1.
+No placeholder / unfinished screens accessible in V1.
 
-No test/debug content exposed unintentionally.
+No test / debug content exposed unintentionally.
+
+No light / dark mode regression that makes content unreadable or controls
+inaccessible.
+
+No Podcasts category, search, preview, or Discover regression.
 
 Completed pre-release UI consistency audit
 
-The V1 popup review is complete across app, components, context, and
+The V1 popup review remains complete across app, components, context, and
 services.
 
 Reviewed confirmation, destructive, success, error, validation,
 authentication, collection, reporting, blocking, and moderation popup
 flows use the shared Top 3 ActionSheet pattern.
 
-A project-wide audit returned zero remaining Alert.alert calls across
-app, components, context, and services.
+The existing zero-Alert.alert audit remains a completed foundation but
+should be rechecked only if final pre-submission changes touch popup paths.
 
-npm run typecheck passes after the completed blocking and
-popup-standardization work.
+npm run typecheck passes on the current feature/dark-mode application
+checkpoint.
 
-This completed audit does not replace the final release-candidate
-regression test above.
+V1 conclusion
+
+Build 8 remains the current TestFlight release candidate. Final release-
+candidate regression is not considered closed for any post-Build-8 code
+until that code is included in a submitted build and the complete device
+regression above passes.
 
 🟢 4.2 Empty/error/loading states --- VERIFIED
 
@@ -909,38 +972,78 @@ Content, Metadata & Third-Party Services
 
 🟢 5.1 Third-party content/API compliance --- VERIFIED
 
-Status: The V1 provider-by-provider compliance review is complete for TMDb,
-Google Books/Open Library, IGDB/Twitch, Apple Music, and YouTube trailer
-playback. No known provider-compliance launch blocker remains for the audited
-V1 implementation.
+Status: The V1 provider-by-provider compliance review now includes the
+current Podcasts implementation. No known provider-compliance launch
+blocker remains for the audited V1 implementation.
 
-Top 3 uses external data/media providers for ranked-item metadata and
-previews. Verify the V1 implementation complies with each provider's
-current terms and attribution requirements.
+Verified provider areas
 
-Known V1 provider areas to audit
-
-TMDB --- Movies / TV
+TMDb --- Movies / TV
 
 Google Books --- Books
 
-IGDB/Twitch --- Video Games, if this is the final V1 provider
+Open Library --- Book fallback
+
+IGDB / Twitch --- Video Games
 
 Apple Music --- Albums / Artists / Songs
 
-YouTube/external trailer playback where used
+Apple iTunes Search API --- Podcasts
 
-Verify
+Apple iTunes Lookup API --- Podcasts
 
-Required attribution is present.
+Apple Podcasts chart data --- Podcast suggestions / charts
 
-Artwork/image usage complies with provider terms.
+YouTube --- embedded Movie / TV trailer playback
 
-API credentials are handled correctly.
+Podcasts verification
 
-Deep links/external playback comply with provider rules.
+The Podcasts implementation uses Apple's public search / lookup services
+for podcast metadata and discovery.
 
-No unsupported content is being cached or redistributed.
+Podcast episode preview URLs are identified through Apple's podcast lookup
+data and played from the publisher or media host rather than downloaded or
+persistently redistributed by Top 3.
+
+Podcast preview information is cached only in memory for the active
+application session.
+
+Apple Podcasts show destinations use the provider-supplied or canonical
+Apple Podcasts show URL.
+
+Physical-device verification confirmed that:
+
+podcast audio preview playback works normally;
+
+the Apple Podcasts action opens the correct show in Apple Podcasts; and
+
+no dead-link, wrong-show, or external-navigation error was observed.
+
+Existing provider requirements remain applicable
+
+Required attribution must remain present where required.
+
+Artwork and metadata usage must remain consistent with provider terms.
+
+Private provider credentials must remain server-side where applicable.
+
+Deep links and external playback must continue to use supported provider
+destinations.
+
+Top 3 must not persist or redistribute provider content beyond what the
+app's provider integrations permit.
+
+Release-candidate note
+
+Repeat representative provider search / preview checks on the final
+release-candidate build to guard against build or configuration
+regressions.
+
+V1 conclusion
+
+Closed. The current Podcasts provider implementation and external Apple
+Podcasts navigation have been reviewed and physically verified, and no
+known third-party content/API compliance blocker remains for V1.
 
 🟢 5.2 App name, icon, screenshots and metadata --- VERIFIED
 
@@ -1028,6 +1131,28 @@ Version/release notes
 
 App Privacy questionnaire
 
+⚪ 6.4 September 2026 Social Media age-rating question --- SUBMISSION TASK
+
+Apple's September 2026 App Store submission flow requires developers to
+indicate whether an app includes social media capabilities.
+
+Top 3 includes a social Feed and allows users to interact with user-
+generated content through Likes, Comments, Follows, and Shares.
+
+Before final submission:
+
+Answer the Social Media capability question accurately in App Store
+Connect.
+
+Confirm the resulting age-rating configuration remains consistent with
+Top 3's intended minimum age of 13.
+
+Reconfirm the completed age-rating questionnaire after the final
+release-candidate feature set is selected.
+
+This is an App Store Connect submission task. No new app-code blocker has
+been identified from this requirement.
+
 Current V1 Gate Summary
 
 Area
@@ -1040,7 +1165,7 @@ User blocking
 
 🟢 VERIFIED
 
-Complete for V1 based on audited/tested social surfaces
+Complete for V1 based on audited / tested social surfaces
 
 Prohibited-content filtering
 
@@ -1054,76 +1179,71 @@ Reporting & moderation
 🟢 VERIFIED
 
 Lists, users, and comments are reportable; admin moderation
-removal/dismissal tested; V1 operational review process documented
+removal / dismissal tested; V1 operational review process documented
 
 In-app support/contact info
 
 🟢 VERIFIED
 
 Settings → Support → Contact Support verified end-to-end on iPhone;
-external Support URL/App Review contact remain submission tasks
+App Store Connect contact fields remain submission tasks
 
 Account deletion
 
 🟢 VERIFIED
 
-End-to-end iPhone deletion, Auth removal, cascade architecture,
-zero-orphan database audit, Apple refresh-token persistence, and Apple
-authorization revocation verified
+End-to-end deletion, Auth removal, cascade architecture, zero-orphan
+database audit, Apple refresh-token persistence, and Apple authorization
+revocation verified
 
 Sign-out/session lifecycle
 
 🟢 VERIFIED
 
-Clean sign-out and sequential account switching verified on iPhone with
-no stale user state or Supabase/permission errors; repeat on release
-candidate
+Clean sign-out and sequential account switching verified; repeat on final
+release candidate
 
 Authentication
 
 🟢 VERIFIED
 
-Email sign-up/verification/sign-in, password recovery/reset/change,
-native Sign in with Apple account lifecycle, and session lifecycle
-verified; reviewer/demo credentials remain a 6.2 submission task
+Email, Apple, Google, password recovery, and session lifecycle verified;
+reviewer/demo credentials remain a submission task
 
 Privacy policy
 
 🟢 VERIFIED
 
-Public Privacy Policy is live at
-https://top3taste.com/privacy; public, repository, and
-in-app copies are synchronized with push-notification disclosures; updated
-screen verified on iPhone; commit 83aafa7 pushed to origin/main; entering
-the live URL in App Store Connect remains a 6.1 submission task
+Reviewed and synchronized for the current Podcasts provider/data flow;
+repository, in-app, and public copies verified September 16, 2026
 
 App Privacy disclosures
 
 🟢 VERIFIED
 
-Existing eight App Store Connect data types verified against the V1 implementation; Amplitude analytics configuration, push notifications, tracking status, and installed native privacy manifests audited with no known disclosure or manifest blocker
+Re-audited against the current Podcasts data flow; no additional App Store
+Connect data type or collection purpose is required
 
 Terms/community standards
 
 🟢 VERIFIED
 
-Terms of Use and Community Standards are available in-app and on the public
-web; public pages load without authentication; rules align with the verified
-V1 reporting, blocking, prohibited-content filtering, and moderation model
+In-app and public-web copies remain aligned with the V1 moderation model
 
 Popup standardization
 
 🟢 VERIFIED
 
-V1 popup review complete; shared Top 3 ActionSheet used across reviewed
-flows; zero Alert.alert matches in app, components, context, and
-services; typecheck passes
+Shared Top 3 ActionSheet foundation complete; zero Alert.alert audit was
+completed for the audited application state
 
 Release regression testing
 
-🟢 VERIFIED
+🟡 VERIFY
 
-Build 6 passed the release-candidate regression; repeat if Build 7 replaces it
+Build 8 remains the current TestFlight release candidate; the branch has
+five verified post-Build-8 application commits. Any replacement build
+must pass the complete regression before becoming the final candidate
 
 Error/empty/loading states
 
@@ -1135,26 +1255,36 @@ Production security/config
 
 🟢 VERIFIED
 
-Production Supabase/RLS/secrets audit completed
+Production Supabase / RLS / secrets audit completed
 
 Third-party API/content compliance
 
 🟢 VERIFIED
 
-Provider-by-provider V1 compliance audit completed
+Provider audit extended to Apple iTunes Search / Lookup, Apple Podcasts
+chart data, podcast preview playback, and external Apple Podcasts
+navigation; physical-device verification completed
 
 App metadata/assets
 
 🟢 VERIFIED
 
-Current V1 App Store metadata and production assets prepared/reviewed
+Current V1 App Store metadata and production assets prepared / reviewed;
+reconfirm screenshots and copy against the selected final binary
+
+September 2026 Social Media age-rating question
+
+⚪ SUBMISSION TASK
+
+Answer the new App Store Connect Social Media capability question
+accurately and reconfirm the resulting 13+ age-rating configuration
 
 App Store Connect submission data
 
 ⚪ SUBMISSION TASK
 
-Required URLs, reviewer access/instructions, and listing data are prepared;
-final App Store submission remains pending
+Required URLs, reviewer access / instructions, listing data, and final
+submission remain pending
 
 Latest verification checkpoint
 
@@ -1256,15 +1386,46 @@ Both pass npm run typecheck and were verified on a physical iPhone.
 Build 7 is intentionally on hold until the remaining launch-critical checks
 are complete.
 
+September 16, 2026
+
+Documentation and post-Build-8 checkpoint review.
+
+Production Build 8 remains the current TestFlight release candidate.
+
+The feature/dark-mode branch contains five verified application commits
+after Build 8 through 92106eb.
+
+Post-Build-8 work includes system-aware light / dark mode, intentional
+preview-sheet theme inversion, authentication-button refinement,
+restored onboarding presentation, Podcasts, Discover search matching,
+and shared Discover search-result cards.
+
+Podcasts was added after the previous privacy, App Privacy, and external-
+provider compliance audits. All three audits were subsequently completed
+on September 16, 2026 and returned to VERIFIED status.
+
+Apple's September 2026 App Store Connect submission requirements now
+include a Social Media capability question. Top 3 must answer that
+question accurately before final submission.
+
 Immediate Next Step
 
-Complete the remaining end-to-end verification of the newly branded password
-reset and password-changed security emails.
+Complete the documentation checkpoint and prepare a replacement
+release-candidate build containing the five post-Build-8 application
+commits.
 
-If no additional launch-critical issue is found, decide whether the two
-post-Build-6 fixes warrant a consolidated Build 7. If Build 7 is created,
-repeat the full release-candidate regression before final App Store
-submission.
+The five post-Build-8 changes are confirmed for inclusion in the V1 App
+Store submission binary.
+
+The Privacy Policy, App Privacy, and Podcasts provider-compliance audits
+are complete.
+
+Complete the September 2026 App Store Connect Social Media age-rating
+question before final submission.
+
+Create the replacement release-candidate build only after the application
+and documentation checkpoint is committed and pushed, then repeat the full
+device regression before replacing Build 8 as the V1 release candidate.
 
 Definition of V1 Launch-Ready
 

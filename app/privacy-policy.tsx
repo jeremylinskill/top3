@@ -115,7 +115,7 @@ export default function PrivacyPolicyScreen() {
             Effective Date: August 25, 2026
           </AppText>
           <AppText variant="legalMeta">
-            Last Updated: September 3, 2026
+            Last Updated: September 16, 2026
           </AppText>
         </View>
 
@@ -370,6 +370,7 @@ export default function PrivacyPolicyScreen() {
                 'Google Books for books.',
                 'Open Library as a book-search source or fallback.',
                 'Apple Music for songs, albums, and artists.',
+                'Apple services, including iTunes Search and Lookup services and Apple Podcasts chart data, for podcasts.',
                 'IGDB/Twitch for video games.',
               ]}
             />
@@ -407,6 +408,7 @@ export default function PrivacyPolicyScreen() {
             <BulletList
               items={[
                 'Music previews may be provided using Apple Music media.',
+                "Podcast previews may use playable episode media identified through Apple's podcast services, and the audio itself may be delivered by the podcast publisher or another media host.",
                 'Movie and television trailers may be discovered through TMDb and played using YouTube.',
               ]}
             />
@@ -737,8 +739,10 @@ export default function PrivacyPolicyScreen() {
                 'Google Books.',
                 'Open Library.',
                 'Apple Music.',
+                'Apple podcast discovery services, including iTunes Search and Lookup and Apple Podcasts chart data.',
                 'IGDB/Twitch.',
                 'YouTube.',
+                'Podcast publishers or media hosts when a podcast audio preview is played.',
               ]}
             />
 

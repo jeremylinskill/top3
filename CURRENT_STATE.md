@@ -1,13 +1,13 @@
 CURRENT_STATE.md
 
-Project: Top3 Version: 3.1 Status: V1 Launch Readiness Last Updated:
-September 10, 2026 Current Branch: main
+Project: Top3 Version: 3.2 Status: V1 Launch Readiness Last Updated:
+September 16, 2026 Current Branch: feature/dark-mode
 
 Last Verified Commit
 
-fa8353a
+92106eb
 
-Dismiss keyboard when playing audio previews
+Unify Discover search result cards
 
 Dashboard
 
@@ -17,23 +17,30 @@ Project Status
 
 Current Feature
 
-V1 App Store launch readiness and final release-candidate validation.
+V1 App Store launch readiness, dark-mode integration, Podcasts support,
+and final release-candidate validation.
 
-Production iOS Build 6 (version 1.0.0, build number 6) remains the
-current TestFlight release candidate. It has been submitted for external
-TestFlight Beta App Review. Build 7 is intentionally being held until
-the remaining launch-critical checks are complete so any final fixes can
-be consolidated into one replacement build.
+Production iOS Build 8 remains the current TestFlight release candidate.
+Build 9 has not been created yet. The active feature/dark-mode branch is
+based on the Build 8 application state and currently contains five
+verified post-Build-8 commits:
 
-The main branch is currently ahead of Build 6 by two verified app-side
-fixes:
+• c5362d8 --- Add dark mode and inverted preview themes
 
-• 150726b --- Add email domain typo suggestions
+• dca2bab --- Refine auth buttons and restore onboarding flow
 
-• fa8353a --- Dismiss keyboard when playing audio previews
+• 6b2acfa --- Add podcast category and previews
 
-Both changes pass npm run typecheck and have been verified on a physical
-iPhone. Build 6 does not contain these two fixes.
+• ccee6d7 --- Improve Discover search matching
+
+• 92106eb --- Unify Discover search result cards
+
+The current branch passes npm run typecheck. The onboarding category
+layout, Podcasts create/search/preview flow, Apple Podcasts external-link
+navigation, inverted preview theming, Discover search matching, and shared
+Discover result-card presentation have all been verified on a physical
+iPhone. These post-Build-8 changes are not yet represented by a new
+TestFlight build.
 
 The production Top 3 website is live at top3taste.com. The site provides
 the public launch/support surfaces and a branded HTTPS authentication
@@ -54,41 +61,51 @@ account creation. High-confidence mistakes such as gmail.con can trigger
 a Top 3 ActionSheet that offers the suggested domain while still
 allowing the user to keep the address they entered.
 
-On Search, tapping an Apple Music audio-preview play/pause control now
-dismisses the iOS keyboard before toggling playback. Movie, TV, and
-Video Game trailer playback already dismisses the keyboard before
-opening the trailer experience.
+On Search, tapping an audio-preview play/pause control dismisses the iOS
+keyboard before toggling playback. Movie, TV, and Video Game trailer
+playback also dismisses the keyboard before opening the trailer
+experience.
 
-Design System & Startup Polish
+Design System, Dark Mode & Startup Polish
 
 Status: ✅ Complete for the current active UI audit
 
-The reviewed active application UI now uses shared semantic typography
-roles from constants/typography.ts for major headings, section titles,
-card titles, body copy, labels, form labels, metadata, captions,
-actions, and badges. Intentional exceptions such as emoji / icon glyph
-sizing and specialized typography without a true shared-token match
-remain local.
+The reviewed active application UI uses shared semantic typography roles
+from constants/typography.ts and semantic colour roles from
+hooks/use-app-colors.ts. AppText is the shared semantic text layer across
+the active dark-mode migration. Intentional exceptions such as emoji /
+icon glyph sizing, provider artwork, and specialized typography without
+a true shared-token match remain local.
 
-Semantic colour usage distinguishes the main action colour from the Top3
-brand / secondary-interaction accent. Shared controls continue to reuse
-the established design tokens, and profile-avatar presentation is
-centralized through the shared UserAvatar component while preserving
-uploaded profile photos.
+The application follows the device appearance automatically. The primary
+application background is #FAFAFA in light mode and #000000 in dark
+mode, with semantic surface, border, and text colours supplied through
+useAppColors(). The Top 3 purple accent remains distinct from primary
+action styling and uses a brighter dark-mode variant where required.
 
-The native splash → onboarding handoff has been refined so the branded
-onboarding state is already present behind the splash, avoiding an
-intermediate white flash or generic loading treatment. Production splash
-icon and wordmark assets are aligned with the first onboarding
-presentation, while onboarding copy and actions use staged fade-in
-behaviour.
+Book, trailer, and audio preview sheets intentionally use the opposite
+visual theme from the application: a light app opens dark preview sheets,
+while a dark app opens light preview sheets. Shared preview-sheet colours
+are supplied through hooks/use-preview-sheet-colors.ts. Trailer video
+itself remains black.
+
+The native splash → onboarding handoff keeps the branded onboarding
+state present behind the splash. The onboarding icon is positioned within
+the intro stage rather than as a persistent full-screen overlay, remains
+stationary during the first intro presentation, and fades with the intro
+content before the category-selection screen appears.
+
+Onboarding categories are derived directly from TOP3_CATEGORIES and
+alphabetized automatically. The two-column layout therefore adapts
+without a manually maintained onboarding category order.
 
 Current Priority
 
-Complete the remaining V1 launch-critical validation while keeping Build
-6 as the current TestFlight release candidate. Avoid creating Build 7
-until the remaining checks are complete; consolidate any additional
-launch-critical fixes into that next build if one is required.
+Complete the documentation and regression pass for feature/dark-mode while
+keeping Build 8 as the current TestFlight release candidate. Do not
+create Build 9 yet; consolidate the verified dark-mode, onboarding,
+Podcasts, authentication-button, and Discover changes before deciding
+whether a replacement TestFlight build is required.
 
 Continue validating authentication email flows, release-candidate
 behaviour, App Store Connect submission details, production
@@ -199,7 +216,9 @@ Open Library --- Book fallback provider
 
 IGDB --- Video Games
 
-Apple Music --- Music / Songs, Albums, and Artists
+Apple Music --- Songs, Albums, and Artists
+
+Apple Podcasts / iTunes Search + Lookup APIs --- Podcasts
 
 Twitch OAuth --- Server-side IGDB authentication
 
@@ -209,11 +228,17 @@ Video Games search works during signed-out onboarding as well as for
 authenticated users. The Twitch Client Secret is stored only in Supabase
 Edge Function secrets and is never exposed to the mobile client.
 
-Music search for Songs, Albums, and Artists is proxied through the
-authenticated Supabase Edge Function apple-music-search. Apple Music
-developer-token credentials, including the private key, Key ID, and Team
-ID, are stored only as Supabase Edge Function secrets and are never
-exposed to the mobile client.
+Search for Songs, Albums, and Artists is proxied through the authenticated
+Supabase Edge Function apple-music-search. Apple Music developer-token
+credentials, including the private key, Key ID, and Team ID, are stored
+only as Supabase Edge Function secrets and are never exposed to the
+mobile client.
+
+Podcast search and suggestions are implemented in providers/podcasts.ts
+using Apple's public iTunes Search / Lookup endpoints and Apple Podcasts
+chart feed. Podcast items persist Apple podcast identifiers, Apple
+Podcasts URLs, artwork, and playable episode-preview information where
+available.
 
 Navigation
 
@@ -303,13 +328,17 @@ Books → providers/books.ts → Google Books with Open Library fallback
 Video Games → providers/video-games.ts → lib/supabase/video-games.ts →
 Supabase Edge Function video-game-search → IGDB
 
-Music / Songs, Albums, and Artists → providers/music.ts →
+Songs, Albums, and Artists → providers/music.ts →
 lib/supabase/apple-music.ts → authenticated Supabase Edge Function
 apple-music-search → Apple Music
 
-Music results include Apple Music artwork and metadata. Songs include
-track preview URLs; Albums and Artists are enriched with representative
-track preview URLs where available.
+Podcasts → providers/podcasts.ts → Apple iTunes Search / Lookup APIs and
+Apple Podcasts chart feed
+
+Apple Music results include artwork and metadata. Songs include track
+preview URLs; Albums and Artists are enriched with representative track
+preview URLs where available. Podcast results include Apple podcast IDs,
+artwork, show links, and on-demand episode preview lookup.
 
 Provider-specific retry, fallback, filtering, ranking, and API behavior
 remains inside each provider rather than being forced into the shared
@@ -320,11 +349,13 @@ maintains an in-memory result cache.
 
 Audio Preview Architecture
 
-Song preview playback is centralized through
+Audio preview playback is centralized through
 context/audio-preview-context.tsx and AudioPreviewProvider.
 
-The shared audio preview controller uses Expo Audio and allows only one
-preview to play at a time across the application.
+The shared audio preview controller supports Apple Music items and Apple
+Podcasts items, uses Expo Audio, and allows only one audio preview to play
+at a time across the application. Podcast episode audio is resolved on
+demand through providers/podcasts.ts.
 
 Audio is configured with playsInSilentMode enabled so previews can play
 through the iPhone speaker while the device is in silent mode.
@@ -341,11 +372,18 @@ Overall ranking rows in Category Feed
 
 Community / Overall Top3 ranking rows
 
-Preview controls are shown only when the Top3Item contains a previewUrl.
+components/audio-preview-sheet.tsx is the shared Apple Music / Apple
+Podcasts preview presentation. It detects the provider from the item,
+uses the correct external destination and label, and participates in the
+inverted preview-sheet theme.
+
+Apple Music preview controls are shown when the Top3Item contains a
+previewUrl. Podcast items can resolve a playable recent episode when the
+preview is requested.
 
 Existing song collections created before previewUrl support do not
-automatically gain preview controls; newly selected and published songs
-persist previewUrl with the collection item.
+automatically gain preview controls; newly selected and published Apple
+Music items persist previewUrl with the collection item.
 
 Movie & TV Trailer Architecture
 
@@ -390,7 +428,7 @@ centered 16:9 player and a subtle circular close control positioned
 above the player. The close control appears after the trailer WebView
 finishes loading and fades in.
 
-Starting trailer playback stops any active Music audio preview.
+Starting trailer playback stops any active audio preview.
 
 Known limitation: a trailer can still be blocked by YouTube for a
 specific country or region even when TMDb returns a usable trailer. Top3
@@ -412,12 +450,19 @@ TV Shows --- 64 × 96
 
 Video Games --- 64 × 96
 
-Music --- 64 × 64
+Songs --- 64 × 64
+
+Albums --- 64 × 64
+
+Artists --- 64 × 64
+
+Podcasts --- 64 × 64
 
 Search, SearchResultSkeleton, RankedItemCard, Top3Card, Overall ranking
 rows in Category Feed, and Community / Overall Top3 ranking rows use the
-shared artwork rules so Music artwork remains square while the other
-current categories retain portrait artwork.
+shared artwork rules so Songs, Albums, Artists, and Podcasts remain
+square while Movies, Books, TV Shows, and Video Games retain portrait
+artwork.
 
 Presentation Layer
 
@@ -445,7 +490,7 @@ GoogleAuthButton
 
 EmailAuthButton
 
-Native AppleAuthenticationButton
+AppText
 
 Content
 
@@ -504,8 +549,16 @@ Link↓Reset Password↓Return to Sign In
 The obsolete standalone Welcome route and WelcomeScreen component have
 been removed. app/onboarding.tsx is the entry experience for new users.
 
+The onboarding intro icon is rendered inside the intro stage and fades
+out with the intro before category selection. Category choices are
+derived from TOP3_CATEGORIES and sorted alphabetically, so newly added
+categories such as Podcasts appear automatically without a separate
+onboarding-order constant.
+
 Provider-choice screens use the shared ScreenHeader and PageHeader
-without a back button.
+without a back button. Apple, Google, and Email choices use shared
+authentication-button components for consistent light- and dark-mode
+presentation.
 
 Email form screens use the shared ScreenHeader with a back button so
 users can return to provider selection.
@@ -625,7 +678,7 @@ Silent handling of user cancellation
 
 Friendly user-facing error messages
 
-Official native Apple authentication button
+Shared AuthProviderButton presentation for Apple while preserving native iOS authentication
 
 Apple account-lifecycle support:
 
@@ -978,13 +1031,18 @@ Curated search suggestions remain until a category/topic reaches 50
 published collections, then become community-driven
 
 Shared search provider registry routes Movies, TV, Books, Video Games,
-and Music through one application-level search contract
+Songs, Albums, Artists, and Podcasts through one application-level search
+contract
 
-Music is available as an application category with Songs, Albums, and
-Artists search experiences
+Songs, Albums, and Artists are separate application categories backed by
+Apple Music search experiences
 
-Music search for Songs, Albums, and Artists uses Apple Music through a
-Supabase Edge Function with server-side developer-token authentication
+Podcasts is an application category backed by Apple's iTunes Search /
+Lookup APIs and Apple Podcasts chart feed, with episode preview lookup
+and Apple Podcasts show links
+
+Search for Songs, Albums, and Artists uses Apple Music through a Supabase
+Edge Function with server-side developer-token authentication
 
 Song suggestions use Apple Music genre-specific chart data when a Song
 topic is selected, with evergreen ranking improvements that reduce
@@ -1092,6 +1150,17 @@ pacing near the final score.
 
 Taste Match presentation uses the shared purple accent for match
 information and recommendation messaging.
+
+Dark mode follows the system appearance through useAppColors(), with
+AppText providing shared semantic text roles across the active UI.
+
+Book, trailer, and audio preview sheets intentionally invert the
+application theme through usePreviewSheetColors().
+
+Discover category and genre search results use the shared
+DiscoverListCard component, so search results and suggestion cards share
+the same visual treatment. Discover matching also supports the restored
+Podcasts category and improved category/topic matching.
 
 Sharing & Analytics
 
@@ -1266,6 +1335,26 @@ Real community experiences
 
 ✅ Taste Match
 
+Design system & media
+
+✅ System-aware light / dark mode
+
+✅ Shared AppText semantic typography
+
+✅ Shared useAppColors() semantic colour architecture
+
+✅ Inverted Book / Trailer / Audio preview-sheet themes
+
+✅ Shared Apple Music / Apple Podcasts audio preview sheet
+
+Categories & onboarding
+
+✅ Podcasts is an active category
+
+✅ Onboarding categories derive from TOP3_CATEGORIES and sort alphabetically
+
+✅ Discover category / genre results use shared DiscoverListCard presentation
+
 Sharing & analytics
 
 ✅ Published List sharing
@@ -1281,8 +1370,8 @@ installed-app recipients
 
 ✅ Successful-share tracking with source attribution
 
-➡️ Universal Links / public web fallback deferred until the production
-domain is confirmed
+➡️ Universal Links / public web fallback deferred until post-launch; the
+production domain is already top3taste.com
 
 Moderation
 
@@ -1334,6 +1423,46 @@ query
 post-launch and classified as a high-priority scalability initiative
 
 Recent Milestones
+
+September 16, 2026
+
+Dark Mode, Podcasts & Discover Integration
+
+Completed the active light / dark mode architecture using AppText,
+useAppColors(), semantic colours, and automatic system appearance.
+
+Added intentional inverted theming for Book, Trailer, and Audio preview
+sheets through usePreviewSheetColors().
+
+Refined Apple, Google, and Email provider-choice presentation so Sign In
+and Create Account share the same authentication-button system while
+preserving the existing native provider authentication services.
+
+Restored the onboarding intro handoff after the dark-mode migration. The
+intro icon now remains stationary in the intro stage and fades before the
+category-selection screen.
+
+Changed onboarding category generation to derive from TOP3_CATEGORIES
+and sort alphabetically automatically.
+
+Restored Podcasts onto feature/dark-mode. Added podcast search,
+suggestions, square artwork, Apple podcast identifiers / links, and
+on-demand episode audio previews through the shared AudioPreviewProvider
+and audio-preview-sheet.tsx.
+
+Improved Discover search matching and unified category / genre search
+results with DiscoverListCard so search-result cards match suggestion
+cards.
+
+Verified the affected flows on a physical iPhone and verified npm run
+typecheck passes.
+
+Committed and pushed:
+• c5362d8 --- Add dark mode and inverted preview themes
+• dca2bab --- Refine auth buttons and restore onboarding flow
+• 6b2acfa --- Add podcast category and previews
+• ccee6d7 --- Improve Discover search matching
+• 92106eb --- Unify Discover search result cards
 
 September 10, 2026
 
@@ -2249,8 +2378,8 @@ collection-item metadata wherever practical.
 Medium Priority
 
 Add Universal Links and a public web fallback for shared Lists / Overall
-rankings after the production Top3 domain is confirmed, so recipients
-without the app installed have a useful destination.
+rankings after V1 launch so recipients without the app installed have a
+useful destination. The production domain is already top3taste.com.
 
 Scope AsyncStorage keys by authenticated user where appropriate.
 
@@ -2275,8 +2404,9 @@ Remove placeholder services and unused routes.
 
 Remove packages that are no longer required after implementation review.
 
-Continue migrating hard-coded colours and spacing into shared design
-tokens.
+Continue auditing isolated hard-coded colours and spacing as new surfaces
+are added; active light / dark mode now uses shared semantic colour and
+typography architecture.
 
 Consider regional YouTube trailer validation if Top3 later introduces a
 reliable user country / region source. Current trailer availability
@@ -2362,20 +2492,26 @@ naming, while IGDB-specific terminology remains inside the provider
 integration. The Edge Function accepts the app's publishable key so
 signed-out onboarding search is supported.
 
-Remember that Music is an active application category. Songs, Albums,
-and Artists use Apple Music through the authenticated apple-music-search
-Supabase Edge Function, with Apple Music credentials stored only
-server-side.
+Remember that Songs, Albums, and Artists are active application
+categories backed by Apple Music through the authenticated
+apple-music-search Supabase Edge Function, with Apple Music credentials
+stored only server-side.
 
-Remember that Top3Item supports previewUrl for Music items. Songs use
-their track previews; Albums and Artists can be enriched with
-representative track previews. Shared preview playback is owned by
-AudioPreviewProvider / context/audio-preview-context.tsx.
+Remember that Podcasts is also an active application category.
+providers/podcasts.ts uses Apple's public iTunes Search / Lookup endpoints
+and Apple Podcasts chart feed for search, suggestions, show links, and
+episode-preview lookup.
+
+Remember that Top3Item supports previewUrl for Apple Music items and
+Apple podcast identifiers / Apple Podcasts URLs for podcast items. Shared
+audio preview playback is owned by AudioPreviewProvider /
+context/audio-preview-context.tsx.
 
 Remember that Search, RankedItemCard, Top3Card, Overall ranking rows in
 Category Feed, and Community / Overall Top3 ranking rows use the shared
 preview controller; do not implement separate Expo Audio players in
-those surfaces.
+those surfaces. components/audio-preview-sheet.tsx is the shared Apple
+Music / Apple Podcasts preview presentation.
 
 Remember that Movie and TV trailer lookup is owned by
 providers/movies-and-tv.ts. Trailer URLs and unavailable results are
@@ -2395,10 +2531,11 @@ does not currently maintain user country / location information, so
 country-specific trailer validation is deferred.
 
 Remember that category artwork sizing is centralized in
-constants/category-artwork-rules.ts. Music uses 64 × 64 square artwork;
-Movies, Books, TV Shows, and Video Games currently use 64 × 96 portrait
-artwork. The shared rules are used by Search, RankedItemCard, Top3Card,
-and the Overall ranking presentations.
+constants/category-artwork-rules.ts. Songs, Albums, Artists, and Podcasts
+use 64 × 64 square artwork; Movies, Books, TV Shows, and Video Games use
+64 × 96 portrait artwork. The shared rules are used by Search,
+SearchResultSkeleton, RankedItemCard, Top3Card, and the Overall ranking
+presentations.
 
 Remember that Apple Music Song suggestions use genre-specific chart data
 for Song topics and trust the selected chart without applying a second
@@ -2457,13 +2594,34 @@ new patterns that depend on unbounded global reads, client-side
 processing of global datasets, global Realtime fan-out, or repeated
 view-time external API hydration before extending them.
 
+Remember that active application light / dark mode is semantic rather
+than screen-specific. AppText owns shared text roles and useAppColors()
+owns application colours. Do not reintroduce legacy global COLORS or
+duplicated hard-coded text colours on migrated surfaces.
+
+Remember that Book, Trailer, and Audio preview sheets intentionally use
+the opposite visual theme from the application through
+usePreviewSheetColors(). Do not "correct" them to match the surrounding
+app theme.
+
+Remember that onboarding categories come directly from TOP3_CATEGORIES
+and are alphabetized automatically. Do not reintroduce a separate manual
+onboarding category-order list.
+
+Remember that Discover category and genre cards, including search
+results, use DiscoverListCard. Do not create a separate search-result
+card style unless the product intentionally introduces a different
+component.
+
 Remember that list titles are generated centrally by
 utils/build-collection-title.ts and topic-specific titles use Top 3
 Category • Topic. The helper retains its existing implementation
 filename.
 
 Remember that search routing is centralized in providers/search.ts, and
-app/search.tsx uses a reusable 300 ms debounce hook.
+the Search screen uses the shared delayed provider-search architecture.
+Keep provider-specific ranking and fallback logic inside the individual
+provider implementations.
 
 Remember that "Lists" is the preferred user-facing term. Do not rename
 internal collection types, database structures, helpers, or files solely
@@ -2509,15 +2667,18 @@ Feed. Anonymous collection reads are restricted to published,
 non-removed rows. collection_shared is tracked only for completed shares
 and includes feed, profile, category_feed, published_detail, or overall
 source attribution. Universal Links / public web fallback remain
-deferred until the production domain is confirmed.
+deferred until post-launch; the production domain is top3taste.com.
 
 Do not recommend migrating Following again---it has already been
 completed.
 
-Remember that production iOS Build 6 is the current TestFlight release
-candidate. The main branch contains two verified post-Build-6 fixes:
-150726b (email-domain typo suggestions) and fa8353a (Search audio-preview
-keyboard dismissal). Do not assume those fixes are present in Build 6.
+Remember that production iOS Build 8 is the current TestFlight release
+candidate. feature/dark-mode contains verified post-Build-8 work through
+92106eb, including dark mode, inverted preview themes, refined
+authentication buttons / onboarding, Podcasts, improved Discover search
+matching, and shared Discover search-result cards. Do not assume those
+changes are present in Build 8, and do not create Build 9 until the
+current documentation / regression checkpoint is complete.
 
 Remember that the production Top 3 domain is top3taste.com. Email signup
 confirmation uses the branded HTTPS bridge at

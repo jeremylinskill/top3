@@ -2,6 +2,170 @@ CHANGELOG.md
 
 This document records significant milestones in the evolution of Top3.
 
+v3.3 --- Dark Mode, Podcasts & Discover Integration
+
+Released: September 16, 2026
+
+This checkpoint records the completed dark-mode architecture, inverted
+preview-sheet theming, restored onboarding presentation, Podcasts support,
+and Discover search / card refinements on feature/dark-mode.
+
+Production iOS Build 8 remains the current TestFlight release candidate.
+The changes in this checkpoint are verified post-Build-8 application work
+and are not yet represented by a new TestFlight build. Build 9 has not
+been created.
+
+Added
+
+System-Aware Dark Mode
+
+Added system-aware light / dark appearance across the active application
+using shared semantic colour roles from hooks/use-app-colors.ts.
+
+Added components/app-text.tsx as the shared semantic text layer for the
+active dark-mode migration.
+
+Configured the application to follow the device appearance automatically.
+
+Preview Theme Architecture
+
+Added hooks/use-preview-sheet-colors.ts as the shared source of truth for
+preview-sheet colours.
+
+Book, trailer, and audio preview sheets intentionally invert the
+surrounding application theme:
+
+App Light → Preview Dark
+
+App Dark → Preview Light
+
+Trailer video itself remains black.
+
+Podcasts
+
+Added Podcasts as an active Top3 category.
+
+Added providers/podcasts.ts for Apple Podcasts search, suggestions, chart
+data, show links, and on-demand episode preview lookup.
+
+Podcast search and suggestions use Apple's public iTunes Search / Lookup
+APIs and Apple Podcasts chart feed.
+
+Added podcast-specific Top3Item metadata, including Apple podcast IDs and
+Apple Podcasts URLs.
+
+Added square 64 × 64 artwork rules for Podcasts.
+
+Extended the shared AudioPreviewProvider to support Apple Podcasts episode
+audio in addition to Apple Music previews.
+
+Renamed the shared Apple Music preview presentation to
+components/audio-preview-sheet.tsx and expanded it to support both Apple
+Music and Apple Podcasts.
+
+Added provider-aware external destination handling from the shared audio
+preview sheet.
+
+Improved
+
+Authentication Presentation
+
+Refined Apple, Google, and Email provider-choice presentation so Sign In
+and Create Account share the same authentication-button system.
+
+Preserved the existing Apple, Google, and Email authentication services and
+account-creation logic.
+
+Onboarding
+
+Restored the intended native splash → onboarding handoff after the
+dark-mode migration.
+
+The onboarding icon is rendered within the intro stage, remains stationary
+during the first intro presentation, and fades out with the intro before
+category selection appears.
+
+Changed onboarding category generation so categories are derived directly
+from TOP3_CATEGORIES and sorted alphabetically.
+
+New categories therefore appear in onboarding automatically without a
+separate manually maintained category-order list.
+
+Discover Search
+
+Improved Discover matching for categories and topics / genres, including
+the restored Podcasts category.
+
+Updated Discover category search results to use the shared
+DiscoverListCard component.
+
+Updated Discover genre search results to use the shared
+DiscoverListCard component.
+
+Search-result cards now use the same presentation as the corresponding
+Discover suggestion / trending cards instead of maintaining separate
+search-only styles.
+
+Media Presentation
+
+Preserved the existing one-at-a-time shared audio-preview architecture
+while extending it to Podcasts.
+
+Preserved cross-media coordination so trailer playback and audio previews
+do not compete.
+
+Verified
+
+Verified the onboarding category screen on a physical iPhone.
+
+Verified Podcasts create, search, add, and preview flow on a physical
+iPhone.
+
+Verified the Apple Podcasts external action opens the correct show on a
+physical iPhone.
+
+Verified Discover search for Podcasts and related genres on a physical
+iPhone.
+
+Verified Discover search-result cards match the shared suggestion-card
+presentation.
+
+Verified the intended inverted preview-sheet theme behaviour.
+
+Verified npm run typecheck passes after the completed integration.
+
+Checkpoint
+
+Committed and pushed c5362d8 --- Add dark mode and inverted preview themes.
+
+Committed and pushed dca2bab --- Refine auth buttons and restore onboarding
+flow.
+
+Committed and pushed 6b2acfa --- Add podcast category and previews.
+
+Committed and pushed ccee6d7 --- Improve Discover search matching.
+
+Committed and pushed 92106eb --- Unify Discover search result cards.
+
+Release-Candidate State
+
+Production iOS Build 8 remains the current TestFlight release candidate.
+
+Build 8 does not contain the five feature/dark-mode commits recorded in
+this checkpoint.
+
+Build 9 has not been created. The current documentation and regression
+checkpoint should be completed before deciding whether a replacement
+TestFlight build is required.
+
+Documentation
+
+Updated CURRENT_STATE.md for the September 16 feature/dark-mode checkpoint.
+
+Updated ARCHITECTURE.md to document semantic dark-mode ownership, the
+authoritative category registry, Podcasts, shared media-preview ownership,
+Discover component reuse, and the current scalability / backend boundaries.
+
 v3.2 --- V1 Launch Infrastructure & Final Polish
 
 Released: September 10, 2026
@@ -205,7 +369,7 @@ push_notification_webhook for Database Webhook authentication.
 
 Updated send-push-notification to require the named secret using:
 
-auth: "secret:push_notification_webhook"
+auth: "secret"
 
 Verified push delivery using the replacement dedicated key.
 
