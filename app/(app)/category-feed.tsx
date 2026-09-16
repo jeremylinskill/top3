@@ -138,6 +138,7 @@ export default function CategoryFeedScreen() {
     category?: string | string[];
     topic?: string | string[];
     itemQuery?: string | string[];
+    itemId?: string | string[];
     view?: string | string[];
   }>();
 
@@ -159,6 +160,12 @@ export default function CategoryFeedScreen() {
     ? params.itemQuery[0]
     : params.itemQuery;
 
+  const itemIdParam = Array.isArray(
+    params.itemId
+  )
+    ? params.itemId[0]
+    : params.itemId;
+
   const viewParam = Array.isArray(
     params.view
   )
@@ -170,6 +177,18 @@ export default function CategoryFeedScreen() {
 
   const normalizedItemQuery =
     normalizeValue(itemQueryParam);
+
+  const normalizedItemId =
+    normalizeValue(itemIdParam);
+
+  const isItemFiltered =
+    Boolean(
+      normalizedItemId ||
+      normalizedItemQuery
+    );
+
+  const itemFilterLabel =
+    itemQueryParam?.trim() ?? '';
 
   const { profile } = useProfile();
 
@@ -208,9 +227,11 @@ export default function CategoryFeedScreen() {
 
   const [activeView, setActiveView] =
     useState<CategoryView>(
-      normalizeValue(viewParam) === 'overall'
-        ? 'overall'
-        : 'lists'
+      isItemFiltered
+        ? 'lists'
+        : normalizeValue(viewParam) === 'overall'
+          ? 'overall'
+          : 'lists'
     );
 
   const [
@@ -227,11 +248,13 @@ export default function CategoryFeedScreen() {
 
   useEffect(() => {
     setActiveView(
-      normalizeValue(viewParam) === 'overall'
-        ? 'overall'
-        : 'lists'
+      isItemFiltered
+        ? 'lists'
+        : normalizeValue(viewParam) === 'overall'
+          ? 'overall'
+          : 'lists'
     );
-  }, [viewParam]);
+  }, [viewParam, isItemFiltered]);
 
   const category = TOP3_CATEGORIES.find(
     (item) =>
@@ -341,7 +364,10 @@ if (isMounted) {
           return false;
         }
 
-        if (!normalizedItemQuery) {
+        if (
+          !normalizedItemId &&
+          !normalizedItemQuery
+        ) {
           return true;
         }
 
@@ -349,6 +375,13 @@ if (isMounted) {
           (item) => {
             if (!item) {
               return false;
+            }
+
+            if (normalizedItemId) {
+              return (
+                normalizeValue(item.id) ===
+                normalizedItemId
+              );
             }
 
             const searchableItem =
@@ -378,6 +411,7 @@ if (isMounted) {
     blockedUserIds,
     categoryId,
     normalizedTopic,
+    normalizedItemId,
     normalizedItemQuery,
     profile.id,
   ]);
@@ -530,6 +564,27 @@ if (isMounted) {
       pathname: '/published-top3',
       params: {
         postId: post.id,
+      },
+    });
+  }
+
+  function openListsForOverallItem(
+    item: CommunityTop3Result['items'][number]['item']
+  ) {
+    if (!categoryId) {
+      return;
+    }
+
+    router.push({
+      pathname: '/category-feed',
+      params: {
+        category: categoryId,
+        ...(normalizedTopic !== 'general'
+          ? { topic: normalizedTopic }
+          : {}),
+        itemId: item.id,
+        itemQuery: item.title,
+        view: 'lists',
       },
     });
   }
@@ -1347,61 +1402,57 @@ if (isMounted) {
       edges={['top', 'left', 'right']}>
       <ScreenHeader showBackButton />
 
-      <View
-        style={[
-          styles.segmentedContainer,
-          {
-            backgroundColor: colors.background,
-          },
-        ]}>
-        <SegmentedControl<CategoryView>
-          value={activeView}
-          options={[
+      {isItemFiltered ? (
+        <View style={styles.filteredHeader}>
+          <AppText
+            variant="label"
+            tone="tertiary"
+            style={styles.filteredEyebrow}>
+            Lists containing
+          </AppText>
+
+          <AppText
+            variant="pageTitle"
+            style={styles.filteredTitle}>
+            {itemFilterLabel || 'This item'}
+          </AppText>
+        </View>
+      ) : (
+        <View
+          style={[
+            styles.segmentedContainer,
             {
-              value: 'lists',
-              label: 'Lists',
-              accessibilityLabel:
-                'Show published lists',
+              backgroundColor: colors.background,
             },
-            {
-              value: 'overall',
-              label: 'Overall',
-              accessibilityLabel:
-                'Show overall ranking',
-            },
-          ]}
-          onChange={setActiveView}
-        />
-      </View>
+          ]}>
+          <SegmentedControl<CategoryView>
+            value={activeView}
+            options={[
+              {
+                value: 'lists',
+                label: 'Lists',
+                accessibilityLabel:
+                  'Show published lists',
+              },
+              {
+                value: 'overall',
+                label: 'Overall',
+                accessibilityLabel:
+                  'Show overall ranking',
+              },
+            ]}
+            onChange={setActiveView}
+          />
+        </View>
+      )}
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          isItemFiltered &&
+            styles.filteredContent,
+        ]}
         showsVerticalScrollIndicator={false}>
-        {normalizedItemQuery ? (
-          <View
-            style={[
-              styles.filterNotice,
-              {
-                backgroundColor: colors.surface,
-              },
-            ]}>
-            <Ionicons
-              name="search-outline"
-              size={16}
-              color={colors.tertiaryText}
-            />
-
-            <AppText
-              variant="label"
-              tone="tertiary"
-              emphasis="regular"
-              style={styles.filterNoticeText}>
-              Showing lists containing “
-              {itemQueryParam?.trim()}”
-            </AppText>
-          </View>
-        ) : null}
-
         {activeView === 'lists' ? (
           filteredPosts.length === 0 ? (
             <View
@@ -1537,119 +1588,132 @@ if (isMounted) {
                       styles.rankRow,
                       {
                         backgroundColor:
-                          colors.secondarySurface,
+                          colors.background,
                       },
                       index <
                         overallResult.items.length - 1 &&
                         styles.rankDivider,
                     ]}>
-                    <AppText
-                      variant="compactRankNumber"
-                      style={styles.rankNumber}>
-                      {index + 1}
-                    </AppText>
-
-                    <View
-                      style={[
-                        styles.artworkContainer,
-                        {
-                          width: artworkRule.width,
-                          height: artworkRule.height,
-                        },
-                      ]}>
-                      {entry.item.imageUrl ? (
-                        <Image
-                          source={{
-                            uri: entry.item.imageUrl,
-                          }}
-                          style={[
-                            styles.itemImage,
-                            {
-                              width: artworkRule.width,
-                              height: artworkRule.height,
-                              backgroundColor:
-                                colors.skeletonSubtle,
-                            },
-                          ]}
-                          resizeMode="cover"
-                        />
-                      ) : (
-                        <View
-                          style={[
-                            styles.imagePlaceholder,
-                            {
-                              width: artworkRule.width,
-                              height: artworkRule.height,
-                              backgroundColor:
-                                colors.secondarySurface,
-                            },
-                          ]}>
-                          <AppText
-                            variant="artworkInitial"
-                            tone="tertiary">
-                            {entry.item.title
-                              .charAt(0)
-                              .toUpperCase()}
-                          </AppText>
-                        </View>
-                      )}
-                    </View>
-
-                    <View
-                      style={styles.itemDetails}>
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.rankItemLink,
+                        pressed && styles.pressed,
+                      ]}
+                      onPress={() =>
+                        openListsForOverallItem(
+                          entry.item
+                        )
+                      }
+                      accessibilityRole="button"
+                      accessibilityLabel={`Show published lists containing ${entry.item.title}`}>
                       <AppText
-                        variant="cardTitle"
-                        numberOfLines={2}
-                        ellipsizeMode="tail">
-                        {entry.item.title}
+                        variant="compactRankNumber"
+                        style={styles.rankNumber}>
+                        {index + 1}
                       </AppText>
 
-                      {entry.item.subtitle ? (
-                        <AppText
-                          variant="subtitle"
-                          tone="secondary"
-                          style={styles.itemSubtitle}
-                          numberOfLines={1}
-                          ellipsizeMode="tail">
-                          {entry.item.subtitle}
-                        </AppText>
-                      ) : null}
-
-                      {typeof entry.item.rating ===
-                      'number' ? (
-                        <View
-                          style={styles.ratingRow}>
-                          <AppText
-                            variant="metadata"
-                            tone="secondary"
-                            emphasis="semibold"
-                            style={styles.ratingText}>
-                            {entry.item.rating.toFixed(1)}
-                          </AppText>
-
-                          <Ionicons
-                            name="star"
-                            size={13}
-                            color={colors.secondaryText}
+                      <View
+                        style={[
+                          styles.artworkContainer,
+                          {
+                            width: artworkRule.width,
+                            height: artworkRule.height,
+                          },
+                        ]}>
+                        {entry.item.imageUrl ? (
+                          <Image
+                            source={{
+                              uri: entry.item.imageUrl,
+                            }}
+                            style={[
+                              styles.itemImage,
+                              {
+                                width: artworkRule.width,
+                                height: artworkRule.height,
+                                backgroundColor:
+                                  colors.skeletonSubtle,
+                              },
+                            ]}
+                            resizeMode="cover"
                           />
-                        </View>
-                      ) : null}
+                        ) : (
+                          <View
+                            style={[
+                              styles.imagePlaceholder,
+                              {
+                                width: artworkRule.width,
+                                height: artworkRule.height,
+                                backgroundColor:
+                                  colors.secondarySurface,
+                              },
+                            ]}>
+                            <AppText
+                              variant="artworkInitial"
+                              tone="tertiary">
+                              {entry.item.title
+                                .charAt(0)
+                                .toUpperCase()}
+                            </AppText>
+                          </View>
+                        )}
+                      </View>
 
-                      <AppText
-                        variant="metadata"
-                        tone="tertiary"
-                        style={styles.scoreText}
-                        numberOfLines={1}>
-                        {entry.score}{' '}
-                        {entry.score === 1
-                          ? 'point'
-                          : 'points'}{' '}
-                        · {entry.appearanceCount}{' '}
-                        {entry.appearanceCount === 1
-                          ? 'list'
-                          : 'lists'}
-                      </AppText>
-                    </View>
+                      <View
+                        style={styles.itemDetails}>
+                        <AppText
+                          variant="cardTitle"
+                          numberOfLines={2}
+                          ellipsizeMode="tail">
+                          {entry.item.title}
+                        </AppText>
+
+                        {entry.item.subtitle ? (
+                          <AppText
+                            variant="subtitle"
+                            tone="secondary"
+                            style={styles.itemSubtitle}
+                            numberOfLines={1}
+                            ellipsizeMode="tail">
+                            {entry.item.subtitle}
+                          </AppText>
+                        ) : null}
+
+                        {typeof entry.item.rating ===
+                        'number' ? (
+                          <View
+                            style={styles.ratingRow}>
+                            <AppText
+                              variant="metadata"
+                              tone="secondary"
+                              emphasis="semibold"
+                              style={styles.ratingText}>
+                              {entry.item.rating.toFixed(1)}
+                            </AppText>
+
+                            <Ionicons
+                              name="star"
+                              size={13}
+                              color={colors.secondaryText}
+                            />
+                          </View>
+                        ) : null}
+
+                        <AppText
+                          variant="metadata"
+                          tone="tertiary"
+                          style={styles.scoreText}
+                          numberOfLines={1}>
+                          {entry.score}{' '}
+                          {entry.score === 1
+                            ? 'point'
+                            : 'points'}{' '}
+                          · {entry.appearanceCount}{' '}
+                          {entry.appearanceCount === 1
+                            ? 'list'
+                            : 'lists'}
+                        </AppText>
+                      </View>
+                    </Pressable>
 
                     <MediaPreviewItemButton
                       item={entry.item}
@@ -1856,6 +1920,19 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
 
+  filteredHeader: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 20,
+  },
+
+  filteredEyebrow: {
+    marginBottom: 4,
+  },
+
+  filteredTitle: {
+    maxWidth: '100%',
+  },
 
   content: {
     paddingHorizontal: 20,
@@ -1863,18 +1940,8 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
 
-  filterNotice: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 14,
-  },
-
-  filterNoticeText: {
-    flex: 1,
-    marginLeft: 8,
+  filteredContent: {
+    paddingTop: 0,
   },
 
   postList: {
@@ -1918,6 +1985,13 @@ const styles = StyleSheet.create({
 
   rankDivider: {
     marginBottom: 8,
+  },
+
+  rankItemLink: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 
   rankNumber: {

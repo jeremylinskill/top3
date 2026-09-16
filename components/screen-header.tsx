@@ -7,6 +7,7 @@ import type { ComponentProps } from 'react';
 import {
   Pressable,
   StyleSheet,
+  Text,
   View,
 } from 'react-native';
 
@@ -83,7 +84,12 @@ export default function ScreenHeader({
         <AppText
           variant="brand"
           style={styles.brand}>
-          Top 3
+          <Text style={styles.brandTop}>
+            Top
+          </Text>
+          <Text style={styles.brandThree}>
+            3
+          </Text>
         </AppText>
 
         <View style={styles.sideActions}>
@@ -182,6 +188,15 @@ const styles = StyleSheet.create({
   brand: {
     flex: 1,
     textAlign: 'center',
+    fontSize: 22,
+  },
+
+  brandTop: {
+    fontWeight: '400',
+  },
+
+  brandThree: {
+    fontWeight: '700',
   },
 
   titleArea: {

@@ -588,12 +588,14 @@ export default function Top3Card({
                       backgroundColor:
                         colors.background,
                     },
-                    isHighlighted && {
-                      ...styles.highlightedRankRow,
-                      backgroundColor:
-                        colors.tasteMatchBackground,
-                    },
+                    isSearchHighlighted &&
+                      !isTasteMatch && {
+                        ...styles.highlightedRankRow,
+                        backgroundColor:
+                          colors.secondarySurface,
+                      },
                     isTasteMatch && {
+                      ...styles.highlightedRankRow,
                       backgroundColor:
                         TASTE_MATCH_RANK_COLORS[
                           index
@@ -604,7 +606,7 @@ export default function Top3Card({
                   <AppText
                     variant="headline"
                     tone={
-                      isHighlighted
+                      isTasteMatch
                         ? 'onHighlight'
                         : 'primary'
                     }
@@ -651,7 +653,7 @@ export default function Top3Card({
                             width: artworkRule.width,
                             height: artworkRule.height,
                             backgroundColor:
-                              isHighlighted
+                              isTasteMatch
                                 ? colors.highlightPlaceholder
                                 : colors.border,
                           },
@@ -660,7 +662,7 @@ export default function Top3Card({
                           name="image-outline"
                           size={24}
                           color={
-                            isHighlighted
+                            isTasteMatch
                               ? colors.highlightMuted
                               : colors.tertiaryText
                           }
@@ -675,7 +677,7 @@ export default function Top3Card({
                     <AppText
                       variant="cardTitle"
                       tone={
-                        isHighlighted
+                        isTasteMatch
                           ? 'onHighlight'
                           : 'primary'
                       }
@@ -694,7 +696,7 @@ export default function Top3Card({
                       <AppText
                         variant="subtitle"
                         tone={
-                          isHighlighted
+                          isTasteMatch
                             ? 'onHighlight'
                             : 'secondary'
                         }
@@ -712,7 +714,7 @@ export default function Top3Card({
                         <AppText
                           variant="caption"
                           tone={
-                            isHighlighted
+                            isTasteMatch
                               ? 'onHighlight'
                               : 'primary'
                           }
@@ -726,7 +728,7 @@ export default function Top3Card({
                           name="star"
                           size={13}
                           color={
-                            isHighlighted
+                            isTasteMatch
                               ? colors.onHighlight
                               : colors.secondaryText
                           }
@@ -743,13 +745,13 @@ export default function Top3Card({
                         styles.previewButton,
                         {
                           backgroundColor:
-                            isHighlighted
+                            isTasteMatch
                               ? colors.highlightSurface
                               : colors.surface,
                         },
                       ]}
                       iconColor={
-                        isHighlighted
+                        isTasteMatch
                           ? colors.onHighlight
                           : colors.secondaryText
                       }
