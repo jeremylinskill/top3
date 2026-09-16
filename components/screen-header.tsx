@@ -192,11 +192,11 @@ const styles = StyleSheet.create({
   },
 
   brandTop: {
-    fontWeight: '400',
+    fontWeight: '700',
   },
 
   brandThree: {
-    fontWeight: '700',
+    fontWeight: '400',
   },
 
   titleArea: {
