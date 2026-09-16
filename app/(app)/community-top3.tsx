@@ -373,7 +373,6 @@ if (isMounted) {
               styles.emptyState,
               {
                 backgroundColor: colors.surface,
-                borderColor: colors.border,
               },
             ]}>
             <AppText variant="sectionTitle">
@@ -395,7 +394,6 @@ if (isMounted) {
               styles.rankingCard,
               {
                 backgroundColor: colors.surface,
-                borderColor: colors.border,
               },
             ]}>
             <View style={styles.rankingContent}>
@@ -689,7 +687,6 @@ const styles = StyleSheet.create({
   },
 
   rankingCard: {
-    borderWidth: 1,
     borderRadius: 18,
     overflow: 'hidden',
   },
@@ -838,7 +835,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 42,
     paddingHorizontal: 24,
-    borderWidth: 1,
     borderRadius: 18,
   },
 

@@ -168,8 +168,6 @@ export default function CreateCollectionScreen() {
                       {
                         backgroundColor:
                           colors.surface,
-                        borderColor:
-                          colors.border,
                       },
                       pressed &&
                         styles.categoryCardPressed,
@@ -249,7 +247,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 12,
     paddingVertical: 18,
-    borderWidth: 1,
     borderRadius: 18,
   },
 

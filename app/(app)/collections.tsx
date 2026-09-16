@@ -131,7 +131,6 @@ export default function CollectionsScreen() {
                 styles.collectionCard,
                 {
                   backgroundColor: colors.surface,
-                  borderColor: colors.border,
                 },
               ]}
               onPress={() => {
@@ -235,7 +234,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 16,
     padding: 20,
-    borderWidth: 1,
   },
 
   icon: {

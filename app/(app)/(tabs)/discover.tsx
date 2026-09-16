@@ -1561,7 +1561,6 @@ export default function DiscoverScreen() {
                 styles.searchPlaceholder,
                 {
                   backgroundColor: colors.surface,
-                  borderColor: colors.border,
                 },
               ]}>
               <AppText
@@ -1620,7 +1619,6 @@ export default function DiscoverScreen() {
                       styles.recentSearchCard,
                       {
                         backgroundColor: colors.surface,
-                        borderColor: colors.border,
                       },
                     ]}>
                     <Pressable
@@ -1900,7 +1898,6 @@ export default function DiscoverScreen() {
                   styles.searchPlaceholder,
                   {
                     backgroundColor: colors.surface,
-                    borderColor: colors.border,
                   },
                 ]}>
                 <AppText
@@ -1944,7 +1941,6 @@ export default function DiscoverScreen() {
                             styles.tasteCard,
                             {
                               backgroundColor: colors.surface,
-                              borderColor: colors.border,
                             },
                           ]}>
                           <View style={styles.tasteMainContent}>
@@ -2076,7 +2072,6 @@ export default function DiscoverScreen() {
                             styles.tasteCard,
                             {
                               backgroundColor: colors.surface,
-                              borderColor: colors.border,
                             },
                           ]}>
                           <Pressable
@@ -2177,7 +2172,6 @@ export default function DiscoverScreen() {
                     styles.emptyTopics,
                     {
                       backgroundColor: colors.surface,
-                      borderColor: colors.border,
                     },
                   ]}>
                   <AppText
@@ -2214,7 +2208,6 @@ export default function DiscoverScreen() {
                     styles.topicsLoading,
                     {
                       backgroundColor: colors.surface,
-                      borderColor: colors.border,
                     },
                   ]}>
                   <ActivityIndicator
@@ -2299,7 +2292,6 @@ export default function DiscoverScreen() {
                     styles.topicsLoading,
                     {
                       backgroundColor: colors.surface,
-                      borderColor: colors.border,
                     },
                   ]}>
                   <ActivityIndicator
@@ -2421,7 +2413,6 @@ const styles = StyleSheet.create({
     minHeight: 56,
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
     borderRadius: 16,
     overflow: 'hidden',
   },
@@ -2487,7 +2478,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 14,
-    borderWidth: 1,
     borderRadius: 18,
   },
 
@@ -2602,7 +2592,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
     borderRadius: 18,
   },
 
@@ -2614,7 +2603,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 32,
     paddingHorizontal: 24,
-    borderWidth: 1,
     borderRadius: 18,
   },
 
@@ -2629,7 +2617,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 32,
     paddingHorizontal: 24,
-    borderWidth: 1,
     borderRadius: 18,
   },
 

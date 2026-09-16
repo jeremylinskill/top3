@@ -324,7 +324,6 @@ export default function Top3Card({
         styles.card,
         {
           backgroundColor: colors.surface,
-          borderColor: colors.border,
         },
       ]}>
       {recommendationTitle ? (
@@ -922,7 +921,6 @@ export default function Top3Card({
 const styles = StyleSheet.create({
   card: {
     borderRadius: 18,
-    borderWidth: 1,
     padding: 18,
   },
 

@@ -1383,7 +1383,6 @@ if (isMounted) {
               styles.filterNotice,
               {
                 backgroundColor: colors.surface,
-                borderColor: colors.border,
               },
             ]}>
             <Ionicons
@@ -1410,7 +1409,6 @@ if (isMounted) {
                 styles.emptyState,
                 {
                   backgroundColor: colors.surface,
-                  borderColor: colors.border,
                 },
               ]}>
               <AppText
@@ -1491,7 +1489,6 @@ if (isMounted) {
               styles.emptyState,
               {
                 backgroundColor: colors.surface,
-                borderColor: colors.border,
               },
             ]}>
             <AppText
@@ -1514,7 +1511,6 @@ if (isMounted) {
               styles.overallCard,
               {
                 backgroundColor: colors.surface,
-                borderColor: colors.border,
               },
             ]}>
             <View style={styles.overallTitleRow}>
@@ -1671,13 +1667,7 @@ if (isMounted) {
               )}
             </View>
 
-            <View
-              style={[
-                styles.overallFooter,
-                {
-                  borderTopColor: colors.border,
-                },
-              ]}>
+            <View style={styles.overallFooter}>
               <View style={styles.sourceItem}>
                 <Ionicons
                   name="people-outline"
@@ -1879,7 +1869,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    borderWidth: 1,
     borderRadius: 14,
   },
 
@@ -1893,7 +1882,6 @@ const styles = StyleSheet.create({
   },
 
   overallCard: {
-    borderWidth: 1,
     borderRadius: 18,
     overflow: 'hidden',
   },
@@ -1917,7 +1905,6 @@ const styles = StyleSheet.create({
 
   rankingContent: {
     paddingHorizontal: 18,
-    paddingBottom: 14,
   },
 
   rankRow: {
@@ -1991,9 +1978,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 18,
-    paddingVertical: 13,
-    borderTopWidth:
-      StyleSheet.hairlineWidth,
+    paddingTop: 14,
+    paddingBottom: 13,
   },
 
   sourceItem: {
@@ -2031,7 +2017,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 40,
     paddingHorizontal: 24,
-    borderWidth: 1,
     borderRadius: 18,
   },
 

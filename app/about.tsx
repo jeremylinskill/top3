@@ -32,6 +32,11 @@ const DATA_SOURCES: DataSource[] = [
     url: 'https://music.apple.com/',
   },
   {
+    label: 'Podcast data and previews',
+    name: 'Apple Podcasts',
+    url: 'https://podcasts.apple.com/',
+  },
+  {
     label: 'Book data',
     name: 'Google Books',
     url: 'https://books.google.com/',
@@ -177,7 +182,6 @@ export default function AboutScreen() {
               styles.betaBadge,
               {
                 backgroundColor: colors.surface,
-                borderColor: colors.border,
               },
             ]}>
             <AppText
@@ -194,7 +198,6 @@ export default function AboutScreen() {
             styles.infoCard,
             {
               backgroundColor: colors.surface,
-              borderColor: colors.border,
             },
           ]}>
           <View style={styles.infoRow}>
@@ -273,7 +276,6 @@ export default function AboutScreen() {
               styles.dataSourcesCard,
               {
                 backgroundColor: colors.surface,
-                borderColor: colors.border,
               },
             ]}>
             {DATA_SOURCES.map((source, index) => (
@@ -394,7 +396,6 @@ const styles = StyleSheet.create({
 
   infoCard: {
     marginTop: 32,
-    borderWidth: 1,
     borderRadius: RADIUS.xl,
     overflow: 'hidden',
   },
@@ -426,7 +427,6 @@ const styles = StyleSheet.create({
   },
 
   dataSourcesCard: {
-    borderWidth: 1,
     borderRadius: RADIUS.xl,
     overflow: 'hidden',
   },

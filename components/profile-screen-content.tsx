@@ -150,7 +150,6 @@ export default function ProfileScreenContent({
           styles.statsRow,
           {
             backgroundColor: colors.surface,
-            borderColor: colors.border,
           },
         ]}>
         <View style={styles.stat}>
@@ -269,7 +268,6 @@ export default function ProfileScreenContent({
               styles.emptyState,
               {
                 backgroundColor: colors.surface,
-                borderColor: colors.border,
               },
             ]}>
             <AppText variant="sectionTitle">
@@ -383,7 +381,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
     borderRadius: RADIUS.xl,
     paddingVertical: 16,
     overflow: 'hidden',
@@ -432,7 +429,6 @@ const styles = StyleSheet.create({
     paddingVertical: 36,
     paddingHorizontal: SPACING.xxl,
     borderRadius: RADIUS.xl,
-    borderWidth: 1,
   },
 
   emptyStateText: {

@@ -751,7 +751,6 @@ return getTasteRecommendationForUser({
                 styles.heroCard,
                 {
                   backgroundColor: colors.surface,
-                  borderColor: colors.border,
                 },
               ]}>
               <View style={styles.avatarPair}>
@@ -842,8 +841,6 @@ return getTasteRecommendationForUser({
                           {
                             backgroundColor:
                               colors.surface,
-                            borderColor:
-                              colors.border,
                           },
                         ]}>
                         {(() => {
@@ -970,7 +967,6 @@ return getTasteRecommendationForUser({
                   styles.stateCard,
                   {
                     backgroundColor: colors.surface,
-                    borderColor: colors.border,
                   },
                 ]}>
                 <AppText
@@ -1037,7 +1033,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 28,
     paddingHorizontal: 22,
-    borderWidth: 1,
     borderRadius: 20,
   },
 
@@ -1093,7 +1088,6 @@ const styles = StyleSheet.create({
 
   comparisonCard: {
     padding: 18,
-    borderWidth: 1,
     borderRadius: 18,
   },
 
@@ -1163,7 +1157,6 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xl,
     paddingVertical: 30,
     paddingHorizontal: 22,
-    borderWidth: 1,
     borderRadius: 18,
   },
 

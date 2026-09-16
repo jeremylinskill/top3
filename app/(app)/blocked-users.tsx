@@ -208,7 +208,6 @@ export default function BlockedUsersScreen() {
               styles.emptyState,
               {
                 backgroundColor: colors.surface,
-                borderColor: colors.border,
               },
             ]}>
             <View
@@ -253,7 +252,6 @@ export default function BlockedUsersScreen() {
               styles.emptyState,
               {
                 backgroundColor: colors.surface,
-                borderColor: colors.border,
               },
             ]}>
             <View
@@ -291,7 +289,6 @@ export default function BlockedUsersScreen() {
               styles.card,
               {
                 backgroundColor: colors.surface,
-                borderColor: colors.border,
               },
             ]}>
             {visibleProfiles.map(
@@ -484,7 +481,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: SPACING.xl,
     paddingVertical: 28,
-    borderWidth: 1,
     borderRadius: RADIUS.xl,
   },
 
@@ -513,7 +509,6 @@ const styles = StyleSheet.create({
 
   card: {
     marginTop: SPACING.sm,
-    borderWidth: 1,
     borderRadius: RADIUS.xl,
     overflow: 'hidden',
   },

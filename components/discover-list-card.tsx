@@ -39,7 +39,6 @@ export default function DiscoverListCard({
         styles.card,
         {
           backgroundColor: colors.surface,
-          borderColor: colors.border,
         },
         pressed && styles.pressed,
       ]}
@@ -112,7 +111,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
     paddingVertical: 13,
-    borderWidth: 1,
     borderRadius: RADIUS.xxl,
   },
 

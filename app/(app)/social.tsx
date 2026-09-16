@@ -864,7 +864,6 @@ export default function SocialScreen() {
               styles.emptyState,
               {
                 backgroundColor: colors.surface,
-                borderColor: colors.border,
               },
             ]}>
             <Ionicons
@@ -908,7 +907,6 @@ export default function SocialScreen() {
               styles.emptyState,
               {
                 backgroundColor: colors.surface,
-                borderColor: colors.border,
               },
             ]}>
             <Ionicons
@@ -938,7 +936,6 @@ export default function SocialScreen() {
               styles.emptyState,
               {
                 backgroundColor: colors.surface,
-                borderColor: colors.border,
               },
             ]}>
             <Ionicons
@@ -996,7 +993,6 @@ export default function SocialScreen() {
                     styles.userRow,
                     {
                       backgroundColor: colors.surface,
-                      borderColor: colors.border,
                     },
                   ]}>
                   <Pressable
@@ -1258,7 +1254,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 40,
     paddingHorizontal: 24,
-    borderWidth: 1,
     borderRadius: 18,
   },
 
@@ -1287,7 +1282,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 14,
     paddingVertical: 12,
-    borderWidth: 1,
     borderRadius: 18,
   },
 

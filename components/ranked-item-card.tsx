@@ -62,7 +62,6 @@ export default function RankedItemCard({
         styles.card,
         {
           backgroundColor: colors.surface,
-          borderColor: colors.border,
         },
       ]}
       onPress={onPress}>
@@ -180,7 +179,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 16,
     padding: 16,
-    borderWidth: 1,
   },
 
   rankContainer: {

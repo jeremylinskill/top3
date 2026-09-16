@@ -436,7 +436,6 @@ export default function CreateTopicScreen() {
             styles.overallCard,
             {
               backgroundColor: colors.surface,
-              borderColor: colors.border,
             },
             pressed &&
               styles.pressed,
@@ -492,7 +491,6 @@ export default function CreateTopicScreen() {
               styles.genreContainer,
               {
                 backgroundColor: colors.surface,
-                borderColor: colors.border,
               },
             ]}>
             <View
@@ -549,8 +547,6 @@ export default function CreateTopicScreen() {
                           {
                             backgroundColor:
                               colors.secondarySurface,
-                            borderColor:
-                              colors.border,
                           },
                           pressed &&
                             styles.pressed,
@@ -626,7 +622,6 @@ const styles =
       paddingHorizontal: 18,
       paddingTop: 18,
       paddingBottom: 18,
-      borderWidth: 1,
       borderRadius: 16,
     },
 
@@ -644,7 +639,6 @@ const styles =
       alignItems: 'center',
       paddingHorizontal: 18,
       paddingVertical: 16,
-      borderWidth: 1,
       borderRadius: 16,
     },
 
@@ -679,7 +673,6 @@ const styles =
         'center',
       paddingHorizontal: 8,
       paddingVertical: 10,
-      borderWidth: 1,
       borderRadius: 14,
     },
 

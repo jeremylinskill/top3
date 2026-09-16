@@ -174,7 +174,6 @@ function ReportCard({
         styles.reportCard,
         {
           backgroundColor: colors.surface,
-          borderColor: colors.border,
         },
       ]}>
       <View style={styles.reportHeader}>
@@ -816,7 +815,6 @@ export default function ModerationScreen() {
                 styles.stateCard,
                 {
                   backgroundColor: colors.surface,
-                  borderColor: colors.border,
                 },
               ]}>
               <AppText
@@ -839,7 +837,6 @@ export default function ModerationScreen() {
                 styles.stateCard,
                 {
                   backgroundColor: colors.surface,
-                  borderColor: colors.border,
                 },
               ]}>
               <AppText
@@ -919,7 +916,6 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.lg,
-    borderWidth: 1,
     borderRadius: RADIUS.xl,
   },
 
@@ -1025,7 +1021,6 @@ const styles = StyleSheet.create({
   stateCard: {
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.xl,
-    borderWidth: 1,
     borderRadius: RADIUS.xl,
   },
 

@@ -50,7 +50,6 @@ export default function SupportScreen() {
             styles.card,
             {
               backgroundColor: colors.surface,
-              borderColor: colors.border,
             },
           ]}>
           <View
@@ -116,7 +115,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: SPACING.xl,
     paddingVertical: 28,
-    borderWidth: 1,
     borderRadius: RADIUS.xl,
   },
 

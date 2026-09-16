@@ -22,7 +22,6 @@ export default function Card({
       style={[
         styles.card,
         {
-          borderColor: colors.border,
           backgroundColor: colors.surface,
         },
         style,
@@ -35,6 +34,5 @@ export default function Card({
 const styles = StyleSheet.create({
   card: {
     borderRadius: 18,
-    borderWidth: 1,
   },
 });

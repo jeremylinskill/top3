@@ -141,7 +141,6 @@ export default function OnboardingOverallTop3Screen() {
             styles.overallCard,
             {
               backgroundColor: colors.surface,
-              borderColor: colors.border,
               opacity: cardOpacity,
               transform: [
                 {
@@ -323,7 +322,6 @@ const styles = StyleSheet.create({
     marginTop: 30,
     padding: 18,
     borderRadius: 16,
-    borderWidth: StyleSheet.hairlineWidth,
   },
 
   cardHeader: {

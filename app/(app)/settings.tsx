@@ -473,7 +473,6 @@ export default function SettingsScreen() {
               styles.card,
               {
                 backgroundColor: colors.surface,
-                borderColor: colors.border,
               },
             ]}>
             <Pressable
@@ -697,7 +696,6 @@ export default function SettingsScreen() {
               styles.card,
               {
                 backgroundColor: colors.surface,
-                borderColor: colors.border,
               },
             ]}>
             <View style={styles.row}>
@@ -935,7 +933,6 @@ export default function SettingsScreen() {
               styles.card,
               {
                 backgroundColor: colors.surface,
-                borderColor: colors.border,
               },
             ]}>
             <View
@@ -1222,7 +1219,6 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    borderWidth: 1,
     borderRadius: RADIUS.xl,
     overflow: 'hidden',
   },

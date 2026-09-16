@@ -888,7 +888,6 @@ export default function OnboardingPublishedScreen() {
                   styles.compactOverallCard,
                 {
                   backgroundColor: colors.surface,
-                  borderColor: colors.border,
                 },
               ]}>
               <View style={styles.titleRow}>
@@ -1228,7 +1227,6 @@ const styles = StyleSheet.create({
 
   overallCard: {
     borderRadius: 18,
-    borderWidth: 1,
     padding: 18,
   },
 

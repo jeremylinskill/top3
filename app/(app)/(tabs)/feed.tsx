@@ -1290,7 +1290,6 @@ export default function FeedScreen() {
               styles.emptyState,
               {
                 backgroundColor: colors.surface,
-                borderColor: colors.border,
               },
             ]}>
             <AppText
@@ -1387,7 +1386,6 @@ const styles = StyleSheet.create({
     paddingVertical: 36,
     paddingHorizontal: SPACING.xxl,
     borderRadius: RADIUS.xl,
-    borderWidth: 1,
   },
 
   emptyTitle: {

@@ -616,7 +616,6 @@ export default function PublishedTop3Screen() {
                 styles.authorRow,
                 {
                   backgroundColor: colors.surface,
-                  borderColor: colors.border,
                 },
                 pressed && styles.pressed,
               ]}
@@ -714,7 +713,6 @@ const styles = StyleSheet.create({
   authorRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,

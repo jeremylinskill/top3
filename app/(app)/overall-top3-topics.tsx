@@ -341,7 +341,6 @@ export default function OverallTop3TopicsScreen() {
               styles.topicCard,
               {
                 backgroundColor: colors.surface,
-                borderColor: colors.border,
               },
               pressed && styles.pressed,
             ]}
@@ -405,7 +404,6 @@ export default function OverallTop3TopicsScreen() {
                     styles.topicCard,
                     {
                       backgroundColor: colors.surface,
-                      borderColor: colors.border,
                     },
                     pressed && styles.pressed,
                   ]}
@@ -463,7 +461,6 @@ export default function OverallTop3TopicsScreen() {
                 styles.emptyState,
                 {
                   backgroundColor: colors.surface,
-                  borderColor: colors.border,
                 },
               ]}>
               <AppText
@@ -534,7 +531,6 @@ const styles = StyleSheet.create({
     minHeight: 88,
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
     borderRadius: 18,
     paddingHorizontal: 16,
     paddingVertical: 15,
@@ -566,7 +562,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingVertical: 34,
     paddingHorizontal: 24,
-    borderWidth: 1,
     borderRadius: 18,
   },
 

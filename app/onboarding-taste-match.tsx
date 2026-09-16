@@ -496,7 +496,6 @@ export default function OnboardingTasteMatchScreen() {
               styles.compactMatchCard,
             {
               backgroundColor: colors.surface,
-              borderColor: colors.border,
             },
             {
               opacity:
@@ -743,7 +742,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 28,
     paddingBottom: 26,
-    borderWidth: 1,
     borderRadius: 22,
     alignItems: 'center',
   },
