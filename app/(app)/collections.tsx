@@ -1,8 +1,9 @@
+import AppText from '@/components/app-text';
 import ScreenHeader from '@/components/screen-header';
-import { COLORS } from '@/constants/colors';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
-import { TYPOGRAPHY } from '@/constants/typography';
 import { useTop3 } from '@/context/top3-context';
+import { useAppColors } from '@/hooks/use-app-colors';
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import {
   Pressable,
@@ -14,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CollectionsScreen() {
+  const colors = useAppColors();
   const { lists } = useTop3();
 
   function getCategory(categoryId: string) {
@@ -22,7 +24,10 @@ export default function CollectionsScreen() {
     );
   }
 
-  function getCollectionIcon(categoryId: string, topic?: string) {
+  function getCollectionIcon(
+    categoryId: string,
+    topic?: string
+  ) {
     const category = getCategory(categoryId);
 
     if (!category) {
@@ -34,15 +39,21 @@ export default function CollectionsScreen() {
     }
 
     const topicConfig = category.topics.find(
-      (item) => item.name.toLowerCase() === topic.toLowerCase()
+      (item) =>
+        item.name.toLowerCase() ===
+        topic.toLowerCase()
     );
 
     return topicConfig?.icon ?? category.icon;
   }
 
-  function getDisplayTitle(categoryId: string, topic?: string) {
+  function getDisplayTitle(
+    categoryId: string,
+    topic?: string
+  ) {
     const category = getCategory(categoryId);
-    const categoryName = category?.name ?? categoryId;
+    const categoryName =
+      category?.name ?? categoryId;
 
     if (!topic) {
       return categoryName;
@@ -51,39 +62,50 @@ export default function CollectionsScreen() {
     return `${categoryName} · ${topic}`;
   }
 
-  const sortedLists = [...lists].sort((firstList, secondList) => {
-    const firstCategoryName =
-      getCategory(firstList.category)?.name ?? firstList.category;
+  const sortedLists = [...lists].sort(
+    (firstList, secondList) => {
+      const firstCategoryName =
+        getCategory(firstList.category)?.name ??
+        firstList.category;
 
-    const secondCategoryName =
-      getCategory(secondList.category)?.name ?? secondList.category;
+      const secondCategoryName =
+        getCategory(secondList.category)?.name ??
+        secondList.category;
 
-    const categoryComparison = firstCategoryName.localeCompare(
-      secondCategoryName
-    );
+      const categoryComparison =
+        firstCategoryName.localeCompare(
+          secondCategoryName
+        );
 
-    if (categoryComparison !== 0) {
-      return categoryComparison;
+      if (categoryComparison !== 0) {
+        return categoryComparison;
+      }
+
+      const firstIsGeneral = !firstList.topic;
+      const secondIsGeneral = !secondList.topic;
+
+      if (firstIsGeneral && !secondIsGeneral) {
+        return -1;
+      }
+
+      if (!firstIsGeneral && secondIsGeneral) {
+        return 1;
+      }
+
+      return (firstList.topic ?? '').localeCompare(
+        secondList.topic ?? ''
+      );
     }
-
-    const firstIsGeneral = !firstList.topic;
-    const secondIsGeneral = !secondList.topic;
-
-    if (firstIsGeneral && !secondIsGeneral) {
-      return -1;
-    }
-
-    if (!firstIsGeneral && secondIsGeneral) {
-      return 1;
-    }
-
-    return (firstList.topic ?? '').localeCompare(
-      secondList.topic ?? ''
-    );
-  });
+  );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+        },
+      ]}>
       <ScreenHeader title="My Top 3" />
 
       <ScrollView
@@ -91,8 +113,12 @@ export default function CollectionsScreen() {
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}>
         {sortedLists.map((list) => {
-          const selectedCount = list.items.filter(Boolean).length;
-          const isComplete = selectedCount === 3;
+          const selectedCount =
+            list.items.filter(Boolean).length;
+
+          const isComplete =
+            selectedCount === 3;
+
           const icon = getCollectionIcon(
             list.category,
             list.topic
@@ -101,7 +127,13 @@ export default function CollectionsScreen() {
           return (
             <Pressable
               key={list.id}
-              style={styles.collectionCard}
+              style={[
+                styles.collectionCard,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                },
+              ]}
               onPress={() => {
                 router.push({
                   pathname: '/collection',
@@ -110,33 +142,72 @@ export default function CollectionsScreen() {
                   },
                 });
               }}>
-              <Text style={styles.icon}>{icon}</Text>
+              <Text style={styles.icon}>
+                {icon}
+              </Text>
 
               <View style={styles.collectionDetails}>
-                <Text style={styles.collectionTitle}>
-                  {getDisplayTitle(list.category, list.topic)}
-                </Text>
+                <AppText
+                  variant="sectionTitle"
+                  emphasis="semibold"
+                  style={styles.collectionTitle}>
+                  {getDisplayTitle(
+                    list.category,
+                    list.topic
+                  )}
+                </AppText>
 
                 {!isComplete ? (
-                  <Text style={styles.collectionSubtitle}>
+                  <AppText
+                    variant="body"
+                    tone="tertiary"
+                    style={styles.collectionSubtitle}>
                     {selectedCount} of 3 selected
-                  </Text>
+                  </AppText>
                 ) : null}
               </View>
 
-              <Text style={styles.arrow}>›</Text>
+              <Ionicons
+                name="chevron-forward"
+                size={22}
+                color={colors.tertiaryText}
+              />
             </Pressable>
           );
         })}
       </ScrollView>
 
-      <View style={styles.bottomBar}>
+      <View
+        style={[
+          styles.bottomBar,
+          {
+            backgroundColor: colors.background,
+            borderTopColor: colors.border,
+          },
+        ]}>
         <Pressable
-          style={styles.createButton}
-          onPress={() => router.push('/create-collection')}>
-          <Text style={styles.createButtonText}>
-            ＋ Create List
-          </Text>
+          style={[
+            styles.createButton,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+            },
+          ]}
+          onPress={() =>
+            router.push('/create-collection')
+          }>
+          <Ionicons
+            name="add"
+            size={20}
+            color={colors.text}
+          />
+
+          <AppText
+            variant="headline"
+            emphasis="semibold"
+            style={styles.createButtonText}>
+            Create List
+          </AppText>
         </Pressable>
       </View>
     </SafeAreaView>
@@ -146,7 +217,6 @@ export default function CollectionsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
   },
 
   scrollView: {
@@ -163,11 +233,9 @@ const styles = StyleSheet.create({
   collectionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#EEEEEE',
   },
 
   icon: {
@@ -181,42 +249,30 @@ const styles = StyleSheet.create({
   },
 
   collectionTitle: {
-    ...TYPOGRAPHY.sectionTitle,
     flexShrink: 1,
-    fontWeight: '600',
   },
 
   collectionSubtitle: {
-    ...TYPOGRAPHY.body,
     marginTop: 6,
-    color: COLORS.tertiaryText,
-  },
-
-  arrow: {
-    fontSize: 32,
-    color: '#999999',
   },
 
   bottomBar: {
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 8,
-    backgroundColor: '#FAFAFA',
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#DDDDDD',
   },
 
   createButton: {
-    paddingVertical: 16,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#CCCCCC',
-    backgroundColor: '#FFFFFF',
   },
 
   createButtonText: {
-    ...TYPOGRAPHY.headline,
-    fontWeight: '600',
+    marginLeft: 6,
   },
 });

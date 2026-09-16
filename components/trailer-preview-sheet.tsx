@@ -1,10 +1,11 @@
 import { useTrailerPreview } from '@/context/trailer-preview-context';
+import { usePreviewSheetColors } from '@/hooks/use-preview-sheet-colors';
 import { Ionicons } from '@expo/vector-icons';
 import {
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
@@ -59,6 +60,8 @@ export default function TrailerPreviewSheet() {
     closeTrailer,
   } = useTrailerPreview();
 
+  const previewColors =
+    usePreviewSheetColors();
   const insets = useSafeAreaInsets();
 
   if (
@@ -69,32 +72,74 @@ export default function TrailerPreviewSheet() {
   }
 
   return (
-    <View
-  pointerEvents="box-none"
-  style={[
-    styles.positioner,
-    {
-      bottom: Math.max(insets.bottom - 2, 4),
-    },
-  ]}>
-      <View style={styles.sheet}>
+    <>
+      <View
+        pointerEvents="none"
+        style={[
+          styles.backdrop,
+          {
+            backgroundColor:
+              previewColors.backdrop,
+          },
+        ]}
+      />
+
+      <View
+        pointerEvents="box-none"
+        style={[
+          styles.positioner,
+        {
+          bottom: Math.max(
+            insets.bottom - 2,
+            4
+          ),
+        },
+      ]}>
+      <View
+        style={[
+          styles.sheet,
+          {
+            backgroundColor:
+              previewColors.surface,
+            borderColor:
+              previewColors.border,
+          },
+        ]}>
         <View style={styles.header}>
           <View style={styles.details}>
             <Text
-              style={styles.eyebrow}
+              style={[
+                styles.eyebrow,
+                {
+                  color:
+                    previewColors.tertiaryText,
+                },
+              ]}
               numberOfLines={1}>
               TRAILER PLAYING
             </Text>
 
             <Text
-              style={styles.title}
+              style={[
+                styles.title,
+                {
+                  color:
+                    previewColors.primaryText,
+                },
+              ]}
               numberOfLines={1}>
               {activeTrailerItem.title}
             </Text>
 
             {activeTrailerItem.subtitle ? (
               <Text
-                style={styles.subtitle}
+                style={[
+                  styles.subtitle,
+                  {
+                    color:
+                      previewColors.secondaryText,
+                  },
+                ]}
                 numberOfLines={1}>
                 {activeTrailerItem.subtitle}
               </Text>
@@ -104,6 +149,10 @@ export default function TrailerPreviewSheet() {
           <Pressable
             style={({ pressed }) => [
               styles.closeButton,
+              {
+                backgroundColor:
+                  previewColors.control,
+              },
               pressed &&
                 styles.closeButtonPressed,
             ]}
@@ -114,7 +163,9 @@ export default function TrailerPreviewSheet() {
             <Ionicons
               name="close"
               size={20}
-              color="#FFFFFF"
+              color={
+                previewColors.primaryText
+              }
             />
           </Pressable>
         </View>
@@ -140,10 +191,16 @@ export default function TrailerPreviewSheet() {
         </View>
       </View>
     </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1000,
+  },
+
   positioner: {
     position: 'absolute',
     left: 12,
@@ -152,16 +209,14 @@ const styles = StyleSheet.create({
   },
 
   sheet: {
-    backgroundColor: '#111111',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#2A2A2A',
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
       height: 5,
     },
-    shadowOpacity: 0.20,
+    shadowOpacity: 0.2,
     shadowRadius: 18,
     elevation: 12,
   },
@@ -184,20 +239,17 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: '700',
     letterSpacing: 0.7,
-    color: '#B8B8B8',
     marginBottom: 3,
   },
 
   title: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#FFFFFF',
   },
 
   subtitle: {
     marginTop: 2,
     fontSize: 12,
-    color: '#D0D0D0',
   },
 
   closeButton: {
@@ -207,7 +259,6 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#2A2A2A',
   },
 
   closeButtonPressed: {

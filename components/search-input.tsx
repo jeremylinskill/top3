@@ -1,9 +1,9 @@
-import { TYPOGRAPHY } from '@/constants/typography';
+import { TEXT_STYLES } from '@/constants/typography';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { Ionicons } from '@expo/vector-icons';
 import {
   Pressable,
   StyleSheet,
-  Text,
   TextInput,
   TextInputProps,
   View,
@@ -23,34 +23,54 @@ export default function SearchInput({
   onChangeText,
   onClear,
   placeholder,
-  placeholderTextColor = '#A0A0A0',
+  placeholderTextColor,
   autoCapitalize = 'none',
   autoCorrect = false,
   returnKeyType = 'search',
   accessibilityLabel,
   ...textInputProps
 }: SearchInputProps) {
+  const colors = useAppColors();
+
+  const resolvedPlaceholderTextColor =
+    placeholderTextColor ??
+    colors.tertiaryText;
+
   function handleClear() {
     onChangeText('');
     onClear?.();
   }
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        {
+          borderColor: colors.border,
+          backgroundColor: colors.surface,
+        },
+      ]}>
       <Ionicons
         name="search-outline"
         size={19}
-        color="#777777"
+        color={colors.secondaryText}
         style={styles.searchIcon}
       />
 
       <TextInput
         {...textInputProps}
-        style={styles.input}
+        style={[
+          styles.input,
+          {
+            color: colors.text,
+          },
+        ]}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={placeholderTextColor}
+        placeholderTextColor={
+          resolvedPlaceholderTextColor
+        }
         autoCapitalize={autoCapitalize}
         autoCorrect={autoCorrect}
         returnKeyType={returnKeyType}
@@ -70,7 +90,11 @@ export default function SearchInput({
             styles.clearButton,
             pressed && styles.clearButtonPressed,
           ]}>
-          <Text style={styles.clearButtonText}>×</Text>
+          <Ionicons
+            name="close"
+            size={26}
+            color={colors.tertiaryText}
+          />
         </Pressable>
       ) : null}
     </View>
@@ -83,11 +107,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E5E5E5',
     borderRadius: 16,
     paddingLeft: 16,
     paddingRight: 8,
-    backgroundColor: '#FFFFFF',
   },
 
   searchIcon: {
@@ -95,12 +117,11 @@ const styles = StyleSheet.create({
   },
 
   input: {
-    ...TYPOGRAPHY.bodyLarge,
+    ...TEXT_STYLES.bodyLarge,
     flex: 1,
     minHeight: 54,
     paddingVertical: 0,
     paddingHorizontal: 0,
-    color: '#222222',
   },
 
   clearButton: {
@@ -112,12 +133,5 @@ const styles = StyleSheet.create({
 
   clearButtonPressed: {
     opacity: 0.55,
-  },
-
-  clearButtonText: {
-    fontSize: 26,
-    lineHeight: 26,
-    fontWeight: '300',
-    color: '#8A8A8A',
   },
 });

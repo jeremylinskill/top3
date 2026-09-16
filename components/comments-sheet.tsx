@@ -1,12 +1,13 @@
 import ActionSheet, {
   ActionSheetAction,
 } from '@/components/action-sheet';
+import AppText from '@/components/app-text';
 import PrimaryButton from '@/components/primary-button';
 import UserAvatar from '@/components/user-avatar';
 import { AVATAR } from '@/constants/avatar';
-import { COLORS } from '@/constants/colors';
 import { RADIUS } from '@/constants/radius';
-import { TYPOGRAPHY } from '@/constants/typography';
+import { TEXT_STYLES } from '@/constants/typography';
+import { useAppColors } from '@/hooks/use-app-colors';
 
 import {
   Comment,
@@ -35,7 +36,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from 'react-native';
@@ -96,6 +96,7 @@ export default function CommentsSheet({
   post,
   onClose,
 }: CommentsSheetProps) {
+  const colors = useAppColors();
   const insets = useSafeAreaInsets();
   const { profile } = useProfile();
 
@@ -743,6 +744,8 @@ export default function CommentsSheet({
               {
                 height:
                   keyboardHeight + 32,
+                backgroundColor:
+                  colors.background,
               },
             ]}
           />
@@ -767,18 +770,42 @@ export default function CommentsSheet({
                         insets.bottom,
                         14
                       ),
+                backgroundColor:
+                  colors.background,
                 transform: [{ translateY }],
               },
             ]}>
             <GestureDetector
               gesture={dismissGesture}>
-              <View style={styles.dragArea}>
-                <View style={styles.handle} />
+              <View
+                style={[
+                  styles.dragArea,
+                  {
+                    backgroundColor:
+                      colors.background,
+                  },
+                ]}>
+                <View
+                  style={[
+                    styles.handle,
+                    {
+                      backgroundColor:
+                        colors.border,
+                    },
+                  ]}
+                />
 
-                <View style={styles.header}>
-              <Text style={styles.title}>
+                <View
+                  style={[
+                    styles.header,
+                    {
+                      borderBottomColor:
+                        colors.border,
+                    },
+                  ]}>
+              <AppText variant="modalTitle">
                 Comments
-              </Text>
+              </AppText>
 
               <Pressable
                 style={({ pressed }) => [
@@ -794,7 +821,7 @@ export default function CommentsSheet({
                 <Ionicons
                   name="close"
                   size={22}
-                  color={COLORS.text}
+                  color={colors.text}
                 />
                 </Pressable>
                 </View>
@@ -814,12 +841,9 @@ export default function CommentsSheet({
               comments.length === 0 ? (
                 <View
                   style={styles.emptyState}>
-                  <Text
-                    style={
-                      styles.emptyStateTitle
-                    }>
+                  <AppText variant="emptyStateTitle">
                     Loading comments…
-                  </Text>
+                  </AppText>
                 </View>
               ) : hasLoadError &&
                 comments.length === 0 ? (
@@ -828,23 +852,19 @@ export default function CommentsSheet({
                   <Ionicons
                     name="cloud-offline-outline"
                     size={34}
-                    color="#999999"
+                    color={colors.tertiaryText}
                   />
 
-                  <Text
-                    style={
-                      styles.emptyStateTitle
-                    }>
+                  <AppText variant="emptyStateTitle">
                     Couldn’t load comments
-                  </Text>
+                  </AppText>
 
-                  <Text
-                    style={
-                      styles.emptyStateText
-                    }>
+                  <AppText
+                    variant="body"
+                    style={styles.emptyStateText}>
                     Check your connection and try
                     again.
-                  </Text>
+                  </AppText>
 
                   <PrimaryButton
                     title="Try Again"
@@ -861,20 +881,16 @@ export default function CommentsSheet({
               ) : comments.length === 0 ? (
                 <View
                   style={styles.emptyState}>
-                  <Text
-                    style={
-                      styles.emptyStateTitle
-                    }>
+                  <AppText variant="emptyStateTitle">
                     No comments yet
-                  </Text>
+                  </AppText>
 
-                  <Text
-                    style={
-                      styles.emptyStateText
-                    }>
+                  <AppText
+                    variant="body"
+                    style={styles.emptyStateText}>
                     Be the first to share your
                     thoughts.
-                  </Text>
+                  </AppText>
                 </View>
               ) : (
                 <View
@@ -908,7 +924,16 @@ export default function CommentsSheet({
               )}
             </ScrollView>
 
-            <View style={styles.composer}>
+            <View
+              style={[
+                styles.composer,
+                {
+                  backgroundColor:
+                    colors.background,
+                  borderTopColor:
+                    colors.border,
+                },
+              ]}>
               <View style={styles.composerAvatar}>
                 <UserAvatar
                   displayName={profile.displayName}
@@ -919,18 +944,27 @@ export default function CommentsSheet({
               </View>
 
               <View
-                style={
-                  styles.inputContainer
-                }>
+                style={[
+                  styles.inputContainer,
+                  {
+                    backgroundColor:
+                      colors.surface,
+                    borderColor:
+                      colors.border,
+                  },
+                ]}>
                 <TextInput
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    { color: colors.text },
+                  ]}
                   value={commentText}
                   onChangeText={
                     setCommentText
                   }
                   placeholder="Add a comment…"
                   placeholderTextColor={
-                    COLORS.tertiaryText
+                    colors.tertiaryText
                   }
                   multiline
                   maxLength={500}
@@ -964,15 +998,16 @@ export default function CommentsSheet({
                     disabled: !canPost,
                   }}
                   accessibilityLabel="Post comment">
-                  <Text
-                    style={[
-                      styles.postButtonText,
-                      !canPost &&
-                        styles
-                          .postButtonTextDisabled,
-                    ]}>
+                  <AppText
+                    variant="action"
+                    tone={
+                      canPost
+                        ? 'primary'
+                        : 'tertiary'
+                    }
+                    emphasis="strong">
                     Post
-                  </Text>
+                  </AppText>
                 </Pressable>
               </View>
             </View>
@@ -1008,6 +1043,8 @@ function CommentRow({
   onLikePress,
   onMenuPress,
 }: CommentRowProps) {
+  const colors = useAppColors();
+
   const createdAtText =
     formatRelativeTime(
       comment.createdAt
@@ -1028,33 +1065,48 @@ function CommentRow({
         fontSize={16}
       />
 
-      <View style={styles.commentContent}>
+      <View
+        style={[
+          styles.commentContent,
+          {
+            borderBottomColor:
+              colors.border,
+          },
+        ]}>
         <View style={styles.commentBody}>
           <View
             style={styles.commentTopRow}>
             <View
               style={styles.commentMeta}>
-              <Text
+              <AppText
+                variant="bodyBold"
+                tone="primary"
+                emphasis="strong"
                 style={styles.commentAuthor}
                 numberOfLines={1}>
                 {comment.authorDisplayName}
-              </Text>
+              </AppText>
 
-              <Text
+              <AppText
+                variant="micro"
                 style={styles.commentTime}>
                 {createdAtText}
-              </Text>
+              </AppText>
             </View>
           </View>
 
-          <Text
+          <AppText
+            variant="metadata"
             style={styles.commentUsername}>
             @{comment.authorUsername}
-          </Text>
+          </AppText>
 
-          <Text style={styles.commentText}>
+          <AppText
+            variant="body"
+            tone="primary"
+            style={styles.commentText}>
             {comment.text}
-          </Text>
+          </AppText>
         </View>
 
         <View
@@ -1077,7 +1129,7 @@ function CommentRow({
               name="ellipsis-horizontal"
               size={18}
               color={
-                COLORS.tertiaryText
+                colors.tertiaryText
               }
             />
           </Pressable>
@@ -1113,8 +1165,8 @@ function CommentRow({
               size={17}
               color={
                 isLiked
-                  ? '#FF3B30'
-                  : '#777777'
+                  ? colors.heart
+                  : colors.secondaryText
               }
             />
           </Pressable>
@@ -1141,8 +1193,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor:
-      COLORS.background,
   },
 
   keyboardView: {
@@ -1152,8 +1202,6 @@ const styles = StyleSheet.create({
 
   sheet: {
     height: '66%',
-    backgroundColor:
-      COLORS.background,
     borderTopLeftRadius:
       RADIUS.xxxl,
     borderTopRightRadius:
@@ -1162,7 +1210,6 @@ const styles = StyleSheet.create({
   },
 
   dragArea: {
-    backgroundColor: COLORS.background,
   },
 
   handle: {
@@ -1171,7 +1218,6 @@ const styles = StyleSheet.create({
     height: 5,
     borderRadius: 3,
     marginTop: 9,
-    backgroundColor: '#D0D0D0',
   },
 
   header: {
@@ -1182,14 +1228,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderBottomWidth:
       StyleSheet.hairlineWidth,
-    borderBottomColor:
-      COLORS.border,
-  },
-
-  title: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#222222',
   },
 
   closeButton: {
@@ -1228,8 +1266,6 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     borderBottomWidth:
       StyleSheet.hairlineWidth,
-    borderBottomColor:
-      COLORS.border,
   },
 
   commentBody: {
@@ -1250,17 +1286,12 @@ const styles = StyleSheet.create({
   },
 
   commentAuthor: {
-    ...TYPOGRAPHY.bodyBold,
     flexShrink: 1,
-    fontWeight: '700',
-    color: '#222222',
   },
 
   commentTime: {
     flexShrink: 0,
     marginLeft: 8,
-    fontSize: 12,
-    color: '#999999',
   },
 
   commentActionsColumn: {
@@ -1278,15 +1309,11 @@ const styles = StyleSheet.create({
   },
 
   commentUsername: {
-    ...TYPOGRAPHY.metadata,
     marginTop: -1,
-    color: '#888888',
   },
 
   commentText: {
-    ...TYPOGRAPHY.body,
     marginTop: 7,
-    color: '#333333',
   },
 
   commentLikeButton: {
@@ -1307,16 +1334,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
 
-  emptyStateTitle: {
-    fontSize: 19,
-    fontWeight: '700',
-    color: '#222222',
-  },
-
   emptyStateText: {
-    ...TYPOGRAPHY.body,
     marginTop: 7,
-    color: '#777777',
     textAlign: 'center',
   },
 
@@ -1330,12 +1349,8 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     paddingHorizontal: 16,
     paddingTop: 10,
-    backgroundColor:
-      COLORS.background,
     borderTopWidth:
       StyleSheet.hairlineWidth,
-    borderTopColor:
-      COLORS.border,
   },
 
   composerAvatar: {
@@ -1349,10 +1364,7 @@ const styles = StyleSheet.create({
     maxHeight: 120,
     flexDirection: 'row',
     alignItems: 'flex-end',
-    backgroundColor:
-      COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.border,
     borderRadius: 23,
     paddingLeft: 15,
     paddingRight: 6,
@@ -1360,15 +1372,13 @@ const styles = StyleSheet.create({
   },
 
   input: {
+    ...TEXT_STYLES.input,
     flex: 1,
     minHeight: 34,
     maxHeight: 100,
     paddingTop: 7,
     paddingBottom: 7,
     paddingRight: 8,
-    fontSize: 15,
-    lineHeight: 20,
-    color: '#222222',
     textAlignVertical: 'top',
   },
 
@@ -1380,16 +1390,6 @@ const styles = StyleSheet.create({
 
   postButtonDisabled: {
     opacity: 0.45,
-  },
-
-  postButtonText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#222222',
-  },
-
-  postButtonTextDisabled: {
-    color: '#999999',
   },
 
   pressed: {

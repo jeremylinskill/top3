@@ -1,7 +1,10 @@
-import { COLORS } from '@/constants/colors';
-import { TYPOGRAPHY } from '@/constants/typography';
+import AppText from '@/components/app-text';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+} from 'react-native';
 
 type SecondaryActionPillProps = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -16,6 +19,8 @@ export default function SecondaryActionPill({
   onPress,
   disabled = false,
 }: SecondaryActionPillProps) {
+  const colors = useAppColors();
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -24,6 +29,10 @@ export default function SecondaryActionPill({
       onPress={onPress}
       style={({ pressed }) => [
         styles.container,
+        {
+          backgroundColor:
+            colors.secondarySurface,
+        },
         pressed &&
           !disabled &&
           styles.pressed,
@@ -33,19 +42,20 @@ export default function SecondaryActionPill({
         size={16}
         color={
           disabled
-            ? '#9B9B9B'
-            : COLORS.accent
+            ? colors.disabledText
+            : colors.accent
         }
       />
 
-      <Text
-        style={[
-          styles.label,
-          disabled &&
-            styles.disabledLabel,
-        ]}>
+      <AppText
+        variant="label"
+        tone={
+          disabled
+            ? 'disabled'
+            : 'accent'
+        }>
         {label}
-      </Text>
+      </AppText>
     </Pressable>
   );
 }
@@ -58,16 +68,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 999,
-    backgroundColor: '#F1F1F1',
-  },
-
-  label: {
-    ...TYPOGRAPHY.label,
-    color: COLORS.accent,
-  },
-
-  disabledLabel: {
-    color: '#9B9B9B',
   },
 
   pressed: {

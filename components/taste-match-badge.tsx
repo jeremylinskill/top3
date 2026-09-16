@@ -1,11 +1,9 @@
-import { COLORS } from '@/constants/colors';
+import AppText from '@/components/app-text';
 import { SPACING } from '@/constants/spacing';
 import { MINIMUM_TASTE_MATCH } from '@/constants/taste-match';
-import { TYPOGRAPHY } from '@/constants/typography';
 import {
   Pressable,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 
@@ -33,19 +31,22 @@ export default function TasteMatchBadge({
 
   const content = (
     <>
-      <Text
-        style={styles.matchText}
+      <AppText
+        variant="badgeTitle"
+        tone="tasteMatch"
         numberOfLines={1}>
         Taste Match {normalizedScore}%
-      </Text>
+      </AppText>
 
-      <Text
+      <AppText
+        variant="badgeSubtitle"
+        tone="tasteMatch"
         style={styles.sharedText}
         numberOfLines={1}>
         {sharedPickCount === 1
           ? 'You share 1 ranked pick.'
           : `You share ${sharedPickCount} ranked picks.`}
-      </Text>
+      </AppText>
     </>
   );
 
@@ -81,14 +82,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
 
-  matchText: {
-    ...TYPOGRAPHY.badgeTitle,
-    color: COLORS.tasteMatchAccent,
-  },
-
   sharedText: {
-    ...TYPOGRAPHY.badgeSubtitle,
-    color: COLORS.tasteMatchAccent,
     marginTop: 1,
   },
 

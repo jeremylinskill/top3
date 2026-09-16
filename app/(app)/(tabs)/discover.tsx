@@ -1,3 +1,4 @@
+import AppText from '@/components/app-text';
 import DiscoverListCard from '@/components/discover-list-card';
 import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
@@ -12,11 +13,11 @@ import {
   MIN_TRENDING_TOPICS,
 } from '@/constants/discover-featured';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
-import { TYPOGRAPHY } from '@/constants/typography';
 import { useBlock } from '@/context/block-context';
 import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
+import { useAppColors } from '@/hooks/use-app-colors';
 import {
   getNewestPublicProfiles,
   getPublicProfilesByIds,
@@ -137,6 +138,7 @@ function formatResultCaption(
 }
 
 export default function DiscoverScreen() {
+  const colors = useAppColors();
   const { profile } = useProfile();
   const { createList } = useTop3();
 
@@ -1460,7 +1462,12 @@ export default function DiscoverScreen() {
 
   return (
     <SafeAreaView
-      style={styles.container}
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+        },
+      ]}
       edges={['top', 'left', 'right']}>
       <ScreenHeader />
 
@@ -1472,6 +1479,8 @@ export default function DiscoverScreen() {
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={refreshDiscover}
+            tintColor={colors.secondaryText}
+            colors={[colors.secondaryText]}
           />
         }
         keyboardDismissMode={
@@ -1523,16 +1532,26 @@ export default function DiscoverScreen() {
           onPress={dismissSearchKeyboard}
           accessible={false}>
           {hasDiscoverLoadError ? (
-            <View style={styles.searchPlaceholder}>
-              <Text
+            <View
+              style={[
+                styles.searchPlaceholder,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                },
+              ]}>
+              <AppText
+                variant="selectionTitle"
                 style={styles.searchPlaceholderTitle}>
                 Couldn&apos;t load Discover
-              </Text>
+              </AppText>
 
-              <Text
+              <AppText
+                variant="body"
+                tone="tertiary"
                 style={styles.searchPlaceholderText}>
                 Check your connection and try again.
-              </Text>
+              </AppText>
 
               <PrimaryButton
                 title="Try Again"
@@ -1546,9 +1565,11 @@ export default function DiscoverScreen() {
           ) : showRecentSearches ? (
           <View style={styles.recentSection}>
             <View style={styles.recentHeader}>
-              <Text style={styles.sectionTitle}>
+              <AppText
+                variant="sectionTitle"
+                style={styles.sectionTitle}>
                 Recent Searches
-              </Text>
+              </AppText>
 
               <Pressable
                 style={({ pressed }) => [
@@ -1558,10 +1579,11 @@ export default function DiscoverScreen() {
                 onPress={clearAllRecentSearches}
                 accessibilityRole="button"
                 accessibilityLabel="Clear recent searches">
-                <Text
-                  style={styles.clearRecentText}>
+                <AppText
+                  variant="label"
+                  tone="tertiary">
                   Clear all
-                </Text>
+                </AppText>
               </Pressable>
             </View>
 
@@ -1570,7 +1592,13 @@ export default function DiscoverScreen() {
                 (recentSearch) => (
                   <View
                     key={recentSearch.toLowerCase()}
-                    style={styles.recentSearchCard}>
+                    style={[
+                      styles.recentSearchCard,
+                      {
+                        backgroundColor: colors.surface,
+                        borderColor: colors.border,
+                      },
+                    ]}>
                     <Pressable
                       style={({ pressed }) => [
                         styles.recentSearchAction,
@@ -1586,16 +1614,15 @@ export default function DiscoverScreen() {
                       <MaterialIcons
                         name="history"
                         size={23}
-                        color="#777777"
+                        color={colors.tertiaryText}
                       />
 
-                      <Text
-                        style={
-                          styles.recentSearchText
-                        }
-                        numberOfLines={1}>
+                      <AppText
+                        variant="bodyLarge"
+                        numberOfLines={1}
+                        style={styles.recentSearchText}>
                         {recentSearch}
-                      </Text>
+                      </AppText>
                     </Pressable>
 
                     <Pressable
@@ -1614,7 +1641,7 @@ export default function DiscoverScreen() {
                       <Ionicons
                         name="close"
                         size={21}
-                        color="#777777"
+                        color={colors.tertiaryText}
                       />
                     </Pressable>
                   </View>
@@ -1624,16 +1651,22 @@ export default function DiscoverScreen() {
           </View>
         ) : isSearching ? (
           <View style={styles.searchResults}>
-            <Text style={styles.resultsCaption}>
+            <AppText
+              variant="label"
+              tone="tertiary"
+              emphasis="regular"
+              style={styles.resultsCaption}>
               {resultCaption} for “
               {searchQuery.trim()}”
-            </Text>
+            </AppText>
 
             {filteredCategories.length > 0 ? (
               <View style={styles.resultSection}>
-                <Text style={styles.sectionTitle}>
+                <AppText
+                  variant="sectionTitle"
+                  style={styles.sectionTitle}>
                   Categories
-                </Text>
+                </AppText>
 
                 <View style={styles.categoryList}>
                   {filteredCategories.map(
@@ -1653,9 +1686,13 @@ export default function DiscoverScreen() {
                         accessibilityRole="button"
                         accessibilityLabel={`Browse ${category.name} Top 3 lists`}>
                         <View
-                          style={
-                            styles.iconContainer
-                          }>
+                          style={[
+                            styles.iconContainer,
+                            {
+                              backgroundColor:
+                                colors.secondarySurface,
+                            },
+                          ]}>
                           <Text
                             style={styles.icon}>
                             {category.icon}
@@ -1666,12 +1703,10 @@ export default function DiscoverScreen() {
                           style={
                             styles.categoryDetails
                           }>
-                          <Text
-                            style={
-                              styles.categoryName
-                            }>
+                          <AppText
+                            variant="emptyStateTitle">
                             {category.name}
-                          </Text>
+                          </AppText>
 
                           <View
                             style={
@@ -1680,13 +1715,14 @@ export default function DiscoverScreen() {
                             {isLoading ? (
                               <ActivityIndicator
                                 size="small"
-                                color="#999999"
+                                color={colors.tertiaryText}
                               />
                             ) : null}
 
-                            <Text
+                            <AppText
+                              variant="metadata"
+                              tone="secondary"
                               style={[
-                                styles.categoryMeta,
                                 isLoading &&
                                   styles
                                     .categoryMetaLoading,
@@ -1694,14 +1730,16 @@ export default function DiscoverScreen() {
                               {getPublishedCountLabel(
                                 category.id
                               )}
-                            </Text>
+                            </AppText>
                           </View>
                         </View>
 
-                        <Text
-                          style={styles.arrow}>
-                          ›
-                        </Text>
+                        <Ionicons
+                          name="chevron-forward"
+                          size={22}
+                          color={colors.tertiaryText}
+                          style={styles.arrow}
+                        />
                       </Pressable>
                     )
                   )}
@@ -1711,9 +1749,11 @@ export default function DiscoverScreen() {
 
             {filteredTopics.length > 0 ? (
               <View style={styles.resultSection}>
-                <Text style={styles.sectionTitle}>
+                <AppText
+                  variant="sectionTitle"
+                  style={styles.sectionTitle}>
                   Topics
-                </Text>
+                </AppText>
 
                 <View style={styles.topicList}>
                   {filteredTopics.map(
@@ -1731,7 +1771,13 @@ export default function DiscoverScreen() {
                         accessibilityRole="button"
                         accessibilityLabel={`Browse ${topic.categoryName} ${topic.topic} Top 3 lists`}>
                         <View
-                          style={styles.topicIcon}>
+                          style={[
+                            styles.topicIcon,
+                            {
+                              backgroundColor:
+                                colors.secondarySurface,
+                            },
+                          ]}>
                           <Text
                             style={
                               styles.topicEmoji
@@ -1744,27 +1790,27 @@ export default function DiscoverScreen() {
                           style={
                             styles.topicDetails
                           }>
-                          <Text
-                            style={
-                              styles.topicTitle
-                            }>
+                          <AppText
+                            variant="selectionTitle">
                             {topic.categoryName} • {topic.topic}
-                          </Text>
+                          </AppText>
 
-                          <Text
-                            style={
-                              styles.topicMeta
-                            }>
+                          <AppText
+                            variant="metadata"
+                            tone="secondary"
+                            style={styles.topicMeta}>
                             {getTopicCountLabel(
                               topic.listCount
                             )}
-                          </Text>
+                          </AppText>
                         </View>
 
-                        <Text
-                          style={styles.arrow}>
-                          ›
-                        </Text>
+                        <Ionicons
+                          name="chevron-forward"
+                          size={22}
+                          color={colors.tertiaryText}
+                          style={styles.arrow}
+                        />
                       </Pressable>
                     )
                   )}
@@ -1774,10 +1820,12 @@ export default function DiscoverScreen() {
 
             {matchingCollections.length > 0 ? (
               <View style={styles.resultSection}>
-                <Text style={styles.sectionTitle}>
+                <AppText
+                  variant="sectionTitle"
+                  style={styles.sectionTitle}>
                   Lists containing “
                   {searchQuery.trim()}”
-                </Text>
+                </AppText>
 
                 <View
                   style={styles.collectionList}>
@@ -1804,9 +1852,13 @@ export default function DiscoverScreen() {
                               )}`
                         }`}>
                         <View
-                          style={
-                            styles.collectionIcon
-                          }>
+                          style={[
+                            styles.collectionIcon,
+                            {
+                              backgroundColor:
+                                colors.secondarySurface,
+                            },
+                          ]}>
                           <Text
                             style={
                               styles.collectionEmoji
@@ -1821,10 +1873,9 @@ export default function DiscoverScreen() {
                           style={
                             styles.collectionDetails
                           }>
-                          <Text
-                            style={
-                              styles.collectionTitle
-                            }
+                          <AppText
+                            variant="selectionTitle"
+                            style={styles.collectionTitle}
                             numberOfLines={2}>
                             {collection.topic ===
                             'general'
@@ -1832,22 +1883,24 @@ export default function DiscoverScreen() {
                               : `${collection.categoryName} • ${formatTopicLabel(
                                   collection.topic
                                 )}`}
-                          </Text>
+                          </AppText>
 
-                          <Text
-                            style={
-                              styles.collectionMeta
-                            }>
+                          <AppText
+                            variant="metadata"
+                            tone="secondary"
+                            style={styles.collectionMeta}>
                             {getMatchingListCountLabel(
                               collection.matchingListCount
                             )}
-                          </Text>
+                          </AppText>
                         </View>
 
-                        <Text
-                          style={styles.arrow}>
-                          ›
-                        </Text>
+                        <Ionicons
+                          name="chevron-forward"
+                          size={22}
+                          color={colors.tertiaryText}
+                          style={styles.arrow}
+                        />
                       </Pressable>
                     )
                   )}
@@ -1857,9 +1910,11 @@ export default function DiscoverScreen() {
 
             {filteredPeople.length > 0 ? (
               <View style={styles.resultSection}>
-                <Text style={styles.sectionTitle}>
+                <AppText
+                  variant="sectionTitle"
+                  style={styles.sectionTitle}>
                   People
-                </Text>
+                </AppText>
 
                 <View style={styles.peopleList}>
                   {filteredPeople.map(
@@ -1887,25 +1942,25 @@ export default function DiscoverScreen() {
                           style={
                             styles.personDetails
                           }>
-                          <Text
-                            style={
-                              styles.personName
-                            }>
+                          <AppText
+                            variant="selectionTitle">
                             {person.displayName}
-                          </Text>
+                          </AppText>
 
-                          <Text
-                            style={
-                              styles.personUsername
-                            }>
+                          <AppText
+                            variant="subtitle"
+                            tone="tertiary"
+                            style={styles.personUsername}>
                             @{person.username}
-                          </Text>
+                          </AppText>
                         </View>
 
-                        <Text
-                          style={styles.arrow}>
-                          ›
-                        </Text>
+                        <Ionicons
+                          name="chevron-forward"
+                          size={22}
+                          color={colors.tertiaryText}
+                          style={styles.arrow}
+                        />
                       </Pressable>
                     )
                   )}
@@ -1915,22 +1970,27 @@ export default function DiscoverScreen() {
 
             {resultCount === 0 ? (
               <View
-                style={styles.searchPlaceholder}>
-                <Text
-                  style={
-                    styles.searchPlaceholderTitle
-                  }>
+                style={[
+                  styles.searchPlaceholder,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                  },
+                ]}>
+                <AppText
+                  variant="selectionTitle"
+                  style={styles.searchPlaceholderTitle}>
                   No results found
-                </Text>
+                </AppText>
 
-                <Text
-                  style={
-                    styles.searchPlaceholderText
-                  }>
+                <AppText
+                  variant="body"
+                  tone="tertiary"
+                  style={styles.searchPlaceholderText}>
                   Try searching for another
                   category, topic, ranked item, or
                   person.
-                </Text>
+                </AppText>
               </View>
             ) : null}
           </View>
@@ -1939,9 +1999,11 @@ export default function DiscoverScreen() {
             <>
             {tasteRecommendations.length > 0 ? (
               <View style={styles.tasteSection}>
-                <Text style={styles.sectionTitle}>
+                <AppText
+                  variant="sectionTitle"
+                  style={styles.sectionTitle}>
                   People with Similar Taste
-                </Text>
+                </AppText>
 
                 <View style={styles.tasteList}>
                   {tasteRecommendations.map(
@@ -1952,7 +2014,13 @@ export default function DiscoverScreen() {
                       return (
                         <View
                           key={user.id}
-                          style={styles.tasteCard}>
+                          style={[
+                            styles.tasteCard,
+                            {
+                              backgroundColor: colors.surface,
+                              borderColor: colors.border,
+                            },
+                          ]}>
                           <View style={styles.tasteMainContent}>
                             <Pressable
                               style={({ pressed }) => [
@@ -1973,19 +2041,19 @@ export default function DiscoverScreen() {
 
                               <View
                                 style={styles.tasteDetails}>
-                                <Text
-                                  style={styles.personName}
+                                <AppText
+                                  variant="selectionTitle"
                                   numberOfLines={1}>
                                   {user.displayName}
-                                </Text>
+                                </AppText>
 
-                                <Text
-                                  style={
-                                    styles.personUsername
-                                  }
+                                <AppText
+                                  variant="subtitle"
+                                  tone="tertiary"
+                                  style={styles.personUsername}
                                   numberOfLines={1}>
                                   @{user.username}
-                                </Text>
+                                </AppText>
                               </View>
                             </Pressable>
 
@@ -2005,6 +2073,17 @@ export default function DiscoverScreen() {
                           <Pressable
                             style={({ pressed }) => [
                               styles.tasteFollowButton,
+                              userIsFollowed
+                                ? {
+                                    backgroundColor:
+                                      colors.surface,
+                                    borderColor:
+                                      colors.border,
+                                  }
+                                : {
+                                    backgroundColor:
+                                      colors.primary,
+                                  },
                               userIsFollowed &&
                                 styles
                                   .tasteFollowingButton,
@@ -2029,17 +2108,18 @@ export default function DiscoverScreen() {
                                 ? `Unfollow ${user.displayName}`
                                 : `Follow ${user.displayName}`
                             }>
-                            <Text
-                              style={[
-                                styles.tasteFollowText,
-                                userIsFollowed &&
-                                  styles
-                                    .tasteFollowingText,
-                              ]}>
+                            <AppText
+                              variant="label"
+                              tone={
+                                userIsFollowed
+                                  ? 'primary'
+                                  : 'onPrimary'
+                              }
+                              emphasis="strong">
                               {userIsFollowed
                                 ? 'Following'
                                 : 'Follow'}
-                            </Text>
+                            </AppText>
                           </Pressable>
                         </View>
                       );
@@ -2052,9 +2132,11 @@ export default function DiscoverScreen() {
             {tasteRecommendations.length === 0 ? (
               visibleNewestProfiles.length > 0 ? (
                 <View style={styles.tasteSection}>
-                  <Text style={styles.sectionTitle}>
+                  <AppText
+                    variant="sectionTitle"
+                    style={styles.sectionTitle}>
                     New Members
-                  </Text>
+                  </AppText>
 
                   <View style={styles.tasteList}>
                     {visibleNewestProfiles.map((user) => {
@@ -2064,7 +2146,13 @@ export default function DiscoverScreen() {
                       return (
                         <View
                           key={user.id}
-                          style={styles.tasteCard}>
+                          style={[
+                            styles.tasteCard,
+                            {
+                              backgroundColor: colors.surface,
+                              borderColor: colors.border,
+                            },
+                          ]}>
                           <Pressable
                             style={({ pressed }) => [
                               styles.tasteProfileAction,
@@ -2085,25 +2173,36 @@ export default function DiscoverScreen() {
 
                             <View
                               style={styles.tasteDetails}>
-                              <Text
-                                style={styles.personName}
+                              <AppText
+                                variant="selectionTitle"
                                 numberOfLines={1}>
                                 {user.displayName}
-                              </Text>
+                              </AppText>
 
-                              <Text
-                                style={
-                                  styles.personUsername
-                                }
+                              <AppText
+                                variant="subtitle"
+                                tone="tertiary"
+                                style={styles.personUsername}
                                 numberOfLines={1}>
                                 @{user.username}
-                              </Text>
+                              </AppText>
                             </View>
                           </Pressable>
 
                           <Pressable
                             style={({ pressed }) => [
                               styles.tasteFollowButton,
+                              userIsFollowed
+                                ? {
+                                    backgroundColor:
+                                      colors.surface,
+                                    borderColor:
+                                      colors.border,
+                                  }
+                                : {
+                                    backgroundColor:
+                                      colors.primary,
+                                  },
                               userIsFollowed &&
                                 styles
                                   .tasteFollowingButton,
@@ -2128,17 +2227,18 @@ export default function DiscoverScreen() {
                                 ? `Unfollow ${user.displayName}`
                                 : `Follow ${user.displayName}`
                             }>
-                            <Text
-                              style={[
-                                styles.tasteFollowText,
-                                userIsFollowed &&
-                                  styles
-                                    .tasteFollowingText,
-                              ]}>
+                            <AppText
+                              variant="label"
+                              tone={
+                                userIsFollowed
+                                  ? 'primary'
+                                  : 'onPrimary'
+                              }
+                              emphasis="strong">
                               {userIsFollowed
                                 ? 'Following'
                                 : 'Follow'}
-                            </Text>
+                            </AppText>
                           </Pressable>
                         </View>
                       );
@@ -2146,17 +2246,27 @@ export default function DiscoverScreen() {
                   </View>
                 </View>
               ) : (
-                <View style={styles.emptyTopics}>
-                  <Text
+                <View
+                  style={[
+                    styles.emptyTopics,
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                    },
+                  ]}>
+                  <AppText
+                    variant="selectionTitle"
                     style={styles.emptyTopicsTitle}>
                     No people to suggest yet
-                  </Text>
+                  </AppText>
 
-                  <Text
+                  <AppText
+                    variant="body"
+                    tone="tertiary"
                     style={styles.emptyTopicsText}>
                     Check back as more people join
                     the Top3 community.
-                  </Text>
+                  </AppText>
                 </View>
               )
             ) : null}
@@ -2164,23 +2274,34 @@ export default function DiscoverScreen() {
           ) : (
             <>
             <View>
-              <Text style={styles.sectionTitle}>
+              <AppText
+                variant="sectionTitle"
+                style={styles.sectionTitle}>
                 {showTrendingCategories
                   ? 'Trending Categories'
                   : 'Featured Categories'}
-              </Text>
+              </AppText>
 
               {isLoading ? (
-                <View style={styles.topicsLoading}>
+                <View
+                  style={[
+                    styles.topicsLoading,
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                    },
+                  ]}>
                   <ActivityIndicator
                     size="small"
-                    color="#777777"
+                    color={colors.tertiaryText}
                   />
 
-                  <Text
+                  <AppText
+                    variant="body"
+                    tone="tertiary"
                     style={styles.topicsLoadingText}>
                     Loading categories…
-                  </Text>
+                  </AppText>
                 </View>
               ) : (
                 <View style={styles.categoryList}>
@@ -2238,23 +2359,34 @@ export default function DiscoverScreen() {
               )}
             </View>
             <View style={styles.topicsSection}>
-              <Text style={styles.sectionTitle}>
+              <AppText
+                variant="sectionTitle"
+                style={styles.sectionTitle}>
                 {showTrendingTopics
                   ? 'Trending Topics'
                   : 'Featured Genres'}
-              </Text>
+              </AppText>
 
               {isLoading ? (
-                <View style={styles.topicsLoading}>
+                <View
+                  style={[
+                    styles.topicsLoading,
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                    },
+                  ]}>
                   <ActivityIndicator
                     size="small"
-                    color="#777777"
+                    color={colors.tertiaryText}
                   />
 
-                  <Text
+                  <AppText
+                    variant="body"
+                    tone="tertiary"
                     style={styles.topicsLoadingText}>
                     Loading topics…
-                  </Text>
+                  </AppText>
                 </View>
               ) : (
                 <View style={styles.topicList}>
@@ -2315,7 +2447,6 @@ export default function DiscoverScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
   },
 
   content: {
@@ -2356,12 +2487,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
 
-  clearRecentText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#777777',
-  },
-
   recentList: {
     gap: 10,
   },
@@ -2370,9 +2495,7 @@ const styles = StyleSheet.create({
     minHeight: 56,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#EAEAEA',
     borderRadius: 16,
     overflow: 'hidden',
   },
@@ -2390,8 +2513,6 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     marginLeft: 12,
-    fontSize: 16,
-    color: '#222222',
   },
 
   removeRecentButton: {
@@ -2407,9 +2528,6 @@ const styles = StyleSheet.create({
 
   resultsCaption: {
     marginBottom: 20,
-    fontSize: 14,
-    lineHeight: 20,
-    color: '#777777',
   },
 
   resultSection: {
@@ -2417,7 +2535,6 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    ...TYPOGRAPHY.sectionTitle,
     marginBottom: 12,
   },
 
@@ -2429,9 +2546,7 @@ const styles = StyleSheet.create({
     minHeight: 88,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#EAEAEA',
     borderRadius: 18,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -2441,7 +2556,6 @@ const styles = StyleSheet.create({
     width: 54,
     height: 54,
     borderRadius: 16,
-    backgroundColor: '#F3F3F3',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -2455,21 +2569,11 @@ const styles = StyleSheet.create({
     marginLeft: 14,
   },
 
-  categoryName: {
-    fontSize: 19,
-    fontWeight: '700',
-    color: '#222222',
-  },
-
   categoryMetaRow: {
     minHeight: 20,
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 6,
-  },
-
-  categoryMeta: {
-    ...TYPOGRAPHY.metadata,
   },
 
   trendingCategoryMeta: {
@@ -2499,9 +2603,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 14,
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#EAEAEA',
     borderRadius: 18,
   },
 
@@ -2536,25 +2638,12 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     paddingHorizontal: 14,
     borderRadius: 10,
-    backgroundColor: '#222222',
     alignItems: 'center',
     justifyContent: 'center',
   },
 
   tasteFollowingButton: {
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#CCCCCC',
-  },
-
-  tasteFollowText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-
-  tasteFollowingText: {
-    color: '#222222',
   },
 
   topicList: {
@@ -2565,9 +2654,7 @@ const styles = StyleSheet.create({
     minHeight: 82,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#EAEAEA',
     borderRadius: 18,
     paddingHorizontal: 16,
     paddingVertical: 13,
@@ -2577,7 +2664,6 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 15,
-    backgroundColor: '#F3F3F3',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -2591,14 +2677,7 @@ const styles = StyleSheet.create({
     marginLeft: 14,
   },
 
-  topicTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#222222',
-  },
-
   topicMeta: {
-    ...TYPOGRAPHY.metadata,
     marginTop: 4,
   },
 
@@ -2612,9 +2691,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 13,
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#EAEAEA',
     borderRadius: 18,
   },
 
@@ -2622,7 +2699,6 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 15,
-    backgroundColor: '#F3F3F3',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -2637,15 +2713,9 @@ const styles = StyleSheet.create({
     marginLeft: 14,
   },
 
-  collectionTitle: {
-    fontSize: 18,
-    lineHeight: 23,
-    fontWeight: '700',
-    color: '#222222',
-  },
+  collectionTitle: {},
 
   collectionMeta: {
-    ...TYPOGRAPHY.metadata,
     marginTop: 4,
   },
 
@@ -2659,9 +2729,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 13,
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#EAEAEA',
     borderRadius: 18,
   },
 
@@ -2672,16 +2740,8 @@ const styles = StyleSheet.create({
     marginLeft: 14,
   },
 
-  personName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#222222',
-  },
-
   personUsername: {
     marginTop: 3,
-    fontSize: 14,
-    color: '#777777',
   },
 
   topicsLoading: {
@@ -2689,38 +2749,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#EAEAEA',
     borderRadius: 18,
   },
 
   topicsLoadingText: {
     marginLeft: 9,
-    fontSize: 15,
-    color: '#777777',
   },
 
   emptyTopics: {
     alignItems: 'center',
     paddingVertical: 32,
     paddingHorizontal: 24,
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#EAEAEA',
     borderRadius: 18,
   },
 
-  emptyTopicsTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#222222',
-  },
+  emptyTopicsTitle: {},
 
   emptyTopicsText: {
-    ...TYPOGRAPHY.body,
     marginTop: 7,
-    color: '#777777',
     textAlign: 'center',
   },
 
@@ -2728,23 +2776,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 32,
     paddingHorizontal: 24,
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#EAEAEA',
     borderRadius: 18,
   },
 
   searchPlaceholderTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#222222',
     textAlign: 'center',
   },
 
   searchPlaceholderText: {
-    ...TYPOGRAPHY.body,
     marginTop: 7,
-    color: '#777777',
     textAlign: 'center',
   },
 
@@ -2755,8 +2796,6 @@ const styles = StyleSheet.create({
 
   arrow: {
     marginLeft: 10,
-    fontSize: 30,
-    color: '#999999',
   },
 
   disabled: {

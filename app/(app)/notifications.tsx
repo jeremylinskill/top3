@@ -1,4 +1,5 @@
 import ActionSheet from '@/components/action-sheet';
+import AppText from '@/components/app-text';
 import PageHeader from '@/components/page-header';
 import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
@@ -6,14 +7,13 @@ import Card from '@/components/ui/card';
 import SecondaryActionPill from '@/components/ui/secondary-action-pill';
 import SectionHeader from '@/components/ui/section-header';
 import UserAvatar from '@/components/user-avatar';
-import { COLORS } from '@/constants/colors';
-import { TYPOGRAPHY } from '@/constants/typography';
 import { useBlock } from '@/context/block-context';
 import {
   EnrichedFollowRequest,
   EnrichedNotification,
   useNotifications,
 } from '@/context/notification-context';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
@@ -23,7 +23,6 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -114,6 +113,7 @@ function formatNotificationTime(
 }
 
 export default function NotificationsScreen() {
+  const colors = useAppColors();
   const {
     notifications,
     pendingFollowRequests,
@@ -323,8 +323,13 @@ export default function NotificationsScreen() {
   return (
     <>
       <SafeAreaView
-      style={styles.container}
-      edges={['top', 'left', 'right']}>
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}
+        edges={['top', 'left', 'right']}>
       <ScreenHeader />
 
       <PageHeader
@@ -350,29 +355,42 @@ export default function NotificationsScreen() {
           <RefreshControl
             refreshing={isLoading}
             onRefresh={refreshNotifications}
+            tintColor={colors.secondaryText}
+            colors={[colors.secondaryText]}
           />
         }>
         {isLoading &&
         visibleNotifications.length === 0 &&
         visiblePendingFollowRequests.length === 0 ? (
           <View style={styles.messageContainer}>
-            <ActivityIndicator size="large" />
+            <ActivityIndicator
+              size="large"
+              color={colors.secondaryText}
+            />
 
-            <Text style={styles.messageText}>
+            <AppText
+              variant="bodyLarge"
+              tone="tertiary"
+              style={styles.messageText}>
               Loading notifications...
-            </Text>
+            </AppText>
           </View>
         ) : loadError &&
           visibleNotifications.length === 0 &&
           visiblePendingFollowRequests.length === 0 ? (
           <View style={styles.messageContainer}>
-            <Text style={styles.messageTitle}>
+            <AppText
+              variant="sectionTitle"
+              style={styles.messageTitle}>
               Couldn’t load notifications
-            </Text>
+            </AppText>
 
-            <Text style={styles.messageText}>
+            <AppText
+              variant="bodyLarge"
+              tone="tertiary"
+              style={styles.messageText}>
               Check your connection and try again.
-            </Text>
+            </AppText>
 
             <PrimaryButton
               title="Try Again"
@@ -385,22 +403,29 @@ export default function NotificationsScreen() {
         ) : visibleNotifications.length === 0 &&
           visiblePendingFollowRequests.length === 0 ? (
           <View style={styles.messageContainer}>
-            <Text style={styles.messageTitle}>
+            <AppText
+              variant="sectionTitle"
+              style={styles.messageTitle}>
               No notifications yet
-            </Text>
+            </AppText>
 
-            <Text style={styles.messageText}>
+            <AppText
+              variant="bodyLarge"
+              tone="tertiary"
+              style={styles.messageText}>
               Likes, comments, follow requests, and
               new followers will appear here.
-            </Text>
+            </AppText>
           </View>
         ) : (
           <>
             {visiblePendingFollowRequests.length > 0 ? (
               <View style={styles.followRequestsSection}>
-                <Text style={styles.sectionTitle}>
+                <AppText
+                  variant="sectionTitle"
+                  style={styles.sectionTitle}>
                   Follow Requests
-                </Text>
+                </AppText>
 
                 {visiblePendingFollowRequests.map(
                   (request) => {
@@ -419,7 +444,15 @@ export default function NotificationsScreen() {
                     return (
                       <View
                         key={request.id}
-                        style={styles.followRequestRow}>
+                        style={[
+                          styles.followRequestRow,
+                          {
+                            backgroundColor:
+                              colors.background,
+                            borderBottomColor:
+                              colors.border,
+                          },
+                        ]}>
                         <Pressable
                           style={({ pressed }) => [
                             styles.requesterProfile,
@@ -442,27 +475,26 @@ export default function NotificationsScreen() {
                             style={
                               styles.followRequestBody
                             }>
-                            <Text
-                              style={
-                                styles.followRequestMessage
-                              }>
-                              <Text
-                                style={
-                                  styles.followRequestName
-                                }>
+                            <AppText
+                              variant="body"
+                              tone="primary">
+                              <AppText
+                                variant="body"
+                                tone="primary"
+                                emphasis="strong">
                                 {requesterName}
-                              </Text>{' '}
+                              </AppText>{' '}
                               requested to follow you.
-                            </Text>
+                            </AppText>
 
-                            <Text
-                              style={
-                                styles.notificationTime
-                              }>
+                            <AppText
+                              variant="metadata"
+                              tone="tertiary"
+                              style={styles.notificationTime}>
                               {formatNotificationTime(
                                 request.createdAt
                               )}
-                            </Text>
+                            </AppText>
                           </View>
                         </Pressable>
 
@@ -473,6 +505,10 @@ export default function NotificationsScreen() {
                           <Pressable
                             style={({ pressed }) => [
                               styles.acceptButton,
+                              {
+                                backgroundColor:
+                                  colors.primary,
+                              },
                               pressed &&
                                 !actionsDisabled &&
                                 styles.pressed,
@@ -490,15 +526,15 @@ export default function NotificationsScreen() {
                             {isRequestActive ? (
                               <ActivityIndicator
                                 size="small"
-                                color="#FFFFFF"
+                                color={colors.onPrimary}
                               />
                             ) : (
-                              <Text
-                                style={
-                                  styles.acceptButtonText
-                                }>
+                              <AppText
+                                variant="label"
+                                tone="onPrimary"
+                                emphasis="strong">
                                 Accept
-                              </Text>
+                              </AppText>
                             )}
                           </Pressable>
 
@@ -523,7 +559,7 @@ export default function NotificationsScreen() {
                             <Ionicons
                               name="close-outline"
                               size={20}
-                              color="#777777"
+                              color={colors.tertiaryText}
                             />
                           </Pressable>
                         </View>
@@ -586,35 +622,40 @@ export default function NotificationsScreen() {
                         />
 
                         <View style={styles.notificationBody}>
-                          <Text style={styles.notificationText}>
-                            <Text style={styles.actorName}>
+                          <AppText
+                            variant="body"
+                            tone="primary">
+                            <AppText
+                              variant="body"
+                              tone="primary"
+                              emphasis="strong">
                               {actorName}
-                            </Text>{' '}
+                            </AppText>{' '}
                             {notification.type === 'like' ? (
                               <>
                                 liked your{' '}
-                                <Text
-                                  style={
-                                    styles.collectionTitle
-                                  }>
+                                <AppText
+                                  variant="body"
+                                  tone="primary"
+                                  emphasis="semibold">
                                   {notification.collection
                                     ?.title ??
                                     'list'}
-                                </Text>
+                                </AppText>
                                 .
                               </>
                             ) : notification.type ===
                               'comment' ? (
                               <>
                                 commented on your{' '}
-                                <Text
-                                  style={
-                                    styles.collectionTitle
-                                  }>
+                                <AppText
+                                  variant="body"
+                                  tone="primary"
+                                  emphasis="semibold">
                                   {notification.collection
                                     ?.title ??
                                     'list'}
-                                </Text>
+                                </AppText>
                                 .
                               </>
                             ) : notification.type ===
@@ -629,18 +670,27 @@ export default function NotificationsScreen() {
                             ) : (
                               'interacted with your profile.'
                             )}
-                          </Text>
+                          </AppText>
 
-                          <Text style={styles.notificationTime}>
+                          <AppText
+                            variant="metadata"
+                            tone="tertiary"
+                            style={styles.notificationTime}>
                             {formatNotificationTime(
                               notification.createdAt
                             )}
-                          </Text>
+                          </AppText>
                         </View>
 
                         {!notification.isRead ? (
                           <View
-                            style={styles.unreadIndicator}
+                            style={[
+                              styles.unreadIndicator,
+                              {
+                                backgroundColor:
+                                  colors.accent,
+                              },
+                            ]}
                             accessibilityLabel="Unread"
                           />
                         ) : null}
@@ -678,7 +728,6 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
 
   scrollView: {
@@ -696,14 +745,11 @@ const styles = StyleSheet.create({
   },
 
   messageTitle: {
-    ...TYPOGRAPHY.sectionTitle,
     textAlign: 'center',
   },
 
   messageText: {
-    ...TYPOGRAPHY.bodyLarge,
     marginTop: 8,
-    color: COLORS.tertiaryText,
     textAlign: 'center',
   },
 
@@ -722,7 +768,6 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    ...TYPOGRAPHY.sectionTitle,
     paddingHorizontal: 20,
   },
 
@@ -733,8 +778,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderBottomWidth:
       StyleSheet.hairlineWidth,
-    borderBottomColor: COLORS.border,
-    backgroundColor: COLORS.background,
   },
 
   requesterProfile: {
@@ -751,14 +794,7 @@ const styles = StyleSheet.create({
     paddingTop: 1,
   },
 
-  followRequestName: {
-    fontWeight: '700',
-    color: COLORS.text,
-  },
 
-  followRequestMessage: {
-    ...TYPOGRAPHY.body,
-  },
 
   followRequestActions: {
     flexDirection: 'row',
@@ -775,14 +811,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 12,
     borderRadius: 10,
-    backgroundColor: COLORS.text,
   },
 
-  acceptButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
 
   declineIconButton: {
     width: 44,
@@ -814,21 +844,10 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
 
-  notificationText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.text,
-  },
 
-  actorName: {
-    fontWeight: '700',
-  },
 
-  collectionTitle: {
-    fontWeight: '600',
-  },
 
   notificationTime: {
-    ...TYPOGRAPHY.metadata,
     marginTop: 4,
   },
 
@@ -836,7 +855,6 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: COLORS.accent,
   },
 
   pressed: {

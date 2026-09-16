@@ -1,9 +1,11 @@
 import ActionSheet from '@/components/action-sheet';
 
+import AppText from '@/components/app-text';
+
 import AuthProviderButton from '@/components/auth-provider-button';
 
-import { COLORS } from '@/constants/colors';
-import { TYPOGRAPHY } from '@/constants/typography';
+import { TEXT_STYLES } from '@/constants/typography';
+import { useAppColors } from '@/hooks/use-app-colors';
 
 import { signInWithEmail } from '@/services/auth-service';
 
@@ -24,7 +26,6 @@ import {
 import {
   Pressable,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from 'react-native';
@@ -58,6 +59,8 @@ function getSignInErrorMessage(error: unknown) {
 export default function EmailSignInForm({
   onSuccess,
 }: EmailSignInFormProps) {
+  const colors = useAppColors();
+
   const passwordInputRef =
     useRef<TextInput>(null);
 
@@ -216,9 +219,11 @@ export default function EmailSignInForm({
     <>
       <View style={styles.container}>
         <View style={styles.field}>
-          <Text style={styles.label}>
+          <AppText
+            variant="formLabel"
+            style={styles.label}>
             Email
-          </Text>
+          </AppText>
 
           <TextInput
             accessibilityLabel="Email"
@@ -233,20 +238,38 @@ export default function EmailSignInForm({
               passwordInputRef.current?.focus()
             }
             placeholder="you@example.com"
-            placeholderTextColor="#999999"
+            placeholderTextColor={
+              colors.tertiaryText
+            }
             returnKeyType="next"
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                borderColor: colors.border,
+                backgroundColor: colors.surface,
+                color: colors.text,
+              },
+            ]}
             textContentType="emailAddress"
             value={email}
           />
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>
+          <AppText
+            variant="formLabel"
+            style={styles.label}>
             Password
-          </Text>
+          </AppText>
 
-          <View style={styles.passwordInputContainer}>
+          <View
+            style={[
+              styles.passwordInputContainer,
+              {
+                borderColor: colors.border,
+                backgroundColor: colors.surface,
+              },
+            ]}>
             <TextInput
               ref={passwordInputRef}
               accessibilityLabel="Password"
@@ -259,10 +282,15 @@ export default function EmailSignInForm({
                 void handleSubmit();
               }}
               placeholder="Enter your password"
-              placeholderTextColor="#999999"
+              placeholderTextColor={
+                colors.tertiaryText
+              }
               returnKeyType="done"
               secureTextEntry={!showPassword}
-              style={styles.passwordInput}
+              style={[
+                styles.passwordInput,
+                { color: colors.text },
+              ]}
               textContentType="password"
               value={password}
             />
@@ -295,7 +323,7 @@ export default function EmailSignInForm({
                     : 'eye-outline'
                 }
                 size={22}
-                color="#666666"
+                color={colors.secondaryText}
               />
             </Pressable>
           </View>
@@ -314,10 +342,9 @@ export default function EmailSignInForm({
                 !isSubmitting &&
                 styles.forgotPasswordButtonPressed,
             ]}>
-            <Text
-              style={styles.forgotPasswordText}>
+            <AppText variant="action">
               Forgot password?
-            </Text>
+            </AppText>
           </Pressable>
         </View>
 
@@ -423,7 +450,6 @@ const styles = StyleSheet.create({
   },
 
   label: {
-    ...TYPOGRAPHY.formLabel,
     marginBottom: 8,
   },
 
@@ -432,11 +458,8 @@ const styles = StyleSheet.create({
     minHeight: 54,
     paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: '#D9D9D9',
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    ...TYPOGRAPHY.bodyLarge,
-    color: COLORS.text,
+    ...TEXT_STYLES.bodyLarge,
   },
 
   passwordInputContainer: {
@@ -445,9 +468,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#D9D9D9',
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
   },
 
   passwordInput: {
@@ -455,8 +476,7 @@ const styles = StyleSheet.create({
     minHeight: 54,
     paddingLeft: 16,
     paddingRight: 8,
-    ...TYPOGRAPHY.bodyLarge,
-    color: COLORS.text,
+    ...TEXT_STYLES.bodyLarge,
   },
 
   visibilityButton: {
@@ -479,9 +499,6 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
 
-  forgotPasswordText: {
-    ...TYPOGRAPHY.action,
-  },
 
   buttonContainer: {
     marginTop: 8,

@@ -1,7 +1,7 @@
 import EmailSignUpForm from '@/components/email-sign-up-form';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
-import { COLORS } from '@/constants/colors';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { router } from 'expo-router';
 import {
   StyleSheet,
@@ -10,13 +10,20 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SignUpEmailScreen() {
+  const colors = useAppColors();
+
   function handleSuccess() {
     router.replace('/check-email');
   }
 
   return (
     <SafeAreaView
-      style={styles.container}
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+        },
+      ]}
       edges={['top', 'bottom']}>
       <ScreenHeader showBackButton />
 
@@ -42,7 +49,6 @@ export default function SignUpEmailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
 
   content: {

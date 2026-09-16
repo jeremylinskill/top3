@@ -1,10 +1,10 @@
 import ActionSheet from '@/components/action-sheet';
+import AppText from '@/components/app-text';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
-import { COLORS } from '@/constants/colors';
 import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
-import { TYPOGRAPHY } from '@/constants/typography';
+import { useAppColors } from '@/hooks/use-app-colors';
 import {
   dismissReport,
   getPendingReports,
@@ -18,7 +18,6 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -153,6 +152,7 @@ function ReportCard({
   onDismiss,
   onRemoveContent,
 }: ReportCardProps) {
+  const colors = useAppColors();
   const reportedUserName =
     getDisplayName(report.reportedUser);
 
@@ -169,76 +169,116 @@ function ReportCard({
     getReportedContentLabel(report);
 
   return (
-    <View style={styles.reportCard}>
+    <View
+      style={[
+        styles.reportCard,
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+        },
+      ]}>
       <View style={styles.reportHeader}>
         <View style={styles.reportHeaderText}>
-          <Text style={styles.reportTargetType}>
+          <AppText variant="headline">
             {formatTargetType(
               report.targetType
             )}
-          </Text>
+          </AppText>
 
-          <Text style={styles.reportDate}>
+          <AppText
+            variant="label"
+            tone="tertiary"
+            emphasis="regular"
+            style={styles.reportDate}>
             {formatReportDate(
               report.createdAt
             )}
-          </Text>
+          </AppText>
         </View>
 
-        <View style={styles.pendingBadge}>
-          <Text style={styles.pendingBadgeText}>
+        <View
+          style={[
+            styles.pendingBadge,
+            {
+              backgroundColor: colors.background,
+            },
+          ]}>
+          <AppText
+            variant="micro"
+            tone="secondary"
+            emphasis="strong">
             Pending
-          </Text>
+          </AppText>
         </View>
       </View>
 
       <View style={styles.reportSection}>
-        <Text style={styles.reportLabel}>
+        <AppText
+          variant="micro"
+          tone="tertiary"
+          emphasis="strong"
+          style={styles.reportLabel}>
           Reported user
-        </Text>
+        </AppText>
 
-        <Text style={styles.reportPrimaryText}>
+        <AppText
+          variant="headline"
+          style={styles.reportPrimaryText}>
           {reportedUserName}
-        </Text>
+        </AppText>
 
         {reportedUsername ? (
-          <Text style={styles.reportSecondaryText}>
+          <AppText
+            variant="label"
+            tone="tertiary"
+            emphasis="regular"
+            style={styles.reportSecondaryText}>
             {reportedUsername}
-          </Text>
+          </AppText>
         ) : null}
       </View>
 
       {reportedContentLabel ? (
         <>
-          <View style={styles.divider} />
+          <View
+        style={[
+          styles.divider,
+          {
+            backgroundColor: colors.border,
+          },
+        ]}
+      />
 
           <View style={styles.reportSection}>
-            <Text style={styles.reportLabel}>
+            <AppText
+          variant="micro"
+          tone="tertiary"
+          emphasis="strong"
+          style={styles.reportLabel}>
               {reportedContentLabel}
-            </Text>
+            </AppText>
 
             {report.reportedContent?.type ===
             'comment' ? (
-              <Text
-                style={
-                  styles.reportContentText
-                }>
+              <AppText
+                variant="body"
+                style={styles.reportContentText}>
                 {report.reportedContent.content}
-              </Text>
+              </AppText>
             ) : report.reportedContent?.type ===
               'post' ? (
               <>
-                <Text
-                  style={
-                    styles.reportPrimaryText
-                  }>
+                <AppText
+          variant="headline"
+          style={styles.reportPrimaryText}>
                   {report.reportedContent.title}
-                </Text>
+                </AppText>
 
-                <Text
-                  style={
-                    styles.reportSecondaryText
-                  }>
+                <AppText
+            variant="label"
+            tone="tertiary"
+            emphasis="regular"
+            style={styles.reportSecondaryText}>
                   {[
                     report.reportedContent
                       .category,
@@ -246,56 +286,101 @@ function ReportCard({
                   ]
                     .filter(Boolean)
                     .join(' · ')}
-                </Text>
+                </AppText>
               </>
             ) : null}
           </View>
         </>
       ) : null}
 
-      <View style={styles.divider} />
+      <View
+        style={[
+          styles.divider,
+          {
+            backgroundColor: colors.border,
+          },
+        ]}
+      />
 
       <View style={styles.reportSection}>
-        <Text style={styles.reportLabel}>
+        <AppText
+          variant="micro"
+          tone="tertiary"
+          emphasis="strong"
+          style={styles.reportLabel}>
           Reported by
-        </Text>
+        </AppText>
 
-        <Text style={styles.reportPrimaryText}>
+        <AppText
+          variant="headline"
+          style={styles.reportPrimaryText}>
           {reporterName}
-        </Text>
+        </AppText>
 
         {reporterUsername ? (
-          <Text style={styles.reportSecondaryText}>
+          <AppText
+            variant="label"
+            tone="tertiary"
+            emphasis="regular"
+            style={styles.reportSecondaryText}>
             {reporterUsername}
-          </Text>
+          </AppText>
         ) : null}
       </View>
 
-      <View style={styles.divider} />
+      <View
+        style={[
+          styles.divider,
+          {
+            backgroundColor: colors.border,
+          },
+        ]}
+      />
 
       <View style={styles.reportSection}>
-        <Text style={styles.reportLabel}>
+        <AppText
+          variant="micro"
+          tone="tertiary"
+          emphasis="strong"
+          style={styles.reportLabel}>
           Reason
-        </Text>
+        </AppText>
 
-        <Text style={styles.reportPrimaryText}>
+        <AppText
+          variant="headline"
+          style={styles.reportPrimaryText}>
           {formatReason(report.reason)}
-        </Text>
+        </AppText>
 
         {report.details ? (
-          <Text style={styles.reportDetails}>
+          <AppText
+            variant="label"
+            tone="secondary"
+            emphasis="regular"
+            style={styles.reportDetails}>
             {report.details}
-          </Text>
+          </AppText>
         ) : null}
       </View>
 
-      <View style={styles.divider} />
+      <View
+        style={[
+          styles.divider,
+          {
+            backgroundColor: colors.border,
+          },
+        ]}
+      />
 
       <View style={styles.actionSection}>
         {report.targetType !== 'user' ? (
           <Pressable
             style={({ pressed }) => [
               styles.removeContentButton,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.destructive,
+              },
               pressed &&
                 !isRemovingContent &&
                 !isDismissing &&
@@ -316,15 +401,15 @@ function ReportCard({
             {isRemovingContent ? (
               <ActivityIndicator
                 size="small"
-                color="#FF3B30"
+                color={colors.destructive}
               />
             ) : (
-              <Text
-                style={
-                  styles.removeContentButtonText
-                }>
+              <AppText
+                variant="action"
+                tone="destructive"
+                emphasis="strong">
                 Remove Content
-              </Text>
+              </AppText>
             )}
           </Pressable>
         ) : null}
@@ -332,6 +417,9 @@ function ReportCard({
         <Pressable
           style={({ pressed }) => [
             styles.dismissButton,
+            {
+              backgroundColor: colors.background,
+            },
             report.targetType !== 'user' &&
               styles.dismissButtonWithSpacing,
             pressed &&
@@ -352,15 +440,15 @@ function ReportCard({
           {isDismissing ? (
             <ActivityIndicator
               size="small"
-              color={COLORS.text}
+              color={colors.text}
             />
           ) : (
-            <Text
-              style={
-                styles.dismissButtonText
-              }>
+            <AppText
+              variant="action"
+              tone="primary"
+              emphasis="strong">
               Dismiss Report
-            </Text>
+            </AppText>
           )}
         </Pressable>
       </View>
@@ -369,6 +457,7 @@ function ReportCard({
 }
 
 export default function ModerationScreen() {
+  const colors = useAppColors();
   const [reports, setReports] = useState<
     ModerationReport[]
   >([]);
@@ -669,7 +758,12 @@ export default function ModerationScreen() {
   return (
     <>
       <SafeAreaView
-        style={styles.container}
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}
         edges={['top', 'left', 'right']}>
       <ScreenHeader showBackButton />
 
@@ -685,6 +779,8 @@ export default function ModerationScreen() {
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
+            tintColor={colors.secondaryText}
+            colors={[colors.secondaryText]}
             onRefresh={() => {
               void loadReports({
                 refreshing: true,
@@ -693,40 +789,72 @@ export default function ModerationScreen() {
           />
         }>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
+          <AppText
+            variant="sectionTitle"
+            style={styles.sectionTitle}>
             Pending reports
-          </Text>
+          </AppText>
 
           {isLoading ? (
             <View style={styles.stateContainer}>
               <ActivityIndicator
                 size="small"
-                color={COLORS.text}
+                color={colors.text}
               />
 
-              <Text style={styles.stateText}>
+              <AppText
+                variant="label"
+                tone="tertiary"
+                emphasis="regular"
+                style={styles.stateText}>
                 Loading reports…
-              </Text>
+              </AppText>
             </View>
           ) : loadError ? (
-            <View style={styles.stateCard}>
-              <Text style={styles.stateTitle}>
+            <View
+              style={[
+                styles.stateCard,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                },
+              ]}>
+              <AppText
+                variant="headline"
+                style={styles.stateTitle}>
                 Unable to load reports
-              </Text>
+              </AppText>
 
-              <Text style={styles.stateText}>
+              <AppText
+                variant="label"
+                tone="tertiary"
+                emphasis="regular"
+                style={styles.stateText}>
                 {loadError}
-              </Text>
+              </AppText>
             </View>
           ) : reports.length === 0 ? (
-            <View style={styles.stateCard}>
-              <Text style={styles.stateTitle}>
+            <View
+              style={[
+                styles.stateCard,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                },
+              ]}>
+              <AppText
+                variant="headline"
+                style={styles.stateTitle}>
                 No pending reports
-              </Text>
+              </AppText>
 
-              <Text style={styles.stateText}>
+              <AppText
+                variant="label"
+                tone="tertiary"
+                emphasis="regular"
+                style={styles.stateText}>
                 New reports will appear here for review.
-              </Text>
+              </AppText>
             </View>
           ) : (
             reports.map((report) => (
@@ -768,7 +896,6 @@ export default function ModerationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
 
   scrollView: {
@@ -785,7 +912,6 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    ...TYPOGRAPHY.sectionTitle,
     marginBottom: SPACING.md,
   },
 
@@ -793,9 +919,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.lg,
-    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.border,
     borderRadius: RADIUS.xl,
   },
 
@@ -812,72 +936,45 @@ const styles = StyleSheet.create({
     marginRight: SPACING.md,
   },
 
-  reportTargetType: {
-    ...TYPOGRAPHY.headline,
-    color: COLORS.text,
-  },
 
   reportDate: {
-    ...TYPOGRAPHY.label,
     marginTop: 3,
-    fontWeight: '400',
-    color: COLORS.tertiaryText,
   },
 
   pendingBadge: {
     paddingHorizontal: SPACING.sm,
     paddingVertical: 5,
     borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.background,
   },
 
-  pendingBadgeText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: COLORS.secondaryText,
-  },
 
   reportSection: {
     paddingVertical: SPACING.sm,
   },
 
   reportLabel: {
-    fontSize: 12,
     lineHeight: 16,
-    fontWeight: '700',
-    color: COLORS.tertiaryText,
     textTransform: 'uppercase',
   },
 
   reportPrimaryText: {
-    ...TYPOGRAPHY.headline,
     marginTop: 4,
-    color: COLORS.text,
   },
 
   reportSecondaryText: {
-    ...TYPOGRAPHY.label,
     marginTop: 2,
-    fontWeight: '400',
-    color: COLORS.tertiaryText,
   },
 
   reportContentText: {
-    ...TYPOGRAPHY.body,
     marginTop: SPACING.sm,
-    color: COLORS.text,
   },
 
   reportDetails: {
-    ...TYPOGRAPHY.label,
     marginTop: SPACING.sm,
-    fontWeight: '400',
-    color: COLORS.secondaryText,
   },
 
   divider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: COLORS.border,
   },
 
   actionSection: {
@@ -888,18 +985,11 @@ const styles = StyleSheet.create({
     minHeight: 44,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
-    borderColor: '#FF3B30',
-    backgroundColor: COLORS.surface,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: SPACING.md,
   },
 
-  removeContentButtonText: {
-    ...TYPOGRAPHY.action,
-    fontWeight: '700',
-    color: '#FF3B30',
-  },
 
   removeContentButtonPressed: {
     opacity: 0.72,
@@ -908,7 +998,6 @@ const styles = StyleSheet.create({
   dismissButton: {
     minHeight: 44,
     borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.background,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: SPACING.md,
@@ -918,11 +1007,6 @@ const styles = StyleSheet.create({
     marginTop: SPACING.sm,
   },
 
-  dismissButtonText: {
-    ...TYPOGRAPHY.action,
-    fontWeight: '700',
-    color: COLORS.text,
-  },
 
   dismissButtonPressed: {
     opacity: 0.72,
@@ -941,23 +1025,16 @@ const styles = StyleSheet.create({
   stateCard: {
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.xl,
-    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.border,
     borderRadius: RADIUS.xl,
   },
 
   stateTitle: {
-    ...TYPOGRAPHY.headline,
-    color: COLORS.text,
     textAlign: 'center',
   },
 
   stateText: {
-    ...TYPOGRAPHY.label,
     marginTop: SPACING.sm,
-    fontWeight: '400',
-    color: COLORS.tertiaryText,
     textAlign: 'center',
   },
 });

@@ -1,5 +1,5 @@
-import { COLORS } from '@/constants/colors';
-import { TYPOGRAPHY } from '@/constants/typography';
+import AppText from '@/components/app-text';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { setSessionFromUrl } from '@/services/auth-service';
 import {
   setAwaitingEmailVerification,
@@ -14,12 +14,12 @@ import {
   ActivityIndicator,
   Pressable,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function AuthCallbackScreen() {
+  const colors = useAppColors();
   const url = Linking.useLinkingURL();
 
   const [errorMessage, setErrorMessage] =
@@ -83,18 +83,27 @@ export default function AuthCallbackScreen() {
 
   return (
     <SafeAreaView
-      style={styles.container}
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+        },
+      ]}
       edges={['top', 'bottom']}>
       <View style={styles.content}>
         {errorMessage ? (
           <>
-            <Text style={styles.title}>
+            <AppText
+              variant="pageTitle"
+              style={styles.title}>
               Unable to verify email
-            </Text>
+            </AppText>
 
-            <Text style={styles.description}>
+            <AppText
+              variant="bodyLarge"
+              style={styles.description}>
               {errorMessage}
-            </Text>
+            </AppText>
 
             <Pressable
               accessibilityRole="button"
@@ -102,27 +111,38 @@ export default function AuthCallbackScreen() {
               onPress={returnToSignIn}
               style={({ pressed }) => [
                 styles.button,
+                {
+                  backgroundColor:
+                    colors.primary,
+                },
                 pressed && styles.buttonPressed,
               ]}>
-              <Text style={styles.buttonText}>
+              <AppText
+                variant="bodyLarge"
+                tone="onPrimary"
+                emphasis="strong">
                 Return to Sign In
-              </Text>
+              </AppText>
             </Pressable>
           </>
         ) : (
           <>
             <ActivityIndicator
               size="large"
-              color="#222222"
+              color={colors.text}
             />
 
-            <Text style={styles.title}>
+            <AppText
+              variant="pageTitle"
+              style={styles.title}>
               Verifying your email…
-            </Text>
+            </AppText>
 
-            <Text style={styles.description}>
+            <AppText
+              variant="bodyLarge"
+              style={styles.description}>
               We&apos;re finishing your Top3 account.
-            </Text>
+            </AppText>
           </>
         )}
       </View>
@@ -133,7 +153,6 @@ export default function AuthCallbackScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
   },
 
   content: {
@@ -144,13 +163,11 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    ...TYPOGRAPHY.pageTitle,
     marginTop: 24,
     textAlign: 'center',
   },
 
   description: {
-    ...TYPOGRAPHY.bodyLarge,
     marginTop: 12,
     maxWidth: 340,
     textAlign: 'center',
@@ -163,17 +180,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 12,
-    backgroundColor: COLORS.primary,
   },
 
   buttonPressed: {
     opacity: 0.8,
-  },
-
-  buttonText: {
-    fontSize: 16,
-    lineHeight: 22,
-    fontWeight: '700',
-    color: '#FFFFFF',
   },
 });

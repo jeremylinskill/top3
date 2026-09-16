@@ -1,8 +1,8 @@
+import AppText from '@/components/app-text';
 import ScreenHeader from '@/components/screen-header';
-import { COLORS } from '@/constants/colors';
 import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
-import { TYPOGRAPHY } from '@/constants/typography';
+import { useAppColors } from '@/hooks/use-app-colors';
 import * as Application from 'expo-application';
 import {
   Image,
@@ -10,7 +10,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -50,6 +49,8 @@ const DATA_SOURCES: DataSource[] = [
 ];
 
 export default function AboutScreen() {
+  const colors = useAppColors();
+
   const version =
     Application.nativeApplicationVersion ??
     '0.1.0';
@@ -134,15 +135,23 @@ export default function AboutScreen() {
     }
 
     return (
-      <Text style={styles.infoValue}>
+      <AppText
+        variant="bodyBold"
+        tone="primary"
+        style={styles.infoValue}>
         {source.name}
-      </Text>
+      </AppText>
     );
   }
 
   return (
     <SafeAreaView
-      style={styles.container}
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+        },
+      ]}
       edges={['top', 'left', 'right']}>
       <ScreenHeader showBackButton />
 
@@ -157,63 +166,127 @@ export default function AboutScreen() {
             accessibilityLabel="Top 3 app icon"
           />
 
-          <Text style={styles.appName}>
+          <AppText
+            variant="pageTitle"
+            style={styles.appName}>
             Top 3
-          </Text>
+          </AppText>
 
-          <View style={styles.betaBadge}>
-            <Text style={styles.betaBadgeText}>
+          <View
+            style={[
+              styles.betaBadge,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}>
+            <AppText
+              variant="caption"
+              tone="secondary"
+              emphasis="strong">
               Beta
-            </Text>
+            </AppText>
           </View>
         </View>
 
-        <View style={styles.infoCard}>
+        <View
+          style={[
+            styles.infoCard,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+            },
+          ]}>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>
+            <AppText
+              variant="body"
+              tone="secondary">
               Version
-            </Text>
+            </AppText>
 
-            <Text style={styles.infoValue}>
+            <AppText
+              variant="bodyBold"
+              tone="primary"
+              style={styles.infoValue}>
               {version}
-            </Text>
+            </AppText>
           </View>
 
-          <View style={styles.divider} />
+          <View
+            style={[
+              styles.divider,
+              {
+                backgroundColor: colors.border,
+              },
+            ]}
+          />
 
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>
+            <AppText
+              variant="body"
+              tone="secondary">
               Build
-            </Text>
+            </AppText>
 
-            <Text style={styles.infoValue}>
+            <AppText
+              variant="bodyBold"
+              tone="primary"
+              style={styles.infoValue}>
               {buildNumber}
-            </Text>
+            </AppText>
           </View>
 
-          <View style={styles.divider} />
+          <View
+            style={[
+              styles.divider,
+              {
+                backgroundColor: colors.border,
+              },
+            ]}
+          />
 
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>
+            <AppText
+              variant="body"
+              tone="secondary">
               Environment
-            </Text>
+            </AppText>
 
-            <Text style={styles.infoValue}>
+            <AppText
+              variant="bodyBold"
+              tone="primary"
+              style={styles.infoValue}>
               {environment}
-            </Text>
+            </AppText>
           </View>
         </View>
 
         <View style={styles.dataSourcesSection}>
-          <Text style={styles.sectionTitle}>
+          <AppText
+            variant="sectionTitle"
+            style={styles.sectionTitle}>
             Data Sources
-          </Text>
+          </AppText>
 
-          <View style={styles.dataSourcesCard}>
+          <View
+            style={[
+              styles.dataSourcesCard,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}>
             {DATA_SOURCES.map((source, index) => (
               <View key={source.name}>
                 {index > 0 ? (
-                  <View style={styles.divider} />
+                  <View
+                    style={[
+                      styles.divider,
+                      {
+                        backgroundColor: colors.border,
+                      },
+                    ]}
+                  />
                 ) : null}
 
                 <Pressable
@@ -229,15 +302,20 @@ export default function AboutScreen() {
                   accessibilityRole="link"
                   accessibilityLabel={`Open ${source.name} website`}>
                   <View style={styles.sourceLabelContainer}>
-                    <Text style={styles.infoLabel}>
+                    <AppText
+                      variant="body"
+                      tone="secondary">
                       {source.label}
-                    </Text>
+                    </AppText>
 
                     {source.name === 'TMDB' ? (
-                      <Text style={styles.tmdbNoticeText}>
+                      <AppText
+                        variant="metadata"
+                        tone="tertiary"
+                        style={styles.tmdbNoticeText}>
                         This product uses the TMDB API but is
                         not endorsed or certified by TMDB.
-                      </Text>
+                      </AppText>
                     ) : null}
                   </View>
 
@@ -251,17 +329,28 @@ export default function AboutScreen() {
         </View>
 
         <View style={styles.attribution}>
-          <Text style={styles.attributionTitle}>
+          <AppText
+            variant="label"
+            tone="tertiary"
+            emphasis="regular"
+            style={styles.attributionTitle}>
             Designed and developed by
-          </Text>
+          </AppText>
 
-          <Text style={styles.attributionName}>
+          <AppText
+            variant="bodyLarge"
+            tone="primary"
+            emphasis="strong"
+            style={styles.attributionName}>
             Jeremy Linskill
-          </Text>
+          </AppText>
 
-          <Text style={styles.copyright}>
+          <AppText
+            variant="metadata"
+            tone="tertiary"
+            style={styles.copyright}>
             © {currentYear} Top 3
-          </Text>
+          </AppText>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -271,7 +360,6 @@ export default function AboutScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
 
   content: {
@@ -292,7 +380,6 @@ const styles = StyleSheet.create({
   },
 
   appName: {
-    ...TYPOGRAPHY.pageTitle,
     marginTop: SPACING.lg,
     textAlign: 'center',
   },
@@ -302,22 +389,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     paddingVertical: 5,
     borderRadius: RADIUS.md,
-    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-
-  betaBadgeText: {
-    ...TYPOGRAPHY.caption,
-    fontWeight: '700',
-    color: COLORS.secondaryText,
   },
 
   infoCard: {
     marginTop: 32,
-    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.border,
     borderRadius: RADIUS.xl,
     overflow: 'hidden',
   },
@@ -331,21 +408,13 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md,
   },
 
-  infoLabel: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.secondaryText,
-  },
-
   infoValue: {
-    ...TYPOGRAPHY.bodyBold,
-    color: COLORS.text,
     textAlign: 'right',
   },
 
   divider: {
     height: StyleSheet.hairlineWidth,
     marginLeft: SPACING.lg,
-    backgroundColor: COLORS.border,
   },
 
   dataSourcesSection: {
@@ -353,14 +422,11 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    ...TYPOGRAPHY.sectionTitle,
     marginBottom: SPACING.md,
   },
 
   dataSourcesCard: {
-    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.border,
     borderRadius: RADIUS.xl,
     overflow: 'hidden',
   },
@@ -418,10 +484,8 @@ const styles = StyleSheet.create({
   },
 
   tmdbNoticeText: {
-    ...TYPOGRAPHY.metadata,
     marginTop: 5,
     maxWidth: 310,
-    color: COLORS.tertiaryText,
   },
 
   pressed: {
@@ -435,24 +499,16 @@ const styles = StyleSheet.create({
   },
 
   attributionTitle: {
-    ...TYPOGRAPHY.label,
-    fontWeight: '400',
-    color: COLORS.tertiaryText,
     textAlign: 'center',
   },
 
   attributionName: {
-    ...TYPOGRAPHY.bodyLarge,
     marginTop: 4,
-    fontWeight: '700',
-    color: COLORS.text,
     textAlign: 'center',
   },
 
   copyright: {
-    ...TYPOGRAPHY.metadata,
     marginTop: SPACING.lg,
-    color: COLORS.tertiaryText,
     textAlign: 'center',
   },
 });

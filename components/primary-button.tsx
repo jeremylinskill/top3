@@ -1,10 +1,9 @@
-import { COLORS } from '@/constants/colors';
+import AppText from '@/components/app-text';
 import { RADIUS } from '@/constants/radius';
-import { TYPOGRAPHY } from '@/constants/typography';
+import { useAppColors } from '@/hooks/use-app-colors';
 import {
   Pressable,
   StyleSheet,
-  Text,
   ViewStyle,
 } from 'react-native';
 
@@ -21,22 +20,31 @@ export default function PrimaryButton({
   disabled = false,
   style,
 }: PrimaryButtonProps) {
+  const colors = useAppColors();
+
   return (
     <Pressable
       style={[
         styles.button,
-        disabled && styles.buttonDisabled,
+        {
+          backgroundColor: disabled
+            ? colors.disabledBackground
+            : colors.primary,
+        },
         style,
       ]}
       onPress={onPress}
       disabled={disabled}>
-      <Text
-        style={[
-          styles.buttonText,
-          disabled && styles.buttonTextDisabled,
-        ]}>
+      <AppText
+        variant="headline"
+        tone={
+          disabled
+            ? 'disabled'
+            : 'onPrimary'
+        }
+        style={styles.buttonText}>
         {title}
-      </Text>
+      </AppText>
     </Pressable>
   );
 }
@@ -47,20 +55,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     alignItems: 'center',
     borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.primary,
-  },
-
-  buttonDisabled: {
-    backgroundColor: COLORS.border,
   },
 
   buttonText: {
-    ...TYPOGRAPHY.headline,
-    color: COLORS.white,
     textAlign: 'center',
-  },
-
-  buttonTextDisabled: {
-    color: COLORS.tertiaryText,
   },
 });

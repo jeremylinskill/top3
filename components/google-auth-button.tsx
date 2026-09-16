@@ -1,10 +1,11 @@
 import GoogleG from '@/assets/images/google-g.svg';
+import { useAppColors } from '@/hooks/use-app-colors';
 import {
-    ActivityIndicator,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 
 interface GoogleAuthButtonProps {
@@ -18,6 +19,8 @@ export default function GoogleAuthButton({
   disabled = false,
   loading = false,
 }: GoogleAuthButtonProps) {
+  const colors = useAppColors();
+
   const isDisabled = disabled || loading;
 
   return (
@@ -28,6 +31,10 @@ export default function GoogleAuthButton({
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+        },
         pressed && !isDisabled && styles.pressed,
         isDisabled && styles.disabled,
       ]}>
@@ -35,7 +42,7 @@ export default function GoogleAuthButton({
         {loading ? (
           <ActivityIndicator
             size="small"
-            color="#1F1F1F"
+            color={colors.text}
           />
         ) : (
           <>
@@ -44,7 +51,11 @@ export default function GoogleAuthButton({
               height={16}
             />
 
-            <Text style={styles.label}>
+            <Text
+              style={[
+                styles.label,
+                { color: colors.text },
+              ]}>
               Continue with Google
             </Text>
           </>
@@ -61,9 +72,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 16,
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#747775',
     borderRadius: 12,
   },
 
@@ -79,7 +88,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     lineHeight: 24,
     fontWeight: '600',
-    color: '#1F1F1F',
     textAlign: 'center',
   },
 

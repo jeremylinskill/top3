@@ -1,4 +1,5 @@
 import { useAuth } from '@/hooks/use-auth';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import {
   Image,
   StyleSheet,
@@ -15,10 +16,23 @@ export function AuthGate({
   children,
 }: AuthGateProps) {
   const { isLoading } = useAuth();
+  const colorScheme = useColorScheme();
+
+  const splashBackgroundColor =
+    colorScheme === 'dark'
+      ? '#000000'
+      : '#FFFFFF';
 
   if (isLoading) {
     return (
-      <View style={styles.splashBridge}>
+      <View
+        style={[
+          styles.splashBridge,
+          {
+            backgroundColor:
+              splashBackgroundColor,
+          },
+        ]}>
         <Image
           source={require('@/assets/images/splash-icon.png')}
           style={styles.splashIcon}
@@ -35,7 +49,6 @@ export function AuthGate({
 const styles = StyleSheet.create({
   splashBridge: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
   },

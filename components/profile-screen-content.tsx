@@ -1,19 +1,18 @@
+import AppText from '@/components/app-text';
 import FollowButton from '@/components/follow-button';
 import PrimaryButton from '@/components/primary-button';
 import TasteMatchBadge from '@/components/taste-match-badge';
 import Top3Card from '@/components/top3-card';
 import UserAvatar from '@/components/user-avatar';
 import { AVATAR } from '@/constants/avatar';
-import { COLORS } from '@/constants/colors';
 import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
-import { TYPOGRAPHY } from '@/constants/typography';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
 import {
   Pressable,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 
@@ -87,6 +86,8 @@ export default function ProfileScreenContent({
   onEditPost,
   onMorePostPress,
 }: ProfileScreenContentProps) {
+  const colors = useAppColors();
+
   const shouldShowTasteMatch =
     !isCurrentUser &&
     typeof tasteMatchScore === 'number';
@@ -102,13 +103,16 @@ export default function ProfileScreenContent({
         />
 
         <View style={styles.identityDetails}>
-          <Text style={styles.displayName}>
+          <AppText variant="pageTitle">
             {user.displayName}
-          </Text>
+          </AppText>
 
-          <Text style={styles.username}>
+          <AppText
+            variant="bodyLarge"
+            tone="tertiary"
+            style={styles.username}>
             @{user.username}
-          </Text>
+          </AppText>
 
           {shouldShowTasteMatch ? (
             <TasteMatchBadge
@@ -121,34 +125,52 @@ export default function ProfileScreenContent({
           ) : null}
 
           {user.bio ? (
-            <Text
+            <AppText
+              variant="body"
               style={styles.bio}
               numberOfLines={3}>
               {user.bio}
-            </Text>
+            </AppText>
           ) : isCurrentUser ? (
-            <Text
+            <AppText
+              variant="label"
+              tone="tertiary"
+              emphasis="regular"
               style={styles.emptyBio}
               numberOfLines={2}>
               Add a bio to tell people about your
               taste.
-            </Text>
+            </AppText>
           ) : null}
         </View>
       </View>
 
-      <View style={styles.statsRow}>
+      <View
+        style={[
+          styles.statsRow,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+          },
+        ]}>
         <View style={styles.stat}>
-          <Text style={styles.statValue}>
+          <AppText variant="statValue">
             {canViewPosts ? publishedPosts.length : 0}
-          </Text>
+          </AppText>
 
-          <Text style={styles.statLabel}>
+          <AppText
+            variant="metadata"
+            style={styles.statLabel}>
             Top 3s
-          </Text>
+          </AppText>
         </View>
 
-        <View style={styles.statDivider} />
+        <View
+          style={[
+            styles.statDivider,
+            { backgroundColor: colors.border },
+          ]}
+        />
 
         <Pressable
           style={({ pressed }) => [
@@ -169,16 +191,23 @@ export default function ProfileScreenContent({
               ? `View ${user.displayName}'s followers`
               : undefined
           }>
-          <Text style={styles.statValue}>
+          <AppText variant="statValue">
             {followerCount}
-          </Text>
+          </AppText>
 
-          <Text style={styles.statLabel}>
+          <AppText
+            variant="metadata"
+            style={styles.statLabel}>
             Followers
-          </Text>
+          </AppText>
         </Pressable>
 
-        <View style={styles.statDivider} />
+        <View
+          style={[
+            styles.statDivider,
+            { backgroundColor: colors.border },
+          ]}
+        />
 
         <Pressable
           style={({ pressed }) => [
@@ -199,13 +228,15 @@ export default function ProfileScreenContent({
               ? `View ${user.displayName}'s following`
               : undefined
           }>
-          <Text style={styles.statValue}>
+          <AppText variant="statValue">
             {followingCount}
-          </Text>
+          </AppText>
 
-          <Text style={styles.statLabel}>
+          <AppText
+            variant="metadata"
+            style={styles.statLabel}>
             Following
-          </Text>
+          </AppText>
         </Pressable>
       </View>
 
@@ -226,33 +257,48 @@ export default function ProfileScreenContent({
       <View style={styles.section}>
         {isLoadingPosts ? (
           <View style={styles.loadingState}>
-            <Text style={styles.loadingText}>
+            <AppText
+              variant="bodyLarge"
+              tone="tertiary">
               Loading Top 3s…
-            </Text>
+            </AppText>
           </View>
         ) : !canViewPosts ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateTitle}>
+          <View
+            style={[
+              styles.emptyState,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}>
+            <AppText variant="sectionTitle">
               This account is private
-            </Text>
+            </AppText>
 
-            <Text style={styles.emptyStateText}>
+            <AppText
+              variant="body"
+              tone="tertiary"
+              style={styles.emptyStateText}>
               This person's lists are only visible to approved followers.
-            </Text>
+            </AppText>
           </View>
         ) : publishedPosts.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyStateTitle}>
+            <AppText variant="sectionTitle">
               {isCurrentUser
                 ? 'Nothing published'
                 : 'Nothing published yet'}
-            </Text>
+            </AppText>
 
-            <Text style={styles.emptyStateText}>
+            <AppText
+              variant="body"
+              tone="tertiary"
+              style={styles.emptyStateText}>
               {isCurrentUser
                 ? 'Publish a Top 3 to see it here.'
                 : 'This person has not published any Top 3s yet.'}
-            </Text>
+            </AppText>
 
             {isCurrentUser && onCreateTop3 ? (
               <PrimaryButton
@@ -321,36 +367,23 @@ const styles = StyleSheet.create({
     marginLeft: SPACING.lg,
   },
 
-  displayName: {
-    ...TYPOGRAPHY.pageTitle,
-  },
-
   username: {
-    ...TYPOGRAPHY.bodyLarge,
     marginTop: 2,
-    color: COLORS.tertiaryText,
   },
 
   bio: {
-    ...TYPOGRAPHY.body,
     marginTop: SPACING.sm,
-    color: COLORS.secondaryText,
   },
 
   emptyBio: {
-    ...TYPOGRAPHY.label,
     marginTop: SPACING.sm,
-    fontWeight: '400',
-    color: COLORS.tertiaryText,
   },
 
   statsRow: {
     marginTop: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.border,
     borderRadius: RADIUS.xl,
     paddingVertical: 16,
     overflow: 'hidden',
@@ -367,21 +400,13 @@ const styles = StyleSheet.create({
     opacity: 0.55,
   },
 
-  statValue: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: COLORS.text,
-  },
-
   statLabel: {
-    ...TYPOGRAPHY.metadata,
     marginTop: 3,
   },
 
   statDivider: {
     width: StyleSheet.hairlineWidth,
     height: 30,
-    backgroundColor: COLORS.border,
   },
 
   profileActions: {
@@ -402,29 +427,16 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
   },
 
-  loadingText: {
-    ...TYPOGRAPHY.bodyLarge,
-    color: COLORS.tertiaryText,
-  },
-
   emptyState: {
     alignItems: 'center',
     paddingVertical: 36,
     paddingHorizontal: SPACING.xxl,
-    backgroundColor: COLORS.surface,
     borderRadius: RADIUS.xl,
     borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-
-  emptyStateTitle: {
-    ...TYPOGRAPHY.sectionTitle,
   },
 
   emptyStateText: {
-    ...TYPOGRAPHY.body,
     marginTop: SPACING.sm,
-    color: COLORS.tertiaryText,
     textAlign: 'center',
   },
 

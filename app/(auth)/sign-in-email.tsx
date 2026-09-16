@@ -1,19 +1,20 @@
+import AppText from '@/components/app-text';
 import EmailSignInForm from '@/components/email-sign-in-form';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
-import { COLORS } from '@/constants/colors';
-import { TYPOGRAPHY } from '@/constants/typography';
 import { useOnboardingCollection } from '@/context/onboarding-collection-context';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { router } from 'expo-router';
 import {
   Pressable,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SignInEmailScreen() {
+  const colors = useAppColors();
+
   const {
     collection: onboardingCollection,
     isPendingPublish,
@@ -47,7 +48,12 @@ export default function SignInEmailScreen() {
 
   return (
     <SafeAreaView
-      style={styles.container}
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+        },
+      ]}
       edges={['top', 'bottom']}>
       <ScreenHeader showBackButton />
 
@@ -65,11 +71,13 @@ export default function SignInEmailScreen() {
         </View>
 
         <View style={styles.signUpContainer}>
-          <Text style={styles.signUpPrompt}>
+          <AppText
+            variant="bodyLarge"
+            tone="tertiary">
             {isReturningFromOnboarding
               ? "Don't have an account?"
               : 'New to Top 3?'}
-          </Text>
+          </AppText>
 
           <Pressable
             accessibilityRole="button"
@@ -84,11 +92,11 @@ export default function SignInEmailScreen() {
               styles.signUpButton,
               pressed && styles.pressed,
             ]}>
-            <Text style={styles.signUpButtonText}>
+            <AppText variant="action">
               {isReturningFromOnboarding
                 ? 'Create one'
                 : 'Get Started'}
-            </Text>
+            </AppText>
           </Pressable>
         </View>
       </View>
@@ -99,7 +107,6 @@ export default function SignInEmailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
 
   content: {
@@ -120,17 +127,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  signUpPrompt: {
-    ...TYPOGRAPHY.bodyLarge,
-    color: COLORS.tertiaryText,
-  },
-
   signUpButton: {
     marginLeft: 5,
-  },
-
-  signUpButtonText: {
-    ...TYPOGRAPHY.action,
   },
 
   pressed: {

@@ -1,7 +1,7 @@
 import ActionSheet from '@/components/action-sheet';
+import AppText from '@/components/app-text';
 import AuthProviderButton from '@/components/auth-provider-button';
-import { COLORS } from '@/constants/colors';
-import { TYPOGRAPHY } from '@/constants/typography';
+import { useAppColors } from '@/hooks/use-app-colors';
 import {
   resendConfirmationEmail,
 } from '@/services/auth-service';
@@ -18,12 +18,13 @@ import {
 import {
   Pressable,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CheckEmailScreen() {
+  const colors = useAppColors();
+
   const [
     verificationEmail,
     setVerificationEmail,
@@ -172,61 +173,105 @@ export default function CheckEmailScreen() {
   return (
     <>
       <SafeAreaView
-        style={styles.container}
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}
         edges={['top', 'bottom']}>
         <View style={styles.content}>
           <View style={styles.mainContent}>
-            <View style={styles.iconContainer}>
+            <View
+              style={[
+                styles.iconContainer,
+                {
+                  backgroundColor:
+                    colors.secondarySurface,
+                },
+              ]}>
               <Ionicons
                 name="mail-outline"
                 size={48}
-                color={COLORS.accent}
+                color={colors.accent}
               />
             </View>
 
             <View style={styles.header}>
-              <Text style={styles.title}>
+              <AppText
+                variant="heroTitle"
+                style={styles.title}>
                 Check your email
-              </Text>
+              </AppText>
 
-              <Text style={styles.description}>
+              <AppText
+                variant="bodyLarge"
+                tone="secondary"
+                style={styles.description}>
                 We sent a confirmation link
                 {verificationEmail ? (
                   <>
                     {' to '}
-                    <Text style={styles.emailText}>
+                    <AppText
+                      variant="bodyLarge"
+                      tone="primary"
+                      emphasis="semibold">
                       {verificationEmail}
-                    </Text>
+                    </AppText>
                   </>
                 ) : null}
                 . Open the email and tap the link to verify
                 your account.
-              </Text>
+              </AppText>
             </View>
 
             <View style={styles.instructions}>
               <View style={styles.instruction}>
-                <View style={styles.stepNumber}>
-                  <Text style={styles.stepNumberText}>
+                <View
+                  style={[
+                    styles.stepNumber,
+                    {
+                      backgroundColor:
+                        colors.secondarySurface,
+                    },
+                  ]}>
+                  <AppText
+                    variant="caption"
+                    tone="accent">
                     1
-                  </Text>
+                  </AppText>
                 </View>
 
-                <Text style={styles.instructionText}>
+                <AppText
+                  variant="bodyLarge"
+                  tone="secondary"
+                  style={styles.instructionText}>
                   Open the confirmation email from Top3.
-                </Text>
+                </AppText>
               </View>
 
               <View style={styles.instruction}>
-                <View style={styles.stepNumber}>
-                  <Text style={styles.stepNumberText}>
+                <View
+                  style={[
+                    styles.stepNumber,
+                    {
+                      backgroundColor:
+                        colors.secondarySurface,
+                    },
+                  ]}>
+                  <AppText
+                    variant="caption"
+                    tone="accent">
                     2
-                  </Text>
+                  </AppText>
                 </View>
 
-                <Text style={styles.instructionText}>
+                <AppText
+                  variant="bodyLarge"
+                  tone="secondary"
+                  style={styles.instructionText}>
                   Tap the confirmation link in the email.
-                </Text>
+                </AppText>
               </View>
             </View>
           </View>
@@ -239,9 +284,11 @@ export default function CheckEmailScreen() {
             />
 
             <View style={styles.resendContainer}>
-              <Text style={styles.resendPrompt}>
+              <AppText
+                variant="bodyLarge"
+                tone="secondary">
                 Didn&apos;t receive it?
-              </Text>
+              </AppText>
 
               <Pressable
                 accessibilityRole="button"
@@ -252,9 +299,12 @@ export default function CheckEmailScreen() {
                   styles.inlineButton,
                   pressed && styles.pressed,
                 ]}>
-                <Text style={styles.inlineButtonText}>
+                <AppText
+                  variant="bodyLarge"
+                  tone="accent"
+                  emphasis="strong">
                   Resend Email
-                </Text>
+                </AppText>
               </Pressable>
             </View>
 
@@ -267,9 +317,13 @@ export default function CheckEmailScreen() {
                 styles.differentEmailButton,
                 pressed && styles.pressed,
               ]}>
-              <Text style={styles.differentEmailText}>
+              <AppText
+                variant="body"
+                tone="secondary"
+                emphasis="semibold"
+                style={styles.differentEmailText}>
                 Use a different email address
-              </Text>
+              </AppText>
             </Pressable>
           </View>
         </View>
@@ -366,7 +420,6 @@ export default function CheckEmailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
   },
 
   content: {
@@ -386,7 +439,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 48,
-    backgroundColor: '#EAF3FD',
   },
 
   header: {
@@ -395,21 +447,13 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    ...TYPOGRAPHY.heroTitle,
     textAlign: 'center',
   },
 
   description: {
-    ...TYPOGRAPHY.bodyLarge,
     marginTop: 14,
     maxWidth: 340,
-    color: '#666666',
     textAlign: 'center',
-  },
-
-  emailText: {
-    fontWeight: '600',
-    color: COLORS.text,
   },
 
   instructions: {
@@ -429,19 +473,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 16,
-    backgroundColor: '#EAF3FD',
-  },
-
-  stepNumberText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.accent,
   },
 
   instructionText: {
-    ...TYPOGRAPHY.bodyLarge,
     flex: 1,
     marginLeft: 14,
-    color: '#444444',
   },
 
   actions: {
@@ -456,21 +492,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  resendPrompt: {
-    ...TYPOGRAPHY.bodyLarge,
-    color: '#666666',
-  },
-
   inlineButton: {
     marginLeft: 5,
     paddingVertical: 4,
     paddingHorizontal: 2,
-  },
-
-  inlineButtonText: {
-    ...TYPOGRAPHY.bodyLarge,
-    fontWeight: '700',
-    color: COLORS.accent,
   },
 
   differentEmailButton: {
@@ -480,9 +505,6 @@ const styles = StyleSheet.create({
   },
 
   differentEmailText: {
-    ...TYPOGRAPHY.body,
-    fontWeight: '500',
-    color: '#666666',
     textAlign: 'center',
   },
 

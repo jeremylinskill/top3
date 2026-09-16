@@ -1,16 +1,22 @@
+import AppText from '@/components/app-text';
 import PageHeader from '@/components/page-header';
 import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
-import { COLORS } from '@/constants/colors';
 import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
 import { SUPPORT_EMAIL } from '@/constants/support';
-import { TYPOGRAPHY } from '@/constants/typography';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { Ionicons } from '@expo/vector-icons';
-import { Linking, StyleSheet, Text, View } from 'react-native';
+import {
+  Linking,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SupportScreen() {
+  const colors = useAppColors();
+
   async function contactSupport() {
     const subject = encodeURIComponent(
       'Top3 Support'
@@ -24,7 +30,12 @@ export default function SupportScreen() {
 
   return (
     <SafeAreaView
-      style={styles.container}
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+        },
+      ]}
       edges={['top', 'left', 'right']}>
       <ScreenHeader showBackButton />
 
@@ -34,24 +45,43 @@ export default function SupportScreen() {
       />
 
       <View style={styles.content}>
-        <View style={styles.card}>
-          <View style={styles.iconContainer}>
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+            },
+          ]}>
+          <View
+            style={[
+              styles.iconContainer,
+              {
+                backgroundColor:
+                  colors.background,
+              },
+            ]}>
             <Ionicons
               name="help-circle-outline"
               size={30}
-              color={COLORS.text}
+              color={colors.text}
             />
           </View>
 
-          <Text style={styles.title}>
+          <AppText
+            variant="sectionTitle"
+            style={styles.title}>
             Need help?
-          </Text>
+          </AppText>
 
-          <Text style={styles.message}>
+          <AppText
+            variant="body"
+            tone="tertiary"
+            style={styles.message}>
             If you have a question, need help with
             Top3, or want to report a problem, get in
             touch and we'll be happy to help.
-          </Text>
+          </AppText>
 
           <View style={styles.buttonContainer}>
             <PrimaryButton
@@ -62,9 +92,11 @@ export default function SupportScreen() {
             />
           </View>
 
-          <Text style={styles.email}>
+          <AppText
+            variant="metadata"
+            style={styles.email}>
             {SUPPORT_EMAIL}
-          </Text>
+          </AppText>
         </View>
       </View>
     </SafeAreaView>
@@ -74,7 +106,6 @@ export default function SupportScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
 
   content: {
@@ -85,9 +116,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: SPACING.xl,
     paddingVertical: 28,
-    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.border,
     borderRadius: RADIUS.xl,
   },
 
@@ -97,20 +126,15 @@ const styles = StyleSheet.create({
     borderRadius: 29,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.background,
   },
 
   title: {
-    ...TYPOGRAPHY.sectionTitle,
     marginTop: SPACING.lg,
-    color: COLORS.text,
     textAlign: 'center',
   },
 
   message: {
-    ...TYPOGRAPHY.body,
     marginTop: SPACING.sm,
-    color: COLORS.tertiaryText,
     textAlign: 'center',
   },
 
@@ -120,9 +144,7 @@ const styles = StyleSheet.create({
   },
 
   email: {
-    ...TYPOGRAPHY.metadata,
     marginTop: SPACING.md,
-    color: COLORS.tertiaryText,
     textAlign: 'center',
   },
 });

@@ -1,5 +1,10 @@
+import { useAppColors } from '@/hooks/use-app-colors';
 import { Top3List } from '@/types/top3-list';
-import { StyleSheet, Text, View } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 type CollectionCardProps = {
   list: Top3List;
@@ -8,9 +13,23 @@ type CollectionCardProps = {
 export default function CollectionCard({
   list,
 }: CollectionCardProps) {
+  const colors = useAppColors();
+
   return (
-    <View style={styles.card}>
-      <Text style={styles.title}>{list.title}</Text>
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: colors.surface,
+        },
+      ]}>
+      <Text
+        style={[
+          styles.title,
+          { color: colors.text },
+        ]}>
+        {list.title}
+      </Text>
 
       <View style={styles.items}>
         {list.items.map((item, index) => (
@@ -18,7 +37,11 @@ export default function CollectionCard({
             key={index}
             style={styles.row}>
             <View style={styles.rankContainer}>
-              <Text style={styles.rank}>
+              <Text
+                style={[
+                  styles.rank,
+                  { color: colors.text },
+                ]}>
                 {index + 1}
               </Text>
             </View>
@@ -26,6 +49,11 @@ export default function CollectionCard({
             <Text
               style={[
                 styles.itemTitle,
+                {
+                  color: item
+                    ? colors.text
+                    : colors.tertiaryText,
+                },
                 !item && styles.placeholder,
               ]}
               numberOfLines={2}>
@@ -35,8 +63,20 @@ export default function CollectionCard({
         ))}
       </View>
 
-      <View style={styles.footer}>
-        <Text style={styles.brand}>
+      <View
+        style={[
+          styles.footer,
+          {
+            borderTopColor: colors.border,
+          },
+        ]}>
+        <Text
+          style={[
+            styles.brand,
+            {
+              color: colors.secondaryText,
+            },
+          ]}>
           Top 3
         </Text>
       </View>
@@ -47,7 +87,6 @@ export default function CollectionCard({
 const styles = StyleSheet.create({
   card: {
     width: 340,
-    backgroundColor: '#FFFFFF',
     borderRadius: 24,
     padding: 28,
     shadowColor: '#000000',
@@ -63,7 +102,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#222222',
   },
 
   items: {
@@ -84,7 +122,6 @@ const styles = StyleSheet.create({
   rank: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#222222',
   },
 
   itemTitle: {
@@ -92,12 +129,10 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     fontSize: 22,
     lineHeight: 30,
-    color: '#222222',
     fontWeight: '500',
   },
 
   placeholder: {
-    color: '#BBBBBB',
     fontStyle: 'italic',
   },
 
@@ -105,14 +140,12 @@ const styles = StyleSheet.create({
     marginTop: 36,
     paddingTop: 18,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#DDDDDD',
     alignItems: 'center',
   },
 
   brand: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#444444',
     letterSpacing: 1,
   },
 });

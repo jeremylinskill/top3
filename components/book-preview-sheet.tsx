@@ -1,4 +1,5 @@
 import { useBookPreview } from '@/context/book-preview-context';
+import { usePreviewSheetColors } from '@/hooks/use-preview-sheet-colors';
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useRef } from 'react';
 import {
@@ -22,6 +23,7 @@ export default function BookPreviewSheet() {
     closeBookPreview,
   } = useBookPreview();
 
+  const previewColors = usePreviewSheetColors();
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const descriptionScrollRef =
@@ -61,10 +63,22 @@ export default function BookPreviewSheet() {
       : 'Description from Google Books';
 
   return (
-    <View
-      pointerEvents="box-none"
-      style={[
-        styles.positioner,
+    <>
+      <View
+        pointerEvents="none"
+        style={[
+          styles.backdrop,
+          {
+            backgroundColor:
+              previewColors.backdrop,
+          },
+        ]}
+      />
+
+      <View
+        pointerEvents="box-none"
+        style={[
+          styles.positioner,
         {
           bottom: Math.max(
             insets.bottom - 2,
@@ -83,23 +97,46 @@ export default function BookPreviewSheet() {
                 height * 0.68
               )
             ),
+            backgroundColor:
+              previewColors.surface,
+            borderColor:
+              previewColors.border,
           },
         ]}>
         <View style={styles.header}>
           <View style={styles.headerText}>
-            <Text style={styles.eyebrow}>
+            <Text
+              style={[
+                styles.eyebrow,
+                {
+                  color:
+                    previewColors.tertiaryText,
+                },
+              ]}>
               ABOUT THIS BOOK
             </Text>
 
             <Text
-              style={styles.title}
+              style={[
+                styles.title,
+                {
+                  color:
+                    previewColors.primaryText,
+                },
+              ]}
               numberOfLines={2}>
               {bookItem.title}
             </Text>
 
             {bookItem.subtitle ? (
               <Text
-                style={styles.subtitle}
+                style={[
+                  styles.subtitle,
+                  {
+                    color:
+                      previewColors.secondaryText,
+                  },
+                ]}
                 numberOfLines={2}>
                 {bookItem.subtitle}
               </Text>
@@ -109,6 +146,10 @@ export default function BookPreviewSheet() {
           <Pressable
             style={({ pressed }) => [
               styles.closeButton,
+              {
+                backgroundColor:
+                  previewColors.control,
+              },
               pressed &&
                 styles.closeButtonPressed,
             ]}
@@ -119,12 +160,22 @@ export default function BookPreviewSheet() {
             <Ionicons
               name="close"
               size={20}
-              color="#FFFFFF"
+              color={
+                previewColors.primaryText
+              }
             />
           </Pressable>
         </View>
 
-        <View style={styles.divider} />
+        <View
+          style={[
+            styles.divider,
+            {
+              backgroundColor:
+                previewColors.border,
+            },
+          ]}
+        />
 
         <View style={styles.body}>
           {bookItem.imageUrl ? (
@@ -132,7 +183,13 @@ export default function BookPreviewSheet() {
               source={{
                 uri: bookItem.imageUrl,
               }}
-              style={styles.cover}
+              style={[
+                styles.cover,
+                {
+                  backgroundColor:
+                    previewColors.placeholder,
+                },
+              ]}
               resizeMode="cover"
               accessibilityLabel={`Cover of ${bookItem.title}`}
             />
@@ -142,9 +199,18 @@ export default function BookPreviewSheet() {
             <View style={styles.status}>
               <ActivityIndicator
                 size="small"
-                color="#F2F2F2"
+                color={
+                  previewColors.activity
+                }
               />
-              <Text style={styles.statusText}>
+              <Text
+                style={[
+                  styles.statusText,
+                  {
+                    color:
+                      previewColors.secondaryText,
+                  },
+                ]}>
                 Loading description…
               </Text>
             </View>
@@ -156,21 +222,51 @@ export default function BookPreviewSheet() {
                 styles.descriptionContent
               }
               showsVerticalScrollIndicator={true}
-              indicatorStyle="white">
-              <Text style={styles.description}>
+              indicatorStyle={
+                previewColors.scrollIndicator
+              }>
+              <Text
+                style={[
+                  styles.description,
+                  {
+                    color:
+                      previewColors.bodyText,
+                  },
+                ]}>
                 {activeBookDescription}
               </Text>
 
-              <Text style={styles.source}>
+              <Text
+                style={[
+                  styles.source,
+                  {
+                    color:
+                      previewColors.sourceText,
+                  },
+                ]}>
                 {sourceLabel}
               </Text>
             </ScrollView>
           ) : (
             <View style={styles.status}>
-              <Text style={styles.unavailableTitle}>
+              <Text
+                style={[
+                  styles.unavailableTitle,
+                  {
+                    color:
+                      previewColors.bodyText,
+                  },
+                ]}>
                 Description unavailable
               </Text>
-              <Text style={styles.unavailableText}>
+              <Text
+                style={[
+                  styles.unavailableText,
+                  {
+                    color:
+                      previewColors.sourceText,
+                  },
+                ]}>
                 No description is available for this book.
               </Text>
             </View>
@@ -178,10 +274,16 @@ export default function BookPreviewSheet() {
         </View>
       </View>
     </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1001,
+  },
+
   positioner: {
     position: 'absolute',
     left: 12,
@@ -191,10 +293,8 @@ const styles = StyleSheet.create({
 
   sheet: {
     overflow: 'hidden',
-    backgroundColor: '#111111',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#2A2A2A',
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
@@ -224,21 +324,18 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: 0.8,
-    color: '#B8B8B8',
   },
 
   title: {
     fontSize: 18,
     lineHeight: 22,
     fontWeight: '700',
-    color: '#FFFFFF',
   },
 
   subtitle: {
     marginTop: 3,
     fontSize: 13,
     lineHeight: 18,
-    color: '#D0D0D0',
   },
 
   closeButton: {
@@ -248,7 +345,6 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#2A2A2A',
   },
 
   closeButtonPressed: {
@@ -257,7 +353,6 @@ const styles = StyleSheet.create({
 
   divider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: '#2A2A2A',
   },
 
   body: {
@@ -274,7 +369,6 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     marginRight: 16,
     borderRadius: 7,
-    backgroundColor: '#2A2A2A',
   },
 
   descriptionScroll: {
@@ -291,14 +385,12 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 15,
     lineHeight: 22,
-    color: '#F2F2F2',
   },
 
   source: {
     marginTop: 16,
     fontSize: 11,
     lineHeight: 15,
-    color: '#A8A8A8',
   },
 
   status: {
@@ -312,20 +404,17 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 14,
     lineHeight: 20,
-    color: '#D0D0D0',
   },
 
   unavailableTitle: {
     fontSize: 15,
     lineHeight: 22,
     fontWeight: '600',
-    color: '#F2F2F2',
   },
 
   unavailableText: {
     marginTop: 4,
     fontSize: 13,
     lineHeight: 19,
-    color: '#A8A8A8',
   },
 });

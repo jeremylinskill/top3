@@ -1,9 +1,10 @@
 import ActionSheet from '@/components/action-sheet';
+import AppText from '@/components/app-text';
 import AuthProviderButton from '@/components/auth-provider-button';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
-import { COLORS } from '@/constants/colors';
-import { TYPOGRAPHY } from '@/constants/typography';
+import { TEXT_STYLES } from '@/constants/typography';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { useAuth } from '@/hooks/use-auth';
 import {
   signInWithEmail,
@@ -22,13 +23,13 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ChangePasswordScreen() {
+  const colors = useAppColors();
   const { user } = useAuth();
 
   const newPasswordInputRef =
@@ -229,16 +230,25 @@ export default function ChangePasswordScreen() {
   if (hasUpdatedPassword) {
     return (
       <SafeAreaView
-        style={styles.container}
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}
         edges={['top', 'bottom']}>
         <View style={styles.successContent}>
-          <Text style={styles.successTitle}>
+          <AppText
+            variant="pageTitle"
+            style={styles.successTitle}>
             Password updated
-          </Text>
+          </AppText>
 
-          <Text style={styles.successDescription}>
+          <AppText
+            variant="bodyLarge"
+            style={styles.successDescription}>
             Your new password is ready to use.
-          </Text>
+          </AppText>
 
           <Pressable
             accessibilityRole="button"
@@ -248,11 +258,18 @@ export default function ChangePasswordScreen() {
             }
             style={({ pressed }) => [
               styles.returnButton,
+              {
+                backgroundColor:
+                  colors.primary,
+              },
               pressed && styles.pressed,
             ]}>
-            <Text style={styles.returnButtonText}>
+            <AppText
+              variant="bodyLarge"
+              tone="onPrimary"
+              emphasis="strong">
               Return to Settings
-            </Text>
+            </AppText>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -262,7 +279,12 @@ export default function ChangePasswordScreen() {
   return (
     <>
       <SafeAreaView
-        style={styles.container}
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}
         edges={['top', 'bottom']}>
         <ScreenHeader showBackButton />
 
@@ -280,7 +302,13 @@ export default function ChangePasswordScreen() {
               : 'height'
           }>
           <ScrollView
-            style={styles.scrollView}
+            style={[
+              styles.scrollView,
+              {
+                backgroundColor:
+                  colors.background,
+              },
+            ]}
             contentContainerStyle={styles.content}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode={
@@ -294,14 +322,22 @@ export default function ChangePasswordScreen() {
               accessible={false}>
               <View style={styles.form}>
                 <View style={styles.field}>
-                  <Text style={styles.label}>
+                  <AppText
+                    variant="formLabel"
+                    style={styles.label}>
                     Current password
-                  </Text>
+                  </AppText>
 
                   <View
-                    style={
-                      styles.passwordInputContainer
-                    }>
+                    style={[
+                      styles.passwordInputContainer,
+                      {
+                        backgroundColor:
+                          colors.surface,
+                        borderColor:
+                          colors.border,
+                      },
+                    ]}>
                     <TextInput
                       accessibilityLabel="Current password"
                       autoCapitalize="none"
@@ -315,12 +351,19 @@ export default function ChangePasswordScreen() {
                         newPasswordInputRef.current?.focus()
                       }
                       placeholder="Enter your current password"
-                      placeholderTextColor="#999999"
+                      placeholderTextColor={
+                        colors.tertiaryText
+                      }
                       returnKeyType="next"
                       secureTextEntry={
                         !showCurrentPassword
                       }
-                      style={styles.passwordInput}
+                      style={[
+                        styles.passwordInput,
+                        {
+                          color: colors.text,
+                        },
+                      ]}
                       textContentType="password"
                       value={currentPassword}
                     />
@@ -354,21 +397,29 @@ export default function ChangePasswordScreen() {
                             : 'eye-outline'
                         }
                         size={22}
-                        color="#666666"
+                        color={colors.secondaryText}
                       />
                     </Pressable>
                   </View>
                 </View>
 
                 <View style={styles.field}>
-                  <Text style={styles.label}>
+                  <AppText
+                    variant="formLabel"
+                    style={styles.label}>
                     New password
-                  </Text>
+                  </AppText>
 
                   <View
-                    style={
-                      styles.passwordInputContainer
-                    }>
+                    style={[
+                      styles.passwordInputContainer,
+                      {
+                        backgroundColor:
+                          colors.surface,
+                        borderColor:
+                          colors.border,
+                      },
+                    ]}>
                     <TextInput
                       ref={newPasswordInputRef}
                       accessibilityLabel="New password"
@@ -381,12 +432,19 @@ export default function ChangePasswordScreen() {
                         confirmPasswordInputRef.current?.focus()
                       }
                       placeholder="Enter a new password"
-                      placeholderTextColor="#999999"
+                      placeholderTextColor={
+                        colors.tertiaryText
+                      }
                       returnKeyType="next"
                       secureTextEntry={
                         !showNewPassword
                       }
-                      style={styles.passwordInput}
+                      style={[
+                        styles.passwordInput,
+                        {
+                          color: colors.text,
+                        },
+                      ]}
                       textContentType="newPassword"
                       value={newPassword}
                     />
@@ -420,25 +478,36 @@ export default function ChangePasswordScreen() {
                             : 'eye-outline'
                         }
                         size={22}
-                        color="#666666"
+                        color={colors.secondaryText}
                       />
                     </Pressable>
                   </View>
 
-                  <Text style={styles.helperText}>
+                  <AppText
+                    variant="metadata"
+                    tone="secondary"
+                    style={styles.helperText}>
                     Must be at least 8 characters.
-                  </Text>
+                  </AppText>
                 </View>
 
                 <View style={styles.field}>
-                  <Text style={styles.label}>
+                  <AppText
+                    variant="formLabel"
+                    style={styles.label}>
                     Confirm new password
-                  </Text>
+                  </AppText>
 
                   <View
-                    style={
-                      styles.passwordInputContainer
-                    }>
+                    style={[
+                      styles.passwordInputContainer,
+                      {
+                        backgroundColor:
+                          colors.surface,
+                        borderColor:
+                          colors.border,
+                      },
+                    ]}>
                     <TextInput
                       ref={confirmPasswordInputRef}
                       accessibilityLabel="Confirm new password"
@@ -455,12 +524,19 @@ export default function ChangePasswordScreen() {
                         }
                       }}
                       placeholder="Enter your new password again"
-                      placeholderTextColor="#999999"
+                      placeholderTextColor={
+                        colors.tertiaryText
+                      }
                       returnKeyType="done"
                       secureTextEntry={
                         !showConfirmPassword
                       }
-                      style={styles.passwordInput}
+                      style={[
+                        styles.passwordInput,
+                        {
+                          color: colors.text,
+                        },
+                      ]}
                       textContentType="newPassword"
                       value={confirmPassword}
                     />
@@ -494,7 +570,7 @@ export default function ChangePasswordScreen() {
                             : 'eye-outline'
                         }
                         size={22}
-                        color="#666666"
+                        color={colors.secondaryText}
                       />
                     </Pressable>
                   </View>
@@ -503,7 +579,16 @@ export default function ChangePasswordScreen() {
             </Pressable>
           </ScrollView>
 
-          <View style={styles.bottomBar}>
+          <View
+            style={[
+              styles.bottomBar,
+              {
+                backgroundColor:
+                  colors.background,
+                borderTopColor:
+                  colors.border,
+              },
+            ]}>
             <AuthProviderButton
               disabled={!isFormValid || isSubmitting}
               loading={isSubmitting}
@@ -540,7 +625,6 @@ export default function ChangePasswordScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
 
   keyboardContainer: {
@@ -549,7 +633,6 @@ const styles = StyleSheet.create({
 
   scrollView: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
 
   content: {
@@ -566,7 +649,6 @@ const styles = StyleSheet.create({
   },
 
   label: {
-    ...TYPOGRAPHY.formLabel,
     marginBottom: 8,
   },
 
@@ -576,9 +658,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#D9D9D9',
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
   },
 
   passwordInput: {
@@ -586,14 +666,11 @@ const styles = StyleSheet.create({
     minHeight: 54,
     paddingLeft: 16,
     paddingRight: 8,
-    ...TYPOGRAPHY.bodyLarge,
-    color: COLORS.text,
+    ...TEXT_STYLES.bodyLarge,
   },
 
   helperText: {
-    ...TYPOGRAPHY.metadata,
     marginTop: 8,
-    color: COLORS.secondaryText,
   },
 
   visibilityButton: {
@@ -611,10 +688,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 12,
     paddingBottom: 16,
-    backgroundColor: COLORS.background,
     borderTopWidth:
       StyleSheet.hairlineWidth,
-    borderTopColor: COLORS.border,
   },
 
   successContent: {
@@ -625,12 +700,10 @@ const styles = StyleSheet.create({
   },
 
   successTitle: {
-    ...TYPOGRAPHY.pageTitle,
     textAlign: 'center',
   },
 
   successDescription: {
-    ...TYPOGRAPHY.bodyLarge,
     marginTop: 12,
     maxWidth: 340,
     textAlign: 'center',
@@ -643,14 +716,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 12,
-    backgroundColor: COLORS.primary,
-  },
-
-  returnButtonText: {
-    fontSize: 16,
-    lineHeight: 22,
-    fontWeight: '700',
-    color: '#FFFFFF',
   },
 
   pressed: {

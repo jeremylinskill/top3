@@ -1,11 +1,11 @@
 import ActionSheet, {
   ActionSheetAction,
 } from '@/components/action-sheet';
+import AppText from '@/components/app-text';
 import CommentsSheet from '@/components/comments-sheet';
 import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
 import Top3Card from '@/components/top3-card';
-import { COLORS } from '@/constants/colors';
 import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
 import { useBlock } from '@/context/block-context';
@@ -13,6 +13,7 @@ import { useComments } from '@/context/comment-context';
 import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { useAuth } from '@/hooks/use-auth';
 import { sharePublishedCollection } from '@/lib/share';
 import { getProfilesByIds } from '@/lib/supabase/profiles';
@@ -39,7 +40,6 @@ import {
   FlatList,
   RefreshControl,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -130,6 +130,7 @@ type FeedReportSheet =
   | null;
 
 export default function FeedScreen() {
+  const colors = useAppColors();
   const {
     isAuthenticated,
     isLoading: isAuthLoading,
@@ -1260,7 +1261,12 @@ export default function FeedScreen() {
 
   return (
     <SafeAreaView
-      style={styles.container}
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+        },
+      ]}
       edges={[
         'top',
         'left',
@@ -1270,20 +1276,35 @@ export default function FeedScreen() {
 
       {isLoadingFeed ? (
         <View style={styles.loadingState}>
-          <Text style={styles.loadingText}>
+          <AppText
+            variant="bodyLarge"
+            tone="tertiary"
+            style={styles.loadingText}>
             Loading feed…
-          </Text>
+          </AppText>
         </View>
       ) : personalizedFeed.length === 0 ? (
         <View style={styles.content}>
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>
+          <View
+            style={[
+              styles.emptyState,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}>
+            <AppText
+              variant="stateTitle"
+              style={styles.emptyTitle}>
               Nothing published
-            </Text>
+            </AppText>
 
-            <Text style={styles.emptyText}>
+            <AppText
+              variant="bodyLarge"
+              tone="tertiary"
+              style={styles.emptyText}>
               Publish a Top 3 to see it here.
-            </Text>
+            </AppText>
 
             <PrimaryButton
               title="Create a Top 3"
@@ -1309,6 +1330,8 @@ export default function FeedScreen() {
             <RefreshControl
               refreshing={isRefreshing}
               onRefresh={refreshFeed}
+              tintColor={colors.secondaryText}
+              colors={[colors.secondaryText]}
             />
           }
           initialNumToRender={3}
@@ -1340,7 +1363,6 @@ export default function FeedScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
   },
 
   content: {
@@ -1358,32 +1380,21 @@ const styles = StyleSheet.create({
     paddingTop: 80,
   },
 
-  loadingText: {
-    fontSize: 16,
-    color: '#777777',
-  },
+  loadingText: {},
 
   emptyState: {
     alignItems: 'center',
     paddingVertical: 36,
     paddingHorizontal: SPACING.xxl,
-    backgroundColor: COLORS.surface,
     borderRadius: RADIUS.xl,
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
 
   emptyTitle: {
     marginBottom: 8,
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#222222',
   },
 
   emptyText: {
-    fontSize: 16,
-    lineHeight: 22,
-    color: '#777777',
     textAlign: 'center',
   },
 

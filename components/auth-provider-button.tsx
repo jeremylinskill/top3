@@ -1,12 +1,11 @@
-import { COLORS } from '@/constants/colors';
-import { TYPOGRAPHY } from '@/constants/typography';
+import AppText from '@/components/app-text';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { Ionicons } from '@expo/vector-icons';
 import {
   ActivityIndicator,
   Pressable,
   StyleProp,
   StyleSheet,
-  Text,
   View,
   ViewStyle,
 } from 'react-native';
@@ -34,14 +33,22 @@ export default function AuthProviderButton({
   loading = false,
   style,
 }: AuthProviderButtonProps) {
+  const colors = useAppColors();
+
   const isDisabled = disabled || loading;
   const isPrimary = variant === 'primary';
 
   const foregroundColor = isPrimary
     ? isDisabled
-      ? COLORS.tertiaryText
-      : COLORS.white
-    : COLORS.text;
+      ? colors.disabledText
+      : colors.onPrimary
+    : colors.text;
+
+  const titleTone = isPrimary
+    ? isDisabled
+      ? 'disabled'
+      : 'onPrimary'
+    : 'primary';
 
   return (
     <Pressable
@@ -51,15 +58,26 @@ export default function AuthProviderButton({
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
-        isPrimary
-          ? styles.primaryButton
-          : styles.secondaryButton,
+        {
+          backgroundColor: isPrimary
+            ? isDisabled
+              ? colors.disabledBackground
+              : colors.primary
+            : colors.surface,
+          borderColor: isPrimary
+            ? 'transparent'
+            : colors.border,
+          borderWidth: isPrimary
+            ? 0
+            : 1,
+        },
         style,
         isDisabled &&
-          (isPrimary
-            ? styles.primaryButtonDisabled
-            : styles.secondaryButtonDisabled),
-        pressed && !isDisabled && styles.pressed,
+          !isPrimary &&
+          styles.secondaryButtonDisabled,
+        pressed &&
+          !isDisabled &&
+          styles.pressed,
       ]}>
       <View style={styles.content}>
         {loading ? (
@@ -78,18 +96,13 @@ export default function AuthProviderButton({
               />
             ) : null}
 
-            <Text
-              style={[
-                styles.title,
-                isPrimary
-                  ? styles.primaryTitle
-                  : styles.secondaryTitle,
-                isPrimary &&
-                  isDisabled &&
-                  styles.primaryTitleDisabled,
-              ]}>
+            <AppText
+              variant="bodyLarge"
+              tone={titleTone}
+              emphasis="semibold"
+              style={styles.title}>
               {title}
-            </Text>
+            </AppText>
           </>
         )}
       </View>
@@ -105,20 +118,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 20,
-  },
-
-  primaryButton: {
-    backgroundColor: COLORS.primary,
-  },
-
-  primaryButtonDisabled: {
-    backgroundColor: COLORS.border,
-  },
-
-  secondaryButton: {
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: '#D9D9D9',
   },
 
   secondaryButtonDisabled: {
@@ -137,21 +136,7 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    ...TYPOGRAPHY.bodyLarge,
-    fontWeight: '600',
     textAlign: 'center',
-  },
-
-  primaryTitle: {
-    color: COLORS.white,
-  },
-
-  primaryTitleDisabled: {
-    color: COLORS.tertiaryText,
-  },
-
-  secondaryTitle: {
-    color: COLORS.text,
   },
 
   pressed: {

@@ -1,11 +1,11 @@
 import ActionSheet from '@/components/action-sheet';
+import AppText from '@/components/app-text';
 import EmailAuthButton from '@/components/email-auth-button';
 import GoogleAuthButton from '@/components/google-auth-button';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
-import { COLORS } from '@/constants/colors';
-import { TYPOGRAPHY } from '@/constants/typography';
 import { useOnboardingCollection } from '@/context/onboarding-collection-context';
+import { useAppColors } from '@/hooks/use-app-colors';
 import {
   signInWithApple,
   signInWithGoogle,
@@ -16,7 +16,6 @@ import { useState } from 'react';
 import {
   Pressable,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -27,6 +26,8 @@ type ErrorSheet = {
 };
 
 export default function CreateAccountScreen() {
+  const colors = useAppColors();
+
   const {
     collection: onboardingCollection,
     prepareAuthHandoff,
@@ -143,7 +144,12 @@ export default function CreateAccountScreen() {
   return (
     <>
       <SafeAreaView
-        style={styles.container}
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}
         edges={['top', 'bottom']}>
         <ScreenHeader />
 
@@ -176,30 +182,55 @@ export default function CreateAccountScreen() {
             />
 
             <View style={styles.divider}>
-              <View style={styles.dividerLine} />
+              <View
+                style={[
+                  styles.dividerLine,
+                  {
+                    backgroundColor:
+                      colors.border,
+                  },
+                ]}
+              />
 
-              <Text style={styles.dividerText}>
+              <AppText
+                variant="micro"
+                tone="tertiary"
+                emphasis="semibold"
+                style={styles.dividerText}>
                 OR
-              </Text>
+              </AppText>
 
-              <View style={styles.dividerLine} />
+              <View
+                style={[
+                  styles.dividerLine,
+                  {
+                    backgroundColor:
+                      colors.border,
+                  },
+                ]}
+              />
             </View>
 
             <EmailAuthButton
               onPress={handleEmailSignUp}
             />
 
-            <Text style={styles.ageNotice}>
+            <AppText
+              variant="bodyLarge"
+              tone="tertiary"
+              style={styles.ageNotice}>
               {
                 'By continuing, you confirm that you’re\nat least 13 years old.'
               }
-            </Text>
+            </AppText>
           </View>
 
           <View style={styles.signInContainer}>
-            <Text style={styles.signInPrompt}>
+            <AppText
+              variant="bodyLarge"
+              tone="tertiary">
               Already have an account?
-            </Text>
+            </AppText>
 
             <Pressable
               accessibilityRole="button"
@@ -210,9 +241,9 @@ export default function CreateAccountScreen() {
                 styles.signInButton,
                 pressed && styles.pressed,
               ]}>
-              <Text style={styles.signInButtonText}>
+              <AppText variant="action">
                 Sign In
-              </Text>
+              </AppText>
             </Pressable>
           </View>
         </View>
@@ -241,7 +272,6 @@ export default function CreateAccountScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
 
   content: {
@@ -269,22 +299,16 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: COLORS.border,
   },
 
   dividerText: {
     marginHorizontal: 14,
-    fontSize: 12,
     lineHeight: 16,
-    fontWeight: '600',
-    color: COLORS.tertiaryText,
   },
 
   ageNotice: {
-    ...TYPOGRAPHY.bodyLarge,
     marginTop: 2,
     paddingHorizontal: 12,
-    color: COLORS.tertiaryText,
     textAlign: 'center',
   },
 
@@ -295,17 +319,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  signInPrompt: {
-    ...TYPOGRAPHY.bodyLarge,
-    color: COLORS.tertiaryText,
-  },
-
   signInButton: {
     marginLeft: 5,
-  },
-
-  signInButtonText: {
-    ...TYPOGRAPHY.action,
   },
 
   pressed: {

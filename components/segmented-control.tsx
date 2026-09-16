@@ -1,9 +1,8 @@
-import { COLORS } from '@/constants/colors';
-import { TYPOGRAPHY } from '@/constants/typography';
+import AppText from '@/components/app-text';
+import { useAppColors } from '@/hooks/use-app-colors';
 import {
   Pressable,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 
@@ -27,8 +26,16 @@ export default function SegmentedControl<
   options,
   onChange,
 }: SegmentedControlProps<T>) {
+  const colors = useAppColors();
+
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.border,
+        },
+      ]}>
       {options.map((option) => {
         const isActive =
           option.value === value;
@@ -38,8 +45,13 @@ export default function SegmentedControl<
             key={option.value}
             style={({ pressed }) => [
               styles.segment,
-              isActive &&
-                styles.activeSegment,
+              isActive && {
+                ...styles.activeSegment,
+                backgroundColor:
+                  colors.surface,
+                borderColor:
+                  colors.border,
+              },
               pressed && styles.pressed,
             ]}
             onPress={() =>
@@ -53,27 +65,39 @@ export default function SegmentedControl<
               option.accessibilityLabel ??
               option.label
             }>
-            <Text
-              style={[
-                styles.label,
-                isActive &&
-                  styles.activeLabel,
-              ]}>
+            <AppText
+              variant="bodyBold"
+              tone={
+                isActive
+                  ? 'primary'
+                  : 'tertiary'
+              }
+              emphasis={
+                isActive
+                  ? 'strong'
+                  : 'default'
+              }>
               {option.label}
 
               {typeof option.count ===
               'number' ? (
-                <Text
-                  style={[
-                    styles.count,
-                    isActive &&
-                      styles.activeCount,
-                  ]}>
+                <AppText
+                  variant="label"
+                  tone={
+                    isActive
+                      ? 'secondary'
+                      : 'tertiary'
+                  }
+                  emphasis={
+                    isActive
+                      ? 'strong'
+                      : 'default'
+                  }>
                   {' '}
                   {option.count}
-                </Text>
+                </AppText>
               ) : null}
-            </Text>
+            </AppText>
           </Pressable>
         );
       })}
@@ -85,7 +109,6 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     padding: 4,
-    backgroundColor: '#EEEEEE',
     borderRadius: 12,
   },
 
@@ -98,29 +121,7 @@ const styles = StyleSheet.create({
   },
 
   activeSegment: {
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E2E2E2',
-  },
-
-  label: {
-    ...TYPOGRAPHY.bodyBold,
-    color: COLORS.tertiaryText,
-  },
-
-  activeLabel: {
-    color: COLORS.text,
-    fontWeight: '700',
-  },
-
-  count: {
-    ...TYPOGRAPHY.label,
-    color: '#999999',
-  },
-
-  activeCount: {
-    color: '#555555',
-    fontWeight: '700',
   },
 
   pressed: {

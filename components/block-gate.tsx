@@ -1,11 +1,11 @@
+import AppText from '@/components/app-text';
 import PrimaryButton from '@/components/primary-button';
-import { COLORS } from '@/constants/colors';
-import { TYPOGRAPHY } from '@/constants/typography';
 import { useBlock } from '@/context/block-context';
+import { useAppColors } from '@/hooks/use-app-colors';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import {
   Image,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 
@@ -18,6 +18,14 @@ const SPLASH_ICON_SIZE = 200;
 export function BlockGate({
   children,
 }: BlockGateProps) {
+  const colors = useAppColors();
+  const colorScheme = useColorScheme();
+
+  const splashBackgroundColor =
+    colorScheme === 'dark'
+      ? '#000000'
+      : '#FFFFFF';
+
   const {
     isLoading,
     isReady,
@@ -27,7 +35,14 @@ export function BlockGate({
 
   if (!isReady && isLoading) {
     return (
-      <View style={styles.splashBridge}>
+      <View
+        style={[
+          styles.splashBridge,
+          {
+            backgroundColor:
+              splashBackgroundColor,
+          },
+        ]}>
         <Image
           source={require('@/assets/images/splash-icon.png')}
           style={styles.splashIcon}
@@ -40,14 +55,26 @@ export function BlockGate({
 
   if (!isReady && hasLoadError) {
     return (
-      <View style={styles.errorState}>
-        <Text style={styles.errorTitle}>
+      <View
+        style={[
+          styles.errorState,
+          {
+            backgroundColor:
+              colors.background,
+          },
+        ]}>
+        <AppText
+          variant="sectionTitle"
+          style={styles.errorTitle}>
           Couldn’t load your account
-        </Text>
+        </AppText>
 
-        <Text style={styles.errorText}>
+        <AppText
+          variant="body"
+          tone="tertiary"
+          style={styles.errorText}>
           Check your connection and try again.
-        </Text>
+        </AppText>
 
         <PrimaryButton
           title="Try Again"
@@ -62,7 +89,14 @@ export function BlockGate({
 
   if (!isReady) {
     return (
-      <View style={styles.splashBridge}>
+      <View
+        style={[
+          styles.splashBridge,
+          {
+            backgroundColor:
+              splashBackgroundColor,
+          },
+        ]}>
         <Image
           source={require('@/assets/images/splash-icon.png')}
           style={styles.splashIcon}
@@ -79,7 +113,6 @@ export function BlockGate({
 const styles = StyleSheet.create({
   splashBridge: {
     flex: 1,
-    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -92,21 +125,16 @@ const styles = StyleSheet.create({
   errorState: {
     flex: 1,
     paddingHorizontal: 32,
-    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
   },
 
   errorTitle: {
-    ...TYPOGRAPHY.sectionTitle,
-    color: COLORS.text,
     textAlign: 'center',
   },
 
   errorText: {
-    ...TYPOGRAPHY.body,
     marginTop: 8,
-    color: COLORS.tertiaryText,
     textAlign: 'center',
   },
 

@@ -1,6 +1,8 @@
+import AppText from '@/components/app-text';
 import PrimaryButton from '@/components/primary-button';
 import { useOnboardingCollection } from '@/context/onboarding-collection-context';
 import { useProfile } from '@/context/profile-context';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/lib/supabase';
 import {
@@ -24,13 +26,19 @@ import {
   ActivityIndicator,
   Image,
   StyleSheet,
-  Text,
+  useColorScheme,
   View,
 } from 'react-native';
 
 const SPLASH_ICON_SIZE = 200;
 
 export default function IndexScreen() {
+  const colors = useAppColors();
+  const colorScheme = useColorScheme();
+  const splashBridgeBackground =
+    colorScheme === 'dark'
+      ? '#000000'
+      : '#FFFFFF';
   const {
     isAuthenticated,
     isLoading: isAuthLoading,
@@ -463,14 +471,25 @@ export default function IndexScreen() {
 
   if (hasAuthLoadError) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorTitle}>
+      <View
+        style={[
+          styles.errorContainer,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
+        <AppText
+          variant="collectionTitle"
+          style={styles.errorTitle}>
           Couldn&apos;t load your account
-        </Text>
+        </AppText>
 
-        <Text style={styles.errorDescription}>
+        <AppText
+          variant="bodyLarge"
+          tone="secondary"
+          style={styles.errorDescription}>
           Check your connection and try again.
-        </Text>
+        </AppText>
 
         <PrimaryButton
           title="Try Again"
@@ -483,14 +502,25 @@ export default function IndexScreen() {
 
   if (hasOnboardingCollectionLoadError) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorTitle}>
+      <View
+        style={[
+          styles.errorContainer,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
+        <AppText
+          variant="collectionTitle"
+          style={styles.errorTitle}>
           Couldn&apos;t load your account
-        </Text>
+        </AppText>
 
-        <Text style={styles.errorDescription}>
+        <AppText
+          variant="bodyLarge"
+          tone="secondary"
+          style={styles.errorDescription}>
           Check your connection and try again.
-        </Text>
+        </AppText>
 
         <PrimaryButton
           title="Try Again"
@@ -505,14 +535,25 @@ export default function IndexScreen() {
 
   if (hasStartupLoadError) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorTitle}>
+      <View
+        style={[
+          styles.errorContainer,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
+        <AppText
+          variant="collectionTitle"
+          style={styles.errorTitle}>
           Couldn&apos;t load your account
-        </Text>
+        </AppText>
 
-        <Text style={styles.errorDescription}>
+        <AppText
+          variant="bodyLarge"
+          tone="secondary"
+          style={styles.errorDescription}>
           Check your connection and try again.
-        </Text>
+        </AppText>
 
         <PrimaryButton
           title="Try Again"
@@ -528,14 +569,25 @@ export default function IndexScreen() {
     hasPendingPublishError
   ) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorTitle}>
+      <View
+        style={[
+          styles.errorContainer,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
+        <AppText
+          variant="collectionTitle"
+          style={styles.errorTitle}>
           Couldn&apos;t finish setting up your account
-        </Text>
+        </AppText>
 
-        <Text style={styles.errorDescription}>
+        <AppText
+          variant="bodyLarge"
+          tone="secondary"
+          style={styles.errorDescription}>
           Check your connection and try again.
-        </Text>
+        </AppText>
 
         <PrimaryButton
           title="Try Again"
@@ -551,14 +603,25 @@ export default function IndexScreen() {
     hasProfileLoadError
   ) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorTitle}>
+      <View
+        style={[
+          styles.errorContainer,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
+        <AppText
+          variant="collectionTitle"
+          style={styles.errorTitle}>
           Couldn&apos;t load your profile
-        </Text>
+        </AppText>
 
-        <Text style={styles.errorDescription}>
+        <AppText
+          variant="bodyLarge"
+          tone="secondary"
+          style={styles.errorDescription}>
           Check your connection and try again.
-        </Text>
+        </AppText>
 
         <PrimaryButton
           title="Try Again"
@@ -574,14 +637,25 @@ export default function IndexScreen() {
     hasLegacyOnboardingCheckError
   ) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorTitle}>
+      <View
+        style={[
+          styles.errorContainer,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
+        <AppText
+          variant="collectionTitle"
+          style={styles.errorTitle}>
           Couldn&apos;t load your account
-        </Text>
+        </AppText>
 
-        <Text style={styles.errorDescription}>
+        <AppText
+          variant="bodyLarge"
+          tone="secondary"
+          style={styles.errorDescription}>
           Check your connection and try again.
-        </Text>
+        </AppText>
 
         <PrimaryButton
           title="Try Again"
@@ -594,7 +668,14 @@ export default function IndexScreen() {
 
   if (!isFinishingOnboardingAccount) {
     return (
-      <View style={styles.splashBridge}>
+      <View
+        style={[
+          styles.splashBridge,
+          {
+            backgroundColor:
+              splashBridgeBackground,
+          },
+        ]}>
         <Image
           source={require('@/assets/images/splash-icon.png')}
           style={styles.splashIcon}
@@ -606,19 +687,30 @@ export default function IndexScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+        },
+      ]}>
       <ActivityIndicator
         size="large"
-        color="#222222"
+        color={colors.text}
       />
 
-      <Text style={styles.title}>
+      <AppText
+        variant="pageTitle"
+        style={styles.title}>
         Verifying your email…
-      </Text>
+      </AppText>
 
-      <Text style={styles.description}>
+      <AppText
+        variant="bodyLarge"
+        tone="secondary"
+        style={styles.description}>
         We&apos;re finishing your Top3 account.
-      </Text>
+      </AppText>
     </View>
   );
 }
@@ -626,7 +718,6 @@ export default function IndexScreen() {
 const styles = StyleSheet.create({
   splashBridge: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -638,26 +729,18 @@ const styles = StyleSheet.create({
 
   errorContainer: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
   },
 
   errorTitle: {
-    fontSize: 24,
-    lineHeight: 30,
-    fontWeight: '700',
-    color: '#222222',
     textAlign: 'center',
   },
 
   errorDescription: {
     marginTop: 10,
     maxWidth: 320,
-    fontSize: 16,
-    lineHeight: 24,
-    color: '#666666',
     textAlign: 'center',
   },
 
@@ -668,7 +751,6 @@ const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
@@ -676,19 +758,12 @@ const styles = StyleSheet.create({
 
   title: {
     marginTop: 24,
-    fontSize: 28,
-    lineHeight: 34,
-    fontWeight: '700',
-    color: '#222222',
     textAlign: 'center',
   },
 
   description: {
     marginTop: 12,
     maxWidth: 340,
-    fontSize: 16,
-    lineHeight: 24,
-    color: '#666666',
     textAlign: 'center',
   },
 });

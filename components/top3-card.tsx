@@ -1,3 +1,4 @@
+import AppText from '@/components/app-text';
 import FollowButton from '@/components/follow-button';
 import {
   MediaPreviewItemButton,
@@ -8,13 +9,12 @@ import {
   getCategoryArtworkRule,
 } from '@/constants/category-artwork-rules';
 import {
-  COLORS,
   TASTE_MATCH_RANK_COLORS,
 } from '@/constants/colors';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
-import { TYPOGRAPHY } from '@/constants/typography';
 import { useComments } from '@/context/comment-context';
 import { useLike } from '@/context/like-context';
+import { useAppColors } from '@/hooks/use-app-colors';
 import {
   repairCollectionArtwork,
 } from '@/lib/supabase/artwork-repair';
@@ -117,6 +117,8 @@ export default function Top3Card({
   tasteMatchSharedPickCount = 0,
   onTasteMatchPress,
 }: Top3CardProps) {
+  const colors = useAppColors();
+
   const {
     isLiked,
     toggleLike,
@@ -317,7 +319,14 @@ export default function Top3Card({
   }
 
   return (
-    <View style={styles.card}>
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+        },
+      ]}>
       {recommendationTitle ? (
         <Pressable
           style={({ pressed }) => [
@@ -328,17 +337,22 @@ export default function Top3Card({
           accessibilityRole="button"
           accessibilityLabel="Open Taste Match details">
           <View style={styles.recommendationTitleRow}>
-            <Text style={styles.recommendationTitle}>
+            <AppText
+              variant="subtitle"
+              tone="accent"
+              emphasis="strong">
               {recommendationTitle}
-            </Text>
+            </AppText>
           </View>
 
           {recommendationReason ? (
-            <Text
+            <AppText
+              variant="metadata"
+              tone="accent"
               style={styles.recommendationReason}
               numberOfLines={3}>
               {recommendationReason}
-            </Text>
+            </AppText>
           ) : null}
         </Pressable>
       ) : null}
@@ -373,13 +387,18 @@ export default function Top3Card({
               />
 
               <View style={styles.authorDetails}>
-                <Text style={styles.authorName}>
+                <AppText
+                  variant="headline"
+                  tone="primary">
                   {author.displayName}
-                </Text>
+                </AppText>
 
-                <Text style={styles.username}>
+                <AppText
+                  variant="subtitle"
+                  tone="secondary"
+                  style={styles.username}>
                   @{author.username}
-                </Text>
+                </AppText>
               </View>
             </Pressable>
 
@@ -417,7 +436,7 @@ export default function Top3Card({
               <Ionicons
                 name="ellipsis-horizontal"
                 size={22}
-                color="#666666"
+                color={colors.secondaryText}
               />
             </Pressable>
           ) : null}
@@ -448,9 +467,12 @@ export default function Top3Card({
             {category?.icon ?? '⭐'}
           </Text>
 
-          <Text style={styles.title}>
+          <AppText
+            variant="collectionTitle"
+            tone="primary"
+            style={styles.title}>
             {displayTitle}
-          </Text>
+          </AppText>
         </Pressable>
 
         {onEditPress ? (
@@ -466,7 +488,7 @@ export default function Top3Card({
             <Ionicons
               name="create-outline"
               size={20}
-              color="#666666"
+              color={colors.secondaryText}
             />
           </Pressable>
         ) : null}
@@ -484,7 +506,7 @@ export default function Top3Card({
             <Ionicons
               name="ellipsis-horizontal"
               size={22}
-              color="#666666"
+              color={colors.secondaryText}
             />
           </Pressable>
         ) : null}
@@ -562,22 +584,34 @@ export default function Top3Card({
                     index ===
                       post.collection.items.length - 1 &&
                       styles.lastRankRow,
-                    !isHighlighted &&
-                      styles.standardRankRow,
-                    isHighlighted &&
-                      styles.highlightedRankRow,
+                    !isHighlighted && {
+                      ...styles.standardRankRow,
+                      backgroundColor:
+                        colors.background,
+                    },
+                    isHighlighted && {
+                      ...styles.highlightedRankRow,
+                      backgroundColor:
+                        colors.tasteMatchBackground,
+                    },
                     isTasteMatch && {
                       backgroundColor:
                         TASTE_MATCH_RANK_COLORS[
                           index
                         ] ??
-                        COLORS.tasteMatchBackground,
+                        colors.tasteMatchBackground,
                     },
                   ]}>
-                  <Text
+                  <AppText
+                    variant="headline"
+                    tone={
+                      isHighlighted
+                        ? 'onHighlight'
+                        : 'primary'
+                    }
                     style={styles.rankNumber}>
                     {index + 1}
-                  </Text>
+                  </AppText>
 
                   <View
                     style={[
@@ -617,12 +651,20 @@ export default function Top3Card({
                           {
                             width: artworkRule.width,
                             height: artworkRule.height,
+                            backgroundColor:
+                              isHighlighted
+                                ? colors.highlightPlaceholder
+                                : colors.border,
                           },
                         ]}>
                         <Ionicons
                           name="image-outline"
                           size={24}
-                          color="#999999"
+                          color={
+                            isHighlighted
+                              ? colors.highlightMuted
+                              : colors.tertiaryText
+                          }
                         />
                       </View>
                     )}
@@ -631,46 +673,64 @@ export default function Top3Card({
 
                   <View
                     style={styles.itemDetails}>
-                    <Text
-                      style={[
-                        styles.itemTitle,
-                        isHighlighted &&
-                          styles.highlightedItemTitle,
-                      ]}
+                    <AppText
+                      variant="cardTitle"
+                      tone={
+                        isHighlighted
+                          ? 'onHighlight'
+                          : 'primary'
+                      }
+                      emphasis={
+                        isHighlighted
+                          ? 'heavy'
+                          : 'default'
+                      }
                       numberOfLines={2}
                       ellipsizeMode="tail">
                       {item?.title ??
                         'Not selected'}
-                    </Text>
+                    </AppText>
 
                     {item?.subtitle ? (
-                      <Text
-                        style={
-                          styles.itemSubtitle
+                      <AppText
+                        variant="subtitle"
+                        tone={
+                          isHighlighted
+                            ? 'onHighlight'
+                            : 'secondary'
                         }
+                        style={styles.itemSubtitle}
                         numberOfLines={1}
                         ellipsizeMode="tail">
                         {item.subtitle}
-                      </Text>
+                      </AppText>
                     ) : null}
 
                     {typeof item?.rating ===
                     'number' ? (
                       <View
                         style={styles.ratingRow}>
-                        <Text
-                          style={
-                            styles.ratingText
-                          }>
+                        <AppText
+                          variant="caption"
+                          tone={
+                            isHighlighted
+                              ? 'onHighlight'
+                              : 'primary'
+                          }
+                          style={styles.ratingText}>
                           {item.rating.toFixed(
                             1
                           )}
-                        </Text>
+                        </AppText>
 
                         <Ionicons
                           name="star"
                           size={13}
-                          color="#555555"
+                          color={
+                            isHighlighted
+                              ? colors.onHighlight
+                              : colors.secondaryText
+                          }
                         />
                       </View>
                     ) : null}
@@ -680,7 +740,20 @@ export default function Top3Card({
                     <MediaPreviewItemButton
                       item={item}
                       category={post.collection.category}
-                      style={styles.previewButton}
+                      style={[
+                        styles.previewButton,
+                        {
+                          backgroundColor:
+                            isHighlighted
+                              ? colors.highlightSurface
+                              : colors.surface,
+                        },
+                      ]}
+                      iconColor={
+                        isHighlighted
+                          ? colors.onHighlight
+                          : colors.secondaryText
+                      }
                     />
                   ) : null}
 
@@ -696,12 +769,15 @@ export default function Top3Card({
           <Ionicons
             name="time-outline"
             size={15}
-            color="#888888"
+            color={colors.tertiaryText}
           />
 
-          <Text style={styles.footerText}>
+          <AppText
+            variant="metadata"
+            tone="secondary"
+            style={styles.footerText}>
             {publishedText ?? 'Published'}
-          </Text>
+          </AppText>
         </View>
 
         <View style={styles.engagement}>
@@ -735,19 +811,26 @@ export default function Top3Card({
               size={17}
               color={
                 postIsLiked
-                  ? '#FF3B30'
-                  : '#777777'
+                  ? colors.heart
+                  : colors.secondaryText
               }
             />
 
-            <Text
-              style={[
-                styles.footerText,
-                postIsLiked &&
-                  styles.activeFooterText,
-              ]}>
+            <AppText
+              variant="metadata"
+              tone={
+                postIsLiked
+                  ? 'primary'
+                  : 'secondary'
+              }
+              emphasis={
+                postIsLiked
+                  ? 'semibold'
+                  : 'default'
+              }
+              style={styles.footerText}>
               {displayedLikeCount}
-            </Text>
+            </AppText>
           </Pressable>
 
           <Pressable
@@ -790,19 +873,26 @@ export default function Top3Card({
               size={15}
               color={
                 hasComments
-                  ? '#222222'
-                  : '#777777'
+                  ? colors.text
+                  : colors.secondaryText
               }
             />
 
-            <Text
-              style={[
-                styles.footerText,
-                hasComments &&
-                  styles.activeFooterText,
-              ]}>
+            <AppText
+              variant="metadata"
+              tone={
+                hasComments
+                  ? 'primary'
+                  : 'secondary'
+              }
+              emphasis={
+                hasComments
+                  ? 'semibold'
+                  : 'default'
+              }
+              style={styles.footerText}>
               {displayedCommentCount}
-            </Text>
+            </AppText>
           </Pressable>
 
           {onSharePress ? (
@@ -819,7 +909,7 @@ export default function Top3Card({
               <Ionicons
                 name="share-outline"
                 size={17}
-                color="#777777"
+                color={colors.secondaryText}
               />
             </Pressable>
           ) : null}
@@ -831,10 +921,8 @@ export default function Top3Card({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#EAEAEA',
     padding: 18,
   },
 
@@ -852,19 +940,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  recommendationTitle: {
-    marginLeft: 0,
-    fontSize: 14,
-    lineHeight: 19,
-    fontWeight: '700',
-    color: COLORS.accent,
-  },
-
   recommendationReason: {
-    ...TYPOGRAPHY.metadata,
     marginTop: 1,
     marginLeft: 0,
-    color: COLORS.accent,
   },
 
 
@@ -899,16 +977,8 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
 
-  authorName: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#222222',
-  },
-
   username: {
     marginTop: 2,
-    fontSize: 14,
-    color: '#777777',
   },
 
   titleRow: {
@@ -932,10 +1002,6 @@ const styles = StyleSheet.create({
 
   title: {
     flex: 1,
-    fontSize: 24,
-    lineHeight: 30,
-    fontWeight: '700',
-    color: '#222222',
   },
 
   editButton: {
@@ -974,25 +1040,20 @@ const styles = StyleSheet.create({
   standardRankRow: {
     marginHorizontal: -10,
     paddingHorizontal: 10,
-    backgroundColor: COLORS.background,
     borderRadius: 12,
   },
 
   highlightedRankRow: {
     marginHorizontal: -10,
     paddingHorizontal: 10,
-    backgroundColor: COLORS.tasteMatchBackground,
     borderRadius: 12,
   },
 
 
   rankNumber: {
     width: 28,
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#222222',
-      textAlign: 'center',
-        transform: [{ translateX: -5 }],
+    textAlign: 'center',
+    transform: [{ translateX: -5 }],
   },
 
   artworkContainer: {
@@ -1002,12 +1063,10 @@ const styles = StyleSheet.create({
 
   itemImage: {
     borderRadius: 9,
-    backgroundColor: '#EEEEEE',
   },
 
   imagePlaceholder: {
     borderRadius: 9,
-    backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1020,7 +1079,6 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
   },
 
 
@@ -1029,18 +1087,8 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
 
-  itemTitle: {
-    ...TYPOGRAPHY.cardTitle,
-  },
-
-  highlightedItemTitle: {
-    fontWeight: '800',
-  },
-
   itemSubtitle: {
-    ...TYPOGRAPHY.subtitle,
     marginTop: 4,
-    color: COLORS.text,
   },
 
   ratingRow: {
@@ -1051,9 +1099,6 @@ const styles = StyleSheet.create({
 
   ratingText: {
     marginRight: 4,
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#222222',
   },
 
   footer: {
@@ -1088,13 +1133,6 @@ const styles = StyleSheet.create({
 
   footerText: {
     marginLeft: 5,
-    fontSize: 13,
-    color: '#777777',
-  },
-
-  activeFooterText: {
-    color: '#222222',
-    fontWeight: '600',
   },
 
 

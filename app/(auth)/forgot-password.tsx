@@ -1,26 +1,20 @@
 import ActionSheet from '@/components/action-sheet';
+import AppText from '@/components/app-text';
 import AuthProviderButton from '@/components/auth-provider-button';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
-import { COLORS } from '@/constants/colors';
-import { TYPOGRAPHY } from '@/constants/typography';
+import { TEXT_STYLES } from '@/constants/typography';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { requestPasswordReset } from '@/services/auth-service';
-
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
-
-import {
-  useState,
-} from 'react';
-
+import { useState } from 'react';
 import {
   Pressable,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from 'react-native';
-
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type ValidationSheet = {
@@ -33,6 +27,8 @@ function isValidEmail(value: string) {
 }
 
 export default function ForgotPasswordScreen() {
+  const colors = useAppColors();
+
   const [email, setEmail] = useState('');
 
   const [isSubmitting, setIsSubmitting] =
@@ -109,7 +105,6 @@ export default function ForgotPasswordScreen() {
 
       if (isNetworkError) {
         setIsNetworkErrorSheetVisible(true);
-
         return;
       }
 
@@ -155,23 +150,35 @@ export default function ForgotPasswordScreen() {
   return (
     <>
       <SafeAreaView
-        style={styles.container}
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}
         edges={['top', 'bottom']}>
         <ScreenHeader showBackButton />
 
         {hasSubmitted ? (
           <View style={styles.successHeader}>
-            <Text style={styles.successTitle}>
+            <AppText
+              variant="heroTitle"
+              style={styles.successTitle}>
               Check your email
-            </Text>
+            </AppText>
 
-            <Text style={styles.successSubtitle}>
+            <AppText
+              variant="heroSubtitle"
+              style={styles.successSubtitle}>
               We sent a password reset link to{'\n'}
-              <Text style={styles.emailText}>
+              <AppText
+                variant="heroSubtitle"
+                tone="primary"
+                emphasis="semibold">
                 {normalizedEmail}
-              </Text>
+              </AppText>
               .
-            </Text>
+            </AppText>
           </View>
         ) : (
           <PageHeader
@@ -184,11 +191,17 @@ export default function ForgotPasswordScreen() {
         <View style={styles.content}>
           {hasSubmitted ? (
             <View style={styles.successContent}>
-              <Text style={styles.successText}>
+              <AppText
+                variant="bodyLarge"
+                tone="tertiary"
+                style={styles.successText}>
                 Open the link in your email to choose a new password.
-              </Text>
+              </AppText>
 
-              <View style={styles.openEmailButtonContainer}>
+              <View
+                style={
+                  styles.openEmailButtonContainer
+                }>
                 <AuthProviderButton
                   title="Open Email App"
                   variant="primary"
@@ -205,17 +218,19 @@ export default function ForgotPasswordScreen() {
                   styles.signInButton,
                   pressed && styles.pressed,
                 ]}>
-                <Text style={styles.signInButtonText}>
+                <AppText variant="action">
                   Return to Sign In
-                </Text>
+                </AppText>
               </Pressable>
             </View>
           ) : (
             <View style={styles.form}>
               <View style={styles.field}>
-                <Text style={styles.label}>
+                <AppText
+                  variant="formLabel"
+                  style={styles.label}>
                   Email
-                </Text>
+                </AppText>
 
                 <TextInput
                   accessibilityLabel="Email"
@@ -229,9 +244,20 @@ export default function ForgotPasswordScreen() {
                     void handleSubmit();
                   }}
                   placeholder="you@example.com"
-                  placeholderTextColor="#999999"
+                  placeholderTextColor={
+                    colors.tertiaryText
+                  }
                   returnKeyType="done"
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor:
+                        colors.surface,
+                      borderColor:
+                        colors.border,
+                      color: colors.text,
+                    },
+                  ]}
                   textContentType="emailAddress"
                   value={email}
                 />
@@ -239,7 +265,10 @@ export default function ForgotPasswordScreen() {
 
               <View style={styles.buttonContainer}>
                 <AuthProviderButton
-                  disabled={!isFormValid || isSubmitting}
+                  disabled={
+                    !isFormValid ||
+                    isSubmitting
+                  }
                   loading={isSubmitting}
                   onPress={() => {
                     void handleSubmit();
@@ -310,7 +339,6 @@ export default function ForgotPasswordScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
 
   content: {
@@ -328,7 +356,6 @@ const styles = StyleSheet.create({
   },
 
   label: {
-    ...TYPOGRAPHY.formLabel,
     marginBottom: 8,
   },
 
@@ -337,11 +364,8 @@ const styles = StyleSheet.create({
     minHeight: 54,
     paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: '#D9D9D9',
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    ...TYPOGRAPHY.bodyLarge,
-    color: COLORS.text,
+    ...TEXT_STYLES.bodyLarge,
   },
 
   buttonContainer: {
@@ -356,23 +380,13 @@ const styles = StyleSheet.create({
   },
 
   successTitle: {
-    ...TYPOGRAPHY.heroTitle,
     textAlign: 'center',
   },
 
   successSubtitle: {
     marginTop: 8,
     maxWidth: 340,
-    fontSize: 18,
-    lineHeight: 24,
-    fontWeight: '400',
-    color: '#7A7A7A',
     textAlign: 'center',
-  },
-
-  emailText: {
-    fontWeight: '600',
-    color: COLORS.text,
   },
 
   successContent: {
@@ -381,9 +395,7 @@ const styles = StyleSheet.create({
   },
 
   successText: {
-    ...TYPOGRAPHY.bodyLarge,
     maxWidth: 340,
-    color: COLORS.tertiaryText,
     textAlign: 'center',
   },
 
@@ -395,10 +407,6 @@ const styles = StyleSheet.create({
   signInButton: {
     marginTop: 24,
     paddingVertical: 8,
-  },
-
-  signInButtonText: {
-    ...TYPOGRAPHY.action,
   },
 
   pressed: {

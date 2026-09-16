@@ -1,9 +1,9 @@
+import AppText from '@/components/app-text';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
-import { COLORS } from '@/constants/colors';
 import { SPACING } from '@/constants/spacing';
-import { TYPOGRAPHY } from '@/constants/typography';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useAppColors } from '@/hooks/use-app-colors';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type PolicySectionProps = {
@@ -26,7 +26,11 @@ function PolicySection({
 }: PolicySectionProps) {
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
+      <AppText
+        variant="sectionTitle"
+        style={styles.sectionTitle}>
+        {title}
+      </AppText>
       {children}
     </View>
   );
@@ -38,7 +42,11 @@ function PolicySubsection({
 }: PolicySubsectionProps) {
   return (
     <View style={styles.subsection}>
-      <Text style={styles.subsectionTitle}>{title}</Text>
+      <AppText
+        variant="headline"
+        style={styles.subsectionTitle}>
+        {title}
+      </AppText>
       {children}
     </View>
   );
@@ -49,7 +57,13 @@ function Paragraph({
 }: {
   children: React.ReactNode;
 }) {
-  return <Text style={styles.body}>{children}</Text>;
+  return (
+    <AppText
+      variant="legalBody"
+      style={styles.body}>
+      {children}
+    </AppText>
+  );
 }
 
 function BulletList({ items }: BulletListProps) {
@@ -57,8 +71,16 @@ function BulletList({ items }: BulletListProps) {
     <View style={styles.bulletList}>
       {items.map((item) => (
         <View key={item} style={styles.bulletRow}>
-          <Text style={styles.bullet}>•</Text>
-          <Text style={styles.bulletText}>{item}</Text>
+          <AppText
+            variant="legalBody"
+            style={styles.bullet}>
+            •
+          </AppText>
+          <AppText
+            variant="legalBody"
+            style={styles.bulletText}>
+            {item}
+          </AppText>
         </View>
       ))}
     </View>
@@ -66,9 +88,16 @@ function BulletList({ items }: BulletListProps) {
 }
 
 export default function PrivacyPolicyScreen() {
+  const colors = useAppColors();
+
   return (
     <SafeAreaView
-      style={styles.container}
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+        },
+      ]}
       edges={['top', 'left', 'right']}>
       <ScreenHeader showBackButton />
 
@@ -82,12 +111,12 @@ export default function PrivacyPolicyScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}>
         <View style={styles.meta}>
-          <Text style={styles.metaText}>
+          <AppText variant="legalMeta">
             Effective Date: August 25, 2026
-          </Text>
-          <Text style={styles.metaText}>
+          </AppText>
+          <AppText variant="legalMeta">
             Last Updated: September 3, 2026
-          </Text>
+          </AppText>
         </View>
 
         <Paragraph>
@@ -1165,15 +1194,17 @@ export default function PrivacyPolicyScreen() {
           </Paragraph>
 
           <View style={styles.contact}>
-            <Text style={styles.contactName}>
+            <AppText
+              variant="headline"
+              style={styles.contactName}>
               Jeremy Linskill
-            </Text>
-            <Text style={styles.contactText}>
+            </AppText>
+            <AppText variant="legalBody">
               Toronto, Ontario, Canada
-            </Text>
-            <Text style={styles.contactText}>
+            </AppText>
+            <AppText variant="legalBody">
               support@top3taste.com
-            </Text>
+            </AppText>
           </View>
         </PolicySection>
       </ScrollView>
@@ -1184,7 +1215,6 @@ export default function PrivacyPolicyScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
 
   scrollView: {
@@ -1201,20 +1231,12 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   },
 
-  metaText: {
-    fontSize: 13,
-    lineHeight: 19,
-    color: COLORS.tertiaryText,
-  },
-
   section: {
     marginTop: SPACING.xl,
   },
 
   sectionTitle: {
-    ...TYPOGRAPHY.sectionTitle,
     marginBottom: SPACING.md,
-    color: COLORS.text,
   },
 
   subsection: {
@@ -1222,16 +1244,11 @@ const styles = StyleSheet.create({
   },
 
   subsectionTitle: {
-    ...TYPOGRAPHY.headline,
     marginBottom: SPACING.sm,
-    color: COLORS.text,
   },
 
   body: {
     marginBottom: SPACING.md,
-    fontSize: 15,
-    lineHeight: 23,
-    color: COLORS.secondaryText,
   },
 
   bulletList: {
@@ -1246,16 +1263,10 @@ const styles = StyleSheet.create({
 
   bullet: {
     width: 18,
-    fontSize: 15,
-    lineHeight: 23,
-    color: COLORS.secondaryText,
   },
 
   bulletText: {
     flex: 1,
-    fontSize: 15,
-    lineHeight: 23,
-    color: COLORS.secondaryText,
   },
 
   contact: {
@@ -1263,14 +1274,7 @@ const styles = StyleSheet.create({
   },
 
   contactName: {
-    ...TYPOGRAPHY.headline,
     marginBottom: 4,
-    color: COLORS.text,
   },
 
-  contactText: {
-    fontSize: 15,
-    lineHeight: 23,
-    color: COLORS.secondaryText,
-  },
 });

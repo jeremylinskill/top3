@@ -1,13 +1,14 @@
 import ActionSheet, {
   ActionSheetAction,
 } from '@/components/action-sheet';
+import AppText from '@/components/app-text';
 import CommentsSheet from '@/components/comments-sheet';
 import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
 import Top3Card from '@/components/top3-card';
 import UserAvatar from '@/components/user-avatar';
-import { TYPOGRAPHY } from '@/constants/typography';
 import { useProfile } from '@/context/profile-context';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { trackAnalyticsEvent } from '@/lib/analytics';
 import { sharePublishedCollection } from '@/lib/share';
 import { getProfileById } from '@/lib/supabase/profiles';
@@ -18,6 +19,7 @@ import {
 import { getPublishedPosts } from '@/services/post-service';
 import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
+import { Ionicons } from '@expo/vector-icons';
 import {
   router,
   useLocalSearchParams,
@@ -32,7 +34,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -54,6 +55,7 @@ type ReportTop3Sheet =
   | null;
 
 export default function PublishedTop3Screen() {
+  const colors = useAppColors();
   const params = useLocalSearchParams<{
     postId?: string | string[];
   }>();
@@ -180,18 +182,27 @@ export default function PublishedTop3Screen() {
 
   if (isLoadingPost) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
         <ScreenHeader showBackButton />
 
         <View style={styles.loadingContainer}>
           <ActivityIndicator
             size="small"
-            color="#222222"
+            color={colors.text}
           />
 
-          <Text style={styles.loadingText}>
+          <AppText
+            variant="bodyLarge"
+            tone="tertiary"
+            style={styles.loadingText}>
             Loading Top 3…
-          </Text>
+          </AppText>
         </View>
       </SafeAreaView>
     );
@@ -199,17 +210,28 @@ export default function PublishedTop3Screen() {
 
   if (hasLoadError) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
         <ScreenHeader showBackButton />
 
         <View style={styles.messageContainer}>
-          <Text style={styles.messageTitle}>
+          <AppText
+            variant="stateTitle"
+            style={styles.messageTitle}>
             Couldn’t load this Top 3
-          </Text>
+          </AppText>
 
-          <Text style={styles.messageText}>
+          <AppText
+            variant="bodyLarge"
+            tone="tertiary"
+            style={styles.messageText}>
             Check your connection and try again.
-          </Text>
+          </AppText>
 
           <PrimaryButton
             title="Try Again"
@@ -225,21 +247,32 @@ export default function PublishedTop3Screen() {
 
   if (!post) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
         <ScreenHeader
           title="Top 3 Not Found"
           showBackButton
         />
 
         <View style={styles.messageContainer}>
-          <Text style={styles.messageTitle}>
+          <AppText
+            variant="stateTitle"
+            style={styles.messageTitle}>
             This Top 3 is unavailable
-          </Text>
+          </AppText>
 
-          <Text style={styles.messageText}>
+          <AppText
+            variant="bodyLarge"
+            tone="tertiary"
+            style={styles.messageText}>
             It may have been removed or is no
             longer available.
-          </Text>
+          </AppText>
         </View>
       </SafeAreaView>
     );
@@ -528,7 +561,12 @@ export default function PublishedTop3Screen() {
 
   return (
     <SafeAreaView
-      style={styles.container}
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+        },
+      ]}
       edges={['top', 'left', 'right']}>
       <View style={styles.keyboardView}>
         <ScreenHeader
@@ -576,6 +614,10 @@ export default function PublishedTop3Screen() {
             <Pressable
               style={({ pressed }) => [
                 styles.authorRow,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                },
                 pressed && styles.pressed,
               ]}
               onPress={openAuthorProfile}
@@ -590,18 +632,23 @@ export default function PublishedTop3Screen() {
 
               <View
                 style={styles.authorDetails}>
-                <Text style={styles.authorName}>
+                <AppText variant="headline">
                   {author.displayName}
-                </Text>
+                </AppText>
 
-                <Text style={styles.username}>
+                <AppText
+                  variant="subtitle"
+                  tone="tertiary"
+                  style={styles.username}>
                   @{author.username}
-                </Text>
+                </AppText>
               </View>
 
-              <Text style={styles.arrow}>
-                ›
-              </Text>
+              <Ionicons
+                name="chevron-forward"
+                size={22}
+                color={colors.tertiaryText}
+              />
             </Pressable>
           ) : null}
 
@@ -648,7 +695,6 @@ export default function PublishedTop3Screen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
   },
 
   keyboardView: {
@@ -668,9 +714,7 @@ const styles = StyleSheet.create({
   authorRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#EEEEEE',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -681,19 +725,8 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
 
-  authorName: {
-    ...TYPOGRAPHY.headline,
-  },
-
   username: {
-    ...TYPOGRAPHY.subtitle,
     marginTop: 2,
-    color: '#777777',
-  },
-
-  arrow: {
-    fontSize: 30,
-    color: '#999999',
   },
 
   loadingContainer: {
@@ -703,9 +736,7 @@ const styles = StyleSheet.create({
   },
 
   loadingText: {
-    ...TYPOGRAPHY.bodyLarge,
     marginTop: 10,
-    color: '#777777',
   },
 
   messageContainer: {
@@ -716,16 +747,11 @@ const styles = StyleSheet.create({
   },
 
   messageTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#222222',
     textAlign: 'center',
   },
 
   messageText: {
-    ...TYPOGRAPHY.bodyLarge,
     marginTop: 8,
-    color: '#777777',
     textAlign: 'center',
   },
 

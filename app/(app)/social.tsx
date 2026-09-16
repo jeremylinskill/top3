@@ -1,15 +1,16 @@
 import ActionSheet from '@/components/action-sheet';
+import AppText from '@/components/app-text';
 import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
 import SearchInput from '@/components/search-input';
 import SegmentedControl from '@/components/segmented-control';
 import TasteMatchBadge from '@/components/taste-match-badge';
 import UserAvatar from '@/components/user-avatar';
-import { TYPOGRAPHY } from '@/constants/typography';
 import { useBlock } from '@/context/block-context';
 import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { getFollowSnapshot } from '@/lib/supabase/follows';
 import {
   getProfileById,
@@ -36,7 +37,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -60,6 +60,7 @@ function buildProfileRecord(
 }
 
 export default function SocialScreen() {
+  const colors = useAppColors();
   const params = useLocalSearchParams<{
     tab?: string | string[];
     userId?: string | string[];
@@ -782,11 +783,22 @@ export default function SocialScreen() {
   return (
     <>
       <SafeAreaView
-      style={styles.container}
-      edges={['top', 'left', 'right']}>
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}
+        edges={['top', 'left', 'right']}>
       <ScreenHeader showBackButton />
 
-      <View style={styles.segmentedContainer}>
+      <View
+        style={[
+          styles.segmentedContainer,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
         <SegmentedControl<SocialTab>
           value={activeTab}
           options={[
@@ -839,26 +851,40 @@ export default function SocialScreen() {
         isLoadingPosts ||
         isLoadingProfiles ? (
           <View style={styles.stateContainer}>
-            <Text style={styles.stateText}>
+            <AppText
+              variant="bodyLarge"
+              tone="tertiary">
               Loading…
-            </Text>
+            </AppText>
           </View>
         ) : hasConnectionsLoadError ||
         hasProfileLoadError ? (
-          <View style={styles.emptyState}>
+          <View
+            style={[
+              styles.emptyState,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}>
             <Ionicons
               name="cloud-offline-outline"
               size={34}
-              color="#999999"
+              color={colors.tertiaryText}
             />
 
-            <Text style={styles.emptyTitle}>
+            <AppText
+              variant="emptyStateTitle"
+              style={styles.emptyTitle}>
               Couldn’t load connections
-            </Text>
+            </AppText>
 
-            <Text style={styles.emptyText}>
+            <AppText
+              variant="body"
+              tone="tertiary"
+              style={styles.emptyText}>
               Check your connection and try again.
-            </Text>
+            </AppText>
 
             <PrimaryButton
               title="Try Again"
@@ -877,25 +903,44 @@ export default function SocialScreen() {
             />
           </View>
         ) : isConnectionsRestricted ? (
-          <View style={styles.emptyState}>
+          <View
+            style={[
+              styles.emptyState,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}>
             <Ionicons
               name="lock-closed-outline"
               size={34}
-              color="#999999"
+              color={colors.tertiaryText}
             />
 
-            <Text style={styles.emptyTitle}>
+            <AppText
+              variant="emptyStateTitle"
+              style={styles.emptyTitle}>
               Connections are private
-            </Text>
+            </AppText>
 
-            <Text style={styles.emptyText}>
+            <AppText
+              variant="body"
+              tone="tertiary"
+              style={styles.emptyText}>
               Follow {socialOwnerDisplayName} and wait
               for their approval to view their followers
               and following.
-            </Text>
+            </AppText>
           </View>
         ) : filteredUsers.length === 0 ? (
-          <View style={styles.emptyState}>
+          <View
+            style={[
+              styles.emptyState,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}>
             <Ionicons
               name={
                 searchQuery.trim()
@@ -905,16 +950,21 @@ export default function SocialScreen() {
                     : 'person-add-outline'
               }
               size={34}
-              color="#999999"
+              color={colors.tertiaryText}
             />
 
-            <Text style={styles.emptyTitle}>
+            <AppText
+              variant="emptyStateTitle"
+              style={styles.emptyTitle}>
               {getEmptyTitle()}
-            </Text>
+            </AppText>
 
-            <Text style={styles.emptyText}>
+            <AppText
+              variant="body"
+              tone="tertiary"
+              style={styles.emptyText}>
               {getEmptyText()}
-            </Text>
+            </AppText>
           </View>
         ) : (
           <View style={styles.userList}>
@@ -942,7 +992,13 @@ export default function SocialScreen() {
               return (
                 <View
                   key={user.id}
-                  style={styles.userRow}>
+                  style={[
+                    styles.userRow,
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                    },
+                  ]}>
                   <Pressable
                     style={({ pressed }) => [
                       styles.profileAction,
@@ -961,17 +1017,19 @@ export default function SocialScreen() {
                     />
 
                     <View style={styles.userDetails}>
-                      <Text
-                        style={styles.displayName}
+                      <AppText
+                        variant="headline"
                         numberOfLines={1}>
                         {user.displayName}
-                      </Text>
+                      </AppText>
 
-                      <Text
+                      <AppText
+                        variant="subtitle"
+                        tone="tertiary"
                         style={styles.username}
                         numberOfLines={1}>
                         @{user.username}
-                      </Text>
+                      </AppText>
 
                       {tasteMatch ? (
                         <TasteMatchBadge
@@ -992,6 +1050,10 @@ export default function SocialScreen() {
                     <Pressable
                       style={({ pressed }) => [
                         styles.followingButton,
+                        {
+                          backgroundColor: colors.surface,
+                          borderColor: colors.border,
+                        },
                         pressed && styles.pressed,
                       ]}
                       onPress={() =>
@@ -999,12 +1061,12 @@ export default function SocialScreen() {
                       }
                       accessibilityRole="button"
                       accessibilityLabel={`Unfollow ${user.displayName}`}>
-                      <Text
-                        style={
-                          styles.followingButtonText
-                        }>
+                      <AppText
+                        variant="label"
+                        tone="primary"
+                        emphasis="strong">
                         Following
-                      </Text>
+                      </AppText>
                     </Pressable>
                   ) : user.id === profile.id ? null :
                   isOwnSocialProfile ? (
@@ -1012,8 +1074,16 @@ export default function SocialScreen() {
                       <Pressable
                         style={({ pressed }) => [
                           styles.followerActionButton,
-                          !usesSecondaryActionStyle &&
-                            styles.followButton,
+                          {
+                            backgroundColor:
+                              usesSecondaryActionStyle
+                                ? colors.surface
+                                : colors.primary,
+                            borderColor:
+                              usesSecondaryActionStyle
+                                ? colors.border
+                                : colors.primary,
+                          },
                           pressed && styles.pressed,
                         ]}
                         onPress={() =>
@@ -1034,15 +1104,17 @@ export default function SocialScreen() {
                                 ? `Request to follow ${user.displayName}`
                                 : `Follow ${user.displayName}`
                         }>
-                        <Text
-                          style={[
-                            styles.followerActionText,
-                            !usesSecondaryActionStyle &&
-                              styles.followButtonText,
-                          ]}
+                        <AppText
+                          variant="label"
+                          tone={
+                            usesSecondaryActionStyle
+                              ? 'primary'
+                              : 'onPrimary'
+                          }
+                          emphasis="strong"
                           numberOfLines={1}>
                           {followerActionLabel}
-                        </Text>
+                        </AppText>
                       </Pressable>
 
                       <Pressable
@@ -1059,7 +1131,7 @@ export default function SocialScreen() {
                         <Ionicons
                           name="close-outline"
                           size={20}
-                          color="#777777"
+                          color={colors.tertiaryText}
                         />
                       </Pressable>
                     </View>
@@ -1067,8 +1139,16 @@ export default function SocialScreen() {
                     <Pressable
                       style={({ pressed }) => [
                         styles.followerActionButton,
-                        !usesSecondaryActionStyle &&
-                          styles.followButton,
+                        {
+                          backgroundColor:
+                            usesSecondaryActionStyle
+                              ? colors.surface
+                              : colors.primary,
+                          borderColor:
+                            usesSecondaryActionStyle
+                              ? colors.border
+                              : colors.primary,
+                        },
                         pressed && styles.pressed,
                       ]}
                       onPress={() =>
@@ -1089,15 +1169,17 @@ export default function SocialScreen() {
                               ? `Request to follow ${user.displayName}`
                               : `Follow ${user.displayName}`
                       }>
-                      <Text
-                        style={[
-                          styles.followerActionText,
-                          !usesSecondaryActionStyle &&
-                            styles.followButtonText,
-                        ]}
+                      <AppText
+                        variant="label"
+                        tone={
+                          usesSecondaryActionStyle
+                            ? 'primary'
+                            : 'onPrimary'
+                        }
+                        emphasis="strong"
                         numberOfLines={1}>
                         {followerActionLabel}
-                      </Text>
+                      </AppText>
                     </Pressable>
                   )}
                 </View>
@@ -1147,14 +1229,12 @@ export default function SocialScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
   },
 
   segmentedContainer: {
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 4,
-    backgroundColor: '#FAFAFA',
   },
 
   content: {
@@ -1174,33 +1254,21 @@ const styles = StyleSheet.create({
     paddingTop: 60,
   },
 
-  stateText: {
-    ...TYPOGRAPHY.bodyLarge,
-    color: '#777777',
-  },
-
   emptyState: {
     alignItems: 'center',
     paddingVertical: 40,
     paddingHorizontal: 24,
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#EAEAEA',
     borderRadius: 18,
   },
 
   emptyTitle: {
     marginTop: 12,
-    fontSize: 19,
-    fontWeight: '700',
-    color: '#222222',
     textAlign: 'center',
   },
 
   emptyText: {
-    ...TYPOGRAPHY.body,
     marginTop: 8,
-    color: '#777777',
     textAlign: 'center',
   },
 
@@ -1219,9 +1287,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 14,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#EAEAEA',
     borderRadius: 18,
   },
 
@@ -1239,14 +1305,8 @@ const styles = StyleSheet.create({
     marginLeft: 13,
   },
 
-  displayName: {
-    ...TYPOGRAPHY.headline,
-  },
-
   username: {
-    ...TYPOGRAPHY.subtitle,
     marginTop: 3,
-    color: '#777777',
   },
 
   followingButton: {
@@ -1256,16 +1316,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#CCCCCC',
-    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-
-  followingButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#222222',
   },
 
   followerActions: {
@@ -1291,25 +1343,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#CCCCCC',
-    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-
-  followerActionText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#222222',
-  },
-
-  followButton: {
-    borderColor: '#222222',
-    backgroundColor: '#222222',
-  },
-
-  followButtonText: {
-    color: '#FFFFFF',
   },
 
   pressed: {

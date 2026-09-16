@@ -1,8 +1,8 @@
-import { TYPOGRAPHY } from '@/constants/typography';
+import AppText from '@/components/app-text';
+import { useAppColors } from '@/hooks/use-app-colors';
 import {
   Pressable,
   StyleSheet,
-  Text,
 } from 'react-native';
 
 type ChipProps = {
@@ -18,6 +18,8 @@ export default function Chip({
   selected = false,
   onPress,
 }: ChipProps) {
+  const colors = useAppColors();
+
   return (
     <Pressable
       onPress={onPress}
@@ -27,17 +29,26 @@ export default function Chip({
       }}
       style={({ pressed }) => [
         styles.chip,
-        selected && styles.selectedChip,
+        {
+          backgroundColor: selected
+            ? colors.primary
+            : colors.surface,
+          borderColor: selected
+            ? colors.primary
+            : colors.border,
+        },
         pressed && styles.pressedChip,
       ]}>
-      <Text
-        style={[
-          styles.label,
-          selected && styles.selectedLabel,
-        ]}>
+      <AppText
+        variant="bodyLarge"
+        tone={
+          selected
+            ? 'onPrimary'
+            : 'primary'
+        }>
         {icon ? `${icon} ` : ''}
         {label}
-      </Text>
+      </AppText>
     </Pressable>
   );
 }
@@ -48,27 +59,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 16,
     paddingVertical: 11,
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#D8D8D8',
     borderRadius: 14,
-  },
-
-  selectedChip: {
-    backgroundColor: '#222222',
-    borderColor: '#222222',
   },
 
   pressedChip: {
     opacity: 0.68,
-  },
-
-  label: {
-    ...TYPOGRAPHY.bodyLarge,
-    color: '#222222',
-  },
-
-  selectedLabel: {
-    color: '#FFFFFF',
   },
 });

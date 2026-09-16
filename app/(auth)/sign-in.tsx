@@ -1,11 +1,11 @@
 import ActionSheet from '@/components/action-sheet';
+import AppText from '@/components/app-text';
 import EmailAuthButton from '@/components/email-auth-button';
 import GoogleAuthButton from '@/components/google-auth-button';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
-import { COLORS } from '@/constants/colors';
-import { TYPOGRAPHY } from '@/constants/typography';
 import { useOnboardingCollection } from '@/context/onboarding-collection-context';
+import { useAppColors } from '@/hooks/use-app-colors';
 import {
   signInWithApple,
   signInWithGoogle,
@@ -20,7 +20,7 @@ import {
   Image,
   Pressable,
   StyleSheet,
-  Text,
+  useColorScheme,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -30,6 +30,9 @@ type SignInProvider = 'Apple' | 'Google';
 const SPLASH_ICON_SIZE = 200;
 
 export default function SignInScreen() {
+  const colors = useAppColors();
+  const colorScheme = useColorScheme();
+
   const {
     source,
   } = useLocalSearchParams<{
@@ -50,6 +53,11 @@ export default function SignInScreen() {
 
   const isReturningFromOnboarding =
     source === 'onboarding-publish';
+
+  const splashBackgroundColor =
+    colorScheme === 'dark'
+      ? '#000000'
+      : '#FFFFFF';
 
   function prepareSignInIntent() {
     if (isReturningFromOnboarding) {
@@ -157,7 +165,14 @@ export default function SignInScreen() {
 
   if (isSigningIn) {
     return (
-      <View style={styles.splashBridge}>
+      <View
+        style={[
+          styles.splashBridge,
+          {
+            backgroundColor:
+              splashBackgroundColor,
+          },
+        ]}>
         <Image
           source={require('@/assets/images/splash-icon.png')}
           style={styles.splashIcon}
@@ -171,7 +186,12 @@ export default function SignInScreen() {
   return (
     <>
       <SafeAreaView
-        style={styles.container}
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}
         edges={['top', 'bottom']}>
         <ScreenHeader />
 
@@ -202,13 +222,33 @@ export default function SignInScreen() {
             />
 
             <View style={styles.divider}>
-              <View style={styles.dividerLine} />
+              <View
+                style={[
+                  styles.dividerLine,
+                  {
+                    backgroundColor:
+                      colors.border,
+                  },
+                ]}
+              />
 
-              <Text style={styles.dividerText}>
+              <AppText
+                variant="micro"
+                tone="tertiary"
+                emphasis="semibold"
+                style={styles.dividerText}>
                 OR
-              </Text>
+              </AppText>
 
-              <View style={styles.dividerLine} />
+              <View
+                style={[
+                  styles.dividerLine,
+                  {
+                    backgroundColor:
+                      colors.border,
+                  },
+                ]}
+              />
             </View>
 
             <EmailAuthButton
@@ -217,11 +257,13 @@ export default function SignInScreen() {
           </View>
 
           <View style={styles.signUpContainer}>
-            <Text style={styles.signUpPrompt}>
+            <AppText
+              variant="bodyLarge"
+              tone="tertiary">
               {isReturningFromOnboarding
                 ? "Don't have an account?"
                 : 'New to Top 3?'}
-            </Text>
+            </AppText>
 
             <Pressable
               accessibilityRole="button"
@@ -236,11 +278,11 @@ export default function SignInScreen() {
                 styles.signUpButton,
                 pressed && styles.pressed,
               ]}>
-              <Text style={styles.signUpButtonText}>
+              <AppText variant="action">
                 {isReturningFromOnboarding
                   ? 'Create one'
                   : 'Get Started'}
-              </Text>
+              </AppText>
             </Pressable>
           </View>
         </View>
@@ -273,7 +315,6 @@ export default function SignInScreen() {
 const styles = StyleSheet.create({
   splashBridge: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -285,7 +326,6 @@ const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
 
   content: {
@@ -313,15 +353,11 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: COLORS.border,
   },
 
   dividerText: {
     marginHorizontal: 14,
-    fontSize: 12,
     lineHeight: 16,
-    fontWeight: '600',
-    color: COLORS.tertiaryText,
   },
 
   signUpContainer: {
@@ -331,17 +367,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  signUpPrompt: {
-    ...TYPOGRAPHY.bodyLarge,
-    color: COLORS.tertiaryText,
-  },
-
   signUpButton: {
     marginLeft: 5,
-  },
-
-  signUpButtonText: {
-    ...TYPOGRAPHY.action,
   },
 
   pressed: {

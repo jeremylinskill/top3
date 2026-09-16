@@ -1,9 +1,9 @@
+import AppText from '@/components/app-text';
 import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
-import { COLORS } from '@/constants/colors';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
-import { TYPOGRAPHY } from '@/constants/typography';
 import { useTop3 } from '@/context/top3-context';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { getPublishedPosts } from '@/services/post-service';
 import { Post } from '@/types/post';
 import { Ionicons } from '@expo/vector-icons';
@@ -43,6 +43,7 @@ function formatTopicLabel(topic: string) {
 }
 
 export default function OverallTop3TopicsScreen() {
+  const colors = useAppColors();
   const params = useLocalSearchParams<{
     category?: string | string[];
   }>();
@@ -203,18 +204,27 @@ export default function OverallTop3TopicsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
         <ScreenHeader showBackButton />
 
         <View style={styles.loadingState}>
           <ActivityIndicator
             size="small"
-            color="#222222"
+            color={colors.text}
           />
 
-          <Text style={styles.loadingText}>
+          <AppText
+            variant="bodyLarge"
+            tone="tertiary"
+            style={styles.loadingText}>
             Loading topics…
-          </Text>
+          </AppText>
         </View>
       </SafeAreaView>
     );
@@ -222,17 +232,28 @@ export default function OverallTop3TopicsScreen() {
 
   if (hasLoadError) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
         <ScreenHeader showBackButton />
 
         <View style={styles.messageState}>
-          <Text style={styles.messageTitle}>
+          <AppText
+            variant="stateTitle"
+            style={styles.messageTitle}>
             Couldn’t load topics
-          </Text>
+          </AppText>
 
-          <Text style={styles.messageText}>
+          <AppText
+            variant="bodyLarge"
+            tone="tertiary"
+            style={styles.messageText}>
             Check your connection and try again.
-          </Text>
+          </AppText>
 
           <PrimaryButton
             title="Try Again"
@@ -250,18 +271,29 @@ export default function OverallTop3TopicsScreen() {
 
   if (!categoryId || !category) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
         <ScreenHeader showBackButton />
 
         <View style={styles.messageState}>
-          <Text style={styles.messageTitle}>
+          <AppText
+            variant="stateTitle"
+            style={styles.messageTitle}>
             Category unavailable
-          </Text>
+          </AppText>
 
-          <Text style={styles.messageText}>
+          <AppText
+            variant="bodyLarge"
+            tone="tertiary"
+            style={styles.messageText}>
             This Overall Top 3 category could not
             be found.
-          </Text>
+          </AppText>
         </View>
       </SafeAreaView>
     );
@@ -269,7 +301,12 @@ export default function OverallTop3TopicsScreen() {
 
   return (
     <SafeAreaView
-      style={styles.container}
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+        },
+      ]}
       edges={['top', 'left', 'right']}>
       <ScreenHeader showBackButton />
 
@@ -282,14 +319,19 @@ export default function OverallTop3TopicsScreen() {
           </Text>
 
           <View style={styles.headingDetails}>
-            <Text style={styles.title}>
+            <AppText
+              variant="rankingTitle"
+              style={styles.title}>
               Overall Top 3 {category.name}
-            </Text>
+            </AppText>
 
-            <Text style={styles.subtitle}>
+            <AppText
+              variant="bodyLarge"
+              tone="tertiary"
+              style={styles.subtitle}>
               Browse the overall ranking or choose
               a topic.
-            </Text>
+            </AppText>
           </View>
         </View>
 
@@ -297,6 +339,10 @@ export default function OverallTop3TopicsScreen() {
           <Pressable
             style={({ pressed }) => [
               styles.topicCard,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
               pressed && styles.pressed,
             ]}
             onPress={() =>
@@ -304,41 +350,63 @@ export default function OverallTop3TopicsScreen() {
             }
             accessibilityRole="button"
             accessibilityLabel={`Open overall Top 3 ${category.name}`}>
-            <View style={styles.topicIcon}>
+            <View
+              style={[
+                styles.topicIcon,
+                {
+                  backgroundColor:
+                    colors.secondarySurface,
+                },
+              ]}>
               <Ionicons
                 name="trophy-outline"
                 size={22}
-                color="#222222"
+                color={colors.text}
               />
             </View>
 
             <View style={styles.topicDetails}>
-              <Text style={styles.topicTitle}>
+              <AppText
+                variant="selectionTitle">
                 Overall
-              </Text>
+              </AppText>
 
-              <Text
+              <AppText
+                variant="label"
+                tone="tertiary"
+                emphasis="regular"
                 style={styles.topicDescription}>
                 The combined Top 3 across all
                 published {category.name.toLowerCase()}{' '}
                 lists.
-              </Text>
+              </AppText>
             </View>
 
-            <Text style={styles.arrow}>›</Text>
+            <Ionicons
+              name="chevron-forward"
+              size={21}
+              color={colors.tertiaryText}
+              style={styles.arrow}
+            />
           </Pressable>
 
           {topics.length > 0 ? (
             <>
-              <Text style={styles.sectionTitle}>
+              <AppText
+                variant="sectionTitle"
+                style={styles.sectionTitle}>
                 Topics
-              </Text>
+              </AppText>
 
               {topics.map((topic) => (
                 <Pressable
                   key={topic.id}
                   style={({ pressed }) => [
                     styles.topicCard,
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                    },
                     pressed && styles.pressed,
                   ]}
                   onPress={() =>
@@ -346,47 +414,72 @@ export default function OverallTop3TopicsScreen() {
                   }
                   accessibilityRole="button"
                   accessibilityLabel={`Open overall Top 3 ${topic.label}`}>
-                  <View style={styles.topicIcon}>
+                  <View
+                    style={[
+                      styles.topicIcon,
+                      {
+                        backgroundColor:
+                          colors.secondarySurface,
+                      },
+                    ]}>
                     <Ionicons
                       name="albums-outline"
                       size={22}
-                      color="#222222"
+                      color={colors.text}
                     />
                   </View>
 
                   <View
                     style={styles.topicDetails}>
-                    <Text
-                      style={styles.topicTitle}>
+                    <AppText
+                      variant="selectionTitle">
                       {topic.label}
-                    </Text>
+                    </AppText>
 
-                    <Text
-                      style={
-                        styles.topicDescription
-                      }>
+                    <AppText
+                      variant="label"
+                      tone="tertiary"
+                      emphasis="regular"
+                      style={styles.topicDescription}>
                       Based on {topic.listCount}{' '}
                       {topic.listCount === 1
                         ? 'published list'
                         : 'published lists'}
-                    </Text>
+                    </AppText>
                   </View>
 
-                  <Text style={styles.arrow}>›</Text>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={21}
+                    color={colors.tertiaryText}
+                    style={styles.arrow}
+                  />
                 </Pressable>
               ))}
             </>
           ) : (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle}>
+            <View
+              style={[
+                styles.emptyState,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                },
+              ]}>
+              <AppText
+                variant="emptyStateTitle"
+                style={styles.emptyTitle}>
                 No topics yet
-              </Text>
+              </AppText>
 
-              <Text style={styles.emptyText}>
+              <AppText
+                variant="body"
+                tone="tertiary"
+                style={styles.emptyText}>
                 Topic rankings will appear here as
                 people publish more specific Top 3
                 lists.
-              </Text>
+              </AppText>
             </View>
           )}
         </View>
@@ -398,7 +491,6 @@ export default function OverallTop3TopicsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
   },
 
   content: {
@@ -423,17 +515,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  title: {
-    fontSize: 30,
-    lineHeight: 36,
-    fontWeight: '700',
-    color: '#222222',
-  },
+  title: {},
 
   subtitle: {
-    ...TYPOGRAPHY.bodyLarge,
     marginTop: 7,
-    color: COLORS.tertiaryText,
   },
 
   topicList: {
@@ -441,7 +526,6 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    ...TYPOGRAPHY.sectionTitle,
     marginTop: 8,
     marginBottom: -2,
   },
@@ -450,9 +534,7 @@ const styles = StyleSheet.create({
     minHeight: 88,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#EAEAEA',
     borderRadius: 18,
     paddingHorizontal: 16,
     paddingVertical: 15,
@@ -462,7 +544,6 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 15,
-    backgroundColor: '#F2F2F2',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -472,23 +553,12 @@ const styles = StyleSheet.create({
     marginLeft: 14,
   },
 
-  topicTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#222222',
-  },
-
   topicDescription: {
-    ...TYPOGRAPHY.label,
     marginTop: 4,
-    fontWeight: '400',
-    color: COLORS.tertiaryText,
   },
 
   arrow: {
     marginLeft: 10,
-    fontSize: 30,
-    color: '#999999',
   },
 
   emptyState: {
@@ -496,22 +566,14 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingVertical: 34,
     paddingHorizontal: 24,
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#EAEAEA',
     borderRadius: 18,
   },
 
-  emptyTitle: {
-    fontSize: 19,
-    fontWeight: '700',
-    color: '#222222',
-  },
+  emptyTitle: {},
 
   emptyText: {
-    ...TYPOGRAPHY.body,
     marginTop: 8,
-    color: COLORS.tertiaryText,
     textAlign: 'center',
   },
 
@@ -527,9 +589,7 @@ const styles = StyleSheet.create({
   },
 
   loadingText: {
-    ...TYPOGRAPHY.bodyLarge,
     marginTop: 10,
-    color: COLORS.tertiaryText,
   },
 
   messageState: {
@@ -540,16 +600,11 @@ const styles = StyleSheet.create({
   },
 
   messageTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#222222',
     textAlign: 'center',
   },
 
   messageText: {
-    ...TYPOGRAPHY.bodyLarge,
     marginTop: 8,
-    color: COLORS.tertiaryText,
     textAlign: 'center',
   },
 

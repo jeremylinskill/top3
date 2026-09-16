@@ -1,6 +1,7 @@
 import ActionSheet, {
   ActionSheetAction,
 } from '@/components/action-sheet';
+import AppText from '@/components/app-text';
 import CommentsSheet from '@/components/comments-sheet';
 import { MediaPreviewItemButton } from '@/components/media-preview-button';
 import PrimaryButton from '@/components/primary-button';
@@ -11,12 +12,12 @@ import {
   getCategoryArtworkRule,
 } from '@/constants/category-artwork-rules';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
-import { TYPOGRAPHY } from '@/constants/typography';
 import { useBlock } from '@/context/block-context';
 import { useComments } from '@/context/comment-context';
 import { useLike } from '@/context/like-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
+import { useAppColors } from '@/hooks/use-app-colors';
 import {
   shareOverallCollection,
   sharePublishedCollection,
@@ -132,6 +133,7 @@ function formatTopicLabel(topic: string) {
 }
 
 export default function CategoryFeedScreen() {
+  const colors = useAppColors();
   const params = useLocalSearchParams<{
     category?: string | string[];
     topic?: string | string[];
@@ -1224,18 +1226,27 @@ if (isMounted) {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
         <ScreenHeader showBackButton />
 
         <View style={styles.loadingState}>
           <ActivityIndicator
             size="small"
-            color="#222222"
+            color={colors.text}
           />
 
-          <Text style={styles.loadingText}>
+          <AppText
+            variant="bodyLarge"
+            tone="tertiary"
+            style={styles.loadingText}>
             Loading published Top 3s…
-          </Text>
+          </AppText>
         </View>
       </SafeAreaView>
     );
@@ -1243,17 +1254,28 @@ if (isMounted) {
 
   if (hasLoadError) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
         <ScreenHeader showBackButton />
 
         <View style={styles.messageState}>
-          <Text style={styles.messageTitle}>
+          <AppText
+            variant="stateTitle"
+            style={styles.messageTitle}>
             Couldn’t load this feed
-          </Text>
+          </AppText>
 
-          <Text style={styles.messageText}>
+          <AppText
+            variant="bodyLarge"
+            tone="tertiary"
+            style={styles.messageText}>
             Check your connection and try again.
-          </Text>
+          </AppText>
 
           <PrimaryButton
             title="Try Again"
@@ -1269,17 +1291,28 @@ if (isMounted) {
 
   if (!categoryId || !category) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
         <ScreenHeader showBackButton />
 
         <View style={styles.messageState}>
-          <Text style={styles.messageTitle}>
+          <AppText
+            variant="stateTitle"
+            style={styles.messageTitle}>
             Category unavailable
-          </Text>
+          </AppText>
 
-          <Text style={styles.messageText}>
+          <AppText
+            variant="bodyLarge"
+            tone="tertiary"
+            style={styles.messageText}>
             This category could not be found.
-          </Text>
+          </AppText>
         </View>
       </SafeAreaView>
     );
@@ -1305,11 +1338,22 @@ if (isMounted) {
 
   return (
     <SafeAreaView
-      style={styles.container}
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+        },
+      ]}
       edges={['top', 'left', 'right']}>
       <ScreenHeader showBackButton />
 
-      <View style={styles.segmentedContainer}>
+      <View
+        style={[
+          styles.segmentedContainer,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
         <SegmentedControl<CategoryView>
           value={activeView}
           options={[
@@ -1334,36 +1378,59 @@ if (isMounted) {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}>
         {normalizedItemQuery ? (
-          <View style={styles.filterNotice}>
+          <View
+            style={[
+              styles.filterNotice,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}>
             <Ionicons
               name="search-outline"
               size={16}
-              color="#777777"
+              color={colors.tertiaryText}
             />
 
-            <Text style={styles.filterNoticeText}>
+            <AppText
+              variant="label"
+              tone="tertiary"
+              emphasis="regular"
+              style={styles.filterNoticeText}>
               Showing lists containing “
               {itemQueryParam?.trim()}”
-            </Text>
+            </AppText>
           </View>
         ) : null}
 
         {activeView === 'lists' ? (
           filteredPosts.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle}>
+            <View
+              style={[
+                styles.emptyState,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                },
+              ]}>
+              <AppText
+                variant="sectionTitle"
+                style={styles.emptyTitle}>
                 {normalizedItemQuery
                   ? 'No matching Top 3s'
                   : 'Nothing published yet'}
-              </Text>
+              </AppText>
 
-              <Text style={styles.emptyText}>
+              <AppText
+                variant="body"
+                tone="tertiary"
+                style={styles.emptyText}>
                 {normalizedItemQuery
                   ? `No published lists here contain “${
                       itemQueryParam?.trim() ?? ''
                     }”.`
                   : 'Published Top 3 lists in this category and topic will appear here.'}
-              </Text>
+              </AppText>
             </View>
           ) : (
             <View style={styles.postList}>
@@ -1419,18 +1486,37 @@ if (isMounted) {
           )
         ) : !overallResult ||
           overallResult.items.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>
+          <View
+            style={[
+              styles.emptyState,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}>
+            <AppText
+              variant="sectionTitle"
+              style={styles.emptyTitle}>
               Not enough rankings yet
-            </Text>
+            </AppText>
 
-            <Text style={styles.emptyText}>
+            <AppText
+              variant="body"
+              tone="tertiary"
+              style={styles.emptyText}>
               Publish matching Top 3 lists to
               build the overall ranking.
-            </Text>
+            </AppText>
           </View>
         ) : (
-          <View style={styles.overallCard}>
+          <View
+            style={[
+              styles.overallCard,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}>
             <View style={styles.overallTitleRow}>
               <Text
                 style={
@@ -1439,10 +1525,11 @@ if (isMounted) {
                 {category.icon}
               </Text>
 
-              <Text
+              <AppText
+                variant="collectionTitle"
                 style={styles.overallCardTitle}>
                 {overallTitle}
-              </Text>
+              </AppText>
             </View>
 
             <View style={styles.rankingContent}>
@@ -1452,14 +1539,19 @@ if (isMounted) {
                     key={entry.item.id}
                     style={[
                       styles.rankRow,
+                      {
+                        backgroundColor:
+                          colors.secondarySurface,
+                      },
                       index <
                         overallResult.items.length - 1 &&
                         styles.rankDivider,
                     ]}>
-                    <Text
+                    <AppText
+                      variant="compactRankNumber"
                       style={styles.rankNumber}>
                       {index + 1}
-                    </Text>
+                    </AppText>
 
                     <View
                       style={[
@@ -1479,6 +1571,8 @@ if (isMounted) {
                             {
                               width: artworkRule.width,
                               height: artworkRule.height,
+                              backgroundColor:
+                                colors.skeletonSubtle,
                             },
                           ]}
                           resizeMode="cover"
@@ -1490,58 +1584,64 @@ if (isMounted) {
                             {
                               width: artworkRule.width,
                               height: artworkRule.height,
+                              backgroundColor:
+                                colors.secondarySurface,
                             },
                           ]}>
-                          <Text
-                            style={
-                              styles.placeholderText
-                            }>
+                          <AppText
+                            variant="artworkInitial"
+                            tone="tertiary">
                             {entry.item.title
                               .charAt(0)
                               .toUpperCase()}
-                          </Text>
+                          </AppText>
                         </View>
                       )}
                     </View>
 
                     <View
                       style={styles.itemDetails}>
-                      <Text
-                        style={styles.itemTitle}
+                      <AppText
+                        variant="cardTitle"
                         numberOfLines={2}
                         ellipsizeMode="tail">
                         {entry.item.title}
-                      </Text>
+                      </AppText>
 
                       {entry.item.subtitle ? (
-                        <Text
-                          style={
-                            styles.itemSubtitle
-                          }
+                        <AppText
+                          variant="subtitle"
+                          tone="secondary"
+                          style={styles.itemSubtitle}
                           numberOfLines={1}
                           ellipsizeMode="tail">
                           {entry.item.subtitle}
-                        </Text>
+                        </AppText>
                       ) : null}
 
                       {typeof entry.item.rating ===
                       'number' ? (
                         <View
                           style={styles.ratingRow}>
-                          <Text
+                          <AppText
+                            variant="metadata"
+                            tone="secondary"
+                            emphasis="semibold"
                             style={styles.ratingText}>
                             {entry.item.rating.toFixed(1)}
-                          </Text>
+                          </AppText>
 
                           <Ionicons
                             name="star"
                             size={13}
-                            color="#555555"
+                            color={colors.secondaryText}
                           />
                         </View>
                       ) : null}
 
-                      <Text
+                      <AppText
+                        variant="metadata"
+                        tone="tertiary"
                         style={styles.scoreText}
                         numberOfLines={1}>
                         {entry.score}{' '}
@@ -1552,13 +1652,18 @@ if (isMounted) {
                         {entry.appearanceCount === 1
                           ? 'list'
                           : 'lists'}
-                      </Text>
+                      </AppText>
                     </View>
 
                     <MediaPreviewItemButton
                       item={entry.item}
                       category={category.id}
-                      style={styles.previewButton}
+                      style={[
+                        styles.previewButton,
+                        {
+                          backgroundColor: colors.surface,
+                        },
+                      ]}
                       checkTrailerAvailability={false}
                     />
                   </View>
@@ -1566,21 +1671,30 @@ if (isMounted) {
               )}
             </View>
 
-            <View style={styles.overallFooter}>
+            <View
+              style={[
+                styles.overallFooter,
+                {
+                  borderTopColor: colors.border,
+                },
+              ]}>
               <View style={styles.sourceItem}>
                 <Ionicons
                   name="people-outline"
                   size={16}
-                  color="#777777"
+                  color={colors.tertiaryText}
                 />
 
-                <Text style={styles.footerText}>
+                <AppText
+                  variant="metadata"
+                  tone="tertiary"
+                  style={styles.footerText}>
                   Based on{' '}
                   {overallResult.totalLists}{' '}
                   {overallResult.totalLists === 1
                     ? 'published list'
                     : 'published lists'}
-                </Text>
+                </AppText>
               </View>
 
               <View style={styles.engagement}>
@@ -1619,22 +1733,28 @@ if (isMounted) {
                     size={17}
                     color={
                       communityIsLiked
-                        ? '#FF3B30'
-                        : '#777777'
+                        ? colors.heart
+                        : colors.tertiaryText
                     }
                   />
 
-                  <Text
-                    style={[
-                      styles.engagementText,
-                      communityIsLiked &&
-                        styles
-                          .activeEngagementText,
-                    ]}>
+                  <AppText
+                    variant="metadata"
+                    tone={
+                      communityIsLiked
+                        ? 'primary'
+                        : 'tertiary'
+                    }
+                    emphasis={
+                      communityIsLiked
+                        ? 'semibold'
+                        : 'default'
+                    }
+                    style={styles.engagementText}>
                     {
                       displayedCommunityLikeCount
                     }
-                  </Text>
+                  </AppText>
                 </Pressable>
 
                 <Pressable
@@ -1668,22 +1788,28 @@ if (isMounted) {
                     size={15}
                     color={
                       communityHasComments
-                        ? '#222222'
-                        : '#777777'
+                        ? colors.text
+                        : colors.tertiaryText
                     }
                   />
 
-                  <Text
-                    style={[
-                      styles.engagementText,
-                      communityHasComments &&
-                        styles
-                          .activeEngagementText,
-                    ]}>
+                  <AppText
+                    variant="metadata"
+                    tone={
+                      communityHasComments
+                        ? 'primary'
+                        : 'tertiary'
+                    }
+                    emphasis={
+                      communityHasComments
+                        ? 'semibold'
+                        : 'default'
+                    }
+                    style={styles.engagementText}>
                     {
                       displayedCommunityCommentCount
                     }
-                  </Text>
+                  </AppText>
                 </Pressable>
 
                 <Pressable
@@ -1700,7 +1826,7 @@ if (isMounted) {
                   <Ionicons
                     name="share-outline"
                     size={17}
-                    color="#777777"
+                    color={colors.tertiaryText}
                   />
                 </Pressable>
               </View>
@@ -1732,14 +1858,12 @@ if (isMounted) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
   },
 
   segmentedContainer: {
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 4,
-    backgroundColor: '#FAFAFA',
   },
 
 
@@ -1755,18 +1879,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#EAEAEA',
     borderRadius: 14,
   },
 
   filterNoticeText: {
     flex: 1,
     marginLeft: 8,
-    fontSize: 14,
-    lineHeight: 20,
-    color: '#777777',
   },
 
   postList: {
@@ -1774,9 +1893,7 @@ const styles = StyleSheet.create({
   },
 
   overallCard: {
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#EAEAEA',
     borderRadius: 18,
     overflow: 'hidden',
   },
@@ -1796,10 +1913,6 @@ const styles = StyleSheet.create({
 
   overallCardTitle: {
     flex: 1,
-    fontSize: 24,
-    lineHeight: 30,
-    fontWeight: '700',
-    color: '#222222',
   },
 
   rankingContent: {
@@ -1813,7 +1926,6 @@ const styles = StyleSheet.create({
     marginHorizontal: -10,
     paddingHorizontal: 10,
     paddingVertical: 15,
-    backgroundColor: '#F8F8F8',
     borderRadius: 12,
   },
 
@@ -1823,9 +1935,6 @@ const styles = StyleSheet.create({
 
   rankNumber: {
     width: 28,
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#222222',
   },
 
   artworkContainer: {
@@ -1835,12 +1944,10 @@ const styles = StyleSheet.create({
 
   itemImage: {
     borderRadius: 9,
-    backgroundColor: '#EEEEEE',
   },
 
   imagePlaceholder: {
     borderRadius: 9,
-    backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1853,13 +1960,6 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-  },
-
-  placeholderText: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: '#888888',
   },
 
   itemDetails: {
@@ -1867,12 +1967,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
 
-  itemTitle: {
-    ...TYPOGRAPHY.cardTitle,
-  },
-
   itemSubtitle: {
-    ...TYPOGRAPHY.subtitle,
     marginTop: 4,
   },
 
@@ -1884,15 +1979,10 @@ const styles = StyleSheet.create({
 
   ratingText: {
     marginRight: 4,
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#555555',
   },
 
   scoreText: {
-    ...TYPOGRAPHY.metadata,
     marginTop: 4,
-    color: '#999999',
   },
 
   overallFooter: {
@@ -1904,7 +1994,6 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     borderTopWidth:
       StyleSheet.hairlineWidth,
-    borderTopColor: '#EAEAEA',
   },
 
   sourceItem: {
@@ -1918,8 +2007,6 @@ const styles = StyleSheet.create({
   footerText: {
     flexShrink: 1,
     marginLeft: 6,
-    fontSize: 13,
-    color: '#777777',
   },
 
   engagement: {
@@ -1938,35 +2025,20 @@ const styles = StyleSheet.create({
 
   engagementText: {
     marginLeft: 5,
-    fontSize: 13,
-    color: '#777777',
-  },
-
-  activeEngagementText: {
-    color: '#222222',
-    fontWeight: '600',
   },
 
   emptyState: {
     alignItems: 'center',
     paddingVertical: 40,
     paddingHorizontal: 24,
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#EAEAEA',
     borderRadius: 18,
   },
 
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#222222',
-  },
+  emptyTitle: {},
 
   emptyText: {
-    ...TYPOGRAPHY.body,
     marginTop: 8,
-    color: '#777777',
     textAlign: 'center',
   },
 
@@ -1978,8 +2050,6 @@ const styles = StyleSheet.create({
 
   loadingText: {
     marginTop: 10,
-    fontSize: 16,
-    color: '#777777',
   },
 
   messageState: {
@@ -1990,16 +2060,11 @@ const styles = StyleSheet.create({
   },
 
   messageTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#222222',
     textAlign: 'center',
   },
 
   messageText: {
-    ...TYPOGRAPHY.bodyLarge,
     marginTop: 8,
-    color: '#777777',
     textAlign: 'center',
   },
 

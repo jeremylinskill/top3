@@ -1,17 +1,17 @@
 import ActionSheet from '@/components/action-sheet';
+import AppText from '@/components/app-text';
 import PageHeader from '@/components/page-header';
 import PrimaryButton from '@/components/primary-button';
 import RankedItemCard from '@/components/ranked-item-card';
 import ScreenHeader from '@/components/screen-header';
-import { COLORS } from '@/constants/colors';
 import {
   CategoryId,
   TOP3_CATEGORIES,
 } from '@/constants/top3-categories';
-import { TYPOGRAPHY } from '@/constants/typography';
 import { useOnboardingCollection } from '@/context/onboarding-collection-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { useAuth } from '@/hooks/use-auth';
 import { Top3Item } from '@/types/top3-item';
 import { formatRelativeTime } from '@/utils/format-relative-time';
@@ -28,7 +28,6 @@ import {
   ActivityIndicator,
   Pressable,
   StyleSheet,
-  Text,
   View
 } from 'react-native';
 import DraggableFlatList, {
@@ -61,6 +60,8 @@ const DRAG_INSTRUCTION_KEY =
 
 
 export default function CollectionScreen() {
+  const colors = useAppColors();
+
   const {
     currentList,
     lists,
@@ -258,17 +259,27 @@ export default function CollectionScreen() {
     hasCollectionsLoadError
   ) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
         <ScreenHeader showBackButton />
 
         <View style={styles.loadErrorState}>
-          <Text style={styles.loadErrorTitle}>
+          <AppText
+            variant="sectionTitle"
+            style={styles.loadErrorTitle}>
             Couldn’t load this Top 3
-          </Text>
+          </AppText>
 
-          <Text style={styles.loadErrorText}>
+          <AppText
+            variant="body"
+            style={styles.loadErrorText}>
             Check your connection and try again.
-          </Text>
+          </AppText>
 
           <PrimaryButton
             title="Try Again"
@@ -286,11 +297,20 @@ export default function CollectionScreen() {
     !isCollectionsLoaded
   ) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
         <ScreenHeader showBackButton />
 
         <View style={styles.loadingState}>
-          <ActivityIndicator size="small" />
+          <ActivityIndicator
+            size="small"
+            color={colors.secondaryText}
+          />
         </View>
       </SafeAreaView>
     );
@@ -299,7 +319,13 @@ export default function CollectionScreen() {
 
   if (!activeCollection) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
         <ScreenHeader showBackButton />
 
 
@@ -701,15 +727,25 @@ function openSearch(rank: number) {
           <Pressable
             style={[
               styles.dragHandleContainer,
-              isActive &&
-                styles.dragHandleContainerActive,
+              {
+                backgroundColor: isActive
+                  ? colors.secondarySurface
+                  : colors.surface,
+              },
             ]}
             onLongPress={() =>
               beginDrag(index, drag)
             }
             delayLongPress={150}
             hitSlop={8}>
-            <View style={styles.dragDivider} />
+            <View
+              style={[
+                styles.dragDivider,
+                {
+                  backgroundColor: colors.border,
+                },
+              ]}
+            />
 
 
             <Ionicons
@@ -717,8 +753,8 @@ function openSearch(rank: number) {
               size={24}
               color={
                 isActive
-                  ? '#333333'
-                  : '#777777'
+                  ? colors.text
+                  : colors.secondaryText
               }
             />
           </Pressable>
@@ -790,7 +826,13 @@ function openSearch(rank: number) {
 
   return (
     <>
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
         <ScreenHeader showBackButton />
 
 
@@ -833,7 +875,14 @@ function openSearch(rank: number) {
       </View>
 
 
-      <View style={styles.bottomBar}>
+      <View
+        style={[
+          styles.bottomBar,
+          {
+            backgroundColor: colors.background,
+            borderTopColor: colors.border,
+          },
+        ]}>
         <PrimaryButton
           title={
             isPublishing
@@ -870,11 +919,14 @@ function openSearch(rank: number) {
               disabled:
                 isDeleting || isPublishing,
             }}>
-            <Text style={styles.deleteButtonText}>
+            <AppText
+              variant="bodyLarge"
+              tone="destructive"
+              emphasis="semibold">
               {isDeleting
                 ? 'Deleting…'
                 : 'Delete List'}
-            </Text>
+            </AppText>
           </Pressable>
         ) : null}
         </View>
@@ -895,7 +947,6 @@ function openSearch(rank: number) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
   },
 
 
@@ -907,16 +958,12 @@ const styles = StyleSheet.create({
   },
 
   loadErrorTitle: {
-    ...TYPOGRAPHY.sectionTitle,
     textAlign: 'center',
-    color: COLORS.text,
   },
 
   loadErrorText: {
-    ...TYPOGRAPHY.body,
     marginTop: 8,
     textAlign: 'center',
-    color: COLORS.secondaryText,
   },
 
   loadErrorButton: {
@@ -986,14 +1033,8 @@ const styles = StyleSheet.create({
     width: 64,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FCFCFC',
     borderTopRightRadius: 16,
     borderBottomRightRadius: 16,
-  },
-
-
-  dragHandleContainerActive: {
-    backgroundColor: '#F2F2F2',
   },
 
 
@@ -1003,7 +1044,6 @@ const styles = StyleSheet.create({
     top: 10,
     bottom: 10,
     width: StyleSheet.hairlineWidth,
-    backgroundColor: '#E5E5E5',
   },
 
 
@@ -1020,20 +1060,11 @@ const styles = StyleSheet.create({
   },
 
 
-  deleteButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FF3B30',
-  },
-
-
   bottomBar: {
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 8,
-    backgroundColor: '#FAFAFA',
     borderTopWidth:
       StyleSheet.hairlineWidth,
-    borderTopColor: '#DDDDDD',
   },
 });

@@ -1,4 +1,5 @@
 import { useNotifications } from '@/context/notification-context';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
@@ -6,6 +7,7 @@ import React from 'react';
 const TAB_ICON_SIZE = 29;
 
 export default function TabLayout() {
+  const colors = useAppColors();
   const { unreadCount } = useNotifications();
 
   const notificationBadge =
@@ -22,13 +24,13 @@ export default function TabLayout() {
         headerShown: false,
         tabBarShowLabel: false,
 
-        tabBarActiveTintColor: '#222222',
-        tabBarInactiveTintColor: '#8E8E93',
+        tabBarActiveTintColor: colors.text,
+        tabBarInactiveTintColor: colors.tertiaryText,
 
         tabBarStyle: {
-          backgroundColor: '#FAFAFA',
+          backgroundColor: colors.background,
           borderTopWidth: 1,
-          borderTopColor: '#EAEAEA',
+          borderTopColor: colors.border,
           elevation: 0,
           shadowOpacity: 0,
           shadowRadius: 0,
@@ -40,11 +42,11 @@ export default function TabLayout() {
         },
 
         tabBarItemStyle: {
-  flex: 1,
-  alignItems: 'center',
-  justifyContent: 'center',
-  paddingTop: 6,
-},
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingTop: 6,
+        },
       }}>
       <Tabs.Screen
         name="feed"

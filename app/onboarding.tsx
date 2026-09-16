@@ -1,8 +1,9 @@
+import AppText from '@/components/app-text';
 import PrimaryButton from '@/components/primary-button';
-import { COLORS } from '@/constants/colors';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
-import { TYPOGRAPHY } from '@/constants/typography';
+import { TEXT_STYLES } from '@/constants/typography';
 import { useOnboardingCollection } from '@/context/onboarding-collection-context';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { buildCollectionTitle } from '@/utils/build-collection-title';
 import { router } from 'expo-router';
 import {
@@ -18,6 +19,7 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  useColorScheme,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -67,6 +69,13 @@ const ONBOARDING_CATEGORIES =
 
 
 export default function OnboardingScreen() {
+  const colors = useAppColors();
+  const colorScheme = useColorScheme();
+  const splashBackgroundColor =
+    colorScheme === 'dark'
+      ? colors.black
+      : colors.white;
+
   const {
     startCollection,
     isLoading: isOnboardingCollectionLoading,
@@ -418,13 +427,24 @@ export default function OnboardingScreen() {
 
 
   return (
-    <View style={styles.root}>
-      <SafeAreaView
+    <View
       style={[
-        styles.container,
-        step !== 'category' &&
-          styles.introContainer,
-      ]}
+        styles.root,
+        {
+          backgroundColor:
+            splashBackgroundColor,
+        },
+      ]}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          {
+            backgroundColor:
+              step === 'category'
+                ? colors.background
+                : splashBackgroundColor,
+          },
+        ]}
       edges={[
         'top',
         'left',
@@ -437,7 +457,9 @@ export default function OnboardingScreen() {
         <Animated.Text
           style={[
             styles.brand,
+            TEXT_STYLES.welcomeBrand,
             {
+              color: colors.text,
               transform: [
                 {
                   translateY:
@@ -473,7 +495,9 @@ export default function OnboardingScreen() {
             <Animated.Text
               style={[
                 styles.headline,
+                TEXT_STYLES.pageTitle,
                 {
+                  color: colors.text,
                   opacity:
                     introTitleOpacity,
                 },
@@ -488,7 +512,9 @@ export default function OnboardingScreen() {
             <Animated.Text
               style={[
                 styles.supportingLine,
+                TEXT_STYLES.supportingText,
                 {
+                  color: colors.text,
                   opacity:
                     introFirstLineOpacity,
                 },
@@ -503,7 +529,9 @@ export default function OnboardingScreen() {
             <Animated.Text
               style={[
                 styles.supportingLine,
+                TEXT_STYLES.supportingText,
                 {
+                  color: colors.text,
                   opacity:
                     introSecondLineOpacity,
                 },
@@ -540,7 +568,9 @@ export default function OnboardingScreen() {
           <Animated.Text
             style={[
               styles.headline,
+              TEXT_STYLES.pageTitle,
               {
+                color: colors.text,
                 opacity:
                   categoryTitleOpacity,
               },
@@ -555,7 +585,9 @@ export default function OnboardingScreen() {
           <Animated.Text
             style={[
               styles.supportingLine,
+              TEXT_STYLES.supportingText,
               {
+                color: colors.text,
                 opacity:
                   categorySubtitleOpacity,
               },
@@ -592,6 +624,12 @@ export default function OnboardingScreen() {
                   <Pressable
                     style={({ pressed }) => [
                       styles.categoryCard,
+                      {
+                        backgroundColor:
+                          colors.surface,
+                        borderColor:
+                          colors.border,
+                      },
                       pressed &&
                         styles.categoryCardPressed,
                     ]}
@@ -615,12 +653,13 @@ export default function OnboardingScreen() {
                     </Text>
 
 
-                    <Text
-                      style={
-                        styles.categoryLabel
-                      }>
+                    <AppText
+                      variant="bodyLarge"
+                      tone="primary"
+                      emphasis="semibold"
+                      style={styles.categoryLabel}>
                       {category.name}
-                    </Text>
+                    </AppText>
                   </Pressable>
                 </Animated.View>
               )
@@ -633,14 +672,20 @@ export default function OnboardingScreen() {
       <View
         style={[
           styles.bottomArea,
-          step !== 'category' &&
-            styles.introBottomArea,
+          {
+            backgroundColor:
+              step === 'category'
+                ? colors.background
+                : splashBackgroundColor,
+          },
         ]}>
         <Animated.View
           pointerEvents="none"
           style={[
             styles.bottomRule,
             {
+              backgroundColor:
+                colors.border,
               opacity:
                 step === 'category'
                   ? 1
@@ -678,9 +723,11 @@ export default function OnboardingScreen() {
                   : introFooterOpacity,
             },
           ]}>
-          <Text style={styles.signInPrompt}>
+          <AppText
+            variant="bodyLarge"
+            tone="tertiary">
             Already have an account?
-          </Text>
+          </AppText>
 
 
           <Pressable
@@ -692,9 +739,12 @@ export default function OnboardingScreen() {
             accessibilityRole="button"
             accessibilityLabel="Sign in"
             hitSlop={8}>
-            <Text style={styles.signInButtonText}>
+            <AppText
+              variant="bodyLarge"
+              tone="accent"
+              emphasis="strong">
               Sign In
-            </Text>
+            </AppText>
           </Pressable>
         </Animated.View>
       </View>
@@ -703,7 +753,13 @@ export default function OnboardingScreen() {
       {step === 'intro' ? (
         <View
           pointerEvents="none"
-          style={styles.splashOverlay}>
+          style={[
+            styles.splashOverlay,
+            {
+              backgroundColor:
+                splashBackgroundColor,
+            },
+          ]}>
           <Animated.Image
             source={require('@/assets/images/splash-icon.png')}
             style={styles.splashIcon}
@@ -720,7 +776,6 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
 
 
@@ -734,12 +789,6 @@ const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
-  },
-
-
-  introContainer: {
-    backgroundColor: '#FFFFFF',
   },
 
 
@@ -763,10 +812,6 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 10,
     height: BRAND_HEIGHT,
-    fontSize: 38,
-    lineHeight: BRAND_HEIGHT,
-    fontWeight: '800',
-    color: '#222222',
     textAlign: 'center',
   },
 
@@ -781,7 +826,6 @@ const styles = StyleSheet.create({
 
 
   headline: {
-    ...TYPOGRAPHY.pageTitle,
     width: '100%',
     textAlign: 'center',
   },
@@ -790,9 +834,6 @@ const styles = StyleSheet.create({
   supportingLine: {
     width: '100%',
     marginTop: 10,
-    fontSize: 17,
-    lineHeight: 23,
-    color: '#222222',
     textAlign: 'center',
   },
 
@@ -819,9 +860,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 12,
     paddingVertical: 18,
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#EAEAEA',
     borderRadius: 18,
   },
 
@@ -846,10 +885,7 @@ const styles = StyleSheet.create({
 
 
   categoryLabel: {
-    ...TYPOGRAPHY.bodyLarge,
     marginTop: 8,
-    fontWeight: '600',
-    color: '#222222',
     textAlign: 'center',
   },
 
@@ -858,7 +894,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 24,
-    backgroundColor: '#F8F8F8',
   },
 
 
@@ -868,12 +903,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: StyleSheet.hairlineWidth,
-    backgroundColor: '#EAEAEA',
-  },
-
-
-  introBottomArea: {
-    backgroundColor: '#FFFFFF',
   },
 
 
@@ -885,22 +914,8 @@ const styles = StyleSheet.create({
   },
 
 
-  signInPrompt: {
-    ...TYPOGRAPHY.bodyLarge,
-    color: '#777777',
-  },
-
-
   signInButton: {
     marginLeft: 5,
-  },
-
-
-  signInButtonText: {
-    fontSize: 16,
-    lineHeight: 22,
-    fontWeight: '700',
-    color: COLORS.accent,
   },
 
 

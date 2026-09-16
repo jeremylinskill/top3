@@ -1,13 +1,13 @@
 import ActionSheet from '@/components/action-sheet';
+import AppText from '@/components/app-text';
 import PageHeader from '@/components/page-header';
 import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
 import UserAvatar from '@/components/user-avatar';
-import { COLORS } from '@/constants/colors';
 import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
-import { TYPOGRAPHY } from '@/constants/typography';
 import { useBlock } from '@/context/block-context';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { getProfilesByIds } from '@/lib/supabase/profiles';
 import { UserProfile } from '@/types/user-profile';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,12 +22,12 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function BlockedUsersScreen() {
+  const colors = useAppColors();
   const {
     blockedUserIds,
     isLoading: isLoadingBlocks,
@@ -170,7 +170,12 @@ export default function BlockedUsersScreen() {
   return (
     <>
       <SafeAreaView
-        style={styles.container}
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}
         edges={['top', 'left', 'right']}>
       <ScreenHeader showBackButton />
 
@@ -187,30 +192,52 @@ export default function BlockedUsersScreen() {
           <View style={styles.loadingState}>
             <ActivityIndicator
               size="small"
-              color={COLORS.tertiaryText}
+              color={colors.tertiaryText}
             />
 
-            <Text style={styles.loadingText}>
+            <AppText
+              variant="label"
+              tone="tertiary"
+              emphasis="regular">
               Loading blocked users…
-            </Text>
+            </AppText>
           </View>
         ) : hasLoadError ? (
-          <View style={styles.emptyState}>
-            <View style={styles.emptyIcon}>
+          <View
+            style={[
+              styles.emptyState,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}>
+            <View
+              style={[
+                styles.emptyIcon,
+                {
+                  backgroundColor:
+                    colors.background,
+                },
+              ]}>
               <Ionicons
                 name="cloud-offline-outline"
                 size={28}
-                color={COLORS.tertiaryText}
+                color={colors.tertiaryText}
               />
             </View>
 
-            <Text style={styles.emptyTitle}>
+            <AppText
+              variant="sectionTitle"
+              style={styles.emptyTitle}>
               Couldn’t load blocked users
-            </Text>
+            </AppText>
 
-            <Text style={styles.emptyText}>
+            <AppText
+              variant="body"
+              tone="tertiary"
+              style={styles.emptyText}>
               Check your connection and try again.
-            </Text>
+            </AppText>
 
             <PrimaryButton
               title="Try Again"
@@ -221,26 +248,52 @@ export default function BlockedUsersScreen() {
             />
           </View>
         ) : visibleProfiles.length === 0 ? (
-          <View style={styles.emptyState}>
-            <View style={styles.emptyIcon}>
+          <View
+            style={[
+              styles.emptyState,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}>
+            <View
+              style={[
+                styles.emptyIcon,
+                {
+                  backgroundColor:
+                    colors.background,
+                },
+              ]}>
               <Ionicons
                 name="ban-outline"
                 size={28}
-                color={COLORS.tertiaryText}
+                color={colors.tertiaryText}
               />
             </View>
 
-            <Text style={styles.emptyTitle}>
+            <AppText
+              variant="sectionTitle"
+              style={styles.emptyTitle}>
               No blocked users
-            </Text>
+            </AppText>
 
-            <Text style={styles.emptyText}>
+            <AppText
+              variant="body"
+              tone="tertiary"
+              style={styles.emptyText}>
               People you block will appear here so
               you can manage them later.
-            </Text>
+            </AppText>
           </View>
         ) : (
-          <View style={styles.card}>
+          <View
+            style={[
+              styles.card,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}>
             {visibleProfiles.map(
               (blockedProfile, index) => {
                 const isUnblocking =
@@ -252,7 +305,13 @@ export default function BlockedUsersScreen() {
                     key={blockedProfile.id}>
                     {index > 0 ? (
                       <View
-                        style={styles.divider}
+                        style={[
+                          styles.divider,
+                          {
+                            backgroundColor:
+                              colors.border,
+                          },
+                        ]}
                       />
                     ) : null}
 
@@ -272,24 +331,33 @@ export default function BlockedUsersScreen() {
                         style={
                           styles.profileDetails
                         }>
-                        <Text
-                          style={styles.name}
+                        <AppText
+                          variant="headline"
                           numberOfLines={1}>
                           {
                             blockedProfile.displayName
                           }
-                        </Text>
+                        </AppText>
 
-                        <Text
+                        <AppText
+                          variant="label"
+                          tone="tertiary"
+                          emphasis="regular"
                           style={styles.username}
                           numberOfLines={1}>
                           @{blockedProfile.username}
-                        </Text>
+                        </AppText>
                       </View>
 
                       <Pressable
                         style={({ pressed }) => [
                           styles.unblockButton,
+                          {
+                            backgroundColor:
+                              colors.surface,
+                            borderColor:
+                              colors.border,
+                          },
                           pressed &&
                             !isUnblocking &&
                             styles.pressed,
@@ -317,15 +385,14 @@ export default function BlockedUsersScreen() {
                         {isUnblocking ? (
                           <ActivityIndicator
                             size="small"
-                            color={COLORS.text}
+                            color={colors.text}
                           />
                         ) : (
-                          <Text
-                            style={
-                              styles.unblockButtonText
-                            }>
+                          <AppText
+                            variant="label"
+                            tone="primary">
                             Unblock
-                          </Text>
+                          </AppText>
                         )}
                       </Pressable>
                     </View>
@@ -395,7 +462,6 @@ export default function BlockedUsersScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
 
   scrollView: {
@@ -414,19 +480,11 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
   },
 
-  loadingText: {
-    ...TYPOGRAPHY.label,
-    fontWeight: '400',
-    color: COLORS.tertiaryText,
-  },
-
   emptyState: {
     alignItems: 'center',
     paddingHorizontal: SPACING.xl,
     paddingVertical: 28,
-    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.border,
     borderRadius: RADIUS.xl,
   },
 
@@ -436,20 +494,15 @@ const styles = StyleSheet.create({
     borderRadius: 29,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.background,
   },
 
   emptyTitle: {
-    ...TYPOGRAPHY.sectionTitle,
     marginTop: SPACING.lg,
-    color: COLORS.text,
     textAlign: 'center',
   },
 
   emptyText: {
-    ...TYPOGRAPHY.body,
     marginTop: SPACING.sm,
-    color: COLORS.tertiaryText,
     textAlign: 'center',
   },
 
@@ -460,9 +513,7 @@ const styles = StyleSheet.create({
 
   card: {
     marginTop: SPACING.sm,
-    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.border,
     borderRadius: RADIUS.xl,
     overflow: 'hidden',
   },
@@ -478,7 +529,6 @@ const styles = StyleSheet.create({
   divider: {
     height: StyleSheet.hairlineWidth,
     marginLeft: SPACING.lg,
-    backgroundColor: COLORS.border,
   },
 
   profileDetails: {
@@ -488,16 +538,8 @@ const styles = StyleSheet.create({
     marginRight: SPACING.md,
   },
 
-  name: {
-    ...TYPOGRAPHY.headline,
-    color: COLORS.text,
-  },
-
   username: {
-    ...TYPOGRAPHY.label,
     marginTop: 3,
-    fontWeight: '400',
-    color: COLORS.tertiaryText,
   },
 
   unblockButton: {
@@ -508,13 +550,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     borderRadius: RADIUS.xl,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
-  },
-
-  unblockButtonText: {
-    ...TYPOGRAPHY.label,
-    color: COLORS.text,
   },
 
   pressed: {

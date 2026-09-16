@@ -1,34 +1,34 @@
+import AppText from '@/components/app-text';
 import PrimaryButton from '@/components/primary-button';
-import { TYPOGRAPHY } from '@/constants/typography';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { useAuth } from '@/hooks/use-auth';
 import {
-    getExistingPushToken,
-    registerForPushNotifications,
+  getExistingPushToken,
+  registerForPushNotifications,
 } from '@/lib/notifications';
 import {
-    deletePushToken,
-    PushTokenPlatform,
-    upsertPushToken,
+  deletePushToken,
+  PushTokenPlatform,
+  upsertPushToken,
 } from '@/lib/supabase/push-tokens';
 import {
-    setPushNotificationsEnabled,
+  setPushNotificationsEnabled,
 } from '@/services/onboarding-service';
 import { router } from 'expo-router';
 import {
-    useEffect,
-    useRef,
-    useState,
+  useEffect,
+  useRef,
+  useState,
 } from 'react';
 import {
-    Animated,
-    Easing,
-    Image,
-    Platform,
-    Pressable,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  Animated,
+  Easing,
+  Image,
+  Platform,
+  Pressable,
+  StyleSheet,
+  useWindowDimensions,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -62,6 +62,8 @@ const DEMO_NOTIFICATIONS: DemoNotification[] = [
 ];
 
 export default function OnboardingNotificationsScreen() {
+  const colors = useAppColors();
+
   const { height: windowHeight } =
     useWindowDimensions();
 
@@ -261,7 +263,13 @@ export default function OnboardingNotificationsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+        },
+      ]}>
       <View
         style={[
           styles.content,
@@ -287,13 +295,18 @@ export default function OnboardingNotificationsScreen() {
               isCompactHeight &&
                 styles.compactHeaderBlock,
             ]}>
-            <Text style={styles.title}>
+            <AppText
+              variant="pageTitle"
+              style={styles.title}>
               Stay in the loop.
-            </Text>
+            </AppText>
 
-            <Text style={styles.subtitle}>
+            <AppText
+              variant="bodyLarge"
+              tone="secondary"
+              style={styles.subtitle}>
               Get notified when someone likes or comments on your Top 3s, or starts following you.
-            </Text>
+            </AppText>
           </View>
 
           <View
@@ -310,6 +323,14 @@ export default function OnboardingNotificationsScreen() {
                     styles.notificationCard,
                     isCompactHeight &&
                       styles.compactNotificationCard,
+                    {
+                      backgroundColor:
+                        colors.surface,
+                      borderColor:
+                        colors.border,
+                      shadowColor:
+                        colors.black,
+                    },
                     {
                       opacity:
                         notificationOpacities[
@@ -333,20 +354,28 @@ export default function OnboardingNotificationsScreen() {
 
                   <View style={styles.notificationContent}>
                     <View style={styles.notificationHeader}>
-                      <Text style={styles.appName}>
+                      <AppText
+                        variant="action"
+                        tone="primary"
+                        emphasis="strong">
                         Top 3
-                      </Text>
+                      </AppText>
 
-                      <Text style={styles.notificationTime}>
+                      <AppText
+                        variant="label"
+                        tone="tertiary"
+                        emphasis="regular"
+                        style={styles.notificationTime}>
                         {notification.time}
-                      </Text>
+                      </AppText>
                     </View>
 
-                    <Text
-                      style={styles.notificationMessage}
-                      numberOfLines={2}>
+                    <AppText
+                      variant="notificationBody"
+                      numberOfLines={2}
+                      style={styles.notificationMessage}>
                       {notification.message}
-                    </Text>
+                    </AppText>
                   </View>
                 </Animated.View>
               )
@@ -355,7 +384,16 @@ export default function OnboardingNotificationsScreen() {
         </Animated.View>
       </View>
 
-      <View style={styles.bottomBar}>
+      <View
+        style={[
+          styles.bottomBar,
+          {
+            backgroundColor:
+              colors.background,
+            borderTopColor:
+              colors.border,
+          },
+        ]}>
         <PrimaryButton
           title={
             isEnabling
@@ -382,9 +420,9 @@ export default function OnboardingNotificationsScreen() {
           }
           accessibilityRole="button"
           accessibilityLabel="Not now">
-          <Text style={styles.notNowText}>
+          <AppText variant="action">
             Not now
-          </Text>
+          </AppText>
         </Pressable>
       </View>
     </SafeAreaView>
@@ -394,7 +432,6 @@ export default function OnboardingNotificationsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
   },
 
   content: {
@@ -422,16 +459,13 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    ...TYPOGRAPHY.pageTitle,
     paddingHorizontal: 8,
     textAlign: 'center',
   },
 
   subtitle: {
-    ...TYPOGRAPHY.bodyLarge,
     marginTop: 12,
     paddingHorizontal: 14,
-    color: '#777777',
     textAlign: 'center',
   },
 
@@ -451,11 +485,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 15,
-    backgroundColor: 'rgba(255, 255, 255, 0.96)',
     borderRadius: 22,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(0, 0, 0, 0.10)',
-    shadowColor: '#000000',
     shadowOffset: {
       width: 0,
       height: 5,
@@ -490,36 +521,20 @@ const styles = StyleSheet.create({
     minHeight: 22,
   },
 
-  appName: {
-    fontSize: 15,
-    lineHeight: 20,
-    fontWeight: '700',
-    color: '#222222',
-  },
-
   notificationTime: {
     marginLeft: 12,
-    fontSize: 14,
-    lineHeight: 20,
-    color: '#8A8A8E',
   },
 
   notificationMessage: {
     marginTop: 4,
-    fontSize: 16,
-    lineHeight: 21,
-    fontWeight: '400',
-    color: '#222222',
   },
 
   bottomBar: {
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 8,
-    backgroundColor: '#FAFAFA',
     borderTopWidth:
       StyleSheet.hairlineWidth,
-    borderTopColor: '#DDDDDD',
   },
 
   notNowButton: {
@@ -529,7 +544,4 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
-  notNowText: {
-    ...TYPOGRAPHY.action,
-  },
 });

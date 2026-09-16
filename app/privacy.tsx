@@ -1,18 +1,17 @@
 import ActionSheet from '@/components/action-sheet';
+import AppText from '@/components/app-text';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
-import { COLORS } from '@/constants/colors';
 import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
-import { TYPOGRAPHY } from '@/constants/typography';
 import { useProfile } from '@/context/profile-context';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -38,12 +37,19 @@ function VisibilityCard({
   disabled = false,
   onSelect,
 }: VisibilityCardProps) {
+  const colors = useAppColors();
   const isSelected = selectedValue === value;
 
   return (
     <Pressable
       style={({ pressed }) => [
         styles.optionCard,
+        {
+          backgroundColor: colors.surface,
+          borderColor: isSelected
+            ? colors.text
+            : colors.border,
+        },
         isSelected && styles.optionCardSelected,
         pressed &&
           !disabled &&
@@ -61,44 +67,71 @@ function VisibilityCard({
       accessibilityHint={description}>
       <View style={styles.optionHeader}>
         <View style={styles.optionContent}>
-          <Text style={styles.optionTitle}>
+          <AppText variant="headline">
             {title}
-          </Text>
+          </AppText>
 
-          <Text style={styles.optionDescription}>
+          <AppText
+            variant="label"
+            tone="tertiary"
+            emphasis="regular"
+            style={styles.optionDescription}>
             {description}
-          </Text>
+          </AppText>
         </View>
 
         <View
           style={[
             styles.radioOuter,
-            isSelected &&
-              styles.radioOuterSelected,
+            {
+              borderColor: isSelected
+                ? colors.text
+                : colors.border,
+            },
           ]}>
           {isSelected ? (
-            <View style={styles.radioInner} />
+            <View
+              style={[
+                styles.radioInner,
+                {
+                  backgroundColor: colors.text,
+                },
+              ]}
+            />
           ) : null}
         </View>
       </View>
 
       {details.length > 0 ? (
-        <View style={styles.detailsSection}>
-          <Text style={styles.detailsTitle}>
+        <View
+          style={[
+            styles.detailsSection,
+            {
+              borderTopColor: colors.border,
+            },
+          ]}>
+          <AppText variant="headline">
             When your account is private
-          </Text>
+          </AppText>
 
           {details.map((detail) => (
             <View
               key={detail}
               style={styles.detailItem}>
-              <Text style={styles.detailBullet}>
+              <AppText
+                variant="bodyLarge"
+                tone="secondary"
+                style={styles.detailBullet}>
                 •
-              </Text>
+              </AppText>
 
-              <Text style={styles.detailText}>
+              <AppText
+                variant="label"
+                tone="secondary"
+                emphasis="regular"
+                style={styles.detailText}>
                 {detail}
-              </Text>
+              </AppText>
             </View>
           ))}
         </View>
@@ -108,6 +141,7 @@ function VisibilityCard({
 }
 
 export default function PrivacyScreen() {
+  const colors = useAppColors();
   const { profile, updateProfile } =
     useProfile();
 
@@ -163,7 +197,12 @@ export default function PrivacyScreen() {
   return (
     <>
       <SafeAreaView
-        style={styles.container}
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}
         edges={['top', 'left', 'right']}>
         <ScreenHeader showBackButton />
 
@@ -177,9 +216,11 @@ export default function PrivacyScreen() {
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}>
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
+            <AppText
+              variant="sectionTitle"
+              style={styles.sectionTitle}>
               Account visibility
-            </Text>
+            </AppText>
 
             <View
               accessibilityRole="radiogroup">
@@ -217,12 +258,16 @@ export default function PrivacyScreen() {
             <View style={styles.savingState}>
               <ActivityIndicator
                 size="small"
-                color={COLORS.text}
+                color={colors.text}
               />
 
-              <Text style={styles.savingText}>
+              <AppText
+                variant="label"
+                tone="tertiary"
+                emphasis="regular"
+                style={styles.savingText}>
                 Updating privacy…
-              </Text>
+              </AppText>
             </View>
           ) : null}
         </ScrollView>
@@ -253,7 +298,6 @@ export default function PrivacyScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
 
   scrollView: {
@@ -270,7 +314,6 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    ...TYPOGRAPHY.sectionTitle,
     marginBottom: SPACING.md,
   },
 
@@ -278,14 +321,11 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.lg,
-    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.border,
     borderRadius: RADIUS.xl,
   },
 
   optionCardSelected: {
-    borderColor: COLORS.text,
     borderWidth: 2,
   },
 
@@ -300,16 +340,8 @@ const styles = StyleSheet.create({
     marginRight: SPACING.md,
   },
 
-  optionTitle: {
-    ...TYPOGRAPHY.headline,
-    color: COLORS.text,
-  },
-
   optionDescription: {
-    ...TYPOGRAPHY.label,
     marginTop: 4,
-    fontWeight: '400',
-    color: COLORS.tertiaryText,
   },
 
   radioOuter: {
@@ -318,32 +350,20 @@ const styles = StyleSheet.create({
     marginTop: 1,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: COLORS.border,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-
-  radioOuterSelected: {
-    borderColor: COLORS.text,
   },
 
   radioInner: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: COLORS.text,
   },
 
   detailsSection: {
     marginTop: SPACING.sm,
     paddingTop: SPACING.sm,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: COLORS.border,
-  },
-
-  detailsTitle: {
-    ...TYPOGRAPHY.headline,
-    color: COLORS.text,
   },
 
   detailItem: {
@@ -354,16 +374,11 @@ const styles = StyleSheet.create({
 
   detailBullet: {
     width: 16,
-    fontSize: 16,
     lineHeight: 20,
-    color: COLORS.secondaryText,
   },
 
   detailText: {
-    ...TYPOGRAPHY.label,
     flex: 1,
-    fontWeight: '400',
-    color: COLORS.secondaryText,
   },
 
   savingState: {
@@ -374,10 +389,7 @@ const styles = StyleSheet.create({
   },
 
   savingText: {
-    ...TYPOGRAPHY.label,
     marginLeft: SPACING.sm,
-    fontWeight: '400',
-    color: COLORS.tertiaryText,
   },
 
   pressed: {

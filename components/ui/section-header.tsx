@@ -1,8 +1,7 @@
-import { TYPOGRAPHY } from '@/constants/typography';
+import AppText from '@/components/app-text';
 import { ReactNode } from 'react';
 import {
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 
@@ -17,9 +16,9 @@ export default function SectionHeader({
 }: SectionHeaderProps) {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>
+      <AppText variant="sectionTitle">
         {title}
-      </Text>
+      </AppText>
 
       {action}
     </View>
@@ -33,9 +32,5 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingBottom: 10,
-  },
-
-  title: {
-    ...TYPOGRAPHY.sectionTitle,
   },
 });

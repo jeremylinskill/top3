@@ -1,10 +1,12 @@
+import AppText from '@/components/app-text';
 import PrimaryButton from '@/components/primary-button';
 import {
   TASTE_MATCH_RANK_COLORS,
 } from '@/constants/colors';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
-import { TYPOGRAPHY } from '@/constants/typography';
+import { TEXT_STYLES } from '@/constants/typography';
 import { useTop3 } from '@/context/top3-context';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { useAuth } from '@/hooks/use-auth';
 import { getPublishedPostsByUser } from '@/lib/supabase/collections';
 import { Top3List } from '@/types/top3-list';
@@ -31,6 +33,8 @@ const DEMO_MATCH_SCORE = 84;
 
 
 export default function OnboardingTasteMatchScreen() {
+  const colors = useAppColors();
+
   const { height: windowHeight } =
     useWindowDimensions();
 
@@ -378,11 +382,17 @@ export default function OnboardingTasteMatchScreen() {
     isLoadingPublishedCollection
   ) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
         <View style={styles.loadState}>
           <ActivityIndicator
             size="large"
-            color="#222222"
+            color={colors.text}
           />
         </View>
       </SafeAreaView>
@@ -395,15 +405,26 @@ export default function OnboardingTasteMatchScreen() {
     hasPublishedCollectionLoadError
   ) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
         <View style={styles.loadState}>
-          <Text style={styles.loadErrorTitle}>
+          <AppText
+            variant="sectionTitle"
+            style={styles.loadErrorTitle}>
             Couldn&apos;t load your Taste Match
-          </Text>
+          </AppText>
 
-          <Text style={styles.loadErrorText}>
+          <AppText
+            variant="body"
+            tone="tertiary"
+            style={styles.loadErrorText}>
             Check your connection and try again.
-          </Text>
+          </AppText>
 
           <PrimaryButton
             title="Try Again"
@@ -419,7 +440,13 @@ export default function OnboardingTasteMatchScreen() {
 
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
       <View
         style={[
           styles.content,
@@ -435,7 +462,9 @@ export default function OnboardingTasteMatchScreen() {
           <Animated.Text
             style={[
               styles.title,
+              TEXT_STYLES.pageTitle,
               {
+                color: colors.text,
                 opacity:
                   titleOpacity,
               },
@@ -448,7 +477,9 @@ export default function OnboardingTasteMatchScreen() {
           <Animated.Text
             style={[
               styles.subtitle,
+              TEXT_STYLES.tasteMatchSubtitle,
               {
+                color: colors.secondaryText,
                 opacity:
                   titleOpacity,
               },
@@ -464,6 +495,10 @@ export default function OnboardingTasteMatchScreen() {
             isCompactHeight &&
               styles.compactMatchCard,
             {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+            },
+            {
               opacity:
                 matchOpacity,
               transform: [
@@ -474,29 +509,33 @@ export default function OnboardingTasteMatchScreen() {
               ],
             },
           ]}>
-          <Text style={styles.matchLabel}>
+          <AppText
+            variant="tasteMatchLabel">
             Taste Match
-          </Text>
+          </AppText>
 
 
-          <Text
+          <AppText
+            variant="matchScore"
             style={[
               styles.matchScore,
               isCompactHeight &&
                 styles.compactMatchScore,
             ]}>
             {animatedScore}%
-          </Text>
+          </AppText>
 
 
-          <Text
+          <AppText
+            variant="bodyLarge"
+            tone="secondary"
             style={[
               styles.sharedText,
               isCompactHeight &&
                 styles.compactSharedText,
             ]}>
             You share 2 ranked picks.
-          </Text>
+          </AppText>
 
 
           <View
@@ -517,23 +556,29 @@ export default function OnboardingTasteMatchScreen() {
                 </Text>
               ) : null}
 
-              <Text style={styles.collectionTitle}>
+              <AppText variant="sectionTitle">
                 {activeCollection?.title?.replace(
                   /^Top 3\s+/i,
                   ''
                 ) || 'Your list'}
-              </Text>
+              </AppText>
             </View>
 
 
             <View style={styles.columnHeaderRow}>
-              <Text style={styles.columnHeader}>
+              <AppText
+                variant="comparisonLabel"
+                tone="tertiary"
+                style={styles.columnHeader}>
                 You
-              </Text>
+              </AppText>
 
-              <Text style={styles.columnHeader}>
+              <AppText
+                variant="comparisonLabel"
+                tone="tertiary"
+                style={styles.columnHeader}>
                 Alex
-              </Text>
+              </AppText>
             </View>
 
 
@@ -553,23 +598,36 @@ export default function OnboardingTasteMatchScreen() {
                       styles.rankCell,
                       isCompactHeight &&
                         styles.compactRankCell,
-                      isShared && {
+                      {
                         backgroundColor:
-                          TASTE_MATCH_RANK_COLORS[
-                            index
-                          ],
+                          isShared
+                            ? TASTE_MATCH_RANK_COLORS[
+                                index
+                              ]
+                            : colors.secondarySurface,
                       },
                     ]}>
-                    <Text
-                      style={styles.rankNumber}>
+                    <AppText
+                      variant="comparisonRank"
+                      tone={
+                        isShared
+                          ? 'onHighlight'
+                          : 'primary'
+                      }>
                       {index + 1}
-                    </Text>
+                    </AppText>
 
-                    <Text
+                    <AppText
+                      variant="comparisonLabel"
+                      tone={
+                        isShared
+                          ? 'onHighlight'
+                          : 'primary'
+                      }
                       style={styles.rankTitle}
                       numberOfLines={2}>
                       {userTitles[index]}
-                    </Text>
+                    </AppText>
 
                   </View>
 
@@ -579,23 +637,36 @@ export default function OnboardingTasteMatchScreen() {
                       styles.rankCell,
                       isCompactHeight &&
                         styles.compactRankCell,
-                      isShared && {
+                      {
                         backgroundColor:
-                          TASTE_MATCH_RANK_COLORS[
-                            index
-                          ],
+                          isShared
+                            ? TASTE_MATCH_RANK_COLORS[
+                                index
+                              ]
+                            : colors.secondarySurface,
                       },
                     ]}>
-                    <Text
-                      style={styles.rankNumber}>
+                    <AppText
+                      variant="comparisonRank"
+                      tone={
+                        isShared
+                          ? 'onHighlight'
+                          : 'primary'
+                      }>
                       {index + 1}
-                    </Text>
+                    </AppText>
 
-                    <Text
+                    <AppText
+                      variant="comparisonLabel"
+                      tone={
+                        isShared
+                          ? 'onHighlight'
+                          : 'primary'
+                      }
                       style={styles.rankTitle}
                       numberOfLines={2}>
                       {exampleTitles[index]}
-                    </Text>
+                    </AppText>
 
                   </View>
                 </View>
@@ -608,7 +679,14 @@ export default function OnboardingTasteMatchScreen() {
       </View>
 
 
-      <View style={styles.bottomBar}>
+      <View
+        style={[
+          styles.bottomBar,
+          {
+            backgroundColor: colors.background,
+            borderTopColor: colors.border,
+          },
+        ]}>
         <PrimaryButton
           title="Continue"
           onPress={continueOnboarding}
@@ -622,7 +700,6 @@ export default function OnboardingTasteMatchScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
   },
 
 
@@ -650,7 +727,6 @@ const styles = StyleSheet.create({
 
 
   title: {
-    ...TYPOGRAPHY.pageTitle,
     paddingHorizontal: 8,
     textAlign: 'center',
   },
@@ -658,9 +734,6 @@ const styles = StyleSheet.create({
 
   subtitle: {
     marginTop: 12,
-    fontSize: 17,
-    lineHeight: 24,
-    color: '#777777',
     textAlign: 'center',
   },
 
@@ -670,9 +743,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 28,
     paddingBottom: 26,
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E5E5E5',
     borderRadius: 22,
     alignItems: 'center',
   },
@@ -684,21 +755,8 @@ const styles = StyleSheet.create({
   },
 
 
-  matchLabel: {
-    fontSize: 17,
-    lineHeight: 22,
-    fontWeight: '600',
-    color: '#777777',
-    textAlign: 'center',
-  },
-
-
   matchScore: {
     marginTop: 4,
-    fontSize: 58,
-    lineHeight: 66,
-    fontWeight: '800',
-    color: '#222222',
     textAlign: 'center',
   },
 
@@ -708,9 +766,7 @@ const styles = StyleSheet.create({
 
 
   sharedText: {
-    ...TYPOGRAPHY.bodyLarge,
     marginTop: 6,
-    color: '#777777',
     textAlign: 'center',
   },
 
@@ -747,11 +803,6 @@ const styles = StyleSheet.create({
   },
 
 
-  collectionTitle: {
-    ...TYPOGRAPHY.sectionTitle,
-  },
-
-
   columnHeaderRow: {
     flexDirection: 'row',
     gap: 10,
@@ -761,10 +812,6 @@ const styles = StyleSheet.create({
 
   columnHeader: {
     flex: 1,
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '600',
-    color: '#777777',
   },
 
 
@@ -785,7 +832,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 9,
     borderRadius: 14,
-    backgroundColor: '#F4F4F4',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
@@ -797,20 +843,8 @@ const styles = StyleSheet.create({
   },
 
 
-  rankNumber: {
-    fontSize: 18,
-    lineHeight: 22,
-    fontWeight: '800',
-    color: '#222222',
-  },
-
-
   rankTitle: {
     flex: 1,
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '600',
-    color: '#222222',
   },
 
 
@@ -818,10 +852,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 8,
-    backgroundColor: '#FAFAFA',
     borderTopWidth:
       StyleSheet.hairlineWidth,
-    borderTopColor: '#DDDDDD',
   },
 
   loadState: {
@@ -832,15 +864,11 @@ const styles = StyleSheet.create({
   },
 
   loadErrorTitle: {
-    ...TYPOGRAPHY.sectionTitle,
-    color: '#222222',
     textAlign: 'center',
   },
 
   loadErrorText: {
-    ...TYPOGRAPHY.body,
     marginTop: 8,
-    color: '#777777',
     textAlign: 'center',
   },
 

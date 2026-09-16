@@ -1,12 +1,12 @@
+import AppText from '@/components/app-text';
 import Chip from '@/components/chip';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
-import { TYPOGRAPHY } from '@/constants/typography';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { Top3List } from '@/types/top3-list';
 import { buildCollectionTitle } from '@/utils/build-collection-title';
 import { useMemo } from 'react';
 import {
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 
@@ -93,6 +93,8 @@ export default function CollectionForm({
   values,
   onChange,
 }: CollectionFormProps) {
+  const colors = useAppColors();
+
   const selectedCategory =
     SORTED_CATEGORIES.find(
       (category) =>
@@ -183,9 +185,11 @@ export default function CollectionForm({
 
   return (
     <View>
-      <Text style={styles.sectionTitle}>
+      <AppText
+        variant="sectionTitle"
+        style={styles.sectionTitle}>
         Category
-      </Text>
+      </AppText>
 
       <View style={styles.optionGroup}>
         {SORTED_CATEGORIES.map(
@@ -211,9 +215,11 @@ export default function CollectionForm({
 
       {hasTypes ? (
         <View style={styles.typeSection}>
-          <Text style={styles.sectionTitle}>
+          <AppText
+            variant="sectionTitle"
+            style={styles.sectionTitle}>
             Type
-          </Text>
+          </AppText>
 
           <View style={styles.optionGroup}>
             {availableTypes.map(
@@ -239,17 +245,24 @@ export default function CollectionForm({
 
       {(!hasTypes || values.typeId) ? (
         <View style={styles.topicSection}>
-          <Text style={styles.sectionTitle}>
+          <AppText
+            variant="sectionTitle"
+            style={styles.sectionTitle}>
             Topic{' '}
-            <Text style={styles.optionalLabel}>
+            <AppText
+              variant="sectionTitle"
+              tone="tertiary"
+              emphasis="regular">
               (optional)
-            </Text>
-          </Text>
+            </AppText>
+          </AppText>
 
-          <Text style={styles.topicHelper}>
+          <AppText
+            variant="body"
+            style={styles.topicHelper}>
             Want to get more specific? Choose a
             topic.
-          </Text>
+          </AppText>
 
           {availableTopics.length > 0 ? (
             <View style={styles.optionGroup}>
@@ -273,10 +286,21 @@ export default function CollectionForm({
               )}
             </View>
           ) : (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyMessage}>
+            <View
+              style={[
+                styles.emptyState,
+                {
+                  backgroundColor:
+                    colors.surface,
+                  borderColor:
+                    colors.border,
+                },
+              ]}>
+              <AppText
+                variant="body"
+                style={styles.emptyMessage}>
                 No topics are available in this category.
-              </Text>
+              </AppText>
             </View>
           )}
         </View>
@@ -287,13 +311,7 @@ export default function CollectionForm({
 
 const styles = StyleSheet.create({
   sectionTitle: {
-    ...TYPOGRAPHY.sectionTitle,
     marginBottom: 12,
-  },
-
-  optionalLabel: {
-    fontWeight: '400',
-    color: '#777777',
   },
 
   typeSection: {
@@ -305,10 +323,8 @@ const styles = StyleSheet.create({
   },
 
   topicHelper: {
-    ...TYPOGRAPHY.body,
     marginTop: -4,
     marginBottom: 14,
-    color: '#777777',
   },
 
   optionGroup: {
@@ -320,15 +336,11 @@ const styles = StyleSheet.create({
   emptyState: {
     paddingVertical: 22,
     paddingHorizontal: 18,
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#EAEAEA',
     borderRadius: 18,
   },
 
   emptyMessage: {
-    ...TYPOGRAPHY.body,
-    color: '#777777',
     textAlign: 'center',
   },
 });

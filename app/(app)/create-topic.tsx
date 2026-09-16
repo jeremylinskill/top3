@@ -1,11 +1,12 @@
+import AppText from '@/components/app-text';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
 import {
   TOP3_CATEGORIES,
   Top3Topic,
 } from '@/constants/top3-categories';
-import { TYPOGRAPHY } from '@/constants/typography';
 import { useTop3 } from '@/context/top3-context';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { Top3List } from '@/types/top3-list';
 import { buildCollectionTitle } from '@/utils/build-collection-title';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,7 +25,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -127,6 +127,8 @@ const TOPIC_GAP = 12;
 const MIN_THREE_COLUMN_CARD_WIDTH = 112;
 
 export default function CreateTopicScreen() {
+  const colors = useAppColors();
+
   const { width: windowWidth } =
     useWindowDimensions();
 
@@ -199,7 +201,12 @@ export default function CreateTopicScreen() {
   if (!category) {
     return (
       <SafeAreaView
-        style={styles.container}
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}
         edges={['top', 'left', 'right']}>
         <ScreenHeader showBackButton />
 
@@ -214,6 +221,10 @@ export default function CreateTopicScreen() {
           <Pressable
             style={({ pressed }) => [
               styles.returnButton,
+              {
+                backgroundColor:
+                  colors.primary,
+              },
               pressed &&
                 styles.pressed,
             ]}
@@ -222,12 +233,12 @@ export default function CreateTopicScreen() {
             }
             accessibilityRole="button"
             accessibilityLabel="Return to categories">
-            <Text
-              style={
-                styles.returnButtonText
-              }>
+            <AppText
+              variant="action"
+              tone="onPrimary"
+              emphasis="strong">
               Choose a category
-            </Text>
+            </AppText>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -392,7 +403,12 @@ export default function CreateTopicScreen() {
 
   return (
     <SafeAreaView
-      style={styles.container}
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+        },
+      ]}
       edges={['top', 'left', 'right']}>
       <ScreenHeader showBackButton />
 
@@ -404,7 +420,13 @@ export default function CreateTopicScreen() {
 
 
       <ScrollView
-        style={styles.scrollView}
+        style={[
+          styles.scrollView,
+          {
+            backgroundColor:
+              colors.background,
+          },
+        ]}
         contentContainerStyle={
           styles.content
         }
@@ -412,6 +434,10 @@ export default function CreateTopicScreen() {
         <Pressable
           style={({ pressed }) => [
             styles.overallCard,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+            },
             pressed &&
               styles.pressed,
           ]}
@@ -431,20 +457,16 @@ export default function CreateTopicScreen() {
             style={
               styles.overallText
             }>
-            <Text
-              style={
-                styles.overallTitle
-              }>
+            <AppText
+              variant="selectionTitle">
               All {selectedCategory.name}
-            </Text>
+            </AppText>
 
-
-            <Text
-              style={
-                styles.overallSubtitle
-              }>
+            <AppText
+              variant="subtitle"
+              style={styles.overallSubtitle}>
               Rank your favourites across every genre.
-            </Text>
+            </AppText>
           </View>
 
 
@@ -452,30 +474,40 @@ export default function CreateTopicScreen() {
           'general' ? (
             <ActivityIndicator
               size="small"
+              color={colors.secondaryText}
             />
           ) : (
             <Ionicons
               name="chevron-forward"
               size={20}
-              color="#777777"
+              color={colors.tertiaryText}
             />
           )}
         </Pressable>
 
 
         {topics.length > 0 ? (
-          <View style={styles.genreContainer}>
+          <View
+            style={[
+              styles.genreContainer,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}>
             <View
               style={styles.genreHeadingRow}>
-              <Text
-                style={styles.sectionLabel}>
+              <AppText
+                variant="selectionTitle">
                 Choose a Genre
-              </Text>
+              </AppText>
 
-              <Text
-                style={styles.optionalLabel}>
+              <AppText
+                variant="selectionTitle"
+                tone="tertiary"
+                emphasis="regular">
                 {' '}(optional)
-              </Text>
+              </AppText>
             </View>
 
 
@@ -514,6 +546,12 @@ export default function CreateTopicScreen() {
                           pressed,
                         }) => [
                           styles.topicCard,
+                          {
+                            backgroundColor:
+                              colors.secondarySurface,
+                            borderColor:
+                              colors.border,
+                          },
                           pressed &&
                             styles.pressed,
                         ]}
@@ -532,17 +570,20 @@ export default function CreateTopicScreen() {
                             ? `Edit ${topic.name} ${selectedCategory.name}`
                             : `${topic.name} ${selectedCategory.name}`
                         }>
-                        <Text
-                          style={
-                            styles.topicName
-                          }>
+                        <AppText
+                          variant="label"
+                          tone="primary"
+                          style={styles.topicName}>
                           {topic.name}
-                        </Text>
+                        </AppText>
 
                         {creatingCollectionKey ===
                         topic.id ? (
                           <ActivityIndicator
                             size="small"
+                            color={
+                              colors.secondaryText
+                            }
                           />
                         ) : null}
 
@@ -565,15 +606,11 @@ const styles =
   StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor:
-        '#F8F8F8',
     },
 
 
     scrollView: {
       flex: 1,
-      backgroundColor:
-        '#F8F8F8',
     },
 
 
@@ -584,22 +621,12 @@ const styles =
     },
 
 
-    sectionLabel: {
-      fontSize: 18,
-      lineHeight: 24,
-      fontWeight: '700',
-      color: '#222222',
-    },
-
-
     genreContainer: {
       marginTop: 12,
       paddingHorizontal: 18,
       paddingTop: 18,
       paddingBottom: 18,
-      backgroundColor: '#FFFFFF',
       borderWidth: 1,
-      borderColor: '#EAEAEA',
       borderRadius: 16,
     },
 
@@ -611,24 +638,13 @@ const styles =
     },
 
 
-    optionalLabel: {
-      fontSize: 18,
-      lineHeight: 24,
-      fontWeight: '400',
-      color: '#888888',
-    },
-
-
     overallCard: {
       minHeight: 82,
       flexDirection: 'row',
       alignItems: 'center',
       paddingHorizontal: 18,
       paddingVertical: 16,
-      backgroundColor:
-        '#FFFFFF',
       borderWidth: 1,
-      borderColor: '#EAEAEA',
       borderRadius: 16,
     },
 
@@ -640,18 +656,8 @@ const styles =
     },
 
 
-    overallTitle: {
-      fontSize: 18,
-      lineHeight: 24,
-      fontWeight: '700',
-      color: '#222222',
-    },
-
-
     overallSubtitle: {
-      ...TYPOGRAPHY.subtitle,
       marginTop: 4,
-      color: '#777777',
     },
 
 
@@ -673,19 +679,12 @@ const styles =
         'center',
       paddingHorizontal: 8,
       paddingVertical: 10,
-      backgroundColor:
-        '#F8F8F8',
       borderWidth: 1,
-      borderColor: '#E1E1E1',
       borderRadius: 14,
     },
 
 
     topicName: {
-      fontSize: 14,
-      lineHeight: 18,
-      fontWeight: '600',
-      color: '#222222',
       textAlign: 'center',
     },
 
@@ -713,14 +712,7 @@ const styles =
       paddingHorizontal: 18,
       paddingVertical: 12,
       borderRadius: 12,
-      backgroundColor:
-        '#222222',
     },
 
 
-    returnButtonText: {
-      fontSize: 15,
-      fontWeight: '700',
-      color: '#FFFFFF',
-    },
   });

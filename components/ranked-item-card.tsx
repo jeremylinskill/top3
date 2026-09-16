@@ -1,3 +1,4 @@
+import AppText from '@/components/app-text';
 import MediaPreviewButton, {
   useMediaPreview,
 } from '@/components/media-preview-button';
@@ -8,14 +9,13 @@ import {
   CategoryId,
   TOP3_CATEGORIES,
 } from '@/constants/top3-categories';
-import { TYPOGRAPHY } from '@/constants/typography';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { Top3Item } from '@/types/top3-item';
 import { Ionicons } from '@expo/vector-icons';
 import {
   Image,
   Pressable,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 
@@ -36,6 +36,8 @@ export default function RankedItemCard({
   category,
   onPress,
 }: RankedItemCardProps) {
+  const colors = useAppColors();
+
   const placeholderIcon =
     TOP3_CATEGORIES.find(
       (categoryItem) =>
@@ -56,12 +58,20 @@ export default function RankedItemCard({
 
   return (
     <Pressable
-      style={styles.card}
+      style={[
+        styles.card,
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+        },
+      ]}
       onPress={onPress}>
       <View style={styles.rankContainer}>
-        <Text style={styles.rank}>
+        <AppText
+          variant="headline"
+          tone="primary">
           {rank}
-        </Text>
+        </AppText>
       </View>
 
       <View
@@ -80,6 +90,7 @@ export default function RankedItemCard({
               {
                 width: artworkRule.width,
                 height: artworkRule.height,
+                backgroundColor: colors.border,
               },
             ]}
             resizeMode="cover"
@@ -91,16 +102,21 @@ export default function RankedItemCard({
               {
                 width: artworkRule.width,
                 height: artworkRule.height,
+                backgroundColor: colors.border,
               },
             ]}>
             {item ? (
               <Ionicons
                 name={placeholderIcon}
                 size={28}
-                color="#999999"
+                color={colors.tertiaryText}
               />
             ) : (
-              <Text style={styles.plus}>+</Text>
+              <Ionicons
+                name="add"
+                size={28}
+                color={colors.tertiaryText}
+              />
             )}
           </View>
         )}
@@ -113,32 +129,45 @@ export default function RankedItemCard({
             !hasMediaButton &&
             styles.detailsWithDragHandle,
         ]}>
-        <Text
-          style={styles.title}
+        <AppText
+          variant="cardTitle"
+          tone="primary"
           numberOfLines={2}>
           {item?.title ?? placeholder}
-        </Text>
+        </AppText>
 
         {item ? (
-          <Text
+          <AppText
+            variant="subtitle"
+            tone="tertiary"
             style={styles.metadata}
             numberOfLines={2}>
             {item.subtitle ?? ''}
             {typeof item.rating === 'number'
               ? ` · ★ ${item.rating.toFixed(1)}`
               : ''}
-          </Text>
+          </AppText>
         ) : (
-          <Text style={styles.placeholderText}>
+          <AppText
+            variant="subtitle"
+            tone="tertiary"
+            style={styles.placeholderText}>
             Tap to choose
-          </Text>
+          </AppText>
         )}
       </View>
 
       {item ? (
         <MediaPreviewButton
           preview={mediaPreview}
-          style={styles.previewButton}
+          style={[
+            styles.previewButton,
+            {
+              backgroundColor:
+                colors.background,
+            },
+          ]}
+          iconColor={colors.secondaryText}
         />
       ) : null}
     </Pressable>
@@ -149,23 +178,15 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#EEEEEE',
   },
 
   rankContainer: {
     width: 28,
     alignItems: 'center',
     transform: [{ translateX: -5 }],
-  },
-
-  rank: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#222222',
   },
 
   artworkContainer: {
@@ -175,12 +196,10 @@ const styles = StyleSheet.create({
 
   poster: {
     borderRadius: 9,
-    backgroundColor: '#EEEEEE',
   },
 
   posterPlaceholder: {
     borderRadius: 9,
-    backgroundColor: '#F0F0F0',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -194,12 +213,6 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F5F5F5',
-  },
-
-  plus: {
-    fontSize: 28,
-    color: '#999999',
   },
 
   details: {
@@ -211,18 +224,11 @@ const styles = StyleSheet.create({
     paddingRight: DRAG_HANDLE_WIDTH + 8,
   },
 
-  title: {
-    ...TYPOGRAPHY.cardTitle,
-  },
-
   metadata: {
-    ...TYPOGRAPHY.subtitle,
     marginTop: 4,
   },
 
   placeholderText: {
-    ...TYPOGRAPHY.subtitle,
     marginTop: 4,
-    color: '#999999',
   },
 });

@@ -193,12 +193,6 @@ export default function RootLayout() {
                                     <Stack.Screen name="onboarding-taste-match" />
                                     <Stack.Screen name="onboarding-notifications" />
                                     <Stack.Screen name="(app)" />
-                                    <Stack.Screen
-                                      name="modal"
-                                      options={{
-                                        presentation: 'modal',
-                                      }}
-                                    />
                                   </Stack>
 
                                   <AppleMusicPreviewSheet />

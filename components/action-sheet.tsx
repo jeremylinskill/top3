@@ -1,13 +1,12 @@
-import { COLORS } from '@/constants/colors';
+import AppText from '@/components/app-text';
 import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
-import { TYPOGRAPHY } from '@/constants/typography';
+import { useAppColors } from '@/hooks/use-app-colors';
 import {
-    Modal,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  Modal,
+  Pressable,
+  StyleSheet,
+  View,
 } from 'react-native';
 
 export type ActionSheetActionVariant =
@@ -37,6 +36,8 @@ export default function ActionSheet({
   actions,
   onClose,
 }: ActionSheetProps) {
+  const colors = useAppColors();
+
   const showHeader =
     Boolean(title) || Boolean(message);
 
@@ -55,24 +56,33 @@ export default function ActionSheet({
           accessibilityLabel="Close action sheet"
         />
 
-        <View style={styles.sheet}>
+        <View
+          style={[
+            styles.sheet,
+            {
+              backgroundColor: colors.surface,
+            },
+          ]}>
           {showHeader ? (
             <View style={styles.header}>
               {title ? (
-                <Text style={styles.title}>
+                <AppText
+                  variant="pageTitle"
+                  style={styles.title}>
                   {title}
-                </Text>
+                </AppText>
               ) : null}
 
               {message ? (
-                <Text
+                <AppText
+                  variant="body"
                   style={[
                     styles.message,
                     !title &&
                       styles.messageWithoutTitle,
                   ]}>
                   {message}
-                </Text>
+                </AppText>
               ) : null}
             </View>
           ) : null}
@@ -97,6 +107,25 @@ export default function ActionSheet({
                 const isCancel =
                   variant === 'cancel';
 
+                const actionBackgroundColor =
+                  isDestructive || isCancel
+                    ? colors.surface
+                    : colors.background;
+
+                const actionBorderColor =
+                  isDestructive
+                    ? colors.destructive
+                    : isCancel
+                      ? colors.border
+                      : 'transparent';
+
+                const actionTextTone =
+                  action.disabled
+                    ? 'disabled'
+                    : isDestructive
+                      ? 'destructive'
+                      : 'primary';
+
                 return (
                   <Pressable
                     key={`${action.label}-${index}`}
@@ -108,12 +137,18 @@ export default function ActionSheet({
                     }}
                     style={({ pressed }) => [
                       styles.actionButton,
+                      {
+                        backgroundColor:
+                          actionBackgroundColor,
+                        borderColor:
+                          actionBorderColor,
+                        borderWidth:
+                          isDestructive || isCancel
+                            ? 1
+                            : 0,
+                      },
                       index > 0 &&
                         styles.actionButtonSpacing,
-                      isDestructive &&
-                        styles.destructiveButton,
-                      isCancel &&
-                        styles.cancelButton,
                       isCancel &&
                         styles.cancelSpacing,
                       action.disabled &&
@@ -122,18 +157,12 @@ export default function ActionSheet({
                         !action.disabled &&
                         styles.actionButtonPressed,
                     ]}>
-                    <Text
-                      style={[
-                        styles.actionText,
-                        isDestructive &&
-                          styles.destructiveText,
-                        isCancel &&
-                          styles.cancelText,
-                        action.disabled &&
-                          styles.actionTextDisabled,
-                      ]}>
+                    <AppText
+                      variant="headline"
+                      tone={actionTextTone}
+                      style={styles.actionText}>
                       {action.label}
-                    </Text>
+                    </AppText>
                   </Pressable>
                 );
               }
@@ -160,7 +189,6 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.xxl,
     paddingBottom: SPACING.xxl,
     borderRadius: RADIUS.xxxl,
-    backgroundColor: COLORS.surface,
   },
 
   header: {
@@ -168,15 +196,11 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    ...TYPOGRAPHY.pageTitle,
-    color: COLORS.text,
     textAlign: 'center',
   },
 
   message: {
-    ...TYPOGRAPHY.body,
     marginTop: SPACING.sm,
-    color: COLORS.secondaryText,
     textAlign: 'center',
   },
 
@@ -197,23 +221,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.lg,
     borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.background,
   },
 
   actionButtonSpacing: {
     marginTop: SPACING.md,
-  },
-
-  destructiveButton: {
-    borderWidth: 1,
-    borderColor: '#FF3B30',
-    backgroundColor: COLORS.surface,
-  },
-
-  cancelButton: {
-    borderWidth: 1,
-    borderColor: '#CFCFCF',
-    backgroundColor: COLORS.surface,
   },
 
   cancelSpacing: {
@@ -229,20 +240,6 @@ const styles = StyleSheet.create({
   },
 
   actionText: {
-    ...TYPOGRAPHY.headline,
-    color: COLORS.text,
     textAlign: 'center',
-  },
-
-  destructiveText: {
-    color: '#FF3B30',
-  },
-
-  cancelText: {
-    color: COLORS.text,
-  },
-
-  actionTextDisabled: {
-    color: COLORS.tertiaryText,
   },
 });

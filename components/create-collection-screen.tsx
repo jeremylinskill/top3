@@ -4,6 +4,7 @@ import {
   CategoryId,
   TOP3_CATEGORIES,
 } from '@/constants/top3-categories';
+import { useAppColors } from '@/hooks/use-app-colors';
 import {
   router,
   useLocalSearchParams,
@@ -18,7 +19,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-
 const CATEGORY_ORDER: CategoryId[] = [
   'albums',
   'artists',
@@ -29,32 +29,29 @@ const CATEGORY_ORDER: CategoryId[] = [
   'games',
 ];
 
-
 export default function CreateCollectionScreen() {
+  const colors = useAppColors();
+
   const params =
     useLocalSearchParams<{
       categoryId?: string | string[];
       topicId?: string | string[];
     }>();
 
-
   const requestedCategoryId =
     Array.isArray(params.categoryId)
       ? params.categoryId[0]
       : params.categoryId;
-
 
   const requestedTopicId =
     Array.isArray(params.topicId)
       ? params.topicId[0]
       : params.topicId;
 
-
   useEffect(() => {
     if (!requestedCategoryId) {
       return;
     }
-
 
     router.replace(
       {
@@ -72,7 +69,6 @@ export default function CreateCollectionScreen() {
     requestedTopicId,
   ]);
 
-
   const categories =
     CATEGORY_ORDER
       .map((categoryId) =>
@@ -89,7 +85,6 @@ export default function CreateCollectionScreen() {
         > => Boolean(category)
       );
 
-
   function chooseCategory(
     categoryId: CategoryId
   ) {
@@ -103,11 +98,16 @@ export default function CreateCollectionScreen() {
     );
   }
 
-
   if (requestedCategoryId) {
     return (
       <SafeAreaView
-        style={styles.container}
+        style={[
+          styles.container,
+          {
+            backgroundColor:
+              colors.background,
+          },
+        ]}
         edges={['top', 'left', 'right']}>
         <ScreenHeader />
 
@@ -116,22 +116,31 @@ export default function CreateCollectionScreen() {
     );
   }
 
-
   return (
     <SafeAreaView
-      style={styles.container}
+      style={[
+        styles.container,
+        {
+          backgroundColor:
+            colors.background,
+        },
+      ]}
       edges={['top', 'left', 'right']}>
       <ScreenHeader />
-
 
       <PageHeader
         title="Create a Top 3"
         subtitle="What would you like to rank?"
       />
 
-
       <ScrollView
-        style={styles.scrollView}
+        style={[
+          styles.scrollView,
+          {
+            backgroundColor:
+              colors.background,
+          },
+        ]}
         contentContainerStyle={
           styles.content
         }
@@ -144,7 +153,6 @@ export default function CreateCollectionScreen() {
                 index ===
                   categories.length - 1;
 
-
               return (
                 <View
                   key={category.id}
@@ -156,6 +164,12 @@ export default function CreateCollectionScreen() {
                   <Pressable
                     style={({ pressed }) => [
                       styles.categoryCard,
+                      {
+                        backgroundColor:
+                          colors.surface,
+                        borderColor:
+                          colors.border,
+                      },
                       pressed &&
                         styles.categoryCardPressed,
                     ]}
@@ -175,11 +189,14 @@ export default function CreateCollectionScreen() {
                       {category.icon}
                     </Text>
 
-
                     <Text
-                      style={
-                        styles.categoryLabel
-                      }>
+                      style={[
+                        styles.categoryLabel,
+                        {
+                          color:
+                            colors.text,
+                        },
+                      ]}>
                       {category.name}
                     </Text>
                   </Pressable>
@@ -193,26 +210,20 @@ export default function CreateCollectionScreen() {
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
   },
-
 
   scrollView: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
   },
-
 
   content: {
     paddingHorizontal: 20,
     paddingTop: 0,
     paddingBottom: 36,
   },
-
 
   categoryGrid: {
     width: '100%',
@@ -222,16 +233,13 @@ const styles = StyleSheet.create({
     rowGap: 12,
   },
 
-
   categoryCardWrapper: {
     width: '48.5%',
   },
 
-
   lastCategoryCard: {
     marginLeft: '25.75%',
   },
-
 
   categoryCard: {
     width: '100%',
@@ -240,12 +248,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 12,
     paddingVertical: 18,
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#EAEAEA',
     borderRadius: 18,
   },
-
 
   categoryCardPressed: {
     opacity: 0.78,
@@ -256,22 +261,18 @@ const styles = StyleSheet.create({
     ],
   },
 
-
   categoryIcon: {
     fontSize: 30,
     lineHeight: 38,
   },
-
 
   categoryLabel: {
     marginTop: 8,
     fontSize: 17,
     lineHeight: 23,
     fontWeight: '700',
-    color: '#222222',
     textAlign: 'center',
   },
-
 
   redirecting: {
     flex: 1,

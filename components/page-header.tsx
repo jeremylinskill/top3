@@ -1,7 +1,6 @@
-import { TYPOGRAPHY } from '@/constants/typography';
+import AppText from '@/components/app-text';
 import {
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 
@@ -24,22 +23,27 @@ export default function PageHeader({
         styles.container,
         isCentered && styles.containerCentered,
       ]}>
-      <Text
-        style={[
-          styles.title,
-          isCentered && styles.textCentered,
-        ]}>
+      <AppText
+        variant="heroTitle"
+        style={
+          isCentered
+            ? styles.textCentered
+            : undefined
+        }>
         {title}
-      </Text>
+      </AppText>
 
       {subtitle ? (
-        <Text
+        <AppText
+          variant="bodyLarge"
+          tone="secondary"
           style={[
             styles.subtitle,
-            isCentered && styles.textCentered,
+            isCentered &&
+              styles.textCentered,
           ]}>
           {subtitle}
-        </Text>
+        </AppText>
       ) : null}
     </View>
   );
@@ -56,16 +60,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  title: {
-    ...TYPOGRAPHY.heroTitle,
-  },
-
   subtitle: {
     marginTop: 8,
     fontSize: 18,
     lineHeight: 24,
-    fontWeight: '400',
-    color: '#7A7A7A',
   },
 
   textCentered: {

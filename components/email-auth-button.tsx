@@ -1,10 +1,11 @@
+import { useAppColors } from '@/hooks/use-app-colors';
 import { Ionicons } from '@expo/vector-icons';
 import {
-    ActivityIndicator,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 
 interface EmailAuthButtonProps {
@@ -18,6 +19,8 @@ export default function EmailAuthButton({
   disabled = false,
   loading = false,
 }: EmailAuthButtonProps) {
+  const colors = useAppColors();
+
   const isDisabled = disabled || loading;
 
   return (
@@ -28,6 +31,10 @@ export default function EmailAuthButton({
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+        },
         pressed && !isDisabled && styles.pressed,
         isDisabled && styles.disabled,
       ]}>
@@ -35,17 +42,21 @@ export default function EmailAuthButton({
         {loading ? (
           <ActivityIndicator
             size="small"
-            color="#1F1F1F"
+            color={colors.text}
           />
         ) : (
           <>
             <Ionicons
               name="mail-outline"
               size={16}
-              color="#1F1F1F"
+              color={colors.text}
             />
 
-            <Text style={styles.label}>
+            <Text
+              style={[
+                styles.label,
+                { color: colors.text },
+              ]}>
               Continue with Email
             </Text>
           </>
@@ -62,9 +73,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 16,
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#747775',
     borderRadius: 12,
   },
 
@@ -80,7 +89,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     lineHeight: 24,
     fontWeight: '600',
-    color: '#1F1F1F',
     textAlign: 'center',
   },
 

@@ -1,4 +1,5 @@
 import ActionSheet from '@/components/action-sheet';
+import AppText from '@/components/app-text';
 import Chip from '@/components/chip';
 import { MediaPreviewItemButton } from '@/components/media-preview-button';
 import PageHeader from '@/components/page-header';
@@ -6,11 +7,10 @@ import ScreenHeader from '@/components/screen-header';
 import SearchInput from '@/components/search-input';
 import SearchResultSkeleton from '@/components/search-result-skeleton';
 import { getCategoryArtworkRule } from '@/constants/category-artwork-rules';
-import { COLORS } from '@/constants/colors';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
-import { TYPOGRAPHY } from '@/constants/typography';
 import { useOnboardingCollection } from '@/context/onboarding-collection-context';
 import { useTop3 } from '@/context/top3-context';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { trackAnalyticsEvent } from '@/lib/analytics';
 import { stopAllMediaPreviewsFromCoordinator } from '@/lib/media-preview-coordinator';
 import {
@@ -138,6 +138,7 @@ function normalizeValue(value?: string) {
 }
 
 export default function SearchScreen() {
+  const colors = useAppColors();
   const params = useLocalSearchParams();
 
   const rank = params.rank;
@@ -895,12 +896,24 @@ const searchTitle = selectedType
     });
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+        },
+      ]}>
       <ScreenHeader showBackButton />
 
       <PageHeader title={searchTitle} />
 
-      <View style={styles.content}>
+      <View
+        style={[
+          styles.content,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
         <View style={styles.searchInputWrapper}>
           <SearchInput
             placeholder={searchPlaceholder}
@@ -917,23 +930,31 @@ const searchTitle = selectedType
         </View>
 
         {!canSearch ? (
-          <Text style={styles.searchHelper}>
+          <AppText
+            variant="subtitle"
+            tone="tertiary"
+            style={styles.searchHelper}>
             Type at least {MINIMUM_SEARCH_LENGTH}{' '}
             characters to search.
-          </Text>
+          </AppText>
         ) : null}
 
         {!hasSearched && !canSearch && suggestions.length > 0 ? (
           <View style={styles.suggestionsSection}>
             <View style={styles.suggestionsHeader}>
-  <Text style={styles.suggestionsTitle}>
+  <AppText
+    variant="selectionTitle"
+    emphasis="semibold">
     Suggestions
-  </Text>
+  </AppText>
 
   {suggestionPool.length > 5 ? (
     <Pressable
       style={({ pressed }) => [
         styles.shuffleButton,
+        {
+          backgroundColor: colors.secondarySurface,
+        },
         pressed && styles.shuffleButtonPressed,
       ]}
       onPress={refreshSuggestions}
@@ -952,13 +973,15 @@ const searchTitle = selectedType
         <Ionicons
           name="shuffle"
           size={16}
-          color={COLORS.accent}
+          color={colors.accent}
         />
       </Animated.View>
 
-      <Text style={styles.shuffleText}>
+      <AppText
+        variant="label"
+        tone="accent">
         Shuffle
-      </Text>
+      </AppText>
     </Pressable>
   ) : null}
 </View>
@@ -995,9 +1018,11 @@ const searchTitle = selectedType
 
           {isLoading ? (
             <>
-              <Text style={styles.sectionTitle}>
+              <AppText
+                variant="sectionTitle"
+                style={styles.sectionTitle}>
                 {resultsTitle}
-              </Text>
+              </AppText>
 
               <ScrollView
                 showsVerticalScrollIndicator={false}
@@ -1024,17 +1049,23 @@ const searchTitle = selectedType
               <Ionicons
                 name="cloud-offline-outline"
                 size={42}
-                color="#777777"
+                color={colors.tertiaryText}
                 style={styles.messageErrorIcon}
               />
 
-              <Text style={styles.messageTitle}>
+              <AppText
+                variant="sectionTitle"
+                emphasis="semibold"
+                style={styles.messageTitle}>
                 Search unavailable
-              </Text>
+              </AppText>
 
-              <Text style={styles.messageText}>
+              <AppText
+                variant="bodyLarge"
+                tone="tertiary"
+                style={styles.messageText}>
                 {searchError}
-              </Text>
+              </AppText>
             </View>
           ) : searchResults.length === 0 ? (
             <View style={styles.messageContainer}>
@@ -1042,19 +1073,27 @@ const searchTitle = selectedType
                 {searchIcon}
               </Text>
 
-              <Text style={styles.messageTitle}>
+              <AppText
+                variant="sectionTitle"
+                emphasis="semibold"
+                style={styles.messageTitle}>
                 No {searchItemName} results found
-              </Text>
+              </AppText>
 
-              <Text style={styles.messageText}>
+              <AppText
+                variant="bodyLarge"
+                tone="tertiary"
+                style={styles.messageText}>
                 Try another title or a broader search.
-              </Text>
+              </AppText>
             </View>
           ) : (
             <>
-              <Text style={styles.sectionTitle}>
+              <AppText
+                variant="sectionTitle"
+                style={styles.sectionTitle}>
                 {resultsTitle}
-              </Text>
+              </AppText>
 
               <Animated.View
                 style={[
@@ -1081,7 +1120,12 @@ const searchTitle = selectedType
                   {searchResults.map((item) => (
                     <Pressable
                       key={item.id}
-                      style={styles.resultRow}
+                      style={[
+                        styles.resultRow,
+                        {
+                          borderBottomColor: colors.border,
+                        },
+                      ]}
                       onPress={() => selectItem(item)}>
                       <View
                         style={[
@@ -1099,6 +1143,8 @@ const searchTitle = selectedType
                               {
                                 width: artworkRule.width,
                                 height: artworkRule.height,
+                                backgroundColor:
+                                  colors.skeletonSubtle,
                               },
                             ]}
                             resizeMode="cover"
@@ -1110,12 +1156,14 @@ const searchTitle = selectedType
                               {
                                 width: artworkRule.width,
                                 height: artworkRule.height,
+                                backgroundColor:
+                                  colors.skeletonSubtle,
                               },
                             ]}>
                             <Ionicons
                               name={placeholderIcon}
                               size={28}
-                              color="#999999"
+                              color={colors.tertiaryText}
                             />
                           </View>
                         )}
@@ -1123,24 +1171,35 @@ const searchTitle = selectedType
                       </View>
 
                       <View style={styles.resultDetails}>
-                        <Text style={styles.resultTitle}>
+                        <AppText
+                          variant="selectionTitle"
+                          emphasis="semibold">
                           {item.title}
-                        </Text>
+                        </AppText>
 
-                        <Text style={styles.metadata}>
+                        <AppText
+                          variant="bodyLarge"
+                          tone="tertiary"
+                          style={styles.metadata}>
                           {item.subtitle ||
                             'Details unavailable'}
                           {typeof item.rating === 'number'
                             ? ` · ★ ${item.rating.toFixed(1)}`
                             : ''}
-                        </Text>
+                        </AppText>
                       </View>
 
                       {activeCollection?.category ? (
                         <MediaPreviewItemButton
                           item={item}
                           category={activeCollection.category}
-                          style={styles.previewButton}
+                          style={[
+                            styles.previewButton,
+                            {
+                              backgroundColor:
+                                colors.secondarySurface,
+                            },
+                          ]}
                           onBeforePress={Keyboard.dismiss}
                           checkTrailerAvailability={false}
                         />
@@ -1177,13 +1236,11 @@ const searchTitle = selectedType
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
   },
 
   content: {
     flex: 1,
     paddingHorizontal: 20,
-    backgroundColor: '#F8F8F8',
   },
 
   searchInputWrapper: {
@@ -1191,21 +1248,13 @@ const styles = StyleSheet.create({
   },
 
   searchHelper: {
-    ...TYPOGRAPHY.subtitle,
     marginTop: -14,
     marginBottom: 20,
-    color: '#777777',
   },
 
   suggestionsSection: {
     marginTop: 4,
   },
-
-  suggestionsTitle: {
-  fontSize: 18,
-  fontWeight: '600',
-  color: '#222222',
-},
 
   suggestionList: {
     flexDirection: 'row',
@@ -1214,7 +1263,6 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    ...TYPOGRAPHY.sectionTitle,
     marginBottom: 16,
   },
 
@@ -1244,15 +1292,11 @@ const styles = StyleSheet.create({
   },
 
   messageTitle: {
-    fontSize: 20,
-    fontWeight: '600',
     marginBottom: 6,
     textAlign: 'center',
   },
 
   messageText: {
-    ...TYPOGRAPHY.bodyLarge,
-    color: '#777777',
     textAlign: 'center',
     marginTop: 10,
   },
@@ -1266,7 +1310,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
   },
 
   imageContainer: {
@@ -1279,7 +1322,6 @@ const styles = StyleSheet.create({
     width: 64,
     height: 96,
     borderRadius: 8,
-    backgroundColor: '#EEEEEE',
   },
 
   previewButton: {
@@ -1290,14 +1332,12 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F1F1F1',
   },
 
   imagePlaceholder: {
     width: 64,
     height: 96,
     borderRadius: 8,
-    backgroundColor: '#EEEEEE',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1307,14 +1347,7 @@ const styles = StyleSheet.create({
     marginLeft: 16,
   },
 
-  resultTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-
   metadata: {
-    ...TYPOGRAPHY.bodyLarge,
-    color: '#777777',
     marginTop: 6,
   },
 
@@ -1325,16 +1358,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 999,
-    backgroundColor: '#F1F1F1',
   },
 
   shuffleButtonPressed: {
     opacity: 0.65,
-  },
-
-  shuffleText: {
-    ...TYPOGRAPHY.label,
-    color: COLORS.accent,
   },
 
   suggestionsHeader: {

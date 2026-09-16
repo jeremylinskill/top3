@@ -2,6 +2,7 @@ import { CategoryId } from '@/constants/top3-categories';
 import { useAudioPreview } from '@/context/audio-preview-context';
 import { useBookPreview } from '@/context/book-preview-context';
 import { useTrailerPreview } from '@/context/trailer-preview-context';
+import { useAppColors } from '@/hooks/use-app-colors';
 import {
     getCachedTrailerAvailability,
     getMovieTrailerUrl,
@@ -442,9 +443,14 @@ export default function MediaPreviewButton({
   style,
   onBeforePress,
   iconSize = 17,
-  iconColor = '#555555',
+  iconColor,
   offsetPlayIcon = true,
 }: MediaPreviewButtonProps) {
+  const colors = useAppColors();
+
+  const resolvedIconColor =
+    iconColor ?? colors.secondaryText;
+
   if (!preview.available) {
     return null;
   }
@@ -484,7 +490,7 @@ export default function MediaPreviewButton({
         <Ionicons
           name={preview.iconName}
           size={iconSize}
-          color={iconColor}
+          color={resolvedIconColor}
           style={
             preview.iconName === 'play' &&
             offsetPlayIcon

@@ -1,7 +1,9 @@
-import { COLORS, TASTE_MATCH_RANK_COLORS } from '@/constants/colors';
+import AppText from '@/components/app-text';
+import { TASTE_MATCH_RANK_COLORS } from '@/constants/colors';
 import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
-import { TYPOGRAPHY } from '@/constants/typography';
+import { useAppColors } from '@/hooks/use-app-colors';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Pressable,
@@ -29,19 +31,28 @@ export default function DiscoverListCard({
   rank,
   reserveRankSpace = false,
 }: DiscoverListCardProps) {
+  const colors = useAppColors();
+
   return (
     <Pressable
       style={({ pressed }) => [
         styles.card,
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+        },
         pressed && styles.pressed,
       ]}
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}>
       {typeof rank === 'number' ? (
-        <Text style={styles.rankNumber}>
+        <AppText
+          variant="headline"
+          tone="primary"
+          style={styles.rankNumber}>
           {rank}
-        </Text>
+        </AppText>
       ) : reserveRankSpace ? (
         <View style={styles.rankSpacer} />
       ) : null}
@@ -53,7 +64,7 @@ export default function DiscoverListCard({
             {
               backgroundColor:
                 TASTE_MATCH_RANK_COLORS[rank - 1] ??
-                '#F3F3F3',
+                colors.border,
             },
           ]}>
           <Text style={styles.icon}>{icon}</Text>
@@ -69,18 +80,27 @@ export default function DiscoverListCard({
       )}
 
       <View style={styles.details}>
-        <Text
-          style={styles.title}
+        <AppText
+          variant="sectionTitle"
+          tone="primary"
           numberOfLines={2}>
           {title}
-        </Text>
+        </AppText>
 
-        <Text style={styles.metadata}>
+        <AppText
+          variant="caption"
+          tone="tertiary"
+          style={styles.metadata}>
           {metadata}
-        </Text>
+        </AppText>
       </View>
 
-      <Text style={styles.arrow}>›</Text>
+      <Ionicons
+        name="chevron-forward"
+        size={24}
+        color={colors.tertiaryText}
+        style={styles.arrow}
+      />
     </Pressable>
   );
 }
@@ -92,17 +112,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
     paddingVertical: 13,
-    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.border,
     borderRadius: RADIUS.xxl,
   },
 
   rankNumber: {
     width: 28,
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#222222',
     textAlign: 'center',
     transform: [{ translateX: -5 }],
   },
@@ -115,7 +130,6 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 15,
-    backgroundColor: '#F3F3F3',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -130,20 +144,12 @@ const styles = StyleSheet.create({
     marginLeft: 14,
   },
 
-  title: {
-    ...TYPOGRAPHY.sectionTitle,
-  },
-
   metadata: {
-    ...TYPOGRAPHY.caption,
     marginTop: SPACING.xs,
-    color: COLORS.tertiaryText,
   },
 
   arrow: {
     marginLeft: 10,
-    fontSize: 30,
-    color: COLORS.tertiaryText,
   },
 
   pressed: {

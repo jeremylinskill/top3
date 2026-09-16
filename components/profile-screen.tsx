@@ -1,13 +1,14 @@
 import ActionSheet, {
   ActionSheetAction,
 } from '@/components/action-sheet';
+import AppText from '@/components/app-text';
 import CommentsSheet from '@/components/comments-sheet';
 import ProfileScreenContent from '@/components/profile-screen-content';
 import ScreenHeader from '@/components/screen-header';
-import { TYPOGRAPHY } from '@/constants/typography';
 import { useBlock } from '@/context/block-context';
 import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { useAuth } from '@/hooks/use-auth';
 import { trackAnalyticsEvent } from '@/lib/analytics';
 import { sharePublishedCollection } from '@/lib/share';
@@ -36,7 +37,6 @@ import {
   ActivityIndicator,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -118,6 +118,7 @@ export default function ProfileScreen({
   userId,
   showBackButton = false,
 }: ProfileScreenProps) {
+  const colors = useAppColors();
   const { isAuthenticated } = useAuth();
   const { profile } = useProfile();
 
@@ -1284,18 +1285,29 @@ export default function ProfileScreen({
   if (isLoadingProfile) {
     return (
       <SafeAreaView
-        style={styles.container}
+        style={[
+          styles.container,
+          {
+            backgroundColor:
+              colors.background,
+          },
+        ]}
         edges={['top', 'left', 'right']}>
         <ScreenHeader
           showBackButton={showBackButton}
         />
 
         <View style={styles.messageContainer}>
-          <ActivityIndicator size="large" />
+          <ActivityIndicator
+            size="large"
+            color={colors.text}
+          />
 
-          <Text style={styles.loadingText}>
+          <AppText
+            variant="bodyLarge"
+            style={styles.loadingText}>
             Loading profile...
-          </Text>
+          </AppText>
         </View>
       </SafeAreaView>
     );
@@ -1304,7 +1316,13 @@ export default function ProfileScreen({
   if (!viewedUser) {
     return (
       <SafeAreaView
-        style={styles.container}
+        style={[
+          styles.container,
+          {
+            backgroundColor:
+              colors.background,
+          },
+        ]}
         edges={['top', 'left', 'right']}>
         <ScreenHeader
           title="Profile Not Found"
@@ -1312,14 +1330,18 @@ export default function ProfileScreen({
         />
 
         <View style={styles.messageContainer}>
-          <Text style={styles.messageTitle}>
+          <AppText
+            variant="stateTitle"
+            style={styles.messageTitle}>
             This profile is unavailable
-          </Text>
+          </AppText>
 
-          <Text style={styles.messageText}>
+          <AppText
+            variant="bodyLarge"
+            style={styles.messageText}>
             The user may no longer exist or the
             profile could not be loaded.
-          </Text>
+          </AppText>
         </View>
       </SafeAreaView>
     );
@@ -1327,7 +1349,13 @@ export default function ProfileScreen({
 
   return (
     <SafeAreaView
-      style={styles.container}
+      style={[
+        styles.container,
+        {
+          backgroundColor:
+            colors.background,
+        },
+      ]}
       edges={['top', 'left', 'right']}>
       <ScreenHeader
         showBackButton={showBackButton}
@@ -1449,7 +1477,6 @@ export default function ProfileScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
   },
 
   content: {
@@ -1466,22 +1493,15 @@ const styles = StyleSheet.create({
   },
 
   loadingText: {
-    ...TYPOGRAPHY.bodyLarge,
     marginTop: 12,
-    color: '#777777',
   },
 
   messageTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#222222',
     textAlign: 'center',
   },
 
   messageText: {
-    ...TYPOGRAPHY.bodyLarge,
     marginTop: 8,
-    color: '#777777',
     textAlign: 'center',
   },
 });

@@ -1,11 +1,13 @@
+import AppText from '@/components/app-text';
 import { MediaPreviewItemButton } from '@/components/media-preview-button';
 import PrimaryButton from '@/components/primary-button';
 import Top3Card from '@/components/top3-card';
 import { getCategoryArtworkRule } from '@/constants/category-artwork-rules';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
-import { TYPOGRAPHY } from '@/constants/typography';
+import { TEXT_STYLES } from '@/constants/typography';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { useAuth } from '@/hooks/use-auth';
 import { getPublishedPostsByUser } from '@/lib/supabase/collections';
 import { getPopularSuggestionsByCategory } from '@/providers/search';
@@ -49,6 +51,8 @@ function shuffleItems(
 
 
 export default function OnboardingPublishedScreen() {
+  const colors = useAppColors();
+
   const { height: windowHeight } =
     useWindowDimensions();
 
@@ -555,11 +559,17 @@ export default function OnboardingPublishedScreen() {
     isLoadingPublishedPost
   ) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
         <View style={styles.loadingContent}>
           <ActivityIndicator
             size="large"
-            color="#222222"
+            color={colors.text}
           />
         </View>
       </SafeAreaView>
@@ -572,15 +582,26 @@ export default function OnboardingPublishedScreen() {
     hasPublishedPostLoadError
   ) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
         <View style={styles.emptyContent}>
-          <Text style={styles.title}>
+          <AppText
+            variant="pageTitle"
+            style={styles.title}>
             Couldn&apos;t load your Top 3
-          </Text>
+          </AppText>
 
-          <Text style={styles.loadErrorText}>
+          <AppText
+            variant="body"
+            tone="tertiary"
+            style={styles.loadErrorText}>
             Check your connection and try again.
-          </Text>
+          </AppText>
 
           <PrimaryButton
             title="Try Again"
@@ -595,11 +616,19 @@ export default function OnboardingPublishedScreen() {
 
   if (!publishedPost) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
         <View style={styles.emptyContent}>
-          <Text style={styles.title}>
+          <AppText
+            variant="pageTitle"
+            style={styles.title}>
             Your taste is taking shape.
-          </Text>
+          </AppText>
         </View>
       </SafeAreaView>
     );
@@ -614,7 +643,13 @@ export default function OnboardingPublishedScreen() {
 
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
       <View
         style={[
           styles.content,
@@ -639,13 +674,17 @@ export default function OnboardingPublishedScreen() {
                   ),
               },
             ]}>
-            <Text style={styles.title}>
+            <AppText
+              variant="pageTitle"
+              style={styles.title}>
               Your taste is taking shape.
-            </Text>
+            </AppText>
 
-            <Text style={styles.subtitle}>
+            <AppText
+              variant="onboardingSubtitle"
+              style={styles.subtitle}>
               Every list you share helps build a picture of what you love.
-            </Text>
+            </AppText>
           </Animated.View>
 
 
@@ -662,13 +701,17 @@ export default function OnboardingPublishedScreen() {
                   ),
               },
             ]}>
-            <Text style={styles.title}>
+            <AppText
+              variant="pageTitle"
+              style={styles.title}>
               See what rises to the top.
-            </Text>
+            </AppText>
 
-            <Text style={styles.subtitle}>
+            <AppText
+              variant="onboardingSubtitle"
+              style={styles.subtitle}>
               Every Top 3 helps shape the community rankings.
-            </Text>
+            </AppText>
           </Animated.View>
         </View>
 
@@ -678,6 +721,10 @@ export default function OnboardingPublishedScreen() {
             styles.segmentedContainer,
             isCompactHeight &&
               styles.compactSegmentedContainer,
+            {
+              backgroundColor:
+                colors.secondarySurface,
+            },
           ]}
           onLayout={(event) => {
             setSegmentedWidth(
@@ -689,6 +736,10 @@ export default function OnboardingPublishedScreen() {
               pointerEvents="none"
               style={[
                 styles.segmentedIndicator,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                },
                 {
                   width:
                     (segmentedWidth - 8) / 2,
@@ -724,14 +775,14 @@ export default function OnboardingPublishedScreen() {
             accessibilityLabel="Show published list">
             <Animated.Text
               style={[
-                styles.segmentLabel,
+                TEXT_STYLES.segmentLabel,
                 {
                   color:
                     toggleProgress.interpolate({
                       inputRange: [0, 1],
                       outputRange: [
-                        '#222222',
-                        '#777777',
+                        colors.text,
+                        colors.tertiaryText,
                       ],
                     }),
                   opacity:
@@ -758,15 +809,20 @@ export default function OnboardingPublishedScreen() {
             }}
             accessibilityLabel="Show overall ranking">
             <View style={styles.segmentLabelStack}>
-              <Text style={styles.segmentLabel}>
+              <AppText
+                variant="segmentLabel"
+                tone="tertiary">
                 Overall
-              </Text>
+              </AppText>
 
               <Animated.Text
                 pointerEvents="none"
                 style={[
                   styles.segmentActiveLabelOverlay,
+                  TEXT_STYLES.segmentLabel,
                   {
+                    color: colors.text,
+                    fontWeight: '700',
                     opacity:
                       toggleProgress,
                   },
@@ -830,15 +886,21 @@ export default function OnboardingPublishedScreen() {
                 styles.overallCard,
                 isCompactHeight &&
                   styles.compactOverallCard,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                },
               ]}>
               <View style={styles.titleRow}>
                 <Text style={styles.categoryIcon}>
                   {category?.icon ?? '⭐'}
                 </Text>
 
-                <Text style={styles.cardTitle}>
+                <AppText
+                  variant="collectionTitle"
+                  style={styles.cardTitle}>
                   {overallTitle}
-                </Text>
+                </AppText>
               </View>
 
 
@@ -850,14 +912,19 @@ export default function OnboardingPublishedScreen() {
                       style={[
                         styles.rankRow,
                         styles.standardRankRow,
+                        {
+                          backgroundColor:
+                            colors.secondarySurface,
+                        },
                         index ===
                           overallItems.length - 1 &&
                           styles.lastRankRow,
                       ]}>
-                      <Text
+                      <AppText
+                        variant="compactRankNumber"
                         style={styles.rankNumber}>
                         {index + 1}
-                      </Text>
+                      </AppText>
 
 
                       <View
@@ -882,6 +949,8 @@ export default function OnboardingPublishedScreen() {
                                   artworkRule.width,
                                 height:
                                   artworkRule.height,
+                                backgroundColor:
+                                  colors.skeletonSubtle,
                               },
                             ]}
                             resizeMode="cover"
@@ -895,12 +964,14 @@ export default function OnboardingPublishedScreen() {
                                   artworkRule.width,
                                 height:
                                   artworkRule.height,
+                                backgroundColor:
+                                  colors.skeletonSubtle,
                               },
                             ]}>
                             <Ionicons
                               name="image-outline"
                               size={24}
-                              color="#999999"
+                              color={colors.tertiaryText}
                             />
                           </View>
                         )}
@@ -909,22 +980,21 @@ export default function OnboardingPublishedScreen() {
 
                       <View
                         style={styles.itemDetails}>
-                        <Text
-                          style={styles.itemTitle}
+                        <AppText
+                          variant="cardTitle"
                           numberOfLines={2}
                           ellipsizeMode="tail">
                           {item.title}
-                        </Text>
+                        </AppText>
 
                         {item.subtitle ? (
-                          <Text
-                            style={
-                              styles.itemSubtitle
-                            }
+                          <AppText
+                            variant="subtitle"
+                            style={styles.itemSubtitle}
                             numberOfLines={1}
                             ellipsizeMode="tail">
                             {item.subtitle}
-                          </Text>
+                          </AppText>
                         ) : null}
 
                         {typeof item.rating ===
@@ -933,19 +1003,19 @@ export default function OnboardingPublishedScreen() {
                             style={
                               styles.ratingRow
                             }>
-                            <Text
-                              style={
-                                styles.ratingText
-                              }>
+                            <AppText
+                              variant="caption"
+                              tone="secondary"
+                              style={styles.ratingText}>
                               {item.rating.toFixed(
                                 1
                               )}
-                            </Text>
+                            </AppText>
 
                             <Ionicons
                               name="star"
                               size={13}
-                              color="#555555"
+                              color={colors.secondaryText}
                             />
                           </View>
                         ) : null}
@@ -955,7 +1025,13 @@ export default function OnboardingPublishedScreen() {
                       <MediaPreviewItemButton
                         item={item}
                         category={publishedPost.collection.category}
-                        style={styles.previewButton}
+                        style={[
+                          styles.previewButton,
+                          {
+                            backgroundColor:
+                              colors.surface,
+                          },
+                        ]}
                       />
                     </View>
                   )
@@ -968,14 +1044,17 @@ export default function OnboardingPublishedScreen() {
                   <Ionicons
                     name="people-outline"
                     size={15}
-                    color="#888888"
+                    color={colors.tertiaryText}
                   />
 
-                  <Text style={styles.footerText}>
+                  <AppText
+                    variant="metadata"
+                    tone="tertiary"
+                    style={styles.footerText}>
                     Based on{' '}
                     {DEMO_PUBLISHED_LIST_COUNT}{' '}
                     published lists
-                  </Text>
+                  </AppText>
                 </View>
               </View>
             </View>
@@ -984,7 +1063,14 @@ export default function OnboardingPublishedScreen() {
       </View>
 
 
-      <View style={styles.bottomBar}>
+      <View
+        style={[
+          styles.bottomBar,
+          {
+            backgroundColor: colors.background,
+            borderTopColor: colors.border,
+          },
+        ]}>
         <PrimaryButton
           title="Continue"
           onPress={continueOnboarding}
@@ -1000,7 +1086,6 @@ export default function OnboardingPublishedScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
   },
 
 
@@ -1059,7 +1144,6 @@ const styles = StyleSheet.create({
 
 
   title: {
-    ...TYPOGRAPHY.pageTitle,
     textAlign: 'center',
   },
 
@@ -1067,9 +1151,6 @@ const styles = StyleSheet.create({
   subtitle: {
     marginTop: 12,
     paddingHorizontal: 14,
-    fontSize: 17,
-    lineHeight: 24,
-    color: '#777777',
     textAlign: 'center',
   },
 
@@ -1079,7 +1160,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginTop: 20,
     padding: 4,
-    backgroundColor: '#EEEEEE',
     borderRadius: 12,
   },
 
@@ -1095,9 +1175,7 @@ const styles = StyleSheet.create({
     left: 4,
     bottom: 4,
     borderRadius: 9,
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E2E2E2',
   },
 
 
@@ -1111,13 +1189,6 @@ const styles = StyleSheet.create({
   },
 
 
-  segmentLabel: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#777777',
-  },
-
-
   segmentLabelStack: {
     position: 'relative',
     alignItems: 'center',
@@ -1127,9 +1198,6 @@ const styles = StyleSheet.create({
 
   segmentActiveLabelOverlay: {
     position: 'absolute',
-    color: '#222222',
-    fontSize: 15,
-    fontWeight: '700',
   },
 
 
@@ -1159,10 +1227,8 @@ const styles = StyleSheet.create({
 
 
   overallCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#EAEAEA',
     padding: 18,
   },
 
@@ -1189,10 +1255,6 @@ const styles = StyleSheet.create({
 
   cardTitle: {
     flex: 1,
-    fontSize: 24,
-    lineHeight: 30,
-    fontWeight: '700',
-    color: '#222222',
   },
 
 
@@ -1216,7 +1278,6 @@ const styles = StyleSheet.create({
   standardRankRow: {
     marginHorizontal: -10,
     paddingHorizontal: 10,
-    backgroundColor: '#F8F8F8',
     borderRadius: 12,
   },
 
@@ -1224,9 +1285,6 @@ const styles = StyleSheet.create({
 
   rankNumber: {
     width: 28,
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#222222',
   },
 
 
@@ -1238,13 +1296,11 @@ const styles = StyleSheet.create({
 
   itemImage: {
     borderRadius: 9,
-    backgroundColor: '#EEEEEE',
   },
 
 
   imagePlaceholder: {
     borderRadius: 9,
-    backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1258,7 +1314,6 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
   },
 
 
@@ -1268,13 +1323,7 @@ const styles = StyleSheet.create({
   },
 
 
-  itemTitle: {
-    ...TYPOGRAPHY.cardTitle,
-  },
-
-
   itemSubtitle: {
-    ...TYPOGRAPHY.subtitle,
     marginTop: 4,
   },
 
@@ -1288,9 +1337,6 @@ const styles = StyleSheet.create({
 
   ratingText: {
     marginRight: 4,
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#555555',
   },
 
 
@@ -1310,8 +1356,6 @@ const styles = StyleSheet.create({
 
   footerText: {
     marginLeft: 5,
-    fontSize: 13,
-    color: '#777777',
   },
 
 
@@ -1319,16 +1363,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 8,
-    backgroundColor: '#FAFAFA',
     borderTopWidth:
       StyleSheet.hairlineWidth,
-    borderTopColor: '#DDDDDD',
   },
 
   loadErrorText: {
-    ...TYPOGRAPHY.body,
     marginTop: 8,
-    color: '#777777',
     textAlign: 'center',
   },
 

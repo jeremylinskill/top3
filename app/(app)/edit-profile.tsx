@@ -1,11 +1,12 @@
 import ActionSheet from '@/components/action-sheet';
+import AppText from '@/components/app-text';
 import PageHeader from '@/components/page-header';
 import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
 import UserAvatar from '@/components/user-avatar';
-import { COLORS } from '@/constants/colors';
-import { TYPOGRAPHY } from '@/constants/typography';
+import { TEXT_STYLES } from '@/constants/typography';
 import { useProfile } from '@/context/profile-context';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
@@ -17,7 +18,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from 'react-native';
@@ -36,6 +36,7 @@ type ProfileActionSheet =
   | null;
 
 export default function EditProfileScreen() {
+  const colors = useAppColors();
   const { profile, updateProfile } = useProfile();
 
   const scrollViewRef = useRef<ScrollView>(null);
@@ -261,7 +262,13 @@ export default function EditProfileScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+        },
+      ]}>
       <ScreenHeader showBackButton />
 
       <PageHeader
@@ -278,7 +285,12 @@ export default function EditProfileScreen() {
         }>
         <ScrollView
           ref={scrollViewRef}
-          style={styles.scrollView}
+          style={[
+            styles.scrollView,
+            {
+              backgroundColor: colors.background,
+            },
+          ]}
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode={
@@ -294,6 +306,9 @@ export default function EditProfileScreen() {
               <Pressable
                 style={({ pressed }) => [
                   styles.avatarButton,
+                  {
+                    backgroundColor: colors.text,
+                  },
                   pressed &&
                     !isSaving &&
                     styles.avatarButtonPressed,
@@ -312,11 +327,18 @@ export default function EditProfileScreen() {
                   fontSize={40}
                 />
 
-                <View style={styles.cameraBadge}>
+                <View
+                  style={[
+                    styles.cameraBadge,
+                    {
+                      backgroundColor: colors.accent,
+                      borderColor: colors.background,
+                    },
+                  ]}>
                   <Ionicons
                     name="camera"
                     size={17}
-                    color="#FFFFFF"
+                    color={colors.white}
                   />
                 </View>
               </Pressable>
@@ -333,24 +355,38 @@ export default function EditProfileScreen() {
                     !isSaving &&
                     styles.avatarHelpButtonPressed,
                 ]}>
-                <Text style={styles.avatarHelpText}>
+                <AppText
+                  variant="label"
+                  tone="tertiary"
+                  emphasis="regular"
+                  style={styles.avatarHelpText}>
                   Tap photo to change
-                </Text>
+                </AppText>
               </Pressable>
             </View>
 
             <View style={styles.field}>
-              <Text style={styles.label}>
+              <AppText
+                variant="formLabel"
+                style={styles.label}>
                 Display name
-              </Text>
+              </AppText>
 
               <TextInput
-                style={styles.input}
+                style={[
+                  styles.input,
+                  TEXT_STYLES.bodyLarge,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                    color: colors.text,
+                  },
+                ]}
                 value={displayName}
                 onChangeText={setDisplayName}
                 placeholder="Your name"
                 placeholderTextColor={
-                  COLORS.tertiaryText
+                  colors.tertiaryText
                 }
                 autoCapitalize="words"
                 autoCorrect={false}
@@ -364,18 +400,35 @@ export default function EditProfileScreen() {
             </View>
 
             <View style={styles.field}>
-              <Text style={styles.label}>
+              <AppText
+                variant="formLabel"
+                style={styles.label}>
                 Username
-              </Text>
+              </AppText>
 
-              <View style={styles.usernameInput}>
-                <Text style={styles.atSymbol}>
+              <View
+                style={[
+                  styles.usernameInput,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                  },
+                ]}>
+                <AppText
+                  variant="bodyLarge"
+                  tone="tertiary">
                   @
-                </Text>
+                </AppText>
 
                 <TextInput
                   ref={usernameInputRef}
-                  style={styles.usernameTextInput}
+                  style={[
+                    styles.usernameTextInput,
+                    TEXT_STYLES.bodyLarge,
+                    {
+                      color: colors.text,
+                    },
+                  ]}
                   value={username}
                   onChangeText={(value) =>
                     setUsername(
@@ -384,7 +437,7 @@ export default function EditProfileScreen() {
                   }
                   placeholder="username"
                   placeholderTextColor={
-                    COLORS.tertiaryText
+                    colors.tertiaryText
                   }
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -399,22 +452,30 @@ export default function EditProfileScreen() {
             </View>
 
             <View style={styles.field}>
-              <Text style={styles.label}>
+              <AppText
+                variant="formLabel"
+                style={styles.label}>
                 Bio
-              </Text>
+              </AppText>
 
               <TextInput
                 ref={bioInputRef}
                 style={[
                   styles.input,
+                  TEXT_STYLES.bodyLarge,
                   styles.bioInput,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                    color: colors.text,
+                  },
                 ]}
                 value={bio}
                 onChangeText={setBio}
                 onFocus={focusBioField}
                 placeholder="Tell people about your taste."
                 placeholderTextColor={
-                  COLORS.tertiaryText
+                  colors.tertiaryText
                 }
                 editable={!isSaving}
                 multiline
@@ -422,15 +483,25 @@ export default function EditProfileScreen() {
                 maxLength={160}
               />
 
-              <Text style={styles.characterCount}>
+              <AppText
+                variant="metadata"
+                tone="tertiary"
+                style={styles.characterCount}>
                 {bio.length}/160
-              </Text>
+              </AppText>
             </View>
 
           </Pressable>
         </ScrollView>
 
-        <View style={styles.bottomBar}>
+        <View
+          style={[
+            styles.bottomBar,
+            {
+              backgroundColor: colors.background,
+              borderTopColor: colors.border,
+            },
+          ]}>
           <PrimaryButton
             title={
               isSaving
@@ -466,7 +537,6 @@ export default function EditProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
 
   keyboardContainer: {
@@ -475,7 +545,6 @@ const styles = StyleSheet.create({
 
   scrollView: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
 
   content: {
@@ -492,7 +561,6 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: COLORS.text,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'visible',
@@ -513,9 +581,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: COLORS.accent,
     borderWidth: 3,
-    borderColor: COLORS.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -529,9 +595,6 @@ const styles = StyleSheet.create({
   },
 
   avatarHelpText: {
-    ...TYPOGRAPHY.label,
-    fontWeight: '400',
-    color: COLORS.tertiaryText,
     textAlign: 'center',
   },
 
@@ -540,42 +603,27 @@ const styles = StyleSheet.create({
   },
 
   label: {
-    ...TYPOGRAPHY.formLabel,
     marginBottom: 8,
-    color: COLORS.text,
   },
 
   input: {
     borderWidth: 1,
-    borderColor: COLORS.border,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
     paddingHorizontal: 14,
     paddingVertical: 14,
-    ...TYPOGRAPHY.bodyLarge,
-    color: COLORS.text,
   },
 
   usernameInput: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: COLORS.border,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
     paddingHorizontal: 14,
   },
 
-  atSymbol: {
-    ...TYPOGRAPHY.bodyLarge,
-    color: COLORS.tertiaryText,
-  },
-
   usernameTextInput: {
-    ...TYPOGRAPHY.bodyLarge,
     flex: 1,
     paddingVertical: 14,
-    color: COLORS.text,
   },
 
   bioInput: {
@@ -583,19 +631,15 @@ const styles = StyleSheet.create({
   },
 
   characterCount: {
-    ...TYPOGRAPHY.metadata,
     marginTop: 6,
     textAlign: 'right',
-    color: COLORS.tertiaryText,
   },
 
   bottomBar: {
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 16,
-    backgroundColor: COLORS.background,
     borderTopWidth:
       StyleSheet.hairlineWidth,
-    borderTopColor: COLORS.border,
   },
 });

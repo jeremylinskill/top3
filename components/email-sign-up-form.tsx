@@ -1,8 +1,10 @@
 import ActionSheet from '@/components/action-sheet';
 
+import AppText from '@/components/app-text';
+
 import AuthProviderButton from '@/components/auth-provider-button';
-import { COLORS } from '@/constants/colors';
-import { TYPOGRAPHY } from '@/constants/typography';
+import { TEXT_STYLES } from '@/constants/typography';
+import { useAppColors } from '@/hooks/use-app-colors';
 
 import { signUpWithEmail } from '@/services/auth-service';
 
@@ -21,7 +23,6 @@ import {
 import {
   Pressable,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from 'react-native';
@@ -99,6 +100,8 @@ function getEmailSuggestion(
 export default function EmailSignUpForm({
   onSuccess,
 }: EmailSignUpFormProps) {
+  const colors = useAppColors();
+
   const passwordInputRef =
     useRef<TextInput>(null);
 
@@ -317,7 +320,11 @@ export default function EmailSignUpForm({
     <>
       <View style={styles.container}>
         <View style={styles.field}>
-          <Text style={styles.label}>Email</Text>
+          <AppText
+            variant="formLabel"
+            style={styles.label}>
+            Email
+          </AppText>
 
           <TextInput
             accessibilityLabel="Email"
@@ -331,18 +338,38 @@ export default function EmailSignUpForm({
               passwordInputRef.current?.focus()
             }
             placeholder="you@example.com"
-            placeholderTextColor="#999999"
+            placeholderTextColor={
+              colors.tertiaryText
+            }
             returnKeyType="next"
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                borderColor: colors.border,
+                backgroundColor: colors.surface,
+                color: colors.text,
+              },
+            ]}
             textContentType="emailAddress"
             value={email}
           />
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>Password</Text>
+          <AppText
+            variant="formLabel"
+            style={styles.label}>
+            Password
+          </AppText>
 
-          <View style={styles.passwordInputContainer}>
+          <View
+            style={[
+              styles.passwordInputContainer,
+              {
+                borderColor: colors.border,
+                backgroundColor: colors.surface,
+              },
+            ]}>
             <TextInput
               ref={passwordInputRef}
               accessibilityLabel="Password"
@@ -355,10 +382,15 @@ export default function EmailSignUpForm({
                 confirmPasswordInputRef.current?.focus()
               }
               placeholder="Enter a password"
-              placeholderTextColor="#999999"
+              placeholderTextColor={
+                colors.tertiaryText
+              }
               returnKeyType="next"
               secureTextEntry={!showPassword}
-              style={styles.passwordInput}
+              style={[
+                styles.passwordInput,
+                { color: colors.text },
+              ]}
               textContentType="newPassword"
               value={password}
             />
@@ -391,22 +423,33 @@ export default function EmailSignUpForm({
                     : 'eye-outline'
                 }
                 size={22}
-                color="#666666"
+                color={colors.secondaryText}
               />
             </Pressable>
           </View>
 
-          <Text style={styles.passwordHint}>
+          <AppText
+            variant="metadata"
+            style={styles.passwordHint}>
             Must be at least 8 characters
-          </Text>
+          </AppText>
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>
+          <AppText
+            variant="formLabel"
+            style={styles.label}>
             Confirm password
-          </Text>
+          </AppText>
 
-          <View style={styles.passwordInputContainer}>
+          <View
+            style={[
+              styles.passwordInputContainer,
+              {
+                borderColor: colors.border,
+                backgroundColor: colors.surface,
+              },
+            ]}>
             <TextInput
               ref={confirmPasswordInputRef}
               accessibilityLabel="Confirm password"
@@ -417,10 +460,15 @@ export default function EmailSignUpForm({
               onChangeText={setConfirmPassword}
               onSubmitEditing={handleSubmit}
               placeholder="Enter your password again"
-              placeholderTextColor="#999999"
+              placeholderTextColor={
+                colors.tertiaryText
+              }
               returnKeyType="done"
               secureTextEntry={!showConfirmPassword}
-              style={styles.passwordInput}
+              style={[
+                styles.passwordInput,
+                { color: colors.text },
+              ]}
               textContentType="newPassword"
               value={confirmPassword}
             />
@@ -453,7 +501,7 @@ export default function EmailSignUpForm({
                     : 'eye-outline'
                 }
                 size={22}
-                color="#666666"
+                color={colors.secondaryText}
               />
             </Pressable>
           </View>
@@ -565,7 +613,6 @@ const styles = StyleSheet.create({
   },
 
   label: {
-    ...TYPOGRAPHY.formLabel,
     marginBottom: 8,
   },
 
@@ -574,11 +621,8 @@ const styles = StyleSheet.create({
     minHeight: 54,
     paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: '#D9D9D9',
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    ...TYPOGRAPHY.bodyLarge,
-    color: COLORS.text,
+    ...TEXT_STYLES.bodyLarge,
   },
 
   passwordInputContainer: {
@@ -587,9 +631,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#D9D9D9',
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
   },
 
   passwordInput: {
@@ -597,12 +639,10 @@ const styles = StyleSheet.create({
     minHeight: 54,
     paddingLeft: 16,
     paddingRight: 8,
-    ...TYPOGRAPHY.bodyLarge,
-    color: COLORS.text,
+    ...TEXT_STYLES.bodyLarge,
   },
 
   passwordHint: {
-    ...TYPOGRAPHY.metadata,
     marginTop: 6,
   },
 

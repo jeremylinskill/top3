@@ -1,8 +1,9 @@
+import { useAppColors } from '@/hooks/use-app-colors';
 import { ReactNode } from 'react';
 import {
-    StyleSheet,
-    View,
-    ViewStyle,
+  StyleSheet,
+  View,
+  ViewStyle,
 } from 'react-native';
 
 type CardProps = {
@@ -14,8 +15,18 @@ export default function Card({
   children,
   style,
 }: CardProps) {
+  const colors = useAppColors();
+
   return (
-    <View style={[styles.card, style]}>
+    <View
+      style={[
+        styles.card,
+        {
+          borderColor: colors.border,
+          backgroundColor: colors.surface,
+        },
+        style,
+      ]}>
       {children}
     </View>
   );
@@ -25,7 +36,5 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#EAEAEA',
-    backgroundColor: '#FFFFFF',
   },
 });

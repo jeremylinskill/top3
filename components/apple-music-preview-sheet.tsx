@@ -1,4 +1,5 @@
 import { useAudioPreview } from '@/context/audio-preview-context';
+import { usePreviewSheetColors } from '@/hooks/use-preview-sheet-colors';
 import { Ionicons } from '@expo/vector-icons';
 import {
   Image,
@@ -45,6 +46,8 @@ export default function AppleMusicPreviewSheet() {
   } = useAudioPreview();
 
   const insets = useSafeAreaInsets();
+  const previewColors =
+    usePreviewSheetColors();
 
   const shouldShow =
     Boolean(
@@ -93,32 +96,71 @@ export default function AppleMusicPreviewSheet() {
     `${previewProgress * 100}%` as `${number}%`;
 
   return (
-    <View
-      pointerEvents="box-none"
-      style={[
-        styles.positioner,
+    <>
+      <View
+        pointerEvents="none"
+        style={[
+          styles.backdrop,
+          {
+            backgroundColor:
+              previewColors.backdrop,
+          },
+        ]}
+      />
+
+      <View
+        pointerEvents="box-none"
+        style={[
+          styles.positioner,
         {
           bottom: Math.max(insets.bottom - 2, 4),
         },
       ]}>
-      <View style={styles.sheet}>
+      <View
+        style={[
+          styles.sheet,
+          {
+            backgroundColor:
+              previewColors.surface,
+            borderColor:
+              previewColors.border,
+          },
+        ]}>
         <View style={styles.header}>
           <View style={styles.headerDetails}>
             <Text
-              style={styles.eyebrow}
+              style={[
+                styles.eyebrow,
+                {
+                  color:
+                    previewColors.tertiaryText,
+                },
+              ]}
               numberOfLines={1}>
               PREVIEW PLAYING
             </Text>
 
             <Text
-              style={styles.title}
+              style={[
+                styles.title,
+                {
+                  color:
+                    previewColors.primaryText,
+                },
+              ]}
               numberOfLines={1}>
               {activePreviewItem.title}
             </Text>
 
             {activePreviewItem.subtitle ? (
               <Text
-                style={styles.subtitle}
+                style={[
+                  styles.subtitle,
+                  {
+                    color:
+                      previewColors.secondaryText,
+                  },
+                ]}
                 numberOfLines={1}>
                 {activePreviewItem.subtitle}
               </Text>
@@ -128,7 +170,12 @@ export default function AppleMusicPreviewSheet() {
           <Pressable
             style={({ pressed }) => [
               styles.closeButton,
-              pressed && styles.closeButtonPressed,
+              {
+                backgroundColor:
+                  previewColors.control,
+              },
+              pressed &&
+                styles.closeButtonPressed,
             ]}
             onPress={stopPreview}
             hitSlop={8}
@@ -137,7 +184,9 @@ export default function AppleMusicPreviewSheet() {
             <Ionicons
               name="close"
               size={20}
-              color="#FFFFFF"
+              color={
+                previewColors.primaryText
+              }
             />
           </Pressable>
         </View>
@@ -148,16 +197,31 @@ export default function AppleMusicPreviewSheet() {
               source={{
                 uri: activePreviewItem.imageUrl,
               }}
-              style={styles.artwork}
+              style={[
+                styles.artwork,
+                {
+                  backgroundColor:
+                    previewColors.placeholder,
+                },
+              ]}
               resizeMode="cover"
               accessibilityIgnoresInvertColors
             />
           ) : (
-            <View style={styles.artworkPlaceholder}>
+            <View
+              style={[
+                styles.artworkPlaceholder,
+                {
+                  backgroundColor:
+                    previewColors.placeholder,
+                },
+              ]}>
               <Ionicons
                 name="musical-note"
                 size={28}
-                color="#8A8A8A"
+                color={
+                  previewColors.placeholderIcon
+                }
               />
             </View>
           )}
@@ -173,7 +237,14 @@ export default function AppleMusicPreviewSheet() {
             hitSlop={6}
             accessibilityRole="link"
             accessibilityLabel={`Open ${activePreviewItem.title} in Apple Music`}>
-            <Text style={styles.linkText}>
+            <Text
+              style={[
+                styles.linkText,
+                {
+                  color:
+                    previewColors.primaryText,
+                },
+              ]}>
               Apple Music ↗
             </Text>
           </Pressable>
@@ -181,7 +252,13 @@ export default function AppleMusicPreviewSheet() {
 
         <View style={styles.progressSection}>
           <View
-            style={styles.progressTrack}
+            style={[
+              styles.progressTrack,
+              {
+                backgroundColor:
+                  previewColors.control,
+              },
+            ]}
             accessibilityRole="progressbar"
             accessibilityValue={{
               min: 0,
@@ -193,27 +270,49 @@ export default function AppleMusicPreviewSheet() {
                 styles.progressFill,
                 {
                   width: progressWidth,
+                  backgroundColor:
+                    previewColors.primaryText,
                 },
               ]}
             />
           </View>
 
           <View style={styles.timeRow}>
-            <Text style={styles.timeText}>
+            <Text
+              style={[
+                styles.timeText,
+                {
+                  color:
+                    previewColors.tertiaryText,
+                },
+              ]}>
               {formatTime(previewCurrentTime)}
             </Text>
 
-            <Text style={styles.timeText}>
+            <Text
+              style={[
+                styles.timeText,
+                {
+                  color:
+                    previewColors.tertiaryText,
+                },
+              ]}>
               {formatTime(previewDuration)}
             </Text>
           </View>
         </View>
       </View>
     </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 999,
+  },
+
   positioner: {
     position: 'absolute',
     left: 12,
@@ -223,10 +322,8 @@ const styles = StyleSheet.create({
 
   sheet: {
     minHeight: 72,
-    backgroundColor: '#111111',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#2A2A2A',
     paddingVertical: 12,
     paddingHorizontal: 14,
     shadowColor: '#000000',
@@ -258,7 +355,6 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#2A2A2A',
   },
 
   closeButtonPressed: {
@@ -276,7 +372,6 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 6,
-    backgroundColor: '#2A2A2A',
   },
 
   artworkPlaceholder: {
@@ -285,29 +380,23 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#2A2A2A',
   },
-
-
 
   eyebrow: {
     fontSize: 9,
     fontWeight: '700',
     letterSpacing: 0.7,
-    color: '#B8B8B8',
     marginBottom: 3,
   },
 
   title: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
   },
 
   subtitle: {
     marginTop: 3,
     fontSize: 13,
-    color: '#D0D0D0',
   },
 
   link: {
@@ -320,7 +409,6 @@ const styles = StyleSheet.create({
   linkText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#FFFFFF',
   },
 
   linkPressed: {
@@ -336,13 +424,11 @@ const styles = StyleSheet.create({
     height: 2,
     overflow: 'hidden',
     borderRadius: 1,
-    backgroundColor: '#2A2A2A',
   },
 
   progressFill: {
     height: '100%',
     borderRadius: 1,
-    backgroundColor: '#FFFFFF',
   },
 
   timeRow: {
@@ -353,7 +439,6 @@ const styles = StyleSheet.create({
 
   timeText: {
     fontSize: 9,
-    color: '#B8B8B8',
     fontVariant: ['tabular-nums'],
   },
 });

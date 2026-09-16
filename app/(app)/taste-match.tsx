@@ -1,17 +1,17 @@
+import AppText from '@/components/app-text';
 import FollowButton from '@/components/follow-button';
 import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
 import UserAvatar from '@/components/user-avatar';
 import {
-  COLORS,
   TASTE_MATCH_RANK_COLORS,
 } from '@/constants/colors';
 import { SPACING } from '@/constants/spacing';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
-import { TYPOGRAPHY } from '@/constants/typography';
 import { useBlock } from '@/context/block-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { trackAnalyticsEvent } from '@/lib/analytics';
 import { getPublicProfilesByIds } from '@/lib/supabase/profiles';
 import {
@@ -222,6 +222,7 @@ function getSharedPickCount(
 }
 
 export default function TasteMatchScreen() {
+  const colors = useAppColors();
   const params = useLocalSearchParams<{
     userId?: string | string[];
   }>();
@@ -563,27 +564,35 @@ return getTasteRecommendationForUser({
       <View
         style={[
           styles.rankItem,
-          isShared && {
-            backgroundColor:
-              TASTE_MATCH_RANK_COLORS[
-                rank - 1
-              ] ??
-              COLORS.tasteMatchBackground,
-          },
+          isShared
+            ? {
+                backgroundColor:
+                  TASTE_MATCH_RANK_COLORS[
+                    rank - 1
+                  ] ??
+                  colors.tasteMatchBackground,
+              }
+            : {
+                backgroundColor:
+                  colors.secondarySurface,
+              },
         ]}>
-        <Text style={styles.rankNumber}>
+        <AppText
+          variant="caption"
+          tone={isShared ? 'onHighlight' : 'primary'}
+          emphasis="strong"
+          style={styles.rankNumber}>
           {rank}
-        </Text>
+        </AppText>
 
-        <Text
-          style={[
-            styles.rankItemText,
-            isShared &&
-              styles.sharedRankItemText,
-          ]}
+        <AppText
+          variant="caption"
+          tone={isShared ? 'onHighlight' : 'secondary'}
+          emphasis={isShared ? 'heavy' : 'default'}
+          style={styles.rankItemText}
           numberOfLines={2}>
           {title || 'Not ranked'}
-        </Text>
+        </AppText>
 
       </View>
     );
@@ -592,19 +601,27 @@ return getTasteRecommendationForUser({
   if (isLoadingViewedUser) {
     return (
       <SafeAreaView
-        style={styles.container}
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}
         edges={['top', 'left', 'right']}>
         <ScreenHeader showBackButton />
 
         <View style={styles.stateContainer}>
           <ActivityIndicator
             size="small"
-            color={COLORS.tertiaryText}
+            color={colors.tertiaryText}
           />
 
-          <Text style={styles.loadingText}>
+          <AppText
+            variant="body"
+            tone="tertiary"
+            style={styles.loadingText}>
             Calculating your taste match…
-          </Text>
+          </AppText>
         </View>
       </SafeAreaView>
     );
@@ -616,18 +633,28 @@ return getTasteRecommendationForUser({
   ) {
     return (
       <SafeAreaView
-        style={styles.container}
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}
         edges={['top', 'left', 'right']}>
         <ScreenHeader showBackButton />
 
         <View style={styles.stateContainer}>
-          <Text style={styles.stateTitle}>
+          <AppText
+            variant="sectionTitle"
+            style={styles.stateTitle}>
             Couldn’t load this Taste Match
-          </Text>
+          </AppText>
 
-          <Text style={styles.stateText}>
+          <AppText
+            variant="body"
+            tone="tertiary"
+            style={styles.stateText}>
             Check your connection and try again.
-          </Text>
+          </AppText>
 
           <PrimaryButton
             title="Try Again"
@@ -646,18 +673,28 @@ return getTasteRecommendationForUser({
   if (!viewedUser) {
     return (
       <SafeAreaView
-        style={styles.container}
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}
         edges={['top', 'left', 'right']}>
         <ScreenHeader showBackButton />
 
         <View style={styles.stateContainer}>
-          <Text style={styles.stateTitle}>
+          <AppText
+            variant="sectionTitle"
+            style={styles.stateTitle}>
             Match unavailable
-          </Text>
+          </AppText>
 
-          <Text style={styles.stateText}>
+          <AppText
+            variant="body"
+            tone="tertiary"
+            style={styles.stateText}>
             This profile could not be loaded.
-          </Text>
+          </AppText>
         </View>
       </SafeAreaView>
     );
@@ -665,7 +702,12 @@ return getTasteRecommendationForUser({
 
   return (
     <SafeAreaView
-      style={styles.container}
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+        },
+      ]}
       edges={['top', 'left', 'right']}>
       <ScreenHeader showBackButton />
 
@@ -676,31 +718,49 @@ return getTasteRecommendationForUser({
           <View style={styles.stateContainer}>
             <ActivityIndicator
               size="small"
-              color={COLORS.tertiaryText}
+              color={colors.tertiaryText}
             />
 
-            <Text style={styles.loadingText}>
+            <AppText
+              variant="body"
+              tone="tertiary"
+              style={styles.loadingText}>
               Calculating your taste match…
-            </Text>
+            </AppText>
           </View>
         ) : !tasteMatch ? (
           <View style={styles.stateContainer}>
-            <Text style={styles.stateTitle}>
+            <AppText
+              variant="sectionTitle"
+              style={styles.stateTitle}>
               Not enough overlap yet
-            </Text>
+            </AppText>
 
-            <Text style={styles.stateText}>
+            <AppText
+              variant="body"
+              tone="tertiary"
+              style={styles.stateText}>
               Publish more Top 3s to create a
               stronger comparison.
-            </Text>
+            </AppText>
           </View>
         ) : (
           <>
-            <View style={styles.heroCard}>
+            <View
+              style={[
+                styles.heroCard,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                },
+              ]}>
               <View style={styles.avatarPair}>
                 <View
                   style={[
                     styles.avatarFrame,
+                    {
+                      backgroundColor: colors.surface,
+                    },
                     styles.currentUserAvatarFrame,
                   ]}>
                   <UserAvatar
@@ -714,6 +774,9 @@ return getTasteRecommendationForUser({
                 <View
                   style={[
                     styles.avatarFrame,
+                    {
+                      backgroundColor: colors.surface,
+                    },
                     styles.otherUserAvatarFrame,
                   ]}>
                   <UserAvatar
@@ -725,23 +788,31 @@ return getTasteRecommendationForUser({
                 </View>
               </View>
 
-              <Text style={styles.pageTitle}>
+              <AppText
+                variant="pageTitle"
+                style={styles.pageTitle}>
                 You & {viewedUser.displayName}
-              </Text>
+              </AppText>
 
-              <Text style={styles.scoreLabel}>
-  Taste Match
-</Text>
+              <AppText
+                variant="headline"
+                style={styles.scoreLabel}>
+                Taste Match
+              </AppText>
 
-<Text style={styles.score}>
-  {animatedScore}%
-</Text>
+              <AppText
+                variant="display"
+                style={styles.score}>
+                {animatedScore}%
+              </AppText>
 
-              <Text style={styles.summary}>
+              <AppText
+                variant="bodyBold"
+                style={styles.summary}>
                 {sharedPickCount === 1
                   ? 'You share 1 ranked pick.'
                   : `You share ${sharedPickCount} ranked picks.`}
-              </Text>
+              </AppText>
             </View>
 
             <View style={styles.followAction}>
@@ -766,7 +837,15 @@ return getTasteRecommendationForUser({
                     return (
                       <View
                         key={`${comparison.category}-${comparison.topic ?? 'general'}-${index}`}
-                        style={styles.comparisonCard}>
+                        style={[
+                          styles.comparisonCard,
+                          {
+                            backgroundColor:
+                              colors.surface,
+                            borderColor:
+                              colors.border,
+                          },
+                        ]}>
                         {(() => {
                           const categoryDetails =
                             getCategoryDetails(
@@ -786,16 +865,15 @@ return getTasteRecommendationForUser({
                                   '⭐'}
                               </Text>
 
-                              <Text
-                                style={
-                                  styles.comparisonTitle
-                                }
+                              <AppText
+                                variant="sectionTitle"
+                                style={styles.comparisonTitle}
                                 numberOfLines={2}>
                                 {getComparisonCardTitle(
                                   comparison.category,
                                   comparison.topic
                                 )}
-                              </Text>
+                              </AppText>
                             </View>
                           );
                         })()}
@@ -804,19 +882,17 @@ return getTasteRecommendationForUser({
                           style={
                             styles.columnHeaderRow
                           }>
-                          <Text
-                            style={
-                              styles.columnHeader
-                            }>
+                          <AppText
+                            variant="label"
+                            style={styles.columnHeader}>
                             You
-                          </Text>
+                          </AppText>
 
-                          <Text
-                            style={
-                              styles.columnHeader
-                            }>
+                          <AppText
+                            variant="label"
+                            style={styles.columnHeader}>
                             {viewedUser.displayName}
-                          </Text>
+                          </AppText>
                         </View>
 
                         <View
@@ -889,17 +965,29 @@ return getTasteRecommendationForUser({
                 )}
               </View>
             ) : (
-              <View style={styles.stateCard}>
-                <Text style={styles.stateCardTitle}>
+              <View
+                style={[
+                  styles.stateCard,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                  },
+                ]}>
+                <AppText
+                  variant="sectionTitle"
+                  style={styles.stateCardTitle}>
                   No side-by-side lists yet
-                </Text>
+                </AppText>
 
-                <Text style={styles.stateCardText}>
+                <AppText
+                  variant="body"
+                  tone="tertiary"
+                  style={styles.stateCardText}>
                   You share some broader taste,
                   but you have not both published
                   a Top 3 in the same category and
                   topic yet.
-                </Text>
+                </AppText>
               </View>
             )}
 
@@ -913,7 +1001,6 @@ return getTasteRecommendationForUser({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
   },
 
   content: {
@@ -934,20 +1021,15 @@ const styles = StyleSheet.create({
   },
 
   loadingText: {
-    ...TYPOGRAPHY.body,
     marginTop: SPACING.md,
-    color: COLORS.tertiaryText,
   },
 
   stateTitle: {
-    ...TYPOGRAPHY.sectionTitle,
     textAlign: 'center',
   },
 
   stateText: {
-    ...TYPOGRAPHY.body,
     marginTop: SPACING.sm,
-    color: COLORS.tertiaryText,
     textAlign: 'center',
   },
 
@@ -955,9 +1037,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 28,
     paddingHorizontal: 22,
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: COLORS.border,
     borderRadius: 20,
   },
 
@@ -974,7 +1054,6 @@ const styles = StyleSheet.create({
     borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
   },
 
   currentUserAvatarFrame: {
@@ -987,24 +1066,18 @@ const styles = StyleSheet.create({
   },
 
   pageTitle: {
-    ...TYPOGRAPHY.pageTitle,
     textAlign: 'center',
   },
 
   scoreLabel: {
-    ...TYPOGRAPHY.headline,
     marginTop: SPACING.xl,
-    color: COLORS.text,
   },
 
   score: {
-    ...TYPOGRAPHY.display,
     marginTop: 2,
-    color: COLORS.text,
   },
 
   summary: {
-    ...TYPOGRAPHY.bodyBold,
     marginTop: SPACING.sm,
     textAlign: 'center',
   },
@@ -1020,9 +1093,7 @@ const styles = StyleSheet.create({
 
   comparisonCard: {
     padding: 18,
-    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.border,
     borderRadius: 18,
   },
 
@@ -1039,7 +1110,6 @@ const styles = StyleSheet.create({
   },
 
   comparisonTitle: {
-    ...TYPOGRAPHY.sectionTitle,
     flex: 1,
     minWidth: 0,
   },
@@ -1050,7 +1120,6 @@ const styles = StyleSheet.create({
   },
 
   columnHeader: {
-    ...TYPOGRAPHY.label,
     flex: 1,
   },
 
@@ -1075,29 +1144,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     paddingHorizontal: 8,
-    backgroundColor: COLORS.background,
     borderRadius: 10,
   },
 
   rankNumber: {
-    ...TYPOGRAPHY.caption,
     width: 22,
-    fontWeight: '700',
-    color: COLORS.text,
   },
 
   rankItemText: {
-    ...TYPOGRAPHY.caption,
     flex: 1,
     minWidth: 0,
     marginLeft: 0,
     marginRight: 5,
-    color: COLORS.secondaryText,
-  },
-
-  sharedRankItemText: {
-    fontWeight: '800',
-    color: COLORS.text,
   },
 
   stateCard: {
@@ -1105,21 +1163,16 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xl,
     paddingVertical: 30,
     paddingHorizontal: 22,
-    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.border,
     borderRadius: 18,
   },
 
   stateCardTitle: {
-    ...TYPOGRAPHY.sectionTitle,
     textAlign: 'center',
   },
 
   stateCardText: {
-    ...TYPOGRAPHY.body,
     marginTop: SPACING.sm,
-    color: COLORS.tertiaryText,
     textAlign: 'center',
   },
 

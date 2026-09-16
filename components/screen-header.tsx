@@ -1,13 +1,12 @@
-import { COLORS } from '@/constants/colors';
+import AppText from '@/components/app-text';
 import { SPACING } from '@/constants/spacing';
-import { TYPOGRAPHY } from '@/constants/typography';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import type { ComponentProps } from 'react';
 import {
   Pressable,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 
@@ -37,6 +36,8 @@ export default function ScreenHeader({
   onSecondaryRightPress,
   secondaryRightAccessibilityLabel = 'Open secondary action',
 }: ScreenHeaderProps) {
+  const colors = useAppColors();
+
   const showRightAction =
     Boolean(rightIconName) &&
     Boolean(onRightPress);
@@ -46,7 +47,14 @@ export default function ScreenHeader({
     Boolean(onSecondaryRightPress);
 
   return (
-    <View style={styles.header}>
+    <View
+      style={[
+        styles.header,
+        {
+          backgroundColor: colors.background,
+          borderBottomColor: colors.border,
+        },
+      ]}>
       <View style={styles.topBar}>
         <View style={styles.sideActions}>
           {showBackButton ? (
@@ -62,7 +70,7 @@ export default function ScreenHeader({
               <Ionicons
                 name="chevron-back"
                 size={28}
-                color={COLORS.text}
+                color={colors.text}
               />
             </Pressable>
           ) : (
@@ -72,7 +80,11 @@ export default function ScreenHeader({
           <View style={styles.sideSlot} />
         </View>
 
-        <Text style={styles.brand}>Top 3</Text>
+        <AppText
+          variant="brand"
+          style={styles.brand}>
+          Top 3
+        </AppText>
 
         <View style={styles.sideActions}>
           {showSecondaryRightAction ? (
@@ -90,7 +102,7 @@ export default function ScreenHeader({
               <Ionicons
                 name={secondaryRightIconName}
                 size={24}
-                color={COLORS.text}
+                color={colors.text}
               />
             </Pressable>
           ) : (
@@ -112,7 +124,7 @@ export default function ScreenHeader({
               <Ionicons
                 name={rightIconName}
                 size={26}
-                color={COLORS.text}
+                color={colors.text}
               />
             </Pressable>
           ) : (
@@ -123,12 +135,16 @@ export default function ScreenHeader({
 
       {title ? (
         <View style={styles.titleArea}>
-          <Text style={styles.title}>{title}</Text>
+          <AppText variant="screenTitle">
+            {title}
+          </AppText>
 
           {subtitle ? (
-            <Text style={styles.subtitle}>
+            <AppText
+              variant="subtitle"
+              style={styles.subtitle}>
               {subtitle}
-            </Text>
+            </AppText>
           ) : null}
         </View>
       ) : null}
@@ -138,10 +154,8 @@ export default function ScreenHeader({
 
 const styles = StyleSheet.create({
   header: {
-    backgroundColor: COLORS.background,
     borderBottomWidth:
       StyleSheet.hairlineWidth,
-    borderBottomColor: COLORS.border,
   },
 
   topBar: {
@@ -168,10 +182,6 @@ const styles = StyleSheet.create({
   brand: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 20,
-    fontWeight: '700',
-    color: COLORS.text,
-    letterSpacing: 0.2,
   },
 
   titleArea: {
@@ -179,15 +189,7 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
 
-  title: {
-    fontSize: 36,
-    fontWeight: '700',
-    lineHeight: 42,
-    color: COLORS.text,
-  },
-
   subtitle: {
-    ...TYPOGRAPHY.subtitle,
     marginTop: SPACING.xs,
   },
 

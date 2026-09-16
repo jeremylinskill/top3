@@ -1,11 +1,11 @@
 import ActionSheet from '@/components/action-sheet';
+import AppText from '@/components/app-text';
 import PageHeader from '@/components/page-header';
 import ScreenHeader from '@/components/screen-header';
-import { COLORS } from '@/constants/colors';
 import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
-import { TYPOGRAPHY } from '@/constants/typography';
 import { useProfile } from '@/context/profile-context';
+import { useAppColors } from '@/hooks/use-app-colors';
 import { useAuth } from '@/hooks/use-auth';
 import {
   getExistingPushToken,
@@ -38,12 +38,12 @@ import {
   ScrollView,
   StyleSheet,
   Switch,
-  Text,
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SettingsScreen() {
+  const colors = useAppColors();
   const { signOut, user } = useAuth();
   const { profile } = useProfile();
 
@@ -374,7 +374,12 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView
-      style={styles.container}
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+        },
+      ]}
       edges={['top', 'left', 'right']}>
       <ScreenHeader showBackButton />
 
@@ -457,11 +462,20 @@ export default function SettingsScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
+          <AppText
+            variant="sectionTitle"
+            style={styles.sectionTitle}>
             Account
-          </Text>
+          </AppText>
 
-          <View style={styles.card}>
+          <View
+            style={[
+              styles.card,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}>
             <Pressable
               style={({ pressed }) => [
                 styles.row,
@@ -470,32 +484,50 @@ export default function SettingsScreen() {
               onPress={openEditProfile}
               accessibilityRole="button"
               accessibilityLabel="Open Edit Profile">
-              <View style={styles.iconContainer}>
+              <View
+                  style={[
+                    styles.iconContainer,
+                    {
+                      backgroundColor:
+                        colors.background,
+                    },
+                  ]}>
                 <Ionicons
                   name="person-outline"
                   size={23}
-                  color={COLORS.text}
+                  color={colors.text}
                 />
               </View>
 
               <View style={styles.rowDetails}>
-                <Text style={styles.rowTitle}>
+                <AppText variant="headline">
                   Edit Profile
-                </Text>
+                </AppText>
 
-                <Text style={styles.rowSubtitle}>
+                <AppText
+                  variant="label"
+                  tone="tertiary"
+                  emphasis="regular"
+                  style={styles.rowSubtitle}>
                   Update your photo, name, username, and bio
-                </Text>
+                </AppText>
               </View>
 
               <Ionicons
                 name="chevron-forward"
                 size={21}
-                color={COLORS.tertiaryText}
+                color={colors.tertiaryText}
               />
             </Pressable>
 
-            <View style={styles.divider} />
+            <View
+              style={[
+                styles.divider,
+                {
+                  backgroundColor: colors.border,
+                },
+              ]}
+            />
 
             <Pressable
               style={({ pressed }) => [
@@ -505,32 +537,50 @@ export default function SettingsScreen() {
               onPress={openPrivacy}
               accessibilityRole="button"
               accessibilityLabel="Open Privacy settings">
-              <View style={styles.iconContainer}>
+              <View
+                  style={[
+                    styles.iconContainer,
+                    {
+                      backgroundColor:
+                        colors.background,
+                    },
+                  ]}>
                 <Ionicons
                   name="shield-checkmark-outline"
                   size={23}
-                  color={COLORS.text}
+                  color={colors.text}
                 />
               </View>
 
               <View style={styles.rowDetails}>
-                <Text style={styles.rowTitle}>
+                <AppText variant="headline">
                   Privacy
-                </Text>
+                </AppText>
 
-                <Text style={styles.rowSubtitle}>
+                <AppText
+                  variant="label"
+                  tone="tertiary"
+                  emphasis="regular"
+                  style={styles.rowSubtitle}>
                   Control who can view your lists
-                </Text>
+                </AppText>
               </View>
 
               <Ionicons
                 name="chevron-forward"
                 size={21}
-                color={COLORS.tertiaryText}
+                color={colors.tertiaryText}
               />
             </Pressable>
 
-            <View style={styles.divider} />
+            <View
+              style={[
+                styles.divider,
+                {
+                  backgroundColor: colors.border,
+                },
+              ]}
+            />
 
             <Pressable
               style={({ pressed }) => [
@@ -540,34 +590,52 @@ export default function SettingsScreen() {
               onPress={openBlockedUsers}
               accessibilityRole="button"
               accessibilityLabel="Open Blocked Users">
-              <View style={styles.iconContainer}>
+              <View
+                  style={[
+                    styles.iconContainer,
+                    {
+                      backgroundColor:
+                        colors.background,
+                    },
+                  ]}>
                 <Ionicons
                   name="ban-outline"
                   size={23}
-                  color={COLORS.text}
+                  color={colors.text}
                 />
               </View>
 
               <View style={styles.rowDetails}>
-                <Text style={styles.rowTitle}>
+                <AppText variant="headline">
                   Blocked Users
-                </Text>
+                </AppText>
 
-                <Text style={styles.rowSubtitle}>
+                <AppText
+                  variant="label"
+                  tone="tertiary"
+                  emphasis="regular"
+                  style={styles.rowSubtitle}>
                   Manage people you've blocked
-                </Text>
+                </AppText>
               </View>
 
               <Ionicons
                 name="chevron-forward"
                 size={21}
-                color={COLORS.tertiaryText}
+                color={colors.tertiaryText}
               />
             </Pressable>
 
             {canChangePassword ? (
               <>
-                <View style={styles.divider} />
+                <View
+              style={[
+                styles.divider,
+                {
+                  backgroundColor: colors.border,
+                },
+              ]}
+            />
 
                 <Pressable
                   style={({ pressed }) => [
@@ -577,28 +645,39 @@ export default function SettingsScreen() {
                   onPress={openChangePassword}
                   accessibilityRole="button"
                   accessibilityLabel="Open Change Password">
-                  <View style={styles.iconContainer}>
+                  <View
+                  style={[
+                    styles.iconContainer,
+                    {
+                      backgroundColor:
+                        colors.background,
+                    },
+                  ]}>
                     <Ionicons
                       name="key-outline"
                       size={23}
-                      color={COLORS.text}
+                      color={colors.text}
                     />
                   </View>
 
                   <View style={styles.rowDetails}>
-                    <Text style={styles.rowTitle}>
-                      Change Password
-                    </Text>
+                    <AppText variant="headline">
+                  Change Password
+                </AppText>
 
-                    <Text style={styles.rowSubtitle}>
-                      Update your account password
-                    </Text>
+                    <AppText
+                  variant="label"
+                  tone="tertiary"
+                  emphasis="regular"
+                  style={styles.rowSubtitle}>
+                  Update your account password
+                </AppText>
                   </View>
 
                   <Ionicons
                     name="chevron-forward"
                     size={21}
-                    color={COLORS.tertiaryText}
+                    color={colors.tertiaryText}
                   />
                 </Pressable>
               </>
@@ -607,35 +686,55 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
+          <AppText
+            variant="sectionTitle"
+            style={styles.sectionTitle}>
             App
-          </Text>
+          </AppText>
 
-          <View style={styles.card}>
+          <View
+            style={[
+              styles.card,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}>
             <View style={styles.row}>
-              <View style={styles.iconContainer}>
+              <View
+                  style={[
+                    styles.iconContainer,
+                    {
+                      backgroundColor:
+                        colors.background,
+                    },
+                  ]}>
                 <Ionicons
                   name="notifications-outline"
                   size={23}
-                  color={COLORS.text}
+                  color={colors.text}
                 />
               </View>
 
               <View style={styles.rowDetails}>
-                <Text style={styles.rowTitle}>
+                <AppText variant="headline">
                   Notifications
-                </Text>
+                </AppText>
 
-                <Text style={styles.rowSubtitle}>
+                <AppText
+                  variant="label"
+                  tone="tertiary"
+                  emphasis="regular"
+                  style={styles.rowSubtitle}>
                   Likes, comments, and new followers
-                </Text>
+                </AppText>
               </View>
 
               <View style={styles.notificationControl}>
                 {isPushUpdating ? (
                   <ActivityIndicator
                     size="small"
-                    color={COLORS.accent}
+                    color={colors.accent}
                   />
                 ) : (
                   <Switch
@@ -646,10 +745,12 @@ export default function SettingsScreen() {
                       );
                     }}
                     trackColor={{
-                      false: '#E5E5EA',
-                      true: COLORS.accent,
+                      false: colors.disabledBackground,
+                      true: colors.accent,
                     }}
-                    ios_backgroundColor="#E5E5EA"
+                    ios_backgroundColor={
+                      colors.disabledBackground
+                    }
                     accessibilityLabel="Push notifications"
                     accessibilityHint="Turns Top 3 push notifications on or off"
                   />
@@ -657,7 +758,14 @@ export default function SettingsScreen() {
               </View>
             </View>
 
-            <View style={styles.divider} />
+            <View
+              style={[
+                styles.divider,
+                {
+                  backgroundColor: colors.border,
+                },
+              ]}
+            />
 
             <Pressable
               style={({ pressed }) => [
@@ -667,32 +775,50 @@ export default function SettingsScreen() {
               onPress={openAbout}
               accessibilityRole="button"
               accessibilityLabel="Open About Top 3">
-              <View style={styles.iconContainer}>
+              <View
+                  style={[
+                    styles.iconContainer,
+                    {
+                      backgroundColor:
+                        colors.background,
+                    },
+                  ]}>
                 <Ionicons
                   name="information-circle-outline"
                   size={23}
-                  color={COLORS.text}
+                  color={colors.text}
                 />
               </View>
 
               <View style={styles.rowDetails}>
-                <Text style={styles.rowTitle}>
+                <AppText variant="headline">
                   About
-                </Text>
+                </AppText>
 
-                <Text style={styles.rowSubtitle}>
+                <AppText
+                  variant="label"
+                  tone="tertiary"
+                  emphasis="regular"
+                  style={styles.rowSubtitle}>
                   Version, build, and app information
-                </Text>
+                </AppText>
               </View>
 
               <Ionicons
                 name="chevron-forward"
                 size={21}
-                color={COLORS.tertiaryText}
+                color={colors.tertiaryText}
               />
             </Pressable>
 
-            <View style={styles.divider} />
+            <View
+              style={[
+                styles.divider,
+                {
+                  backgroundColor: colors.border,
+                },
+              ]}
+            />
 
             <Pressable
               style={({ pressed }) => [
@@ -702,34 +828,52 @@ export default function SettingsScreen() {
               onPress={openSupport}
               accessibilityRole="button"
               accessibilityLabel="Open Support">
-              <View style={styles.iconContainer}>
+              <View
+                  style={[
+                    styles.iconContainer,
+                    {
+                      backgroundColor:
+                        colors.background,
+                    },
+                  ]}>
                 <Ionicons
                   name="help-circle-outline"
                   size={23}
-                  color={COLORS.text}
+                  color={colors.text}
                 />
               </View>
 
               <View style={styles.rowDetails}>
-                <Text style={styles.rowTitle}>
+                <AppText variant="headline">
                   Support
-                </Text>
+                </AppText>
 
-                <Text style={styles.rowSubtitle}>
+                <AppText
+                  variant="label"
+                  tone="tertiary"
+                  emphasis="regular"
+                  style={styles.rowSubtitle}>
                   Get help or contact Top 3 support
-                </Text>
+                </AppText>
               </View>
 
               <Ionicons
                 name="chevron-forward"
                 size={21}
-                color={COLORS.tertiaryText}
+                color={colors.tertiaryText}
               />
             </Pressable>
 
             {profile.isAdmin ? (
               <>
-                <View style={styles.divider} />
+                <View
+              style={[
+                styles.divider,
+                {
+                  backgroundColor: colors.border,
+                },
+              ]}
+            />
 
                 <Pressable
                   style={({ pressed }) => [
@@ -739,28 +883,39 @@ export default function SettingsScreen() {
                   onPress={openModeration}
                   accessibilityRole="button"
                   accessibilityLabel="Open Moderation">
-                  <View style={styles.iconContainer}>
+                  <View
+                  style={[
+                    styles.iconContainer,
+                    {
+                      backgroundColor:
+                        colors.background,
+                    },
+                  ]}>
                     <Ionicons
                       name="shield-outline"
                       size={23}
-                      color={COLORS.text}
+                      color={colors.text}
                     />
                   </View>
 
                   <View style={styles.rowDetails}>
-                    <Text style={styles.rowTitle}>
-                      Moderation
-                    </Text>
+                    <AppText variant="headline">
+                  Moderation
+                </AppText>
 
-                    <Text style={styles.rowSubtitle}>
-                      Review pending reports
-                    </Text>
+                    <AppText
+                  variant="label"
+                  tone="tertiary"
+                  emphasis="regular"
+                  style={styles.rowSubtitle}>
+                  Review pending reports
+                </AppText>
                   </View>
 
                   <Ionicons
                     name="chevron-forward"
                     size={21}
-                    color={COLORS.tertiaryText}
+                    color={colors.tertiaryText}
                   />
                 </Pressable>
               </>
@@ -769,12 +924,28 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
+          <AppText
+            variant="sectionTitle"
+            style={styles.sectionTitle}>
             Legal
-          </Text>
+          </AppText>
 
-          <View style={styles.card}>
-            <View style={styles.divider} />
+          <View
+            style={[
+              styles.card,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}>
+            <View
+              style={[
+                styles.divider,
+                {
+                  backgroundColor: colors.border,
+                },
+              ]}
+            />
 
             <Pressable
               style={({ pressed }) => [
@@ -784,32 +955,50 @@ export default function SettingsScreen() {
               onPress={openPrivacyPolicy}
               accessibilityRole="button"
               accessibilityLabel="Open Privacy Policy">
-              <View style={styles.iconContainer}>
+              <View
+                  style={[
+                    styles.iconContainer,
+                    {
+                      backgroundColor:
+                        colors.background,
+                    },
+                  ]}>
                 <Ionicons
                   name="document-text-outline"
                   size={23}
-                  color={COLORS.text}
+                  color={colors.text}
                 />
               </View>
 
               <View style={styles.rowDetails}>
-                <Text style={styles.rowTitle}>
+                <AppText variant="headline">
                   Privacy Policy
-                </Text>
+                </AppText>
 
-                <Text style={styles.rowSubtitle}>
+                <AppText
+                  variant="label"
+                  tone="tertiary"
+                  emphasis="regular"
+                  style={styles.rowSubtitle}>
                   Learn how Top 3 handles your information
-                </Text>
+                </AppText>
               </View>
 
               <Ionicons
                 name="chevron-forward"
                 size={21}
-                color={COLORS.tertiaryText}
+                color={colors.tertiaryText}
               />
             </Pressable>
 
-            <View style={styles.divider} />
+            <View
+              style={[
+                styles.divider,
+                {
+                  backgroundColor: colors.border,
+                },
+              ]}
+            />
 
             <Pressable
               style={({ pressed }) => [
@@ -819,32 +1008,50 @@ export default function SettingsScreen() {
               onPress={openTermsOfUse}
               accessibilityRole="button"
               accessibilityLabel="Open Terms of Use">
-              <View style={styles.iconContainer}>
+              <View
+                  style={[
+                    styles.iconContainer,
+                    {
+                      backgroundColor:
+                        colors.background,
+                    },
+                  ]}>
                 <Ionicons
                   name="reader-outline"
                   size={23}
-                  color={COLORS.text}
+                  color={colors.text}
                 />
               </View>
 
               <View style={styles.rowDetails}>
-                <Text style={styles.rowTitle}>
+                <AppText variant="headline">
                   Terms of Use
-                </Text>
+                </AppText>
 
-                <Text style={styles.rowSubtitle}>
+                <AppText
+                  variant="label"
+                  tone="tertiary"
+                  emphasis="regular"
+                  style={styles.rowSubtitle}>
                   Review the terms for using Top 3
-                </Text>
+                </AppText>
               </View>
 
               <Ionicons
                 name="chevron-forward"
                 size={21}
-                color={COLORS.tertiaryText}
+                color={colors.tertiaryText}
               />
             </Pressable>
 
-            <View style={styles.divider} />
+            <View
+              style={[
+                styles.divider,
+                {
+                  backgroundColor: colors.border,
+                },
+              ]}
+            />
 
             <Pressable
               style={({ pressed }) => [
@@ -854,28 +1061,39 @@ export default function SettingsScreen() {
               onPress={openCommunityStandards}
               accessibilityRole="button"
               accessibilityLabel="Open Community Standards">
-              <View style={styles.iconContainer}>
+              <View
+                  style={[
+                    styles.iconContainer,
+                    {
+                      backgroundColor:
+                        colors.background,
+                    },
+                  ]}>
                 <Ionicons
                   name="people-outline"
                   size={23}
-                  color={COLORS.text}
+                  color={colors.text}
                 />
               </View>
 
               <View style={styles.rowDetails}>
-                <Text style={styles.rowTitle}>
+                <AppText variant="headline">
                   Community Standards
-                </Text>
+                </AppText>
 
-                <Text style={styles.rowSubtitle}>
+                <AppText
+                  variant="label"
+                  tone="tertiary"
+                  emphasis="regular"
+                  style={styles.rowSubtitle}>
                   See the rules for content and behaviour
-                </Text>
+                </AppText>
               </View>
 
               <Ionicons
                 name="chevron-forward"
                 size={21}
-                color={COLORS.tertiaryText}
+                color={colors.tertiaryText}
               />
             </Pressable>
 
@@ -886,6 +1104,10 @@ export default function SettingsScreen() {
           <Pressable
             style={({ pressed }) => [
               styles.signOutButton,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
               pressed &&
                 !isSigningOut &&
                 !isDeletingAccount &&
@@ -909,20 +1131,26 @@ export default function SettingsScreen() {
             {isSigningOut ? (
               <ActivityIndicator
                 size="small"
-                color={COLORS.text}
+                color={colors.text}
               />
             ) : null}
 
-            <Text style={styles.signOutButtonText}>
+            <AppText
+              variant="headline"
+              style={styles.signOutButtonText}>
               {isSigningOut
                 ? 'Signing Out…'
                 : 'Sign Out'}
-            </Text>
+            </AppText>
           </Pressable>
 
           <Pressable
             style={({ pressed }) => [
               styles.deleteAccountButton,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.destructive,
+              },
               pressed &&
                 !isDeletingAccount &&
                 !isSigningOut &&
@@ -946,18 +1174,18 @@ export default function SettingsScreen() {
             {isDeletingAccount ? (
               <ActivityIndicator
                 size="small"
-                color="#FF3B30"
+                color={colors.destructive}
               />
             ) : null}
 
-            <Text
-              style={
-                styles.deleteAccountButtonText
-              }>
+            <AppText
+              variant="headline"
+              tone="destructive"
+              style={styles.deleteAccountButtonText}>
               {isDeletingAccount
                 ? 'Deleting Account…'
                 : 'Delete Account'}
-            </Text>
+            </AppText>
           </Pressable>
         </View>
       </ScrollView>
@@ -968,7 +1196,6 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
 
   scrollView: {
@@ -986,7 +1213,6 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    ...TYPOGRAPHY.sectionTitle,
     marginBottom: SPACING.md,
   },
 
@@ -996,9 +1222,7 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.border,
     borderRadius: RADIUS.xl,
     overflow: 'hidden',
   },
@@ -1014,7 +1238,6 @@ const styles = StyleSheet.create({
   divider: {
     height: StyleSheet.hairlineWidth,
     marginLeft: SPACING.lg,
-    backgroundColor: COLORS.border,
   },
 
   iconContainer: {
@@ -1023,7 +1246,6 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.background,
   },
 
   rowDetails: {
@@ -1038,16 +1260,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  rowTitle: {
-    ...TYPOGRAPHY.headline,
-    color: COLORS.text,
-  },
+
 
   rowSubtitle: {
     marginTop: 3,
-    fontSize: 14,
-    lineHeight: 20,
-    color: COLORS.tertiaryText,
   },
 
   signOutButton: {
@@ -1059,13 +1275,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.xl,
     borderRadius: RADIUS.xl,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
   },
 
   signOutButtonText: {
-    ...TYPOGRAPHY.headline,
-    color: COLORS.text,
     textAlign: 'center',
   },
 
@@ -1079,13 +1291,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.xl,
     borderRadius: RADIUS.xl,
     borderWidth: 1,
-    borderColor: '#FF3B30',
-    backgroundColor: COLORS.surface,
   },
 
   deleteAccountButtonText: {
-    ...TYPOGRAPHY.headline,
-    color: '#FF3B30',
     textAlign: 'center',
   },
 

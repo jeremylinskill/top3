@@ -1,9 +1,9 @@
+import AppText from '@/components/app-text';
 import { Top3Item } from '@/types/top3-item';
 import {
-    Linking,
-    Pressable,
-    StyleSheet,
-    Text,
+  Linking,
+  Pressable,
+  StyleSheet,
 } from 'react-native';
 
 type AppleMusicLinkProps = {
@@ -68,9 +68,11 @@ export default function AppleMusicLink({
       hitSlop={4}
       accessibilityRole="link"
       accessibilityLabel={`Open ${item.title} in Apple Music`}>
-      <Text style={styles.linkText}>
+      <AppText
+        variant="microAction"
+        tone="secondary">
         Open in Apple Music ↗
-      </Text>
+      </AppText>
     </Pressable>
   );
 }
@@ -81,11 +83,6 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
 
-  linkText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#666666',
-  },
 
   pressed: {
     opacity: 0.7,

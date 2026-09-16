@@ -1,13 +1,12 @@
-import { COLORS } from '@/constants/colors';
+import AppText from '@/components/app-text';
 import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
-import { TYPOGRAPHY } from '@/constants/typography';
 import { useFollow } from '@/context/follow-context';
+import { useAppColors } from '@/hooks/use-app-colors';
 import {
   ActivityIndicator,
   Pressable,
   StyleSheet,
-  Text,
   ViewStyle,
 } from 'react-native';
 
@@ -38,6 +37,8 @@ export default function FollowButton({
   isLoading: controlledIsLoading,
   onPress,
 }: FollowButtonProps) {
+  const colors = useAppColors();
+
   const {
     isFollowing,
     toggleFollow,
@@ -85,15 +86,37 @@ export default function FollowButton({
     toggleFollow(normalizedUserId);
   }
 
+  const foregroundColor =
+    usesSecondaryStyle
+      ? colors.text
+      : colors.onPrimary;
+
+  const textTone =
+    usesSecondaryStyle
+      ? 'primary'
+      : 'onPrimary';
+
   return (
     <Pressable
       style={({ pressed }) => [
         styles.button,
+        {
+          backgroundColor:
+            usesSecondaryStyle
+              ? colors.surface
+              : colors.primary,
+          borderColor:
+            usesSecondaryStyle
+              ? colors.border
+              : 'transparent',
+          borderWidth:
+            usesSecondaryStyle
+              ? 1
+              : 0,
+        },
         size === 'small'
           ? styles.smallButton
           : styles.largeButton,
-        usesSecondaryStyle &&
-          styles.secondaryButton,
         pressed &&
           !buttonIsDisabled &&
           styles.pressed,
@@ -121,23 +144,20 @@ export default function FollowButton({
       {buttonIsLoading ? (
         <ActivityIndicator
           size="small"
-          color={
-            usesSecondaryStyle
-              ? COLORS.text
-              : COLORS.white
-          }
+          color={foregroundColor}
         />
       ) : (
-        <Text
-          style={[
+        <AppText
+          variant={
             size === 'small'
-              ? styles.smallButtonText
-              : styles.largeButtonText,
-            usesSecondaryStyle &&
-              styles.secondaryButtonText,
-          ]}>
+              ? 'label'
+              : 'bodyLarge'
+          }
+          tone={textTone}
+          emphasis="strong"
+          style={styles.buttonText}>
           {buttonLabel}
-        </Text>
+        </AppText>
       )}
     </Pressable>
   );
@@ -147,7 +167,6 @@ const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.text,
   },
 
   smallButton: {
@@ -164,28 +183,8 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
   },
 
-  secondaryButton: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-
-  smallButtonText: {
-    ...TYPOGRAPHY.label,
-    fontWeight: '700',
-    color: COLORS.white,
+  buttonText: {
     textAlign: 'center',
-  },
-
-  largeButtonText: {
-    ...TYPOGRAPHY.bodyLarge,
-    fontWeight: '700',
-    color: COLORS.white,
-    textAlign: 'center',
-  },
-
-  secondaryButtonText: {
-    color: COLORS.text,
   },
 
   pressed: {
