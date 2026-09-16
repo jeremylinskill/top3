@@ -1031,7 +1031,7 @@ export default function SocialScreen() {
                         <TasteMatchBadge
                           score={tasteMatch.score}
                           sharedPickCount={
-                            tasteMatch.sharedItems.length
+                            tasteMatch.sharedPickCount
                           }
                           onPress={() =>
                             openTasteMatch(user.id)

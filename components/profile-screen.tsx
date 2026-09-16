@@ -1397,7 +1397,7 @@ export default function ProfileScreen({
             tasteMatch?.score
           }
           tasteMatchSharedPickCount={
-            tasteMatch?.sharedItems.length ?? 0
+            tasteMatch?.sharedPickCount ?? 0
           }
           tasteMatchItemTitlesByPostId={
             tasteMatchItemTitlesByPostId

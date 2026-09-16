@@ -1,9 +1,9 @@
 import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
 import {
-    calculateTasteMatch,
-    SharedRankComparison,
-    TasteMatchResult,
+  calculateTasteMatch,
+  SharedRankComparison,
+  TasteMatchResult,
 } from '@/utils/calculate-taste-match';
 
 export type TasteRecommendation = {
@@ -12,6 +12,7 @@ export type TasteRecommendation = {
   reason: string;
 
   sharedItems: string[];
+  sharedPickCount: number;
   sharedCategories: string[];
   sharedTopics: string[];
 
@@ -62,6 +63,16 @@ function groupPostsByAuthor(
   return postsByAuthor;
 }
 
+function getSharedPickCount(
+  comparisons: SharedRankComparison[]
+) {
+  return comparisons.reduce(
+    (total, comparison) =>
+      total + comparison.sharedItems.length,
+    0
+  );
+}
+
 function createRecommendation(
   user: UserProfile,
   match: TasteMatchResult
@@ -72,6 +83,9 @@ function createRecommendation(
     reason: match.reason,
 
     sharedItems: match.sharedItems,
+    sharedPickCount: getSharedPickCount(
+      match.sharedRankComparisons
+    ),
     sharedCategories:
       match.sharedCategories,
     sharedTopics: match.sharedTopics,
@@ -135,9 +149,9 @@ export function getTasteRecommendations({
 
       const user = profilesByUserId[authorId];
 
-if (!user) {
-  return;
-}
+      if (!user) {
+        return;
+      }
 
       /*
        * Only public profiles are eligible to
@@ -152,20 +166,22 @@ if (!user) {
         otherUserPosts
       );
 
+      const recommendation =
+        createRecommendation(user, match);
+
       /*
        * A recommendation must have at least one
-       * concrete shared ranked pick.
+       * concrete shared ranked pick within a
+       * directly comparable category/topic list.
        *
        * Taste Match score is used for ordering,
        * not as an eligibility threshold.
        */
-      if (match.sharedItems.length === 0) {
+      if (recommendation.sharedPickCount === 0) {
         return;
       }
 
-      recommendations.push(
-        createRecommendation(user, match)
-      );
+      recommendations.push(recommendation);
     }
   );
 
@@ -179,15 +195,15 @@ if (!user) {
       }
 
       /*
-       * 2. More shared ranked picks first.
+       * 2. More comparable shared ranked picks first.
        */
       if (
-        second.sharedItems.length !==
-        first.sharedItems.length
+        second.sharedPickCount !==
+        first.sharedPickCount
       ) {
         return (
-          second.sharedItems.length -
-          first.sharedItems.length
+          second.sharedPickCount -
+          first.sharedPickCount
         );
       }
 
@@ -277,6 +293,9 @@ export function getTasteRecommendationForUser({
     otherUserPosts
   );
 
+  const recommendation =
+    createRecommendation(user, match);
+
   /*
    * Direct Taste Match lookups are allowed for
    * any valid user, including private profiles.
@@ -284,12 +303,9 @@ export function getTasteRecommendationForUser({
    * The public-profile and exclusion rules apply
    * only to recommendation lists.
    */
-  if (match.sharedItems.length === 0) {
+  if (recommendation.sharedPickCount === 0) {
     return null;
   }
 
-  return createRecommendation(
-    user,
-    match
-  );
+  return recommendation;
 }

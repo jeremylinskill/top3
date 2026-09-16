@@ -831,12 +831,12 @@ export default function DiscoverScreen() {
         }
 
         if (
-          second.sharedItems.length !==
-          first.sharedItems.length
+          second.sharedPickCount !==
+          first.sharedPickCount
         ) {
           return (
-            second.sharedItems.length -
-            first.sharedItems.length
+            second.sharedPickCount -
+            first.sharedPickCount
           );
         }
 
@@ -1930,7 +1930,11 @@ export default function DiscoverScreen() {
 
                 <View style={styles.tasteList}>
                   {tasteRecommendations.map(
-                    ({ user, score, sharedItems }) => {
+                    ({
+                      user,
+                      score,
+                      sharedPickCount,
+                    }) => {
                       const userIsFollowed =
                         isFollowing(user.id);
 
@@ -1983,7 +1987,7 @@ export default function DiscoverScreen() {
                               <TasteMatchBadge
                                 score={score}
                                 sharedPickCount={
-                                  sharedItems.length
+                                  sharedPickCount
                                 }
                                 onPress={() =>
                                   openTasteMatch(user.id)
