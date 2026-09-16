@@ -6,6 +6,7 @@ import {
   Pressable,
   StyleProp,
   StyleSheet,
+  TextStyle,
   View,
   ViewStyle,
 } from 'react-native';
@@ -22,6 +23,7 @@ interface AuthProviderButtonProps {
   disabled?: boolean;
   loading?: boolean;
   style?: StyleProp<ViewStyle>;
+  titleStyle?: StyleProp<TextStyle>;
 }
 
 export default function AuthProviderButton({
@@ -32,6 +34,7 @@ export default function AuthProviderButton({
   disabled = false,
   loading = false,
   style,
+  titleStyle,
 }: AuthProviderButtonProps) {
   const colors = useAppColors();
 
@@ -92,7 +95,6 @@ export default function AuthProviderButton({
                 name={icon}
                 size={22}
                 color={foregroundColor}
-                style={styles.icon}
               />
             ) : null}
 
@@ -100,7 +102,10 @@ export default function AuthProviderButton({
               variant="bodyLarge"
               tone={titleTone}
               emphasis="semibold"
-              style={styles.title}>
+              style={[
+                styles.title,
+                titleStyle,
+              ]}>
               {title}
             </AppText>
           </>
@@ -129,10 +134,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-
-  icon: {
-    marginRight: 10,
+    gap: 8,
   },
 
   title: {

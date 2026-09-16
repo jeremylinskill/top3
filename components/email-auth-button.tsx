@@ -48,7 +48,7 @@ export default function EmailAuthButton({
           <>
             <Ionicons
               name="mail-outline"
-              size={16}
+              size={18}
               color={colors.text}
             />
 
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 7,
+    gap: 8,
   },
 
   label: {

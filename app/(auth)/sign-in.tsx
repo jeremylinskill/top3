@@ -1,5 +1,6 @@
 import ActionSheet from '@/components/action-sheet';
 import AppText from '@/components/app-text';
+import AuthProviderButton from '@/components/auth-provider-button';
 import EmailAuthButton from '@/components/email-auth-button';
 import GoogleAuthButton from '@/components/google-auth-button';
 import PageHeader from '@/components/page-header';
@@ -10,7 +11,6 @@ import {
   signInWithApple,
   signInWithGoogle,
 } from '@/services/auth-service';
-import * as AppleAuthentication from 'expo-apple-authentication';
 import {
   router,
   useLocalSearchParams,
@@ -203,18 +203,11 @@ export default function SignInScreen() {
 
         <View style={styles.content}>
           <View style={styles.options}>
-            <AppleAuthentication.AppleAuthenticationButton
-              buttonType={
-                AppleAuthentication
-                  .AppleAuthenticationButtonType.CONTINUE
-              }
-              buttonStyle={
-                AppleAuthentication
-                  .AppleAuthenticationButtonStyle.WHITE_OUTLINE
-              }
-              cornerRadius={12}
-              style={styles.appleButton}
+            <AuthProviderButton
+              title="Continue with Apple"
+              icon="logo-apple"
               onPress={handleAppleSignIn}
+              titleStyle={styles.appleButtonLabel}
             />
 
             <GoogleAuthButton
@@ -339,9 +332,9 @@ const styles = StyleSheet.create({
     gap: 14,
   },
 
-  appleButton: {
-    width: '100%',
-    height: 54,
+  appleButtonLabel: {
+    fontSize: 20,
+    lineHeight: 24,
   },
 
   divider: {

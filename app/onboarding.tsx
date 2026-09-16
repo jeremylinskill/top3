@@ -20,9 +20,13 @@ import {
   StyleSheet,
   Text,
   useColorScheme,
+  useWindowDimensions,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 
 
 type OnboardingStep =
@@ -40,32 +44,11 @@ const BRAND_HEIGHT = 40;
 const CATEGORY_BRAND_GAP = 16;
 
 
-const ONBOARDING_CATEGORY_ORDER = [
-  'movies',
-  'tv',
-  'albums',
-  'artists',
-  'songs',
-  'books',
-  'games',
-] as const;
-
-
 const ONBOARDING_CATEGORIES =
-  ONBOARDING_CATEGORY_ORDER
-    .map((categoryId) =>
-      TOP3_CATEGORIES.find(
-        (category) =>
-          category.id === categoryId
-      )
-    )
-    .filter(
-      (
-        category
-      ): category is NonNullable<
-        typeof category
-      > => Boolean(category)
-    );
+  [...TOP3_CATEGORIES].sort(
+    (first, second) =>
+      first.name.localeCompare(second.name)
+  );
 
 
 export default function OnboardingScreen() {
@@ -75,6 +58,11 @@ export default function OnboardingScreen() {
     colorScheme === 'dark'
       ? colors.black
       : colors.white;
+
+  const { height: windowHeight } =
+    useWindowDimensions();
+
+  const insets = useSafeAreaInsets();
 
   const {
     startCollection,
@@ -86,6 +74,9 @@ export default function OnboardingScreen() {
 
 
   const [stageHeight, setStageHeight] =
+    useState(0);
+
+  const [introHeight, setIntroHeight] =
     useState(0);
 
   const [categoryHeight, setCategoryHeight] =
@@ -143,9 +134,10 @@ export default function OnboardingScreen() {
       ONBOARDING_CATEGORIES.map(
         (category, index) => ({
           category,
-          isLast:
+          isCenteredLast:
+            ONBOARDING_CATEGORIES.length % 2 === 1 &&
             index ===
-            ONBOARDING_CATEGORIES.length - 1,
+              ONBOARDING_CATEGORIES.length - 1,
         })
       ),
     []
@@ -189,11 +181,29 @@ export default function OnboardingScreen() {
     BRAND_HEIGHT +
     CATEGORY_BRAND_GAP;
 
+  /*
+   * Keep the onboarding icon stationary below the welcome copy.
+   * This is the same composition used by the approved startup flow:
+   * the icon is part of the onboarding stage, not a full-screen overlay.
+   */
+  const introIconY =
+    Math.min(
+      windowHeight -
+        insets.top -
+        insets.bottom -
+        SPLASH_ICON_SIZE -
+        180,
+      introContentY +
+        introHeight +
+        92
+    );
+
 
   useEffect(() => {
     if (
       hasPositionedInitialLayout.current ||
       stageHeight === 0 ||
+      introHeight === 0 ||
       categoryHeight === 0
     ) {
       return;
@@ -278,6 +288,7 @@ export default function OnboardingScreen() {
     introFooterOpacity,
     introBrandY,
     introContentY,
+    introHeight,
     introOpacity,
     introSecondLineOpacity,
     introTitleOpacity,
@@ -290,6 +301,15 @@ export default function OnboardingScreen() {
     event: LayoutChangeEvent
   ) {
     setStageHeight(
+      event.nativeEvent.layout.height
+    );
+  }
+
+
+  function handleIntroLayout(
+    event: LayoutChangeEvent
+  ) {
+    setIntroHeight(
       event.nativeEvent.layout.height
     );
   }
@@ -479,6 +499,7 @@ export default function OnboardingScreen() {
                 ? 'auto'
                 : 'none'
             }
+            onLayout={handleIntroLayout}
             style={[
               styles.contentGroup,
               {
@@ -545,6 +566,27 @@ export default function OnboardingScreen() {
         ) : null}
 
 
+        {step !== 'category' ? (
+          <Animated.Image
+            source={require('@/assets/images/splash-icon.png')}
+            style={[
+              styles.splashIcon,
+              {
+                opacity: introOpacity,
+                transform: [
+                  {
+                    translateY:
+                      introIconY,
+                  },
+                ],
+              },
+            ]}
+            resizeMode="contain"
+            accessibilityIgnoresInvertColors
+          />
+        ) : null}
+
+
         <Animated.View
           pointerEvents={
             step === 'category'
@@ -604,7 +646,7 @@ export default function OnboardingScreen() {
               (
                 {
                   category,
-                  isLast,
+                  isCenteredLast,
                 },
                 index
               ) => (
@@ -612,7 +654,7 @@ export default function OnboardingScreen() {
                   key={category.id}
                   style={[
                     styles.categoryCardWrapper,
-                    isLast &&
+                    isCenteredLast &&
                       styles.lastCategoryCard,
                     {
                       opacity:
@@ -750,24 +792,6 @@ export default function OnboardingScreen() {
       </View>
       </SafeAreaView>
 
-      {step === 'intro' ? (
-        <View
-          pointerEvents="none"
-          style={[
-            styles.splashOverlay,
-            {
-              backgroundColor:
-                splashBackgroundColor,
-            },
-          ]}>
-          <Animated.Image
-            source={require('@/assets/images/splash-icon.png')}
-            style={styles.splashIcon}
-            resizeMode="contain"
-            accessibilityIgnoresInvertColors
-          />
-        </View>
-      ) : null}
     </View>
   );
 }
@@ -776,14 +800,6 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-  },
-
-
-  splashOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 20,
   },
 
 
@@ -800,8 +816,13 @@ const styles = StyleSheet.create({
 
 
   splashIcon: {
+    position: 'absolute',
+    top: 0,
+    left: '50%',
     width: SPLASH_ICON_SIZE,
     height: SPLASH_ICON_SIZE,
+    marginLeft: -(SPLASH_ICON_SIZE / 2),
+    zIndex: 10,
   },
 
 

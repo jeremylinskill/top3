@@ -47,8 +47,8 @@ export default function GoogleAuthButton({
         ) : (
           <>
             <GoogleG
-              width={16}
-              height={16}
+              width={18}
+              height={18}
             />
 
             <Text
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: 8,
   },
 
   label: {
