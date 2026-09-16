@@ -1695,76 +1695,20 @@ export default function DiscoverScreen() {
                 <View style={styles.categoryList}>
                   {filteredCategories.map(
                     (category) => (
-                      <Pressable
+                      <DiscoverListCard
                         key={category.id}
-                        style={({ pressed }) => [
-                          styles.categoryCard,
-                          pressed &&
-                            styles.pressed,
-                        ]}
+                        icon={category.icon}
+                        title={`All ${category.name}`}
+                        metadata={getPublishedCountLabel(
+                          category.id
+                        )}
                         onPress={() =>
                           openCategoryFeed(
                             category.id
                           )
                         }
-                        accessibilityRole="button"
-                        accessibilityLabel={`Browse All ${category.name} Top 3 lists`}>
-                        <View
-                          style={[
-                            styles.iconContainer,
-                            {
-                              backgroundColor:
-                                colors.secondarySurface,
-                            },
-                          ]}>
-                          <Text
-                            style={styles.icon}>
-                            {category.icon}
-                          </Text>
-                        </View>
-
-                        <View
-                          style={
-                            styles.categoryDetails
-                          }>
-                          <AppText
-                            variant="emptyStateTitle">
-                            All {category.name}
-                          </AppText>
-
-                          <View
-                            style={
-                              styles.categoryMetaRow
-                            }>
-                            {isLoading ? (
-                              <ActivityIndicator
-                                size="small"
-                                color={colors.tertiaryText}
-                              />
-                            ) : null}
-
-                            <AppText
-                              variant="metadata"
-                              tone="secondary"
-                              style={[
-                                isLoading &&
-                                  styles
-                                    .categoryMetaLoading,
-                              ]}>
-                              {getPublishedCountLabel(
-                                category.id
-                              )}
-                            </AppText>
-                          </View>
-                        </View>
-
-                        <Ionicons
-                          name="chevron-forward"
-                          size={22}
-                          color={colors.tertiaryText}
-                          style={styles.arrow}
-                        />
-                      </Pressable>
+                        accessibilityLabel={`Browse All ${category.name} Top 3 lists`}
+                      />
                     )
                   )}
                 </View>
@@ -1782,60 +1726,18 @@ export default function DiscoverScreen() {
                 <View style={styles.topicList}>
                   {filteredTopics.map(
                     (topic) => (
-                      <Pressable
+                      <DiscoverListCard
                         key={topic.id}
-                        style={({ pressed }) => [
-                          styles.topicCard,
-                          pressed &&
-                            styles.pressed,
-                        ]}
+                        icon={topic.categoryIcon}
+                        title={`${topic.categoryName} • ${topic.topic}`}
+                        metadata={getTopicCountLabel(
+                          topic.listCount
+                        )}
                         onPress={() =>
                           openTopicFeed(topic)
                         }
-                        accessibilityRole="button"
-                        accessibilityLabel={`Browse ${topic.categoryName} ${topic.topic} Top 3 lists`}>
-                        <View
-                          style={[
-                            styles.topicIcon,
-                            {
-                              backgroundColor:
-                                colors.secondarySurface,
-                            },
-                          ]}>
-                          <Text
-                            style={
-                              styles.topicEmoji
-                            }>
-                            {topic.categoryIcon}
-                          </Text>
-                        </View>
-
-                        <View
-                          style={
-                            styles.topicDetails
-                          }>
-                          <AppText
-                            variant="selectionTitle">
-                            {topic.categoryName} • {topic.topic}
-                          </AppText>
-
-                          <AppText
-                            variant="metadata"
-                            tone="secondary"
-                            style={styles.topicMeta}>
-                            {getTopicCountLabel(
-                              topic.listCount
-                            )}
-                          </AppText>
-                        </View>
-
-                        <Ionicons
-                          name="chevron-forward"
-                          size={22}
-                          color={colors.tertiaryText}
-                          style={styles.arrow}
-                        />
-                      </Pressable>
+                        accessibilityLabel={`Browse ${topic.categoryName} ${topic.topic} Top 3 lists`}
+                      />
                     )
                   )}
                 </View>
@@ -2566,48 +2468,6 @@ const styles = StyleSheet.create({
     gap: 12,
   },
 
-  categoryCard: {
-    minHeight: 88,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: 18,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-
-  iconContainer: {
-    width: 54,
-    height: 54,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  icon: {
-    fontSize: 28,
-  },
-
-  categoryDetails: {
-    flex: 1,
-    marginLeft: 14,
-  },
-
-  categoryMetaRow: {
-    minHeight: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 6,
-  },
-
-  trendingCategoryMeta: {
-    marginTop: 6,
-  },
-
-  categoryMetaLoading: {
-    marginLeft: 7,
-  },
-
   topicsSection: {
     marginTop: 30,
   },
@@ -2672,37 +2532,6 @@ const styles = StyleSheet.create({
 
   topicList: {
     gap: 12,
-  },
-
-  topicCard: {
-    minHeight: 82,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: 18,
-    paddingHorizontal: 16,
-    paddingVertical: 13,
-  },
-
-  topicIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  topicEmoji: {
-    fontSize: 25,
-  },
-
-  topicDetails: {
-    flex: 1,
-    marginLeft: 14,
-  },
-
-  topicMeta: {
-    marginTop: 4,
   },
 
   collectionList: {
