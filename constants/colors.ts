@@ -15,10 +15,12 @@ export const TASTE_MATCH_RANK_COLORS = [
 export const LIGHT_COLORS = {
   background: '#F2F2F7',
   surface: '#FFFFFF',
-  secondarySurface: '#F1F1F1',
+  secondarySurface: '#ECECF1',
+  controlSurface: '#E8E8ED',
+  highlightedItemSurface: '#E2E2E8',
 
-  skeleton: '#E8E8E8',
-  skeletonSubtle: '#EEEEEE',
+  skeleton: '#E4E4E9',
+  skeletonSubtle: '#ECECF1',
 
   text: '#222222',
   secondaryText: '#666666',
@@ -32,7 +34,7 @@ export const LIGHT_COLORS = {
   highlightPlaceholder: '#F0F0F0',
   highlightMuted: '#777777',
 
-  disabledBackground: '#EAEAEA',
+  disabledBackground: '#E8E8ED',
   disabledText: '#888888',
 
   accent: BRAND_ACCENT,
@@ -46,7 +48,7 @@ export const LIGHT_COLORS = {
   trophy: '#F5A623',
   sparkle: '#FFC83D',
 
-  border: '#EAEAEA',
+  border: '#DEDEE4',
 
   black: '#111111',
   white: '#FFFFFF',
@@ -56,6 +58,8 @@ export const DARK_COLORS = {
   background: '#171717',
   surface: '#000000',
   secondarySurface: '#242424',
+  controlSurface: '#2A2A2A',
+  highlightedItemSurface: '#242424',
 
   skeleton: '#2A2A2A',
   skeletonSubtle: '#232323',

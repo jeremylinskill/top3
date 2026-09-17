@@ -592,7 +592,7 @@ export default function Top3Card({
                       !isTasteMatch && {
                         ...styles.highlightedRankRow,
                         backgroundColor:
-                          colors.secondarySurface,
+                          colors.highlightedItemSurface,
                       },
                     isTasteMatch && {
                       ...styles.highlightedRankRow,

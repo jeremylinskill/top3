@@ -33,7 +33,8 @@ export default function SegmentedControl<
       style={[
         styles.container,
         {
-          backgroundColor: colors.border,
+          backgroundColor:
+            colors.controlSurface,
         },
       ]}>
       {options.map((option) => {

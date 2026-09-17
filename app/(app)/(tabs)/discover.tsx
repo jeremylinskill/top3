@@ -242,7 +242,7 @@ export default function DiscoverScreen() {
       const profiles =
         await getNewestPublicProfiles(
           profile.id,
-          5
+          8
         );
 
       setNewestProfiles(profiles);
@@ -319,7 +319,7 @@ export default function DiscoverScreen() {
         const profiles =
           await getNewestPublicProfiles(
             profile.id,
-            5
+            8
           );
 
         if (isMounted) {
@@ -927,13 +927,74 @@ export default function DiscoverScreen() {
         return first.user.displayName.localeCompare(
           second.user.displayName
         );
-      })
-      .slice(0, 3);
+      });
   }, [
     visiblePosts,
     profilesByUserId,
     blockedUserIds,
     profile.id,
+  ]);
+
+  const discoverMorePeople = useMemo(() => {
+    const excludedUserIds = new Set([
+      profile.id,
+      ...followedUserIds,
+      ...blockedUserIds,
+      ...tasteRecommendations.map(
+        ({ user }) => user.id
+      ),
+    ]);
+
+    const people: Array<{
+      user: UserProfile;
+      detail: string;
+    }> = [];
+
+    activeCollectors.forEach(
+      ({ user, collectionCount }) => {
+        if (
+          people.length >= 3 ||
+          excludedUserIds.has(user.id)
+        ) {
+          return;
+        }
+
+        excludedUserIds.add(user.id);
+
+        people.push({
+          user,
+          detail:
+            collectionCount === 1
+              ? '1 published Top 3'
+              : `${collectionCount} published Top 3s`,
+        });
+      }
+    );
+
+    visibleNewestProfiles.forEach((user) => {
+      if (
+        people.length >= 3 ||
+        excludedUserIds.has(user.id)
+      ) {
+        return;
+      }
+
+      excludedUserIds.add(user.id);
+
+      people.push({
+        user,
+        detail: 'New to Top 3',
+      });
+    });
+
+    return people;
+  }, [
+    activeCollectors,
+    blockedUserIds,
+    followedUserIds,
+    profile.id,
+    tasteRecommendations,
+    visibleNewestProfiles,
   ]);
 
   const normalizedSearchQuery =
@@ -2055,17 +2116,22 @@ export default function DiscoverScreen() {
               </View>
             ) : null}
 
-            {tasteRecommendations.length === 0 ? (
-              visibleNewestProfiles.length > 0 ? (
-                <View style={styles.tasteSection}>
-                  <AppText
-                    variant="sectionTitle"
-                    style={styles.sectionTitle}>
-                    New Members
-                  </AppText>
+            {discoverMorePeople.length > 0 ? (
+              <View
+                style={[
+                  styles.tasteSection,
+                  tasteRecommendations.length > 0 &&
+                    styles.discoverMoreSection,
+                ]}>
+                <AppText
+                  variant="sectionTitle"
+                  style={styles.sectionTitle}>
+                  Discover More People
+                </AppText>
 
-                  <View style={styles.tasteList}>
-                    {visibleNewestProfiles.map((user) => {
+                <View style={styles.tasteList}>
+                  {discoverMorePeople.map(
+                    ({ user, detail }) => {
                       const userIsFollowed =
                         isFollowing(user.id);
 
@@ -2090,11 +2156,11 @@ export default function DiscoverScreen() {
                             accessibilityRole="button"
                             accessibilityLabel={`Open ${user.displayName}'s profile`}>
                             <UserAvatar
-                                displayName={user.displayName}
-                                avatarUrl={user.avatarUrl}
-                                size={50}
-                                fontSize={20}
-                              />
+                              displayName={user.displayName}
+                              avatarUrl={user.avatarUrl}
+                              size={50}
+                              fontSize={20}
+                            />
 
                             <View
                               style={styles.tasteDetails}>
@@ -2110,6 +2176,14 @@ export default function DiscoverScreen() {
                                 style={styles.personUsername}
                                 numberOfLines={1}>
                                 @{user.username}
+                              </AppText>
+
+                              <AppText
+                                variant="metadata"
+                                tone="secondary"
+                                style={styles.discoverPersonMeta}
+                                numberOfLines={1}>
+                                {detail}
                               </AppText>
                             </View>
                           </Pressable>
@@ -2167,32 +2241,35 @@ export default function DiscoverScreen() {
                           </Pressable>
                         </View>
                       );
-                    })}
-                  </View>
+                    }
+                  )}
                 </View>
-              ) : (
-                <View
-                  style={[
-                    styles.emptyTopics,
-                    {
-                      backgroundColor: colors.surface,
-                    },
-                  ]}>
-                  <AppText
-                    variant="selectionTitle"
-                    style={styles.emptyTopicsTitle}>
-                    No people to suggest yet
-                  </AppText>
+              </View>
+            ) : null}
 
-                  <AppText
-                    variant="body"
-                    tone="tertiary"
-                    style={styles.emptyTopicsText}>
-                    Check back as more people join
-                    the Top3 community.
-                  </AppText>
-                </View>
-              )
+            {tasteRecommendations.length === 0 &&
+            discoverMorePeople.length === 0 ? (
+              <View
+                style={[
+                  styles.emptyTopics,
+                  {
+                    backgroundColor: colors.surface,
+                  },
+                ]}>
+                <AppText
+                  variant="selectionTitle"
+                  style={styles.emptyTopicsTitle}>
+                  No people to suggest yet
+                </AppText>
+
+                <AppText
+                  variant="body"
+                  tone="tertiary"
+                  style={styles.emptyTopicsText}>
+                  Check back as more people join
+                  the Top 3 community.
+                </AppText>
+              </View>
             ) : null}
             </>
           ) : (
@@ -2472,6 +2549,10 @@ const styles = StyleSheet.create({
     marginTop: 0,
   },
 
+  discoverMoreSection: {
+    marginTop: 30,
+  },
+
   tasteList: {
     gap: 12,
   },
@@ -2589,6 +2670,10 @@ const styles = StyleSheet.create({
 
   personUsername: {
     marginTop: 3,
+  },
+
+  discoverPersonMeta: {
+    marginTop: 5,
   },
 
   topicsLoading: {
