@@ -3,6 +3,7 @@ import ScreenHeader from '@/components/screen-header';
 import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import * as Application from 'expo-application';
 import {
   Image,
@@ -10,6 +11,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -55,10 +57,11 @@ const DATA_SOURCES: DataSource[] = [
 
 export default function AboutScreen() {
   const colors = useAppColors();
+  const colorScheme = useColorScheme();
 
   const version =
     Application.nativeApplicationVersion ??
-    '0.1.0';
+    '1.0.0';
 
   const buildNumber =
     Application.nativeBuildVersion ??
@@ -109,7 +112,7 @@ export default function AboutScreen() {
     if (source.name === 'Google Books') {
       return (
         <Image
-          source={require('../assets/images/google-play-books-logo.png')}
+          source={require('../assets/images/google-books-logo.png')}
           style={styles.googleBooksLogo}
           resizeMode="contain"
           accessibilityLabel="Google Books logo"
@@ -120,7 +123,11 @@ export default function AboutScreen() {
     if (source.name === 'Open Library') {
       return (
         <Image
-          source={require('../assets/images/open-library-logo.png')}
+          source={
+            colorScheme === 'dark'
+              ? require('../assets/images/open-library-logo-darkmode.png')
+              : require('../assets/images/open-library-logo-lightmode.png')
+          }
           style={styles.openLibraryLogo}
           resizeMode="contain"
           accessibilityLabel="Open Library logo"
@@ -131,7 +138,11 @@ export default function AboutScreen() {
     if (source.name === 'IGDB') {
       return (
         <Image
-          source={require('../assets/images/igdb-logo.png')}
+          source={
+            colorScheme === 'dark'
+              ? require('../assets/images/igdb-logo-white.png')
+              : require('../assets/images/igdb-logo.png')
+          }
           style={styles.igdbLogo}
           resizeMode="contain"
           accessibilityLabel="IGDB logo"
@@ -174,23 +185,14 @@ export default function AboutScreen() {
           <AppText
             variant="pageTitle"
             style={styles.appName}>
-            Top 3
+            <Text style={styles.brandTop}>
+              Top
+            </Text>
+            <Text style={styles.brandThree}>
+              3
+            </Text>
           </AppText>
 
-          <View
-            style={[
-              styles.betaBadge,
-              {
-                backgroundColor: colors.surface,
-              },
-            ]}>
-            <AppText
-              variant="caption"
-              tone="secondary"
-              emphasis="strong">
-              Beta
-            </AppText>
-          </View>
         </View>
 
         <View
@@ -386,12 +388,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  betaBadge: {
-    marginTop: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 5,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
+  brandTop: {
+    fontWeight: '700',
+  },
+
+  brandThree: {
+    fontWeight: '400',
   },
 
   infoCard: {
