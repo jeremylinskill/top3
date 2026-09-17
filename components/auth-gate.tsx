@@ -1,5 +1,6 @@
 import { useAuth } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Redirect } from 'expo-router';
 import {
   Image,
   StyleSheet,
@@ -15,7 +16,11 @@ const SPLASH_ICON_SIZE = 200;
 export function AuthGate({
   children,
 }: AuthGateProps) {
-  const { isLoading } = useAuth();
+  const {
+    isLoading,
+    isAuthenticated,
+  } = useAuth();
+
   const colorScheme = useColorScheme();
 
   const splashBackgroundColor =
@@ -41,6 +46,10 @@ export function AuthGate({
         />
       </View>
     );
+  }
+
+  if (!isAuthenticated) {
+    return <Redirect href="/sign-in" />;
   }
 
   return <>{children}</>;

@@ -9,6 +9,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
@@ -251,6 +252,9 @@ export function ProfileProvider({
   const [loadedUserId, setLoadedUserId] =
     useState<string | null>(null);
 
+  const loadedUserIdRef =
+    useRef<string | null>(null);
+
   const [
     hasProfileLoadError,
     setHasProfileLoadError,
@@ -282,18 +286,29 @@ export function ProfileProvider({
 
   const isProfileLoading =
     Boolean(userId) &&
-    loadedUserId !== userId;
+    loadedUserId !== userId &&
+    !hasProfileLoadError;
 
   useEffect(() => {
     let isCancelled = false;
 
     async function loadProfile() {
-      setProfile(EMPTY_PROFILE);
-      setLoadedUserId(null);
       setHasProfileLoadError(false);
 
       if (!userId) {
+        loadedUserIdRef.current = null;
+        setProfile(EMPTY_PROFILE);
+        setLoadedUserId(null);
         return;
+      }
+
+      const isSameLoadedUser =
+        loadedUserIdRef.current === userId;
+
+      if (!isSameLoadedUser) {
+        loadedUserIdRef.current = null;
+        setProfile(EMPTY_PROFILE);
+        setLoadedUserId(null);
       }
 
       const defaultProfile =
@@ -404,6 +419,7 @@ export function ProfileProvider({
             )
           );
 
+          loadedUserIdRef.current = userId;
           setLoadedUserId(userId);
           return;
         }
@@ -480,6 +496,7 @@ export function ProfileProvider({
             )
           );
 
+          loadedUserIdRef.current = userId;
           setLoadedUserId(userId);
 
           trackAnalyticsEvent(
@@ -501,6 +518,7 @@ export function ProfileProvider({
           mapRowToProfile(createdProfile)
         );
 
+        loadedUserIdRef.current = userId;
         setLoadedUserId(userId);
 
         trackAnalyticsEvent(
