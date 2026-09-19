@@ -2,6 +2,7 @@ import { useAudioPreview } from '@/context/audio-preview-context';
 import { usePreviewSheetColors } from '@/hooks/use-preview-sheet-colors';
 import { Ionicons } from '@expo/vector-icons';
 import {
+    ActivityIndicator,
     Image,
     Linking,
     Pressable,
@@ -55,6 +56,7 @@ export default function AudioPreviewSheet() {
   const {
     activePreviewItem,
     isPreviewVisible,
+    isPreviewLoading,
     previewCurrentTime,
     previewDuration,
     previewProgress,
@@ -240,7 +242,12 @@ export default function AudioPreviewSheet() {
           </Pressable>
         </View>
 
-        <View style={styles.mediaRow}>
+        <View
+          style={[
+            styles.mediaRow,
+            isApplePodcast &&
+              styles.podcastMediaRow,
+          ]}>
           {activePreviewItem.imageUrl ? (
             <Image
               source={{
@@ -276,7 +283,56 @@ export default function AudioPreviewSheet() {
             </View>
           )}
 
-          {externalUrl ? (
+          {isApplePodcast ? (
+            <View
+              style={
+                styles.podcastDetails
+              }>
+              {previewItem.podcastDescription ? (
+                <Text
+                  style={[
+                    styles.podcastDescription,
+                    {
+                      color:
+                        previewColors.bodyText,
+                    },
+                  ]}
+                  numberOfLines={4}
+                  ellipsizeMode="tail">
+                  {
+                    previewItem.podcastDescription
+                  }
+                </Text>
+              ) : null}
+
+              {externalUrl ? (
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.link,
+                    styles.podcastLink,
+                    pressed &&
+                      styles.linkPressed,
+                  ]}
+                  onPress={() => {
+                    void openExternalItem();
+                  }}
+                  hitSlop={6}
+                  accessibilityRole="link"
+                  accessibilityLabel={`Open ${activePreviewItem.title} in ${externalLabel}`}>
+                  <Text
+                    style={[
+                      styles.linkText,
+                      {
+                        color:
+                          previewColors.primaryText,
+                      },
+                    ]}>
+                    {externalLabel} ↗
+                  </Text>
+                </Pressable>
+              ) : null}
+            </View>
+          ) : externalUrl ? (
             <Pressable
               style={({ pressed }) => [
                 styles.link,
@@ -307,57 +363,91 @@ export default function AudioPreviewSheet() {
           style={
             styles.progressSection
           }>
-          <View
-            style={[
-              styles.progressTrack,
-              {
-                backgroundColor:
-                  previewColors.control,
-              },
-            ]}
-            accessibilityRole="progressbar"
-            accessibilityValue={{
-              min: 0,
-              max: 100,
-              now: Math.round(
-                previewProgress * 100
-              ),
-            }}>
+          {isApplePodcast &&
+          isPreviewLoading ? (
             <View
-              style={[
-                styles.progressFill,
-                {
-                  width: progressWidth,
-                  backgroundColor:
-                    previewColors.primaryText,
-                },
-              ]}
-            />
-          </View>
+              style={
+                styles.loadingRow
+              }>
+              <ActivityIndicator
+                size="small"
+                color={
+                  previewColors.tertiaryText
+                }
+              />
+              <Text
+                style={[
+                  styles.loadingText,
+                  {
+                    color:
+                      previewColors.tertiaryText,
+                  },
+                ]}>
+                Preparing preview…
+              </Text>
+            </View>
+          ) : (
+            <>
+              <View
+                style={[
+                  styles.progressTrack,
+                  {
+                    backgroundColor:
+                      previewColors.control,
+                  },
+                ]}
+                accessibilityRole="progressbar"
+                accessibilityValue={{
+                  min: 0,
+                  max: 100,
+                  now: Math.round(
+                    previewProgress * 100
+                  ),
+                }}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    {
+                      width: progressWidth,
+                      backgroundColor:
+                        previewColors.primaryText,
+                    },
+                  ]}
+                />
+              </View>
 
-          <View style={styles.timeRow}>
-            <Text
-              style={[
-                styles.timeText,
-                {
-                  color:
-                    previewColors.tertiaryText,
-                },
-              ]}>
-              {formatTime(previewCurrentTime)}
-            </Text>
+              <View
+                style={
+                  styles.timeRow
+                }>
+                <Text
+                  style={[
+                    styles.timeText,
+                    {
+                      color:
+                        previewColors.tertiaryText,
+                    },
+                  ]}>
+                  {formatTime(
+                    previewCurrentTime
+                  )}
+                </Text>
 
-            <Text
-              style={[
-                styles.timeText,
-                {
-                  color:
-                    previewColors.tertiaryText,
-                },
-              ]}>
-              {formatTime(previewDuration)}
-            </Text>
-          </View>
+                <Text
+                  style={[
+                    styles.timeText,
+                    {
+                      color:
+                        previewColors.tertiaryText,
+                    },
+                  ]}>
+                  {formatTime(
+                    previewDuration
+                  )}
+                </Text>
+              </View>
+            </>
+          )}
         </View>
       </View>
     </View>
@@ -426,6 +516,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
 
+  podcastMediaRow: {
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
+  },
+
   artwork: {
     width: 88,
     height: 88,
@@ -438,6 +533,17 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  podcastDetails: {
+    flex: 1,
+    minWidth: 0,
+    marginLeft: 14,
+  },
+
+  podcastDescription: {
+    fontSize: 13,
+    lineHeight: 18,
   },
 
   eyebrow: {
@@ -464,6 +570,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
 
+  podcastLink: {
+    alignSelf: 'flex-start',
+    minHeight: 0,
+    marginTop: 8,
+    paddingHorizontal: 0,
+    justifyContent: 'flex-start',
+  },
+
   linkText: {
     fontSize: 12,
     fontWeight: '600',
@@ -475,6 +589,17 @@ const styles = StyleSheet.create({
 
   progressSection: {
     marginTop: 12,
+  },
+
+  loadingRow: {
+    minHeight: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  loadingText: {
+    marginLeft: 8,
+    fontSize: 11,
   },
 
   progressTrack: {

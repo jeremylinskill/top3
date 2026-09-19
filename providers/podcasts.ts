@@ -5,6 +5,7 @@ type ApplePodcastSearchResult = {
   collectionName?: string;
   artistName?: string;
   collectionViewUrl?: string;
+  feedUrl?: string;
   artworkUrl600?: string;
   artworkUrl100?: string;
   artworkUrl60?: string;
@@ -34,6 +35,7 @@ type ApplePodcastEpisodeResult = {
   collectionId?: number;
   collectionViewUrl?: string;
   episodeUrl?: string;
+  feedUrl?: string;
   releaseDate?: string;
   trackName?: string;
   trackViewUrl?: string;
@@ -46,6 +48,7 @@ type ApplePodcastLookupResponse = {
 export type PodcastEpisodePreview = {
   audioUrl: string;
   applePodcastsUrl?: string;
+  feedUrl?: string;
 };
 
 const ITUNES_SEARCH_URL =
@@ -70,6 +73,9 @@ const MAX_ATTEMPTS = 3;
 
 const podcastEpisodePreviewCache =
   new Map<string, PodcastEpisodePreview | null>();
+
+const podcastDescriptionCache =
+  new Map<string, string | null>();
 
 function createAbortError() {
   const error = new Error(
@@ -221,6 +227,148 @@ function upgradeArtworkUrl(
   );
 }
 
+function normalizePodcastFeedUrl(
+  value?: string
+) {
+  const trimmedUrl =
+    value?.trim();
+
+  if (!trimmedUrl) {
+    return undefined;
+  }
+
+  return trimmedUrl.replace(
+    /^http:\/\//i,
+    'https://'
+  );
+}
+
+function decodeXmlEntities(
+  value: string
+) {
+  const namedEntities: Record<
+    string,
+    string
+  > = {
+    amp: '&',
+    apos: "'",
+    gt: '>',
+    lt: '<',
+    nbsp: ' ',
+    quot: '"',
+  };
+
+  return value.replace(
+    /&(#x?[0-9a-f]+|[a-z]+);/gi,
+    (match, entity: string) => {
+      if (
+        entity.startsWith('#x') ||
+        entity.startsWith('#X')
+      ) {
+        const codePoint =
+          Number.parseInt(
+            entity.slice(2),
+            16
+          );
+
+        return Number.isFinite(codePoint)
+          ? String.fromCodePoint(codePoint)
+          : match;
+      }
+
+      if (entity.startsWith('#')) {
+        const codePoint =
+          Number.parseInt(
+            entity.slice(1),
+            10
+          );
+
+        return Number.isFinite(codePoint)
+          ? String.fromCodePoint(codePoint)
+          : match;
+      }
+
+      return (
+        namedEntities[
+          entity.toLowerCase()
+        ] ?? match
+      );
+    }
+  );
+}
+
+function cleanPodcastDescription(
+  value: string
+) {
+  return decodeXmlEntities(
+    value
+      .replace(
+        /^<!\[CDATA\[([\s\S]*)\]\]>$/i,
+        '$1'
+      )
+  )
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function extractPodcastDescription(
+  xml: string
+): string | null {
+  const channelMatch =
+    /<channel\b[^>]*>([\s\S]*?)<\/channel>/i.exec(
+      xml
+    );
+
+  if (!channelMatch?.[1]) {
+    return null;
+  }
+
+  const channelMetadata =
+    channelMatch[1].replace(
+      /<item\b[^>]*>[\s\S]*?<\/item>/gi,
+      ''
+    );
+
+  const tagNames = [
+    'description',
+    'itunes:summary',
+    'content:encoded',
+  ];
+
+  for (const tagName of tagNames) {
+    const escapedTagName =
+      tagName.replace(
+        /[.*+?^${}()|[\]\\]/g,
+        '\\$&'
+      );
+
+    const tagPattern =
+      new RegExp(
+        `<${escapedTagName}\\b[^>]*>([\\s\\S]*?)<\\/${escapedTagName}>`,
+        'i'
+      );
+
+    const match =
+      tagPattern.exec(
+        channelMetadata
+      );
+
+    const description =
+      match?.[1]
+        ? cleanPodcastDescription(
+            match[1]
+          )
+        : '';
+
+    if (description) {
+      return description;
+    }
+  }
+
+  return null;
+}
+
 function buildApplePodcastsShowUrl(
   podcastId: string
 ) {
@@ -278,6 +426,10 @@ function mapSearchResult(
       getApplePodcastsShowUrl(
         String(id),
         result.collectionViewUrl
+      ),
+    podcastFeedUrl:
+      normalizePodcastFeedUrl(
+        result.feedUrl
       ),
     imageUrl:
       upgradeArtworkUrl(
@@ -626,6 +778,57 @@ async function requestTopPodcastChart(
     [];
 }
 
+export async function getPodcastDescription(
+  feedUrl: string,
+  signal?: AbortSignal
+): Promise<string | null> {
+  const normalizedFeedUrl =
+    normalizePodcastFeedUrl(
+      feedUrl
+    );
+
+  if (!normalizedFeedUrl) {
+    return null;
+  }
+
+  if (
+    podcastDescriptionCache.has(
+      normalizedFeedUrl
+    )
+  ) {
+    return (
+      podcastDescriptionCache.get(
+        normalizedFeedUrl
+      ) ?? null
+    );
+  }
+
+  const response =
+    await fetchWithRetry(
+      normalizedFeedUrl,
+      signal
+    );
+
+  if (!response.ok) {
+    throw new Error(
+      `Podcast feed request failed with status ${response.status}.`
+    );
+  }
+
+  const xml =
+    await response.text();
+
+  const description =
+    extractPodcastDescription(xml);
+
+  podcastDescriptionCache.set(
+    normalizedFeedUrl,
+    description
+  );
+
+  return description;
+}
+
 export async function getPodcastEpisodePreview(
   item: Top3Item,
   signal?: AbortSignal
@@ -676,6 +879,16 @@ export async function getPodcastEpisodePreview(
   const episode =
     playableEpisodes[0];
 
+  const feedUrl =
+    normalizePodcastFeedUrl(
+      results.find(
+        (result) =>
+          Boolean(
+            result.feedUrl?.trim()
+          )
+      )?.feedUrl
+    );
+
   if (!episode?.episodeUrl) {
     podcastEpisodePreviewCache.set(
       podcastId,
@@ -693,6 +906,8 @@ export async function getPodcastEpisodePreview(
         podcastId,
         item.applePodcastsUrl
       ),
+    feedUrl:
+      feedUrl || undefined,
   };
 
   podcastEpisodePreviewCache.set(

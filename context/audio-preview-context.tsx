@@ -2,7 +2,10 @@ import {
   registerAudioPreviewStopper,
   stopOtherMediaPreviewsFromCoordinator,
 } from '@/lib/media-preview-coordinator';
-import { getPodcastEpisodePreview } from '@/providers/podcasts';
+import {
+  getPodcastDescription,
+  getPodcastEpisodePreview,
+} from '@/providers/podcasts';
 import { Top3Item } from '@/types/top3-item';
 import {
   setAudioModeAsync,
@@ -24,6 +27,7 @@ type AudioPreviewContextValue = {
   activePreviewItemId: string | null;
   isPreviewPlaying: boolean;
   isPreviewVisible: boolean;
+  isPreviewLoading: boolean;
   previewCurrentTime: number;
   previewDuration: number;
   previewProgress: number;
@@ -55,6 +59,8 @@ export function AudioPreviewProvider({
   const [activePreviewItem, setActivePreviewItem] =
     useState<Top3Item | null>(null);
   const [isPreviewVisible, setIsPreviewVisible] =
+    useState(false);
+  const [isPreviewLoading, setIsPreviewLoading] =
     useState(false);
 
   const previewPlayer = useAudioPlayer(null);
@@ -133,6 +139,7 @@ export function AudioPreviewProvider({
       activePreviewItem
     ) {
       previewActionIdRef.current += 1;
+      setIsPreviewLoading(false);
       setIsPreviewVisible(false);
       setActivePreviewItem(null);
     }
@@ -144,6 +151,7 @@ export function AudioPreviewProvider({
   const stopPreview = useCallback(() => {
     previewActionIdRef.current += 1;
     previewPlayer.pause();
+    setIsPreviewLoading(false);
     setIsPreviewVisible(false);
     setActivePreviewItem(null);
   }, [previewPlayer]);
@@ -172,6 +180,54 @@ export function AudioPreviewProvider({
     );
   }, [stopPreview]);
 
+  function applyPodcastDescription(
+    descriptionPromise: Promise<string | null>,
+    actionId: number,
+    itemId: string,
+    itemTitle: string
+  ) {
+    void descriptionPromise
+      .then((description) => {
+        if (
+          !description ||
+          previewActionIdRef.current !== actionId
+        ) {
+          return;
+        }
+
+        setActivePreviewItem(
+          (currentItem) => {
+            if (
+              !currentItem ||
+              currentItem.id !== itemId
+            ) {
+              return currentItem;
+            }
+
+            return {
+              ...currentItem,
+              podcastDescription:
+                description,
+            };
+          }
+        );
+      })
+      .catch((error) => {
+        if (
+          previewActionIdRef.current !== actionId
+        ) {
+          return;
+        }
+
+        if (__DEV__) {
+          console.log(
+            `Failed to load podcast description for ${itemTitle}:`,
+            error
+          );
+        }
+      });
+  }
+
   async function togglePreview(item: Top3Item) {
     if (
       isAppleMusicItem(item) &&
@@ -188,6 +244,11 @@ export function AudioPreviewProvider({
       activePreviewItem?.id === item.id;
 
     if (isCurrentPreview) {
+      if (isPreviewLoading) {
+        stopPreview();
+        return;
+      }
+
       if (previewStatus.playing) {
         stopPreview();
         return;
@@ -225,20 +286,49 @@ export function AudioPreviewProvider({
 
     let playableItem = item;
 
+    const actionId =
+      previewActionIdRef.current + 1;
+    previewActionIdRef.current = actionId;
+
+    stopOtherMediaPreviewsFromCoordinator(
+      'audio'
+    );
+
+    previewPlayer.pause();
+
+    const isPodcastItem =
+      isApplePodcastItem(item);
+
+    let hasStartedDescriptionRequest =
+      false;
+
+    if (isPodcastItem) {
+      setActivePreviewItem(item);
+      setIsPreviewVisible(true);
+      setIsPreviewLoading(true);
+
+      if (
+        !item.podcastDescription &&
+        item.podcastFeedUrl
+      ) {
+        hasStartedDescriptionRequest =
+          true;
+
+        applyPodcastDescription(
+          getPodcastDescription(
+            item.podcastFeedUrl
+          ),
+          actionId,
+          item.id,
+          item.title
+        );
+      }
+    }
+
     if (
-      isApplePodcastItem(item) &&
+      isPodcastItem &&
       !item.previewUrl
     ) {
-      const actionId =
-        previewActionIdRef.current + 1;
-      previewActionIdRef.current = actionId;
-
-      stopOtherMediaPreviewsFromCoordinator(
-        'audio'
-      );
-
-      previewPlayer.pause();
-
       try {
         const podcastPreview =
           await getPodcastEpisodePreview(item);
@@ -250,8 +340,15 @@ export function AudioPreviewProvider({
         }
 
         if (!podcastPreview) {
+          setIsPreviewLoading(false);
+          setIsPreviewVisible(false);
+          setActivePreviewItem(null);
           return;
         }
+
+        const podcastFeedUrl =
+          item.podcastFeedUrl ??
+          podcastPreview.feedUrl;
 
         playableItem = {
           ...item,
@@ -260,13 +357,54 @@ export function AudioPreviewProvider({
           applePodcastsUrl:
             item.applePodcastsUrl ??
             podcastPreview.applePodcastsUrl,
+          podcastFeedUrl,
         };
+
+        setActivePreviewItem(
+          (currentItem) => {
+            if (
+              !currentItem ||
+              currentItem.id !== item.id
+            ) {
+              return currentItem;
+            }
+
+            return {
+              ...playableItem,
+              podcastDescription:
+                currentItem.podcastDescription ??
+                playableItem.podcastDescription,
+            };
+          }
+        );
+
+        if (
+          !hasStartedDescriptionRequest &&
+          !playableItem.podcastDescription &&
+          podcastFeedUrl
+        ) {
+          hasStartedDescriptionRequest =
+            true;
+
+          applyPodcastDescription(
+            getPodcastDescription(
+              podcastFeedUrl
+            ),
+            actionId,
+            item.id,
+            item.title
+          );
+        }
       } catch (error) {
         if (
           previewActionIdRef.current !== actionId
         ) {
           return;
         }
+
+        setIsPreviewLoading(false);
+        setIsPreviewVisible(false);
+        setActivePreviewItem(null);
 
         if (__DEV__) {
           console.log(
@@ -277,21 +415,17 @@ export function AudioPreviewProvider({
 
         return;
       }
-    } else {
-      if (!item.previewUrl) {
-        return;
-      }
-
-      previewActionIdRef.current += 1;
-
-      stopOtherMediaPreviewsFromCoordinator(
-        'audio'
-      );
-
-      previewPlayer.pause();
+    } else if (!item.previewUrl) {
+      return;
     }
 
     if (!playableItem.previewUrl) {
+      if (isPodcastItem) {
+        setIsPreviewLoading(false);
+        setIsPreviewVisible(false);
+        setActivePreviewItem(null);
+      }
+
       return;
     }
 
@@ -299,18 +433,37 @@ export function AudioPreviewProvider({
       playableItem.previewUrl
     );
 
-    if (
-      isApplePodcastItem(playableItem)
-    ) {
+    if (isPodcastItem) {
       await previewPlayer.seekTo(
         PODCAST_PREVIEW_START_SECONDS
       );
+
+      if (
+        previewActionIdRef.current !== actionId
+      ) {
+        return;
+      }
     }
 
     setActivePreviewItem(
-      playableItem
+      (currentItem) => {
+        if (
+          isPodcastItem &&
+          currentItem?.id === playableItem.id
+        ) {
+          return {
+            ...playableItem,
+            podcastDescription:
+              currentItem.podcastDescription ??
+              playableItem.podcastDescription,
+          };
+        }
+
+        return playableItem;
+      }
     );
     setIsPreviewVisible(true);
+    setIsPreviewLoading(false);
 
     previewPlayer.play();
   }
@@ -322,6 +475,7 @@ export function AudioPreviewProvider({
         activePreviewItemId,
         isPreviewPlaying: previewStatus.playing,
         isPreviewVisible,
+        isPreviewLoading,
         previewCurrentTime,
         previewDuration,
         previewProgress,
