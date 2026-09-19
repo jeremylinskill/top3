@@ -242,12 +242,7 @@ export default function AudioPreviewSheet() {
           </Pressable>
         </View>
 
-        <View
-          style={[
-            styles.mediaRow,
-            isApplePodcast &&
-              styles.podcastMediaRow,
-          ]}>
+        <View style={styles.mediaRow}>
           {activePreviewItem.imageUrl ? (
             <Image
               source={{
@@ -283,80 +278,62 @@ export default function AudioPreviewSheet() {
             </View>
           )}
 
-          {isApplePodcast ? (
-            <View
-              style={
-                styles.podcastDetails
-              }>
-              {previewItem.podcastDescription ? (
-                <Text
-                  style={[
-                    styles.podcastDescription,
-                    {
-                      color:
-                        previewColors.bodyText,
-                    },
-                  ]}
-                  numberOfLines={4}
-                  ellipsizeMode="tail">
-                  {
-                    previewItem.podcastDescription
-                  }
-                </Text>
-              ) : null}
-
-              {externalUrl ? (
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.link,
-                    styles.podcastLink,
-                    pressed &&
-                      styles.linkPressed,
-                  ]}
-                  onPress={() => {
-                    void openExternalItem();
-                  }}
-                  hitSlop={6}
-                  accessibilityRole="link"
-                  accessibilityLabel={`Open ${activePreviewItem.title} in ${externalLabel}`}>
+          <View
+            style={[
+              styles.mediaDetails,
+              !isApplePodcast &&
+                styles.musicMediaDetails,
+            ]}>
+            {isApplePodcast ? (
+              <View
+                style={
+                  styles.podcastDescriptionSlot
+                }>
+                {previewItem.podcastDescription ? (
                   <Text
                     style={[
-                      styles.linkText,
+                      styles.podcastDescription,
                       {
                         color:
-                          previewColors.primaryText,
+                          previewColors.bodyText,
                       },
-                    ]}>
-                    {externalLabel} ↗
+                    ]}
+                    numberOfLines={4}
+                    ellipsizeMode="tail">
+                    {
+                      previewItem.podcastDescription
+                    }
                   </Text>
-                </Pressable>
-              ) : null}
-            </View>
-          ) : externalUrl ? (
-            <Pressable
-              style={({ pressed }) => [
-                styles.link,
-                pressed &&
-                  styles.linkPressed,
-              ]}
-              onPress={() => {
-                void openExternalItem();
-              }}
-              hitSlop={6}
-              accessibilityRole="link"
-              accessibilityLabel={`Open ${activePreviewItem.title} in ${externalLabel}`}>
-              <Text
-                style={[
-                  styles.linkText,
-                  {
-                    color:
-                      previewColors.primaryText,
-                  },
-                ]}>
-                {externalLabel} ↗
-              </Text>
-            </Pressable>
-          ) : null}
+                ) : null}
+              </View>
+            ) : null}
+
+            {externalUrl ? (
+              <Pressable
+                style={({ pressed }) => [
+                  styles.mediaLink,
+                  pressed &&
+                    styles.linkPressed,
+                ]}
+                onPress={() => {
+                  void openExternalItem();
+                }}
+                hitSlop={6}
+                accessibilityRole="link"
+                accessibilityLabel={`Open ${activePreviewItem.title} in ${externalLabel}`}>
+                <Text
+                  style={[
+                    styles.linkText,
+                    {
+                      color:
+                        previewColors.primaryText,
+                    },
+                  ]}>
+                  {externalLabel} ↗
+                </Text>
+              </Pressable>
+            ) : null}
+          </View>
         </View>
 
         <View
@@ -512,13 +489,7 @@ const styles = StyleSheet.create({
   mediaRow: {
     marginTop: 12,
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-  },
-
-  podcastMediaRow: {
     alignItems: 'flex-start',
-    justifyContent: 'flex-start',
   },
 
   artwork: {
@@ -535,10 +506,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  podcastDetails: {
+  mediaDetails: {
     flex: 1,
     minWidth: 0,
     marginLeft: 14,
+  },
+
+  musicMediaDetails: {
+    minHeight: 88,
+    justifyContent: 'flex-end',
+  },
+
+  podcastDescriptionSlot: {
+    height: 72,
+    overflow: 'hidden',
   },
 
   podcastDescription: {
@@ -563,18 +544,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
 
-  link: {
-    flexShrink: 0,
-    minHeight: 36,
-    justifyContent: 'flex-end',
-    paddingHorizontal: 4,
-  },
-
-  podcastLink: {
+  mediaLink: {
     alignSelf: 'flex-start',
+    flexShrink: 0,
     minHeight: 0,
     marginTop: 8,
-    paddingHorizontal: 0,
     justifyContent: 'flex-start',
   },
 
