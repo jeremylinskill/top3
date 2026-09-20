@@ -9,7 +9,7 @@ import {
 export type SegmentedControlOption<T extends string> = {
   value: T;
   label: string;
-  count?: number;
+  count?: number | string;
   accessibilityLabel?: string;
 };
 
@@ -80,8 +80,7 @@ export default function SegmentedControl<
               }>
               {option.label}
 
-              {typeof option.count ===
-              'number' ? (
+              {option.count !== undefined ? (
                 <AppText
                   variant="label"
                   tone={

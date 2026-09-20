@@ -600,6 +600,18 @@ export default function SocialScreen() {
       (hasSocialOwnerLoadError ||
         hasViewedConnectionsLoadError));
 
+  const displayedFollowerCount =
+    isLoadingConnections ||
+    hasConnectionsLoadError
+      ? '—'
+      : followerCount;
+
+  const displayedFollowingCount =
+    isLoadingConnections ||
+    hasConnectionsLoadError
+      ? '—'
+      : followingCount;
+
   const isConnectionsRestricted =
     !isOwnSocialProfile &&
     Boolean(resolvedSocialOwnerProfile) &&
@@ -805,16 +817,22 @@ export default function SocialScreen() {
             {
               value: 'followers',
               label: 'Followers',
-              count: followerCount,
+              count: displayedFollowerCount,
               accessibilityLabel:
-                `Show ${followerCount} followers`,
+                isLoadingConnections ||
+                hasConnectionsLoadError
+                  ? 'Show followers'
+                  : `Show ${followerCount} followers`,
             },
             {
               value: 'following',
               label: 'Following',
-              count: followingCount,
+              count: displayedFollowingCount,
               accessibilityLabel:
-                `Show ${followingCount} following`,
+                isLoadingConnections ||
+                hasConnectionsLoadError
+                  ? 'Show following'
+                  : `Show ${followingCount} following`,
             },
           ]}
           onChange={changeTab}
