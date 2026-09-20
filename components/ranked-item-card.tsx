@@ -166,7 +166,6 @@ export default function RankedItemCard({
                 colors.background,
             },
           ]}
-          iconColor={colors.secondaryText}
         />
       ) : null}
     </Pressable>

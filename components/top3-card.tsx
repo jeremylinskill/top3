@@ -771,7 +771,7 @@ export default function Top3Card({
                         iconColor={
                           isTasteMatch
                             ? colors.onHighlight
-                            : colors.secondaryText
+                            : colors.text
                         }
                       />
 
