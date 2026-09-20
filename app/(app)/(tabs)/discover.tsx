@@ -36,6 +36,7 @@ import {
   Ionicons,
   MaterialIcons,
 } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import {
   useCallback,
@@ -1820,6 +1821,10 @@ export default function DiscoverScreen() {
                         key={collection.id}
                         style={({ pressed }) => [
                           styles.collectionCard,
+                          {
+                            backgroundColor:
+                              colors.surface,
+                          },
                           pressed &&
                             styles.pressed,
                         ]}
@@ -1836,14 +1841,14 @@ export default function DiscoverScreen() {
                                 collection.topic
                               )}`
                         }`}>
-                        <View
-                          style={[
-                            styles.collectionIcon,
-                            {
-                              backgroundColor:
-                                colors.secondarySurface,
-                            },
-                          ]}>
+                        <LinearGradient
+                          colors={[
+                            '#00D89A',
+                            '#00D2FD',
+                          ]}
+                          start={{ x: 0.5, y: 0 }}
+                          end={{ x: 0.5, y: 1 }}
+                          style={styles.collectionIcon}>
                           <Text
                             style={
                               styles.collectionEmoji
@@ -1852,7 +1857,7 @@ export default function DiscoverScreen() {
                               collection.categoryIcon
                             }
                           </Text>
-                        </View>
+                        </LinearGradient>
 
                         <View
                           style={
@@ -2619,7 +2624,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 13,
-    borderWidth: 1,
     borderRadius: 18,
   },
 
