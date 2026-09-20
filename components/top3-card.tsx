@@ -14,6 +14,7 @@ import {
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { useComments } from '@/context/comment-context';
 import { useLike } from '@/context/like-context';
+import { useSavedItems } from '@/context/saved-items-context';
 import { useAppColors } from '@/hooks/use-app-colors';
 import {
   repairCollectionArtwork,
@@ -131,6 +132,12 @@ export default function Top3Card({
     isLoading: isLoadingComments,
   } = useComments();
 
+  const {
+    isSaved,
+    toggleSavedItem,
+    isLoading: isLoadingSavedItems,
+  } = useSavedItems();
+
   const [
     artworkOverrides,
     setArtworkOverrides,
@@ -154,6 +161,8 @@ export default function Top3Card({
     (item) =>
       item.id === post.collection.category
   );
+
+  const savedCategory = category?.id;
 
   const artworkRule =
     getCategoryArtworkRule(
@@ -575,6 +584,14 @@ export default function Top3Card({
                     )
                   : false;
 
+              const itemIsSaved =
+                item !== null &&
+                savedCategory !== undefined &&
+                isSaved(
+                  savedCategory,
+                  item.id
+                );
+
               return (
                 <View
                   key={`${post.id}-${index}`}
@@ -738,24 +755,88 @@ export default function Top3Card({
                   </View>
 
                   {item ? (
-                    <MediaPreviewItemButton
-                      item={item}
-                      category={post.collection.category}
-                      style={[
-                        styles.previewButton,
-                        {
-                          backgroundColor:
+                    <View style={styles.itemActions}>
+                      <MediaPreviewItemButton
+                        item={item}
+                        category={post.collection.category}
+                        style={[
+                          styles.previewButton,
+                          {
+                            backgroundColor:
+                              isTasteMatch
+                                ? colors.highlightSurface
+                                : colors.surface,
+                          },
+                        ]}
+                        iconColor={
+                          isTasteMatch
+                            ? colors.onHighlight
+                            : colors.secondaryText
+                        }
+                      />
+
+                      <Pressable
+                        style={({ pressed }) => [
+                          styles.saveButton,
+                          {
+                            backgroundColor:
+                              isTasteMatch
+                                ? colors.highlightSurface
+                                : colors.surface,
+                          },
+                          pressed && styles.pressed,
+                          isLoadingSavedItems &&
+                            styles.disabled,
+                        ]}
+                        onPress={(event) => {
+                          event.stopPropagation();
+
+                          if (!savedCategory) {
+                            return;
+                          }
+
+                          toggleSavedItem(
+                            savedCategory,
+                            item,
+                            {
+                              collectionId:
+                                post.collection.id,
+                              userId: post.authorId,
+                            }
+                          );
+                        }}
+                        disabled={
+                          isLoadingSavedItems ||
+                          !savedCategory
+                        }
+                        hitSlop={8}
+                        accessibilityRole="button"
+                        accessibilityState={{
+                          selected: itemIsSaved,
+                          disabled:
+                            isLoadingSavedItems ||
+                            !savedCategory,
+                        }}
+                        accessibilityLabel={
+                          itemIsSaved
+                            ? `Remove ${item.title} from Saved`
+                            : `Save ${item.title}`
+                        }>
+                        <Ionicons
+                          name={
+                            itemIsSaved
+                              ? 'bookmark'
+                              : 'bookmark-outline'
+                          }
+                          size={19}
+                          color={
                             isTasteMatch
-                              ? colors.highlightSurface
-                              : colors.surface,
-                        },
-                      ]}
-                      iconColor={
-                        isTasteMatch
-                          ? colors.onHighlight
-                          : colors.secondaryText
-                      }
-                    />
+                              ? colors.onHighlight
+                              : colors.text
+                          }
+                        />
+                      </Pressable>
+                    </View>
                   ) : null}
 
                 </View>
@@ -1071,11 +1152,27 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
+  itemActions: {
+    flexShrink: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 10,
+    gap: 8,
+  },
+
   previewButton: {
     flexShrink: 0,
     width: 36,
     height: 36,
-    marginLeft: 10,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  saveButton: {
+    flexShrink: 0,
+    width: 36,
+    height: 36,
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',

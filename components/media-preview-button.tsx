@@ -459,7 +459,7 @@ export default function MediaPreviewButton({
   const colors = useAppColors();
 
   const resolvedIconColor =
-    iconColor ?? colors.secondaryText;
+    iconColor ?? colors.text;
 
   if (!preview.available) {
     return null;
@@ -492,6 +492,7 @@ export default function MediaPreviewButton({
             {
               width: iconSize + 8,
               height: iconSize + 8,
+              tintColor: resolvedIconColor,
             },
           ]}
           resizeMode="contain"

@@ -10,6 +10,7 @@ import { SPACING } from '@/constants/spacing';
 import { useAppColors } from '@/hooks/use-app-colors';
 import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
+import { Ionicons } from '@expo/vector-icons';
 import {
   Pressable,
   StyleSheet,
@@ -41,6 +42,7 @@ type ProfileScreenContentProps = {
 
   onToggleFollow?: () => void;
   onCreateTop3?: () => void;
+  onSavedPress?: () => void;
   onFollowersPress?: () => void;
   onFollowingPress?: () => void;
   onTasteMatchPress?: () => void;
@@ -75,6 +77,7 @@ export default function ProfileScreenContent({
 
   onToggleFollow,
   onCreateTop3,
+  onSavedPress,
   onFollowersPress,
   onFollowingPress,
   onTasteMatchPress,
@@ -238,6 +241,56 @@ export default function ProfileScreenContent({
           </AppText>
         </Pressable>
       </View>
+
+      {isCurrentUser && onSavedPress ? (
+        <Pressable
+          style={({ pressed }) => [
+            styles.savedRow,
+            {
+              backgroundColor: colors.surface,
+            },
+            pressed && styles.savedRowPressed,
+          ]}
+          onPress={onSavedPress}
+          accessibilityRole="button"
+          accessibilityLabel="Open Saved">
+          <View
+            style={[
+              styles.savedIconContainer,
+              {
+                backgroundColor:
+                  colors.background,
+              },
+            ]}>
+            <Ionicons
+              name="bookmark-outline"
+              size={22}
+              color={colors.text}
+            />
+          </View>
+
+          <View style={styles.savedDetails}>
+            <AppText variant="headline">
+              Saved
+            </AppText>
+
+            <AppText
+              variant="label"
+              tone="tertiary"
+              emphasis="regular"
+              style={styles.savedSubtitle}
+              numberOfLines={1}>
+              Movies, books, music and more
+            </AppText>
+          </View>
+
+          <Ionicons
+            name="chevron-forward"
+            size={21}
+            color={colors.tertiaryText}
+          />
+        </Pressable>
+      ) : null}
 
       {!isCurrentUser ? (
         <View style={styles.profileActions}>
@@ -404,6 +457,38 @@ const styles = StyleSheet.create({
   statDivider: {
     width: StyleSheet.hairlineWidth,
     height: 30,
+  },
+
+  savedRow: {
+    marginTop: SPACING.sm,
+    minHeight: 72,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: RADIUS.xl,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+  },
+
+  savedRowPressed: {
+    opacity: 0.65,
+  },
+
+  savedIconContainer: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  savedDetails: {
+    flex: 1,
+    minWidth: 0,
+    marginLeft: SPACING.md,
+  },
+
+  savedSubtitle: {
+    marginTop: 2,
   },
 
   profileActions: {

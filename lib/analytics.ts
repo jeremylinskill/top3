@@ -22,7 +22,9 @@ export type AnalyticsEvent =
   | 'taste_match_viewed'
   | 'collection_viewed'
   | 'collection_shared'
-  | 'notification_opened';
+  | 'notification_opened'
+  | 'saved_item_added'
+  | 'saved_item_removed';
 
 export type AnalyticsEventProperties = {
   category?: string;

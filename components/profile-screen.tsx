@@ -548,6 +548,14 @@ export default function ProfileScreen({
     router.push('/settings');
   }
 
+  function openSaved() {
+    if (!isCurrentUser) {
+      return;
+    }
+
+    router.push('/saved');
+  }
+
   function openCreateScreen() {
     if (!isCurrentUser) {
       return;
@@ -1434,6 +1442,11 @@ export default function ProfileScreen({
           onCreateTop3={
             isCurrentUser
               ? openCreateScreen
+              : undefined
+          }
+          onSavedPress={
+            isCurrentUser
+              ? openSaved
               : undefined
           }
           onTitlePress={openCollectionFeed}

@@ -10,6 +10,7 @@ import { LikeProvider } from '@/context/like-context';
 import { NotificationProvider } from '@/context/notification-context';
 import { OnboardingCollectionProvider } from '@/context/onboarding-collection-context';
 import { ProfileProvider } from '@/context/profile-context';
+import { SavedItemsProvider } from '@/context/saved-items-context';
 import { Top3Provider } from '@/context/top3-context';
 import { TrailerPreviewProvider } from '@/context/trailer-preview-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -164,47 +165,49 @@ export default function RootLayout() {
                 <NotificationProvider>
                   <FollowProvider>
                     <LikeProvider>
-                      <CommentProvider>
-                        <Top3Provider>
-                          <AudioPreviewProvider>
-                            <TrailerPreviewProvider>
-                              <BookPreviewProvider>
-                                <ThemeProvider
-                                  value={
-                                    colorScheme === 'dark'
-                                      ? DarkTheme
-                                      : DefaultTheme
-                                  }>
-                                  <NotificationResponseController />
+                      <SavedItemsProvider>
+                        <CommentProvider>
+                          <Top3Provider>
+                            <AudioPreviewProvider>
+                              <TrailerPreviewProvider>
+                                <BookPreviewProvider>
+                                  <ThemeProvider
+                                    value={
+                                      colorScheme === 'dark'
+                                        ? DarkTheme
+                                        : DefaultTheme
+                                    }>
+                                    <NotificationResponseController />
 
-                                  <Stack
-                                    screenOptions={{
-                                      headerShown: false,
-                                    }}>
-                                    <Stack.Screen name="index" />
-                                    <Stack.Screen
-                                      name="onboarding"
-                                      options={{
-                                        animation: 'none',
-                                      }}
-                                    />
-                                    <Stack.Screen name="onboarding-published" />
-                                    <Stack.Screen name="onboarding-overall-top3" />
-                                    <Stack.Screen name="onboarding-taste-match" />
-                                    <Stack.Screen name="onboarding-notifications" />
-                                    <Stack.Screen name="(app)" />
-                                  </Stack>
+                                    <Stack
+                                      screenOptions={{
+                                        headerShown: false,
+                                      }}>
+                                      <Stack.Screen name="index" />
+                                      <Stack.Screen
+                                        name="onboarding"
+                                        options={{
+                                          animation: 'none',
+                                        }}
+                                      />
+                                      <Stack.Screen name="onboarding-published" />
+                                      <Stack.Screen name="onboarding-overall-top3" />
+                                      <Stack.Screen name="onboarding-taste-match" />
+                                      <Stack.Screen name="onboarding-notifications" />
+                                      <Stack.Screen name="(app)" />
+                                    </Stack>
 
-                                  <AudioPreviewSheet />
-                                  <TrailerPreviewSheet />
-                                  <BookPreviewSheet />
-                                  <StatusBar style="auto" />
-                                </ThemeProvider>
-                              </BookPreviewProvider>
-                            </TrailerPreviewProvider>
-                          </AudioPreviewProvider>
-                        </Top3Provider>
-                      </CommentProvider>
+                                    <AudioPreviewSheet />
+                                    <TrailerPreviewSheet />
+                                    <BookPreviewSheet />
+                                    <StatusBar style="auto" />
+                                  </ThemeProvider>
+                                </BookPreviewProvider>
+                              </TrailerPreviewProvider>
+                            </AudioPreviewProvider>
+                          </Top3Provider>
+                        </CommentProvider>
+                      </SavedItemsProvider>
                     </LikeProvider>
                   </FollowProvider>
                 </NotificationProvider>
