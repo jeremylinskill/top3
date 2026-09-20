@@ -33,6 +33,7 @@ type ProfileScreenContentProps = {
   >;
 
   isLoadingPosts?: boolean;
+  hasPostsLoadError?: boolean;
 
   canViewPosts?: boolean;
 
@@ -42,6 +43,7 @@ type ProfileScreenContentProps = {
 
   onToggleFollow?: () => void;
   onCreateTop3?: () => void;
+  onRetryPosts?: () => void;
   onSavedPress?: () => void;
   onFollowersPress?: () => void;
   onFollowingPress?: () => void;
@@ -68,6 +70,7 @@ export default function ProfileScreenContent({
   tasteMatchItemTitlesByPostId = {},
 
   isLoadingPosts = false,
+  hasPostsLoadError = false,
 
   canViewPosts = true,
 
@@ -77,6 +80,7 @@ export default function ProfileScreenContent({
 
   onToggleFollow,
   onCreateTop3,
+  onRetryPosts,
   onSavedPress,
   onFollowersPress,
   onFollowingPress,
@@ -157,7 +161,12 @@ export default function ProfileScreenContent({
         ]}>
         <View style={styles.stat}>
           <AppText variant="statValue">
-            {canViewPosts ? publishedPosts.length : 0}
+            {!canViewPosts
+              ? 0
+              : isLoadingPosts ||
+                  hasPostsLoadError
+                ? '—'
+                : publishedPosts.length}
           </AppText>
 
           <AppText
@@ -333,6 +342,29 @@ export default function ProfileScreenContent({
               style={styles.emptyStateText}>
               This person's lists are only visible to approved followers.
             </AppText>
+          </View>
+        ) : hasPostsLoadError ? (
+          <View style={styles.emptyState}>
+            <AppText variant="sectionTitle">
+              {isCurrentUser
+                ? 'Couldn’t load your Top 3s'
+                : 'Couldn’t load Top 3s'}
+            </AppText>
+
+            <AppText
+              variant="body"
+              tone="tertiary"
+              style={styles.emptyStateText}>
+              Check your connection and try again.
+            </AppText>
+
+            {onRetryPosts ? (
+              <PrimaryButton
+                title="Try Again"
+                onPress={onRetryPosts}
+                style={styles.emptyStateAction}
+              />
+            ) : null}
           </View>
         ) : publishedPosts.length === 0 ? (
           <View style={styles.emptyState}>

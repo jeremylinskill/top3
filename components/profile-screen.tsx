@@ -25,6 +25,7 @@ import { getPublishedPostsByUser } from '@/services/post-service';
 import { getTasteRecommendationForUser } from '@/services/taste-recommendation-service';
 import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
+import { isNetworkError } from '@/utils/is-network-error';
 import { router } from 'expo-router';
 import {
   useCallback,
@@ -145,6 +146,11 @@ export default function ProfileScreen({
 
   const [isLoadingPosts, setIsLoadingPosts] =
     useState(true);
+
+  const [
+    hasPostsLoadError,
+    setHasPostsLoadError,
+  ] = useState(false);
 
   const [
     viewedUserFollowCounts,
@@ -323,11 +329,13 @@ export default function ProfileScreen({
         !viewedUserId
       ) {
         setAllPosts([]);
+        setHasPostsLoadError(false);
         setIsLoadingPosts(false);
         return;
       }
 
       if (showLoading) {
+        setHasPostsLoadError(false);
         setIsLoadingPosts(true);
       }
 
@@ -336,6 +344,8 @@ export default function ProfileScreen({
           await getPublishedPostsByUser(
             profile.id
           );
+
+        setHasPostsLoadError(false);
 
         if (viewedUserId === profile.id) {
           setAllPosts(currentUserPosts);
@@ -359,12 +369,16 @@ export default function ProfileScreen({
           )
         );
       } catch (error) {
-        console.error(
-          'Failed to load profile posts:',
-          error
-        );
+        if (!isNetworkError(error)) {
+          console.error(
+            'Failed to load profile posts:',
+            error
+          );
+        }
 
-        setAllPosts([]);
+        if (showLoading) {
+          setHasPostsLoadError(true);
+        }
       } finally {
         if (showLoading) {
           setIsLoadingPosts(false);
@@ -380,6 +394,12 @@ export default function ProfileScreen({
   );
 
   useEffect(() => {
+    void loadProfilePosts({
+      showLoading: true,
+    });
+  }, [loadProfilePosts]);
+
+  const retryProfilePosts = useCallback(() => {
     void loadProfilePosts({
       showLoading: true,
     });
@@ -1426,6 +1446,8 @@ export default function ProfileScreen({
               : undefined
           }
           isLoadingPosts={isLoadingPosts}
+          hasPostsLoadError={hasPostsLoadError}
+          onRetryPosts={retryProfilePosts}
           canViewPosts={canViewPosts}
           isFollowing={userIsFollowed}
           isFollowRequested={
