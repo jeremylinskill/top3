@@ -475,6 +475,11 @@ if (isMounted) {
                             ? {
                                 category:
                                   saveCategory,
+                                source: {
+                                  topic:
+                                    result.topic ||
+                                    'general',
+                                },
                               }
                             : undefined
                         }

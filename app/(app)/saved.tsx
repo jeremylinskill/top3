@@ -475,6 +475,8 @@ export default function SavedScreen() {
                             savedItem.sourceCollectionId,
                           userId:
                             savedItem.sourceUserId,
+                          topic:
+                            savedItem.sourceTopic,
                         },
                       }}
                       style={{

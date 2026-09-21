@@ -9,12 +9,14 @@ export type SavedItem = {
   item: Top3Item;
   sourceCollectionId?: string;
   sourceUserId?: string;
+  sourceTopic?: string;
   createdAt: string;
 };
 
 export type SaveItemSource = {
   collectionId?: string;
   userId?: string;
+  topic?: string;
 };
 
 type SavedItemRow = {
@@ -25,6 +27,7 @@ type SavedItemRow = {
   item_snapshot: Top3Item;
   source_collection_id: string | null;
   source_user_id: string | null;
+  source_topic: string | null;
   created_at: string;
 };
 
@@ -49,6 +52,7 @@ function mapSavedItemRow(
     sourceCollectionId:
       row.source_collection_id ?? undefined,
     sourceUserId: row.source_user_id ?? undefined,
+    sourceTopic: row.source_topic ?? undefined,
     createdAt: row.created_at,
   };
 }
@@ -67,6 +71,7 @@ export async function getSavedItems(
         'item_snapshot',
         'source_collection_id',
         'source_user_id',
+        'source_topic',
         'created_at',
       ].join(', ')
     )
@@ -98,6 +103,7 @@ export async function saveItem(
     item_snapshot: Top3Item;
     source_collection_id?: string;
     source_user_id?: string;
+    source_topic?: string;
   } = {
     user_id: userId,
     category,
@@ -112,6 +118,12 @@ export async function saveItem(
 
   if (isUuid(source?.userId)) {
     row.source_user_id = source.userId;
+  }
+
+  const sourceTopic = source?.topic?.trim();
+
+  if (sourceTopic) {
+    row.source_topic = sourceTopic;
   }
 
   const { error } = await supabase

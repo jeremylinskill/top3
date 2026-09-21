@@ -3,12 +3,15 @@ import AppText from '@/components/app-text';
 import Chip from '@/components/chip';
 import { MediaPreviewItemButton } from '@/components/media-preview-button';
 import PageHeader from '@/components/page-header';
+import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
 import SearchInput from '@/components/search-input';
 import SearchResultSkeleton from '@/components/search-result-skeleton';
+import SegmentedControl from '@/components/segmented-control';
 import { getCategoryArtworkRule } from '@/constants/category-artwork-rules';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { useOnboardingCollection } from '@/context/onboarding-collection-context';
+import { useSavedItems } from '@/context/saved-items-context';
 import { useTop3 } from '@/context/top3-context';
 import { useAppColors } from '@/hooks/use-app-colors';
 import { trackAnalyticsEvent } from '@/lib/analytics';
@@ -21,7 +24,7 @@ import { getPublishedPosts } from '@/services/post-service';
 import { Top3Item } from '@/types/top3-item';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Image,
@@ -33,6 +36,8 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+type SearchSource = 'search' | 'saved';
 
 const MINIMUM_SEARCH_LENGTH = 3;
 const MINIMUM_COLLECTIONS_FOR_POPULARITY = 50;
@@ -157,6 +162,13 @@ export default function SearchScreen() {
     setItemAtRank: setOnboardingItemAtRank,
   } = useOnboardingCollection();
 
+  const {
+    savedItems,
+    isLoading: isLoadingSavedItems,
+    hasLoadError: hasSavedItemsLoadError,
+    retrySavedItemsLoad,
+  } = useSavedItems();
+
   const isOnboardingSearch =
     sourceParam === 'onboarding';
 
@@ -164,6 +176,9 @@ export default function SearchScreen() {
     isOnboardingSearch
       ? onboardingCollection
       : currentList;
+
+  const [activeSource, setActiveSource] =
+    useState<SearchSource>('search');
 
   const [searchQuery, setSearchQuery] = useState('');
   const [
@@ -212,6 +227,36 @@ export default function SearchScreen() {
     (category) => category.id === activeCollection?.category
   );
 
+  const savedCategoryItems = useMemo(() => {
+    if (!selectedCategory) {
+      return [];
+    }
+
+    const activeTopic =
+      normalizeValue(activeCollection?.topic) ||
+      'general';
+
+    return savedItems
+      .filter(
+        (savedItem) =>
+          savedItem.category ===
+            selectedCategory.id &&
+          (activeTopic === 'general' ||
+            normalizeValue(
+              savedItem.sourceTopic
+            ) === activeTopic)
+      )
+      .sort(
+        (first, second) =>
+          new Date(second.createdAt).getTime() -
+          new Date(first.createdAt).getTime()
+      );
+  }, [
+    activeCollection?.topic,
+    savedItems,
+    selectedCategory,
+  ]);
+
   const selectedType =
     selectedCategory?.types?.find(
       (type) =>
@@ -246,6 +291,14 @@ export default function SearchScreen() {
     selectedType
       ? selectedType.name
       : selectedTopic?.name;
+
+  const savedSelectionName =
+    normalizeValue(activeCollection?.topic) &&
+    normalizeValue(activeCollection?.topic) !==
+      'general' &&
+    topicName
+      ? topicName
+      : categoryName;
 
   const searchItemName =
     selectedTopic?.searchItemName ??
@@ -829,7 +882,10 @@ function chooseSuggestion(
   );
 }
 
-  function selectItem(item: Top3Item) {
+  function selectItem(
+    item: Top3Item,
+    source: SearchSource = 'search'
+  ) {
     const selectedRank = Number(rank);
 
     if (selectedRank < 1 || selectedRank > 3) {
@@ -867,20 +923,20 @@ function chooseSuggestion(
       {
         category: activeCollection?.category,
         rank: selectedRank,
-        source: 'search',
+        source,
       }
     );
 
     router.back();
   }
 
-const searchTitle = selectedType
+const pageTitle = selectedType
   ? activeCollection?.topic
-    ? `Search ${selectedType.name} • ${topicName}`
-    : `Search ${selectedType.name}`
+    ? `Choose ${selectedType.name} • ${topicName}`
+    : `Choose ${selectedType.name}`
   : activeCollection?.topic
-    ? `Search ${categoryName} • ${topicName}`
-    : `Search ${categoryName}`;
+    ? `Choose ${categoryName} • ${topicName}`
+    : `Choose ${categoryName}`;
 
   const searchPlaceholder =
     `Search for a ${searchItemName}...`;
@@ -895,6 +951,99 @@ const searchTitle = selectedType
       outputRange: ['0deg', '180deg'],
     });
 
+  function renderSelectionRow(
+    item: Top3Item,
+    source: SearchSource
+  ) {
+    return (
+      <Pressable
+        key={`${source}:${item.id}`}
+        style={[
+          styles.resultRow,
+          {
+            borderBottomColor: colors.border,
+          },
+        ]}
+        onPress={() => selectItem(item, source)}>
+        <View
+          style={[
+            styles.imageContainer,
+            {
+              width: artworkRule.width,
+              height: artworkRule.height,
+            },
+          ]}>
+          {item.imageUrl ? (
+            <Image
+              source={{ uri: item.imageUrl }}
+              style={[
+                styles.image,
+                {
+                  width: artworkRule.width,
+                  height: artworkRule.height,
+                  backgroundColor:
+                    colors.skeletonSubtle,
+                },
+              ]}
+              resizeMode="cover"
+            />
+          ) : (
+            <View
+              style={[
+                styles.imagePlaceholder,
+                {
+                  width: artworkRule.width,
+                  height: artworkRule.height,
+                  backgroundColor:
+                    colors.skeletonSubtle,
+                },
+              ]}>
+              <Ionicons
+                name={placeholderIcon}
+                size={28}
+                color={colors.tertiaryText}
+              />
+            </View>
+          )}
+        </View>
+
+        <View style={styles.resultDetails}>
+          <AppText
+            variant="selectionTitle"
+            emphasis="semibold">
+            {item.title}
+          </AppText>
+
+          <AppText
+            variant="bodyLarge"
+            tone="tertiary"
+            style={styles.metadata}>
+            {item.subtitle || 'Details unavailable'}
+            {typeof item.rating === 'number'
+              ? ` · ★ ${item.rating.toFixed(1)}`
+              : ''}
+          </AppText>
+        </View>
+
+        {activeCollection?.category ? (
+          <MediaPreviewItemButton
+            item={item}
+            category={activeCollection.category}
+            style={[
+              styles.previewButton,
+              {
+                backgroundColor:
+                  colors.secondarySurface,
+              },
+            ]}
+            onBeforePress={Keyboard.dismiss}
+            checkTrailerAvailability={false}
+          />
+        ) : null}
+      </Pressable>
+    );
+  }
+
   return (
     <SafeAreaView
       style={[
@@ -905,7 +1054,41 @@ const searchTitle = selectedType
       ]}>
       <ScreenHeader showBackButton />
 
-      <PageHeader title={searchTitle} />
+      <PageHeader title={pageTitle} />
+
+      <View
+        style={[
+          styles.segmentedContainer,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
+        <SegmentedControl<SearchSource>
+          value={activeSource}
+          options={[
+            {
+              value: 'search',
+              label: 'Search',
+              accessibilityLabel:
+                `Search for ${categoryName}`,
+            },
+            {
+              value: 'saved',
+              label: 'Saved',
+              count: savedCategoryItems.length,
+              accessibilityLabel:
+                `Choose from saved ${savedSelectionName}`,
+            },
+          ]}
+          onChange={(nextSource) => {
+            if (nextSource === 'saved') {
+              Keyboard.dismiss();
+            }
+
+            setActiveSource(nextSource);
+          }}
+        />
+      </View>
 
       <View
         style={[
@@ -914,302 +1097,318 @@ const searchTitle = selectedType
             backgroundColor: colors.background,
           },
         ]}>
-        <View style={styles.searchInputWrapper}>
-          <SearchInput
-            placeholder={searchPlaceholder}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            autoCapitalize="words"
-            accessibilityLabel={searchPlaceholder}
-            onClear={() => {
-              setSearchResults([]);
-              setHasSearched(false);
-              setSearchError(null);
-            }}
-          />
-        </View>
-
-        {!canSearch ? (
-          <AppText
-            variant="subtitle"
-            tone="tertiary"
-            style={styles.searchHelper}>
-            Type at least {MINIMUM_SEARCH_LENGTH}{' '}
-            characters to search.
-          </AppText>
-        ) : null}
-
-        {!hasSearched && !canSearch && suggestions.length > 0 ? (
-          <View style={styles.suggestionsSection}>
-            <View style={styles.suggestionsHeader}>
-  <AppText
-    variant="selectionTitle"
-    emphasis="semibold">
-    Suggestions
-  </AppText>
-
-  {suggestionPool.length > 5 ? (
-    <Pressable
-      style={({ pressed }) => [
-        styles.shuffleButton,
-        {
-          backgroundColor: colors.secondarySurface,
-        },
-        pressed && styles.shuffleButtonPressed,
-      ]}
-      onPress={refreshSuggestions}
-      hitSlop={8}
-      accessibilityRole="button"
-      accessibilityLabel="Shuffle suggestions">
-      <Animated.View
-        style={{
-          transform: [
-            {
-              rotate:
-                shuffleRotationDegrees,
-            },
-          ],
-        }}>
-        <Ionicons
-          name="shuffle"
-          size={16}
-          color={colors.accent}
-        />
-      </Animated.View>
-
-      <AppText
-        variant="label"
-        tone="accent">
-        Shuffle
-      </AppText>
-    </Pressable>
-  ) : null}
-</View>
-
-            <Animated.View
-              style={{
-                opacity:
-                  suggestionsOpacity,
-                transform: [
-                  {
-                    translateY:
-                      suggestionsTranslateY,
-                  },
-                ],
-              }}>
-              <View style={styles.suggestionList}>
-                {suggestions.map(
-                  (suggestion) => (
-                    <Chip
-                      key={suggestion.id}
-                      label={suggestion.title}
-                      onPress={() =>
-                        chooseSuggestion(
-                          suggestion
-                        )
-                      }
-                    />
-                  )
-                )}
-              </View>
-            </Animated.View>
-          </View>
-        ) : null}
-
-          {isLoading ? (
-            <>
-              <AppText
-                variant="sectionTitle"
-                style={styles.sectionTitle}>
-                {resultsTitle}
-              </AppText>
-
-              <ScrollView
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
-                contentContainerStyle={
-                  styles.resultsContent
-                }>
-                {Array.from(
-                  { length: 5 },
-                  (_, index) => (
-                    <SearchResultSkeleton
-  key={index}
-  artworkWidth={artworkRule.width}
-  artworkHeight={artworkRule.height}
-/>
-                  )
-                )}
-              </ScrollView>
-            </>
-          ) : !hasSearched ? (
-            <View style={styles.emptySpace} />
-          ) : searchError ? (
-            <View style={styles.messageContainer}>
-              <Ionicons
-                name="cloud-offline-outline"
-                size={42}
-                color={colors.tertiaryText}
-                style={styles.messageErrorIcon}
+        {activeSource === 'search' ? (
+          <>
+            <View style={styles.searchInputWrapper}>
+              <SearchInput
+                placeholder={searchPlaceholder}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                autoCapitalize="words"
+                accessibilityLabel={searchPlaceholder}
+                onClear={() => {
+                  setSearchResults([]);
+                  setHasSearched(false);
+                  setSearchError(null);
+                }}
               />
-
-              <AppText
-                variant="sectionTitle"
-                emphasis="semibold"
-                style={styles.messageTitle}>
-                Search unavailable
-              </AppText>
-
-              <AppText
-                variant="bodyLarge"
-                tone="tertiary"
-                style={styles.messageText}>
-                {searchError}
-              </AppText>
             </View>
-          ) : searchResults.length === 0 ? (
-            <View style={styles.messageContainer}>
-              <Text style={styles.messageIcon}>
-                {searchIcon}
-              </Text>
 
+            {!canSearch ? (
               <AppText
-                variant="sectionTitle"
-                emphasis="semibold"
-                style={styles.messageTitle}>
-                No {searchItemName} results found
-              </AppText>
-
-              <AppText
-                variant="bodyLarge"
+                variant="subtitle"
                 tone="tertiary"
-                style={styles.messageText}>
-                Try another title or a broader search.
+                style={styles.searchHelper}>
+                Type at least {MINIMUM_SEARCH_LENGTH}{' '}
+                characters to search.
               </AppText>
-            </View>
-          ) : (
-            <>
-              <AppText
-                variant="sectionTitle"
-                style={styles.sectionTitle}>
-                {resultsTitle}
-              </AppText>
+            ) : null}
 
-              <Animated.View
-                style={[
-                  styles.resultsContainer,
-                  {
-                    opacity: fadeAnim,
+            {!hasSearched &&
+            !canSearch &&
+            suggestions.length > 0 ? (
+              <View style={styles.suggestionsSection}>
+                <View style={styles.suggestionsHeader}>
+                  <AppText
+                    variant="selectionTitle"
+                    emphasis="semibold">
+                    Suggestions
+                  </AppText>
+
+                  {suggestionPool.length > 5 ? (
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.shuffleButton,
+                        {
+                          backgroundColor:
+                            colors.secondarySurface,
+                        },
+                        pressed &&
+                          styles.shuffleButtonPressed,
+                      ]}
+                      onPress={refreshSuggestions}
+                      hitSlop={8}
+                      accessibilityRole="button"
+                      accessibilityLabel="Shuffle suggestions">
+                      <Animated.View
+                        style={{
+                          transform: [
+                            {
+                              rotate:
+                                shuffleRotationDegrees,
+                            },
+                          ],
+                        }}>
+                        <Ionicons
+                          name="shuffle"
+                          size={16}
+                          color={colors.accent}
+                        />
+                      </Animated.View>
+
+                      <AppText
+                        variant="label"
+                        tone="accent">
+                        Shuffle
+                      </AppText>
+                    </Pressable>
+                  ) : null}
+                </View>
+
+                <Animated.View
+                  style={{
+                    opacity: suggestionsOpacity,
                     transform: [
                       {
                         translateY:
-                          fadeAnim.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [6, 0],
-                          }),
+                          suggestionsTranslateY,
                       },
                     ],
-                  },
-                ]}>
+                  }}>
+                  <View style={styles.suggestionList}>
+                    {suggestions.map(
+                      (suggestion) => (
+                        <Chip
+                          key={suggestion.id}
+                          label={suggestion.title}
+                          onPress={() =>
+                            chooseSuggestion(
+                              suggestion
+                            )
+                          }
+                        />
+                      )
+                    )}
+                  </View>
+                </Animated.View>
+              </View>
+            ) : null}
+
+            {isLoading ? (
+              <>
+                <AppText
+                  variant="sectionTitle"
+                  style={styles.sectionTitle}>
+                  {resultsTitle}
+                </AppText>
+
                 <ScrollView
                   showsVerticalScrollIndicator={false}
                   keyboardShouldPersistTaps="handled"
                   contentContainerStyle={
                     styles.resultsContent
                   }>
-                  {searchResults.map((item) => (
-                    <Pressable
-                      key={item.id}
-                      style={[
-                        styles.resultRow,
-                        {
-                          borderBottomColor: colors.border,
-                        },
-                      ]}
-                      onPress={() => selectItem(item)}>
-                      <View
-                        style={[
-                          styles.imageContainer,
-                          {
-                            width: artworkRule.width,
-                            height: artworkRule.height,
-                          },
-                        ]}>
-                        {item.imageUrl ? (
-                          <Image
-                            source={{ uri: item.imageUrl }}
-                            style={[
-                              styles.image,
-                              {
-                                width: artworkRule.width,
-                                height: artworkRule.height,
-                                backgroundColor:
-                                  colors.skeletonSubtle,
-                              },
-                            ]}
-                            resizeMode="cover"
-                          />
-                        ) : (
-                          <View
-                            style={[
-                              styles.imagePlaceholder,
-                              {
-                                width: artworkRule.width,
-                                height: artworkRule.height,
-                                backgroundColor:
-                                  colors.skeletonSubtle,
-                              },
-                            ]}>
-                            <Ionicons
-                              name={placeholderIcon}
-                              size={28}
-                              color={colors.tertiaryText}
-                            />
-                          </View>
-                        )}
-
-                      </View>
-
-                      <View style={styles.resultDetails}>
-                        <AppText
-                          variant="selectionTitle"
-                          emphasis="semibold">
-                          {item.title}
-                        </AppText>
-
-                        <AppText
-                          variant="bodyLarge"
-                          tone="tertiary"
-                          style={styles.metadata}>
-                          {item.subtitle ||
-                            'Details unavailable'}
-                          {typeof item.rating === 'number'
-                            ? ` · ★ ${item.rating.toFixed(1)}`
-                            : ''}
-                        </AppText>
-                      </View>
-
-                      {activeCollection?.category ? (
-                        <MediaPreviewItemButton
-                          item={item}
-                          category={activeCollection.category}
-                          style={[
-                            styles.previewButton,
-                            {
-                              backgroundColor:
-                                colors.secondarySurface,
-                            },
-                          ]}
-                          onBeforePress={Keyboard.dismiss}
-                          checkTrailerAvailability={false}
-                        />
-                      ) : null}
-                    </Pressable>
-                  ))}
+                  {Array.from(
+                    { length: 5 },
+                    (_, index) => (
+                      <SearchResultSkeleton
+                        key={index}
+                        artworkWidth={artworkRule.width}
+                        artworkHeight={artworkRule.height}
+                      />
+                    )
+                  )}
                 </ScrollView>
-              </Animated.View>
-            </>
-          )}
+              </>
+            ) : !hasSearched ? (
+              <View style={styles.emptySpace} />
+            ) : searchError ? (
+              <View style={styles.messageContainer}>
+                <Ionicons
+                  name="cloud-offline-outline"
+                  size={42}
+                  color={colors.tertiaryText}
+                  style={styles.messageErrorIcon}
+                />
+
+                <AppText
+                  variant="sectionTitle"
+                  emphasis="semibold"
+                  style={styles.messageTitle}>
+                  Search unavailable
+                </AppText>
+
+                <AppText
+                  variant="bodyLarge"
+                  tone="tertiary"
+                  style={styles.messageText}>
+                  {searchError}
+                </AppText>
+              </View>
+            ) : searchResults.length === 0 ? (
+              <View style={styles.messageContainer}>
+                <Text style={styles.messageIcon}>
+                  {searchIcon}
+                </Text>
+
+                <AppText
+                  variant="sectionTitle"
+                  emphasis="semibold"
+                  style={styles.messageTitle}>
+                  No {searchItemName} results found
+                </AppText>
+
+                <AppText
+                  variant="bodyLarge"
+                  tone="tertiary"
+                  style={styles.messageText}>
+                  Try another title or a broader search.
+                </AppText>
+              </View>
+            ) : (
+              <>
+                <AppText
+                  variant="sectionTitle"
+                  style={styles.sectionTitle}>
+                  {resultsTitle}
+                </AppText>
+
+                <Animated.View
+                  style={[
+                    styles.resultsContainer,
+                    {
+                      opacity: fadeAnim,
+                      transform: [
+                        {
+                          translateY:
+                            fadeAnim.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [6, 0],
+                            }),
+                        },
+                      ],
+                    },
+                  ]}>
+                  <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                    contentContainerStyle={
+                      styles.resultsContent
+                    }>
+                    {searchResults.map((item) =>
+                      renderSelectionRow(
+                        item,
+                        'search'
+                      )
+                    )}
+                  </ScrollView>
+                </Animated.View>
+              </>
+            )}
+          </>
+        ) : isLoadingSavedItems ? (
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.resultsContent}>
+            {Array.from(
+              { length: 5 },
+              (_, index) => (
+                <SearchResultSkeleton
+                  key={index}
+                  artworkWidth={artworkRule.width}
+                  artworkHeight={artworkRule.height}
+                />
+              )
+            )}
+          </ScrollView>
+        ) : hasSavedItemsLoadError &&
+          savedItems.length === 0 ? (
+          <View style={styles.messageContainer}>
+            <Ionicons
+              name="cloud-offline-outline"
+              size={42}
+              color={colors.tertiaryText}
+              style={styles.messageErrorIcon}
+            />
+
+            <AppText
+              variant="sectionTitle"
+              emphasis="semibold"
+              style={styles.messageTitle}>
+              Couldn’t load Saved
+            </AppText>
+
+            <AppText
+              variant="bodyLarge"
+              tone="tertiary"
+              style={styles.messageText}>
+              Check your connection and try again.
+            </AppText>
+
+            <PrimaryButton
+              title="Try Again"
+              onPress={retrySavedItemsLoad}
+              style={styles.retryButton}
+            />
+          </View>
+        ) : savedCategoryItems.length === 0 ? (
+          <View style={styles.messageContainer}>
+            <Ionicons
+              name="bookmark-outline"
+              size={42}
+              color={colors.tertiaryText}
+              style={styles.messageErrorIcon}
+            />
+
+            <AppText
+              variant="sectionTitle"
+              emphasis="semibold"
+              style={styles.messageTitle}>
+              {savedItems.length === 0
+                ? 'Nothing saved yet'
+                : `No saved ${savedSelectionName}`}
+            </AppText>
+
+            <AppText
+              variant="bodyLarge"
+              tone="tertiary"
+              style={styles.messageText}>
+              {savedItems.length === 0
+                ? `Save some ${categoryName} from Top 3 lists and they’ll appear here.`
+                : `You haven’t saved any ${categoryName} yet.`}
+            </AppText>
+          </View>
+        ) : (
+          <>
+            <AppText
+              variant="sectionTitle"
+              style={styles.sectionTitle}>
+              Saved {savedSelectionName}
+            </AppText>
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.resultsContent}>
+              {savedCategoryItems.map((savedItem) =>
+                renderSelectionRow(
+                  savedItem.item,
+                  'saved'
+                )
+              )}
+            </ScrollView>
+          </>
+        )}
       </View>
 
       <ActionSheet
@@ -1236,6 +1435,12 @@ const searchTitle = selectedType
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+
+  segmentedContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 20,
   },
 
   content: {
@@ -1299,6 +1504,11 @@ const styles = StyleSheet.create({
   messageText: {
     textAlign: 'center',
     marginTop: 10,
+  },
+
+  retryButton: {
+    alignSelf: 'stretch',
+    marginTop: 20,
   },
 
   resultsContent: {

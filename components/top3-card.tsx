@@ -761,6 +761,9 @@ export default function Top3Card({
                                     post.collection.id,
                                   userId:
                                     post.authorId,
+                                  topic:
+                                    post.collection.topic ??
+                                    'general',
                                 },
                               }
                             : undefined
@@ -798,6 +801,9 @@ export default function Top3Card({
                               collectionId:
                                 post.collection.id,
                               userId: post.authorId,
+                              topic:
+                                post.collection.topic ??
+                                'general',
                             }
                           );
                         }}

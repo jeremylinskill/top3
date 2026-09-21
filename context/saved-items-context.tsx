@@ -322,6 +322,7 @@ export function SavedItemsProvider({
         sourceCollectionId:
           source?.collectionId,
         sourceUserId: source?.userId,
+        sourceTopic: source?.topic,
         createdAt,
       };
 

@@ -1041,6 +1041,9 @@ export default function OnboardingPublishedScreen() {
                                     publishedPost.collection.id,
                                   userId:
                                     publishedPost.authorId,
+                                  topic:
+                                    publishedPost.collection.topic ??
+                                    'general',
                                 },
                               }
                             : undefined

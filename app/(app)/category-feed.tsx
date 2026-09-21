@@ -1720,6 +1720,9 @@ if (isMounted) {
                       category={category.id}
                       saveContext={{
                         category: category.id,
+                        source: {
+                          topic: normalizedTopic,
+                        },
                       }}
                       style={[
                         styles.previewButton,
