@@ -1,3 +1,5 @@
+import IconButton from '@/components/icon-button';
+import PreviewSaveButton from '@/components/preview-save-button';
 import { useAudioPreview } from '@/context/audio-preview-context';
 import { usePreviewSheetColors } from '@/hooks/use-preview-sheet-colors';
 import { Ionicons } from '@expo/vector-icons';
@@ -55,6 +57,7 @@ function formatTime(seconds: number): string {
 export default function AudioPreviewSheet() {
   const {
     activePreviewItem,
+    activeSaveContext,
     isPreviewVisible,
     isPreviewLoading,
     previewCurrentTime,
@@ -218,28 +221,31 @@ export default function AudioPreviewSheet() {
             ) : null}
           </View>
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.closeButton,
-              {
-                backgroundColor:
-                  previewColors.control,
-              },
-              pressed &&
-                styles.closeButtonPressed,
-            ]}
-            onPress={stopPreview}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel={`Close preview for ${activePreviewItem.title}`}>
-            <Ionicons
-              name="close"
-              size={20}
-              color={
-                previewColors.primaryText
+          <View style={styles.headerActions}>
+            {activeSaveContext ? (
+              <PreviewSaveButton
+                item={activePreviewItem}
+                saveContext={
+                  activeSaveContext
+                }
+              />
+            ) : null}
+
+            <IconButton
+              backgroundColor={
+                previewColors.control
               }
-            />
-          </Pressable>
+              onPress={stopPreview}
+              accessibilityLabel={`Close preview for ${activePreviewItem.title}`}>
+              <Ionicons
+                name="close"
+                size={20}
+                color={
+                  previewColors.primaryText
+                }
+              />
+            </IconButton>
+          </View>
         </View>
 
         <View style={styles.mediaRow}>
@@ -473,18 +479,13 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
 
-  closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  headerActions: {
     flexShrink: 0,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 8,
   },
 
-  closeButtonPressed: {
-    opacity: 0.65,
-  },
 
   mediaRow: {
     marginTop: 12,

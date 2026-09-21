@@ -174,6 +174,13 @@ export default function OnboardingPublishedScreen() {
     localPublishedPost ??
     fetchedPublishedPost;
 
+  const saveCategory =
+    TOP3_CATEGORIES.find(
+      ({ id }) =>
+        id ===
+        publishedPost?.collection.category
+    )?.id;
+
 
   const category = useMemo(
     () =>
@@ -1024,6 +1031,20 @@ export default function OnboardingPublishedScreen() {
                       <MediaPreviewItemButton
                         item={item}
                         category={publishedPost.collection.category}
+                        saveContext={
+                          saveCategory
+                            ? {
+                                category:
+                                  saveCategory,
+                                source: {
+                                  collectionId:
+                                    publishedPost.collection.id,
+                                  userId:
+                                    publishedPost.authorId,
+                                },
+                              }
+                            : undefined
+                        }
                         style={[
                           styles.previewButton,
                           {
@@ -1305,13 +1326,7 @@ const styles = StyleSheet.create({
 
 
   previewButton: {
-    flexShrink: 0,
-    width: 36,
-    height: 36,
     marginLeft: 10,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 
 

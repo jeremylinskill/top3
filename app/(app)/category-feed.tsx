@@ -1718,6 +1718,9 @@ if (isMounted) {
                     <MediaPreviewItemButton
                       item={entry.item}
                       category={category.id}
+                      saveContext={{
+                        category: category.id,
+                      }}
                       style={[
                         styles.previewButton,
                         {
@@ -2014,13 +2017,7 @@ const styles = StyleSheet.create({
   },
 
   previewButton: {
-    flexShrink: 0,
-    width: 36,
-    height: 36,
     marginLeft: 10,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 
   itemDetails: {

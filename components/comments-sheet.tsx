@@ -1,3 +1,4 @@
+import IconButton from '@/components/icon-button';
 import ActionSheet, {
   ActionSheetAction,
 } from '@/components/action-sheet';
@@ -807,23 +808,17 @@ export default function CommentsSheet({
                 Comments
               </AppText>
 
-              <Pressable
-                style={({ pressed }) => [
-                  styles.closeButton,
-                  pressed &&
-                    styles.pressed,
-                ]}
+              <IconButton
+                style={styles.closeButton}
                 onPress={handleClose}
                 disabled={isClosing}
-                hitSlop={10}
-                accessibilityRole="button"
                 accessibilityLabel="Close comments">
                 <Ionicons
                   name="close"
                   size={22}
                   color={colors.text}
                 />
-                </Pressable>
+              </IconButton>
                 </View>
               </View>
             </GestureDetector>
@@ -1233,11 +1228,6 @@ const styles = StyleSheet.create({
   closeButton: {
     position: 'absolute',
     right: 16,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 
   scrollView: {

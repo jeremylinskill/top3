@@ -6,6 +6,7 @@ import {
   getPodcastDescription,
   getPodcastEpisodePreview,
 } from '@/providers/podcasts';
+import { PreviewSaveContext } from '@/types/media-preview';
 import { Top3Item } from '@/types/top3-item';
 import {
   setAudioModeAsync,
@@ -24,6 +25,7 @@ import {
 
 type AudioPreviewContextValue = {
   activePreviewItem: Top3Item | null;
+  activeSaveContext: PreviewSaveContext | null;
   activePreviewItemId: string | null;
   isPreviewPlaying: boolean;
   isPreviewVisible: boolean;
@@ -31,7 +33,10 @@ type AudioPreviewContextValue = {
   previewCurrentTime: number;
   previewDuration: number;
   previewProgress: number;
-  togglePreview: (item: Top3Item) => Promise<void>;
+  togglePreview: (
+    item: Top3Item,
+    saveContext?: PreviewSaveContext
+  ) => Promise<void>;
   stopPreview: () => void;
 };
 
@@ -58,6 +63,8 @@ export function AudioPreviewProvider({
 }: AudioPreviewProviderProps) {
   const [activePreviewItem, setActivePreviewItem] =
     useState<Top3Item | null>(null);
+  const [activeSaveContext, setActiveSaveContext] =
+    useState<PreviewSaveContext | null>(null);
   const [isPreviewVisible, setIsPreviewVisible] =
     useState(false);
   const [isPreviewLoading, setIsPreviewLoading] =
@@ -142,6 +149,7 @@ export function AudioPreviewProvider({
       setIsPreviewLoading(false);
       setIsPreviewVisible(false);
       setActivePreviewItem(null);
+      setActiveSaveContext(null);
     }
   }, [
     activePreviewItem,
@@ -154,6 +162,7 @@ export function AudioPreviewProvider({
     setIsPreviewLoading(false);
     setIsPreviewVisible(false);
     setActivePreviewItem(null);
+    setActiveSaveContext(null);
   }, [previewPlayer]);
 
   useEffect(() => {
@@ -228,7 +237,10 @@ export function AudioPreviewProvider({
       });
   }
 
-  async function togglePreview(item: Top3Item) {
+  async function togglePreview(
+    item: Top3Item,
+    saveContext?: PreviewSaveContext
+  ) {
     if (
       isAppleMusicItem(item) &&
       !item.appleMusicUrl
@@ -279,6 +291,9 @@ export function AudioPreviewProvider({
         }
       }
 
+      setActiveSaveContext(
+        saveContext ?? null
+      );
       setIsPreviewVisible(true);
       previewPlayer.play();
       return;
@@ -304,6 +319,9 @@ export function AudioPreviewProvider({
 
     if (isPodcastItem) {
       setActivePreviewItem(item);
+      setActiveSaveContext(
+        saveContext ?? null
+      );
       setIsPreviewVisible(true);
       setIsPreviewLoading(true);
 
@@ -343,6 +361,7 @@ export function AudioPreviewProvider({
           setIsPreviewLoading(false);
           setIsPreviewVisible(false);
           setActivePreviewItem(null);
+          setActiveSaveContext(null);
           return;
         }
 
@@ -405,6 +424,7 @@ export function AudioPreviewProvider({
         setIsPreviewLoading(false);
         setIsPreviewVisible(false);
         setActivePreviewItem(null);
+        setActiveSaveContext(null);
 
         if (__DEV__) {
           console.log(
@@ -424,6 +444,7 @@ export function AudioPreviewProvider({
         setIsPreviewLoading(false);
         setIsPreviewVisible(false);
         setActivePreviewItem(null);
+        setActiveSaveContext(null);
       }
 
       return;
@@ -462,6 +483,9 @@ export function AudioPreviewProvider({
         return playableItem;
       }
     );
+    setActiveSaveContext(
+      saveContext ?? null
+    );
     setIsPreviewVisible(true);
     setIsPreviewLoading(false);
 
@@ -472,6 +496,7 @@ export function AudioPreviewProvider({
     <AudioPreviewContext.Provider
       value={{
         activePreviewItem,
+        activeSaveContext,
         activePreviewItemId,
         isPreviewPlaying: previewStatus.playing,
         isPreviewVisible,

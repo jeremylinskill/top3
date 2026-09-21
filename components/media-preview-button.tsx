@@ -1,3 +1,4 @@
+import IconButton from '@/components/icon-button';
 import { CategoryId } from '@/constants/top3-categories';
 import { useAudioPreview } from '@/context/audio-preview-context';
 import { useBookPreview } from '@/context/book-preview-context';
@@ -8,12 +9,12 @@ import {
     getMovieTrailerUrl,
     getTvShowTrailerUrl,
 } from '@/providers/movies-and-tv';
+import { PreviewSaveContext } from '@/types/media-preview';
 import { Top3Item } from '@/types/top3-item';
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import {
     Image,
-    Pressable,
     StyleProp,
     StyleSheet,
     ViewStyle,
@@ -41,6 +42,7 @@ export type MediaPreviewController = {
 
 type MediaPreviewOptions = {
   checkTrailerAvailability?: boolean;
+  saveContext?: PreviewSaveContext;
 };
 
 type MediaPreviewButtonProps = {
@@ -113,6 +115,9 @@ export function useMediaPreview(
 ): MediaPreviewController {
   const checkTrailerAvailability =
     options.checkTrailerAvailability ?? true;
+
+  const saveContext =
+    options.saveContext;
 
   const {
     activePreviewItemId,
@@ -333,7 +338,7 @@ export function useMediaPreview(
     }
 
     if (kind === 'audio') {
-      await togglePreview(item);
+      await togglePreview(item, saveContext);
       return;
     }
 
@@ -350,7 +355,7 @@ export function useMediaPreview(
       setIsLoadingBook(true);
 
       try {
-        await openBookPreview(item);
+        await openBookPreview(item, saveContext);
       } finally {
         setIsLoadingBook(false);
       }
@@ -378,7 +383,8 @@ export function useMediaPreview(
       const didOpen =
         await openTrailer(
           item,
-          trailerCategory
+          trailerCategory,
+          saveContext
         );
 
       setTrailerAvailability(
@@ -466,20 +472,14 @@ export default function MediaPreviewButton({
   }
 
   return (
-    <Pressable
-      style={({ pressed }) => [
-        style,
-        pressed &&
-          styles.previewButtonPressed,
-      ]}
+    <IconButton
+      style={style}
       onPress={(event) => {
         event.stopPropagation();
         onBeforePress?.();
         void preview.onPress();
       }}
       disabled={preview.disabled}
-      hitSlop={6}
-      accessibilityRole="button"
       accessibilityLabel={
         preview.accessibilityLabel
       }>
@@ -510,13 +510,14 @@ export default function MediaPreviewButton({
           }
         />
       )}
-    </Pressable>
+    </IconButton>
   );
 }
 
 type MediaPreviewItemButtonProps = {
   item: Top3Item;
   category: string;
+  saveContext?: PreviewSaveContext;
   style?: StyleProp<ViewStyle>;
   onBeforePress?: () => void;
   checkTrailerAvailability?: boolean;
@@ -528,6 +529,7 @@ type MediaPreviewItemButtonProps = {
 export function MediaPreviewItemButton({
   item,
   category,
+  saveContext,
   style,
   onBeforePress,
   checkTrailerAvailability,
@@ -541,6 +543,7 @@ export function MediaPreviewItemButton({
       category,
       {
         checkTrailerAvailability,
+        saveContext,
       }
     );
 
@@ -565,7 +568,4 @@ const styles = StyleSheet.create({
     transform: [{ translateX: 1 }],
   },
 
-  previewButtonPressed: {
-    opacity: 0.75,
-  },
 });

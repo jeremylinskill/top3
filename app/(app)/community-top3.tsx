@@ -6,6 +6,7 @@ import ScreenHeader from '@/components/screen-header';
 import {
   getCategoryArtworkRule,
 } from '@/constants/category-artwork-rules';
+import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { useComments } from '@/context/comment-context';
 import { useLike } from '@/context/like-context';
 import { useTop3 } from '@/context/top3-context';
@@ -143,6 +144,11 @@ if (isMounted) {
       }
     );
   }, [allPosts, category, topic]);
+
+  const saveCategory =
+    TOP3_CATEGORIES.find(
+      ({ id }) => id === result?.category
+    )?.id;
 
   const communityPost = useMemo<Post | null>(
     () => {
@@ -464,6 +470,14 @@ if (isMounted) {
                       <MediaPreviewItemButton
                         item={entry.item}
                         category={result.category}
+                        saveContext={
+                          saveCategory
+                            ? {
+                                category:
+                                  saveCategory,
+                              }
+                            : undefined
+                        }
                         style={styles.previewButton}
                         iconSize={18}
                         iconColor={colors.white}
@@ -724,13 +738,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: '50%',
     left: '50%',
-    width: 36,
-    height: 36,
     marginTop: -18,
     marginLeft: -18,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.68)',
   },
 

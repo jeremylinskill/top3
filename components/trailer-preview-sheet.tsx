@@ -1,3 +1,5 @@
+import IconButton from '@/components/icon-button';
+import PreviewSaveButton from '@/components/preview-save-button';
 import { useTrailerPreview } from '@/context/trailer-preview-context';
 import { usePreviewSheetColors } from '@/hooks/use-preview-sheet-colors';
 import { Ionicons } from '@expo/vector-icons';
@@ -56,6 +58,7 @@ function getYouTubeEmbedHtml(
 export default function TrailerPreviewSheet() {
   const {
     activeTrailerItem,
+    activeSaveContext,
     activeTrailerEmbedUrl,
     closeTrailer,
   } = useTrailerPreview();
@@ -146,28 +149,31 @@ export default function TrailerPreviewSheet() {
             ) : null}
           </View>
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.closeButton,
-              {
-                backgroundColor:
-                  previewColors.control,
-              },
-              pressed &&
-                styles.closeButtonPressed,
-            ]}
-            onPress={closeTrailer}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel={`Close trailer for ${activeTrailerItem.title}`}>
-            <Ionicons
-              name="close"
-              size={20}
-              color={
-                previewColors.primaryText
+          <View style={styles.headerActions}>
+            {activeSaveContext ? (
+              <PreviewSaveButton
+                item={activeTrailerItem}
+                saveContext={
+                  activeSaveContext
+                }
+              />
+            ) : null}
+
+            <IconButton
+              backgroundColor={
+                previewColors.control
               }
-            />
-          </Pressable>
+              onPress={closeTrailer}
+              accessibilityLabel={`Close trailer for ${activeTrailerItem.title}`}>
+              <Ionicons
+                name="close"
+                size={20}
+                color={
+                  previewColors.primaryText
+                }
+              />
+            </IconButton>
+          </View>
         </View>
 
         <View style={styles.playerInset}>
@@ -235,6 +241,13 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
 
+  headerActions: {
+    flexShrink: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+
   eyebrow: {
     fontSize: 9,
     fontWeight: '700',
@@ -252,18 +265,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 
-  closeButton: {
-    flexShrink: 0,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  closeButtonPressed: {
-    opacity: 0.65,
-  },
 
   playerInset: {
     paddingLeft: 14,

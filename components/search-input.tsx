@@ -1,8 +1,8 @@
+import IconButton from '@/components/icon-button';
 import { TEXT_STYLES } from '@/constants/typography';
 import { useAppColors } from '@/hooks/use-app-colors';
 import { Ionicons } from '@expo/vector-icons';
 import {
-  Pressable,
   StyleSheet,
   TextInput,
   TextInputProps,
@@ -81,21 +81,16 @@ export default function SearchInput({
       />
 
       {value.length > 0 ? (
-        <Pressable
+        <IconButton
+          size="navigation"
           onPress={handleClear}
-          hitSlop={10}
-          accessibilityRole="button"
-          accessibilityLabel="Clear search"
-          style={({ pressed }) => [
-            styles.clearButton,
-            pressed && styles.clearButtonPressed,
-          ]}>
+          accessibilityLabel="Clear search">
           <Ionicons
             name="close"
             size={26}
             color={colors.tertiaryText}
           />
-        </Pressable>
+        </IconButton>
       ) : null}
     </View>
   );
@@ -124,14 +119,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
   },
 
-  clearButton: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  clearButtonPressed: {
-    opacity: 0.55,
-  },
 });

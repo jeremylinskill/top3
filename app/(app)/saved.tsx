@@ -1,3 +1,4 @@
+import IconButton from '@/components/icon-button';
 import ActionSheet from '@/components/action-sheet';
 import AppText from '@/components/app-text';
 import { MediaPreviewItemButton } from '@/components/media-preview-button';
@@ -466,40 +467,40 @@ export default function SavedScreen() {
                       category={
                         savedItem.category
                       }
-                      style={[
-                        styles.actionButton,
-                        {
-                          backgroundColor:
-                            colors.background,
+                      saveContext={{
+                        category:
+                          savedItem.category,
+                        source: {
+                          collectionId:
+                            savedItem.sourceCollectionId,
+                          userId:
+                            savedItem.sourceUserId,
                         },
-                      ]}
+                      }}
+                      style={{
+                        backgroundColor:
+                          colors.background,
+                      }}
                     />
 
-                    <Pressable
-                      style={({ pressed }) => [
-                        styles.actionButton,
-                        {
-                          backgroundColor:
-                            colors.background,
-                        },
-                        pressed &&
-                          styles.pressed,
-                      ]}
-                      onPress={() =>
+                    <IconButton
+                      backgroundColor={
+                        colors.background
+                      }
+                      onPress={() => {
                         unsaveItem(
                           savedItem.category,
                           savedItem.item.id
-                        )
-                      }
-                      hitSlop={8}
-                      accessibilityRole="button"
+                        );
+                      }}
+                      selected
                       accessibilityLabel={`Remove ${savedItem.item.title} from Saved`}>
                       <Ionicons
                         name="bookmark"
                         size={19}
                         color={colors.text}
                       />
-                    </Pressable>
+                    </IconButton>
                   </View>
                 </View>
               );
@@ -619,14 +620,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginLeft: 10,
     gap: 8,
-  },
-
-  actionButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 
   loadingState: {

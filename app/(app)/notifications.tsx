@@ -1,3 +1,4 @@
+import IconButton from '@/components/icon-button';
 import ActionSheet from '@/components/action-sheet';
 import AppText from '@/components/app-text';
 import PageHeader from '@/components/page-header';
@@ -538,30 +539,21 @@ export default function NotificationsScreen() {
                             )}
                           </Pressable>
 
-                          <Pressable
-                            style={({ pressed }) => [
-                              styles.declineIconButton,
-                              pressed &&
-                                !actionsDisabled &&
-                                styles.pressed,
-                              actionsDisabled &&
-                                styles.disabledButton,
-                            ]}
-                            onPress={() =>
+                          <IconButton
+                            size="navigation"
+                            onPress={() => {
                               void handleDeclineFollowRequest(
                                 request.id
-                              )
-                            }
+                              );
+                            }}
                             disabled={actionsDisabled}
-                            hitSlop={10}
-                            accessibilityRole="button"
                             accessibilityLabel={`Decline ${requesterName}'s follow request`}>
                             <Ionicons
                               name="close-outline"
                               size={20}
                               color={colors.tertiaryText}
                             />
-                          </Pressable>
+                          </IconButton>
                         </View>
                       </View>
                     );
@@ -813,13 +805,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
 
-
-  declineIconButton: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
 
   disabledButton: {
     opacity: 0.55,

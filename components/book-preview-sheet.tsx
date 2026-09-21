@@ -1,3 +1,5 @@
+import IconButton from '@/components/icon-button';
+import PreviewSaveButton from '@/components/preview-save-button';
 import { useBookPreview } from '@/context/book-preview-context';
 import { usePreviewSheetColors } from '@/hooks/use-preview-sheet-colors';
 import { Ionicons } from '@expo/vector-icons';
@@ -5,7 +7,6 @@ import { useEffect, useRef } from 'react';
 import {
     ActivityIndicator,
     Image,
-    Pressable,
     ScrollView,
     StyleSheet,
     Text,
@@ -17,6 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 export default function BookPreviewSheet() {
   const {
     activeBookItem,
+    activeSaveContext,
     activeBookDescription,
     activeBookDescriptionSource,
     isBookLoading,
@@ -143,28 +145,31 @@ export default function BookPreviewSheet() {
             ) : null}
           </View>
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.closeButton,
-              {
-                backgroundColor:
-                  previewColors.control,
-              },
-              pressed &&
-                styles.closeButtonPressed,
-            ]}
-            onPress={closeBookPreview}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel={`Close details for ${bookItem.title}`}>
-            <Ionicons
-              name="close"
-              size={20}
-              color={
-                previewColors.primaryText
+          <View style={styles.headerActions}>
+            {activeSaveContext ? (
+              <PreviewSaveButton
+                item={bookItem}
+                saveContext={
+                  activeSaveContext
+                }
+              />
+            ) : null}
+
+            <IconButton
+              backgroundColor={
+                previewColors.control
               }
-            />
-          </Pressable>
+              onPress={closeBookPreview}
+              accessibilityLabel={`Close details for ${bookItem.title}`}>
+              <Ionicons
+                name="close"
+                size={20}
+                color={
+                  previewColors.primaryText
+                }
+              />
+            </IconButton>
+          </View>
         </View>
 
         <View
@@ -319,6 +324,13 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
 
+  headerActions: {
+    flexShrink: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+
   eyebrow: {
     marginBottom: 4,
     fontSize: 10,
@@ -338,18 +350,6 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 
-  closeButton: {
-    flexShrink: 0,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  closeButtonPressed: {
-    opacity: 0.65,
-  },
 
   divider: {
     height: StyleSheet.hairlineWidth,

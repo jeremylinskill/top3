@@ -1,3 +1,4 @@
+import IconButton from '@/components/icon-button';
 import AppText from '@/components/app-text';
 import { SPACING } from '@/constants/spacing';
 import { useAppColors } from '@/hooks/use-app-colors';
@@ -5,7 +6,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import type { ComponentProps } from 'react';
 import {
-  Pressable,
   StyleSheet,
   Text,
   View,
@@ -59,21 +59,16 @@ export default function ScreenHeader({
       <View style={styles.topBar}>
         <View style={styles.sideActions}>
           {showBackButton ? (
-            <Pressable
-              style={({ pressed }) => [
-                styles.sideSlot,
-                pressed && styles.pressed,
-              ]}
+            <IconButton
+              size="navigation"
               onPress={() => router.back()}
-              hitSlop={10}
-              accessibilityRole="button"
               accessibilityLabel="Go back">
               <Ionicons
                 name="chevron-back"
                 size={28}
                 color={colors.text}
               />
-            </Pressable>
+            </IconButton>
           ) : (
             <View style={styles.sideSlot} />
           )}
@@ -94,14 +89,11 @@ export default function ScreenHeader({
 
         <View style={styles.sideActions}>
           {showSecondaryRightAction ? (
-            <Pressable
-              style={({ pressed }) => [
-                styles.sideSlot,
-                pressed && styles.pressed,
-              ]}
-              onPress={onSecondaryRightPress}
-              hitSlop={10}
-              accessibilityRole="button"
+            <IconButton
+              size="navigation"
+              onPress={() => {
+                onSecondaryRightPress?.();
+              }}
               accessibilityLabel={
                 secondaryRightAccessibilityLabel
               }>
@@ -110,20 +102,17 @@ export default function ScreenHeader({
                 size={24}
                 color={colors.text}
               />
-            </Pressable>
+            </IconButton>
           ) : (
             <View style={styles.sideSlot} />
           )}
 
           {showRightAction ? (
-            <Pressable
-              style={({ pressed }) => [
-                styles.sideSlot,
-                pressed && styles.pressed,
-              ]}
-              onPress={onRightPress}
-              hitSlop={10}
-              accessibilityRole="button"
+            <IconButton
+              size="navigation"
+              onPress={() => {
+                onRightPress?.();
+              }}
               accessibilityLabel={
                 rightAccessibilityLabel
               }>
@@ -132,7 +121,7 @@ export default function ScreenHeader({
                 size={26}
                 color={colors.text}
               />
-            </Pressable>
+            </IconButton>
           ) : (
             <View style={styles.sideSlot} />
           )}
@@ -206,9 +195,5 @@ const styles = StyleSheet.create({
 
   subtitle: {
     marginTop: SPACING.xs,
-  },
-
-  pressed: {
-    opacity: 0.55,
   },
 });

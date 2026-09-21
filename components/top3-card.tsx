@@ -1,3 +1,4 @@
+import IconButton from '@/components/icon-button';
 import AppText from '@/components/app-text';
 import FollowButton from '@/components/follow-button';
 import {
@@ -432,21 +433,18 @@ export default function Top3Card({
           ) : null}
 
           {onMorePress ? (
-            <Pressable
-              style={({ pressed }) => [
-                styles.moreButton,
-                pressed && styles.pressed,
-              ]}
-              onPress={onMorePress}
-              hitSlop={10}
-              accessibilityRole="button"
+            <IconButton
+              style={styles.headerIconButton}
+              onPress={() => {
+                onMorePress?.();
+              }}
               accessibilityLabel={`Open actions for ${displayTitle}`}>
               <Ionicons
                 name="ellipsis-horizontal"
                 size={22}
                 color={colors.secondaryText}
               />
-            </Pressable>
+            </IconButton>
           ) : null}
         </View>
       ) : null}
@@ -484,39 +482,33 @@ export default function Top3Card({
         </Pressable>
 
         {onEditPress ? (
-          <Pressable
-            style={({ pressed }) => [
-              styles.editButton,
-              pressed && styles.pressed,
-            ]}
-            onPress={onEditPress}
-            hitSlop={10}
-            accessibilityRole="button"
+          <IconButton
+            style={styles.headerIconButton}
+            onPress={() => {
+              onEditPress?.();
+            }}
             accessibilityLabel={`Edit ${displayTitle}`}>
             <Ionicons
               name="create-outline"
               size={20}
               color={colors.secondaryText}
             />
-          </Pressable>
+          </IconButton>
         ) : null}
 
         {!showAuthor && onMorePress ? (
-          <Pressable
-            style={({ pressed }) => [
-              styles.moreButton,
-              pressed && styles.pressed,
-            ]}
-            onPress={onMorePress}
-            hitSlop={10}
-            accessibilityRole="button"
+          <IconButton
+            style={styles.headerIconButton}
+            onPress={() => {
+              onMorePress?.();
+            }}
             accessibilityLabel={`Open actions for ${displayTitle}`}>
             <Ionicons
               name="ellipsis-horizontal"
               size={22}
               color={colors.secondaryText}
             />
-          </Pressable>
+          </IconButton>
         ) : null}
       </View>
 
@@ -759,15 +751,26 @@ export default function Top3Card({
                       <MediaPreviewItemButton
                         item={item}
                         category={post.collection.category}
-                        style={[
-                          styles.previewButton,
-                          {
-                            backgroundColor:
-                              isTasteMatch
-                                ? colors.highlightSurface
-                                : colors.surface,
-                          },
-                        ]}
+                        saveContext={
+                          savedCategory
+                            ? {
+                                category:
+                                  savedCategory,
+                                source: {
+                                  collectionId:
+                                    post.collection.id,
+                                  userId:
+                                    post.authorId,
+                                },
+                              }
+                            : undefined
+                        }
+                        style={{
+                          backgroundColor:
+                            isTasteMatch
+                              ? colors.highlightSurface
+                              : colors.surface,
+                        }}
                         iconColor={
                           isTasteMatch
                             ? colors.onHighlight
@@ -775,19 +778,12 @@ export default function Top3Card({
                         }
                       />
 
-                      <Pressable
-                        style={({ pressed }) => [
-                          styles.saveButton,
-                          {
-                            backgroundColor:
-                              isTasteMatch
-                                ? colors.highlightSurface
-                                : colors.surface,
-                          },
-                          pressed && styles.pressed,
-                          isLoadingSavedItems &&
-                            styles.disabled,
-                        ]}
+                      <IconButton
+                        backgroundColor={
+                          isTasteMatch
+                            ? colors.highlightSurface
+                            : colors.surface
+                        }
                         onPress={(event) => {
                           event.stopPropagation();
 
@@ -809,14 +805,7 @@ export default function Top3Card({
                           isLoadingSavedItems ||
                           !savedCategory
                         }
-                        hitSlop={8}
-                        accessibilityRole="button"
-                        accessibilityState={{
-                          selected: itemIsSaved,
-                          disabled:
-                            isLoadingSavedItems ||
-                            !savedCategory,
-                        }}
+                        selected={itemIsSaved}
                         accessibilityLabel={
                           itemIsSaved
                             ? `Remove ${item.title} from Saved`
@@ -835,7 +824,7 @@ export default function Top3Card({
                               : colors.text
                           }
                         />
-                      </Pressable>
+                      </IconButton>
                     </View>
                   ) : null}
 
@@ -1085,24 +1074,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  editButton: {
-    width: 36,
-    height: 36,
+  headerIconButton: {
     marginLeft: 8,
     marginRight: -7,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  moreButton: {
-    width: 36,
-    height: 36,
-    marginLeft: 8,
-    marginRight: -7,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 
   ranking: {},
@@ -1158,24 +1132,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginLeft: 10,
     gap: 8,
-  },
-
-  previewButton: {
-    flexShrink: 0,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  saveButton: {
-    flexShrink: 0,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 
 

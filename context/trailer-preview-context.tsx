@@ -7,6 +7,7 @@ import {
   getMovieTrailerUrl,
   getTvShowTrailerUrl,
 } from '@/providers/movies-and-tv';
+import { PreviewSaveContext } from '@/types/media-preview';
 import { Top3Item } from '@/types/top3-item';
 import {
   createContext,
@@ -20,11 +21,13 @@ import {
 
 type TrailerPreviewContextValue = {
   activeTrailerItem: Top3Item | null;
+  activeSaveContext: PreviewSaveContext | null;
   activeTrailerEmbedUrl: string | null;
   isTrailerLoading: boolean;
   openTrailer: (
     item: Top3Item,
-    category: CategoryId
+    category: CategoryId,
+    saveContext?: PreviewSaveContext
   ) => Promise<boolean>;
   closeTrailer: () => void;
 };
@@ -89,6 +92,11 @@ export function TrailerPreviewProvider({
   ] = useState<Top3Item | null>(null);
 
   const [
+    activeSaveContext,
+    setActiveSaveContext,
+  ] = useState<PreviewSaveContext | null>(null);
+
+  const [
     activeTrailerEmbedUrl,
     setActiveTrailerEmbedUrl,
   ] = useState<string | null>(null);
@@ -103,6 +111,7 @@ export function TrailerPreviewProvider({
   const closeTrailer = useCallback(() => {
     trailerRequestIdRef.current += 1;
     setActiveTrailerItem(null);
+    setActiveSaveContext(null);
     setActiveTrailerEmbedUrl(null);
     setIsTrailerLoading(false);
   }, []);
@@ -115,7 +124,8 @@ export function TrailerPreviewProvider({
 
   async function openTrailer(
     item: Top3Item,
-    category: CategoryId
+    category: CategoryId,
+    saveContext?: PreviewSaveContext
   ): Promise<boolean> {
     const requestId =
       trailerRequestIdRef.current + 1;
@@ -148,6 +158,9 @@ export function TrailerPreviewProvider({
         }
 
         setActiveTrailerItem(item);
+        setActiveSaveContext(
+          saveContext ?? null
+        );
         setActiveTrailerEmbedUrl(embedUrl);
 
         return true;
@@ -194,6 +207,9 @@ export function TrailerPreviewProvider({
       }
 
       setActiveTrailerItem(item);
+      setActiveSaveContext(
+        saveContext ?? null
+      );
       setActiveTrailerEmbedUrl(embedUrl);
 
       return true;
@@ -222,6 +238,7 @@ export function TrailerPreviewProvider({
     <TrailerPreviewContext.Provider
       value={{
         activeTrailerItem,
+        activeSaveContext,
         activeTrailerEmbedUrl,
         isTrailerLoading,
         openTrailer,

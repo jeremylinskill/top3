@@ -6,6 +6,7 @@ import {
     BookDescriptionSource,
     getBookDescriptionResult,
 } from '@/providers/books';
+import { PreviewSaveContext } from '@/types/media-preview';
 import { Top3Item } from '@/types/top3-item';
 import {
     createContext,
@@ -19,12 +20,14 @@ import {
 
 type BookPreviewContextValue = {
   activeBookItem: Top3Item | null;
+  activeSaveContext: PreviewSaveContext | null;
   activeBookDescription: string | null;
   activeBookDescriptionSource:
     BookDescriptionSource | null;
   isBookLoading: boolean;
   openBookPreview: (
-    item: Top3Item
+    item: Top3Item,
+    saveContext?: PreviewSaveContext
   ) => Promise<boolean>;
   closeBookPreview: () => void;
 };
@@ -45,6 +48,11 @@ export function BookPreviewProvider({
     activeBookItem,
     setActiveBookItem,
   ] = useState<Top3Item | null>(null);
+
+  const [
+    activeSaveContext,
+    setActiveSaveContext,
+  ] = useState<PreviewSaveContext | null>(null);
 
   const [
     activeBookDescription,
@@ -68,6 +76,7 @@ export function BookPreviewProvider({
   const closeBookPreview = useCallback(() => {
     bookRequestIdRef.current += 1;
     setActiveBookItem(null);
+    setActiveSaveContext(null);
     setActiveBookDescription(null);
     setActiveBookDescriptionSource(null);
     setIsBookLoading(false);
@@ -80,7 +89,8 @@ export function BookPreviewProvider({
   }, [closeBookPreview]);
 
   async function openBookPreview(
-    item: Top3Item
+    item: Top3Item,
+    saveContext?: PreviewSaveContext
   ): Promise<boolean> {
     const requestId =
       bookRequestIdRef.current + 1;
@@ -91,6 +101,9 @@ export function BookPreviewProvider({
     );
 
     setActiveBookItem(item);
+    setActiveSaveContext(
+      saveContext ?? null
+    );
     setActiveBookDescription(null);
     setActiveBookDescriptionSource(null);
     setIsBookLoading(true);
@@ -144,6 +157,7 @@ export function BookPreviewProvider({
     <BookPreviewContext.Provider
       value={{
         activeBookItem,
+        activeSaveContext,
         activeBookDescription,
         activeBookDescriptionSource,
         isBookLoading,
