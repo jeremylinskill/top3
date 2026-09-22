@@ -5,6 +5,9 @@ import { useBookPreview } from '@/context/book-preview-context';
 import { useTrailerPreview } from '@/context/trailer-preview-context';
 import { useAppColors } from '@/hooks/use-app-colors';
 import {
+  isYouTubeVideoAllowed,
+} from '@/lib/supabase/youtube-video-status';
+import {
     getCachedTrailerAvailability,
     getMovieTrailerUrl,
     getTvShowTrailerUrl,
@@ -250,10 +253,49 @@ export function useMediaPreview(
     }
 
     if (category === 'games') {
-      setTrailerAvailability(
-        Boolean(item.trailerVideoId)
-      );
-      return;
+      if (!item.trailerVideoId) {
+        setTrailerAvailability(false);
+        return;
+      }
+
+      let isMounted = true;
+      const trailerVideoId =
+        item.trailerVideoId;
+      const itemTitle = item.title;
+
+      async function loadGameTrailerAvailability() {
+        try {
+          const isAllowed =
+            await isYouTubeVideoAllowed(
+              trailerVideoId
+            );
+
+          if (isMounted) {
+            setTrailerAvailability(
+              isAllowed
+            );
+          }
+        } catch (error) {
+          if (__DEV__) {
+            console.log(
+              `Failed to check trailer availability for ${itemTitle}:`,
+              error
+            );
+          }
+
+          if (isMounted) {
+            setTrailerAvailability(
+              undefined
+            );
+          }
+        }
+      }
+
+      void loadGameTrailerAvailability();
+
+      return () => {
+        isMounted = false;
+      };
     }
 
     if (
@@ -276,12 +318,12 @@ export function useMediaPreview(
         resolvedTrailerItemId
       );
 
-    if (cachedAvailability !== undefined) {
-      setTrailerAvailability(
-        cachedAvailability
-      );
+    if (cachedAvailability === false) {
+      setTrailerAvailability(false);
       return;
     }
+
+    setTrailerAvailability(undefined);
 
     let isMounted = true;
     const itemTitle = item.title;
@@ -297,9 +339,50 @@ export function useMediaPreview(
                 resolvedTrailerItemId
               );
 
+        if (!trailerUrl) {
+          if (isMounted) {
+            setTrailerAvailability(false);
+          }
+
+          return;
+        }
+
+        const videoIdMatch =
+          /[?&]v=([^&]+)/.exec(
+            trailerUrl
+          );
+
+        const encodedVideoId =
+          videoIdMatch?.[1];
+
+        if (!encodedVideoId) {
+          if (isMounted) {
+            setTrailerAvailability(false);
+          }
+
+          return;
+        }
+
+        let videoId =
+          encodedVideoId;
+
+        try {
+          videoId =
+            decodeURIComponent(
+              encodedVideoId
+            );
+        } catch {
+          // Keep the encoded ID if decoding fails.
+        }
+
+        const isAllowed =
+          await isYouTubeVideoAllowed(
+            videoId
+          );
+
         if (isMounted) {
           setTrailerAvailability(
-            Boolean(trailerUrl)
+            isAllowed
           );
         }
       } catch (error) {

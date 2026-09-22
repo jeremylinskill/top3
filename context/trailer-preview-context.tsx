@@ -4,6 +4,9 @@ import {
   stopOtherMediaPreviewsFromCoordinator,
 } from '@/lib/media-preview-coordinator';
 import {
+  isYouTubeVideoAllowed,
+} from '@/lib/supabase/youtube-video-status';
+import {
   getMovieTrailerUrl,
   getTvShowTrailerUrl,
 } from '@/providers/movies-and-tv';
@@ -57,7 +60,7 @@ function getYouTubeEmbedUrlFromVideoId(
   );
 }
 
-function getYouTubeEmbedUrl(
+function getYouTubeVideoId(
   trailerUrl: string
 ): string | null {
   const videoIdMatch =
@@ -79,9 +82,10 @@ function getYouTubeEmbedUrl(
     // Keep the encoded ID if decoding fails.
   }
 
-  return getYouTubeEmbedUrlFromVideoId(
-    videoId
-  );
+  const trimmedVideoId =
+    videoId.trim();
+
+  return trimmedVideoId || null;
 }
 
 export function TrailerPreviewProvider({
@@ -149,18 +153,27 @@ export function TrailerPreviewProvider({
           return false;
         }
 
+        const isAllowed =
+          await isYouTubeVideoAllowed(
+            item.trailerVideoId
+          );
+
+        if (
+          trailerRequestIdRef.current !== requestId
+        ) {
+          return false;
+        }
+
+        if (!isAllowed) {
+          return false;
+        }
+
         const embedUrl =
           getYouTubeEmbedUrlFromVideoId(
             item.trailerVideoId
           );
 
         if (!embedUrl) {
-          return false;
-        }
-
-        if (
-          trailerRequestIdRef.current !== requestId
-        ) {
           return false;
         }
 
@@ -207,8 +220,32 @@ export function TrailerPreviewProvider({
         return false;
       }
 
+      const videoId =
+        getYouTubeVideoId(trailerUrl);
+
+      if (!videoId) {
+        return false;
+      }
+
+      const isAllowed =
+        await isYouTubeVideoAllowed(
+          videoId
+        );
+
+      if (
+        trailerRequestIdRef.current !== requestId
+      ) {
+        return false;
+      }
+
+      if (!isAllowed) {
+        return false;
+      }
+
       const embedUrl =
-        getYouTubeEmbedUrl(trailerUrl);
+        getYouTubeEmbedUrlFromVideoId(
+          videoId
+        );
 
       if (!embedUrl) {
         return false;
