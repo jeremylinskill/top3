@@ -2,6 +2,8 @@ export type Top3Item = {
   id: string;
   title: string;
   subtitle?: string;
+  releaseYear?: string;
+  genres?: string[];
   imageUrl?: string;
   rating?: number;
   previewUrl?: string;

@@ -1,6 +1,11 @@
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { Top3Item } from '@/types/top3-item';
 
+type TMDBGenre = {
+  id: number;
+  name: string;
+};
+
 type TMDBMovie = {
   id: number;
   title: string;
@@ -10,6 +15,7 @@ type TMDBMovie = {
   vote_count?: number;
   popularity?: number;
   genre_ids?: number[];
+  genres?: TMDBGenre[];
 };
 
 type TMDBTvShow = {
@@ -21,6 +27,7 @@ type TMDBTvShow = {
   vote_count?: number;
   popularity?: number;
   genre_ids?: number[];
+  genres?: TMDBGenre[];
 };
 
 type TMDBSearchResponse<T> = {
@@ -50,6 +57,47 @@ const API_BASE_URL =
 
 const IMAGE_BASE_URL =
   'https://image.tmdb.org/t/p/w500';
+
+const MOVIE_GENRE_NAMES: Record<number, string> = {
+  28: 'Action',
+  12: 'Adventure',
+  16: 'Animation',
+  35: 'Comedy',
+  80: 'Crime',
+  99: 'Documentary',
+  18: 'Drama',
+  10751: 'Family',
+  14: 'Fantasy',
+  36: 'History',
+  27: 'Horror',
+  10402: 'Music',
+  9648: 'Mystery',
+  10749: 'Romance',
+  878: 'Science Fiction',
+  10770: 'TV Movie',
+  53: 'Thriller',
+  10752: 'War',
+  37: 'Western',
+};
+
+const TV_GENRE_NAMES: Record<number, string> = {
+  10759: 'Action & Adventure',
+  16: 'Animation',
+  35: 'Comedy',
+  80: 'Crime',
+  99: 'Documentary',
+  18: 'Drama',
+  10751: 'Family',
+  10762: 'Kids',
+  9648: 'Mystery',
+  10763: 'News',
+  10764: 'Reality',
+  10765: 'Sci-Fi & Fantasy',
+  10766: 'Soap',
+  10767: 'Talk',
+  10768: 'War & Politics',
+  37: 'Western',
+};
 
 const MOVIE_MINIMUM_VOTE_COUNT = 500;
 const TV_MINIMUM_VOTE_COUNT = 200;
@@ -131,11 +179,30 @@ function getTopicGenreId(
 function movieToTop3Item(
   movie: TMDBMovie
 ): Top3Item {
+  const releaseYear =
+    movie.release_date?.slice(0, 4);
+
+  const genres =
+    movie.genres?.map((genre) => genre.name) ??
+    movie.genre_ids
+      ?.map(
+        (genreId) =>
+          MOVIE_GENRE_NAMES[genreId]
+      )
+      .filter(
+        (genreName): genreName is string =>
+          Boolean(genreName)
+      );
+
   return {
     id: `movie-${movie.id}`,
     title: movie.title,
-    subtitle:
-      movie.release_date?.slice(0, 4),
+    subtitle: releaseYear,
+    releaseYear,
+    genres:
+      genres && genres.length > 0
+        ? genres
+        : undefined,
     imageUrl: movie.poster_path
       ? `${IMAGE_BASE_URL}${movie.poster_path}`
       : undefined,
@@ -146,11 +213,30 @@ function movieToTop3Item(
 function tvShowToTop3Item(
   show: TMDBTvShow
 ): Top3Item {
+  const releaseYear =
+    show.first_air_date?.slice(0, 4);
+
+  const genres =
+    show.genres?.map((genre) => genre.name) ??
+    show.genre_ids
+      ?.map(
+        (genreId) =>
+          TV_GENRE_NAMES[genreId]
+      )
+      .filter(
+        (genreName): genreName is string =>
+          Boolean(genreName)
+      );
+
   return {
     id: `tv-${show.id}`,
     title: show.name,
-    subtitle:
-      show.first_air_date?.slice(0, 4),
+    subtitle: releaseYear,
+    releaseYear,
+    genres:
+      genres && genres.length > 0
+        ? genres
+        : undefined,
     imageUrl: show.poster_path
       ? `${IMAGE_BASE_URL}${show.poster_path}`
       : undefined,

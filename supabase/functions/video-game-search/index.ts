@@ -18,6 +18,10 @@ type IgdbVideo = {
   video_id?: string;
 };
 
+type IgdbGenre = {
+  name?: string;
+};
+
 type IgdbGame = {
   id?: number;
   name?: string;
@@ -26,6 +30,7 @@ type IgdbGame = {
   total_rating_count?: number;
   cover?: IgdbCover;
   videos?: IgdbVideo[];
+  genres?: IgdbGenre[];
 };
 
 type SearchRequestBody = {
@@ -39,6 +44,8 @@ type GameSearchResult = {
   id: string;
   title: string;
   subtitle?: string;
+  releaseYear?: string;
+  genres?: string[];
   imageUrl?: string;
   rating?: number;
   trailerVideoId?: string;
@@ -251,12 +258,14 @@ function getSearchScore(
 }
 
 
-function deduplicateGamesByBestMatch(
-  games: IgdbGame[],
+function deduplicateGamesByBestMatch<
+  T extends IgdbGame
+>(
+  games: T[],
   query: string
-): IgdbGame[] {
+): T[] {
   const bestGames =
-    new Map<string, IgdbGame>();
+    new Map<string, T>();
 
   for (const game of games) {
     const normalizedTitle =
@@ -323,6 +332,24 @@ function getReleaseYear(
   return new Date(firstReleaseDate * 1000)
     .getUTCFullYear()
     .toString();
+}
+
+function getGenreNames(
+  genres?: IgdbGenre[]
+): string[] | undefined {
+  const names =
+    genres
+      ?.map((genre) =>
+        genre.name?.trim()
+      )
+      .filter(
+        (name): name is string =>
+          Boolean(name)
+      ) ?? [];
+
+  return names.length > 0
+    ? names
+    : undefined;
 }
 
 function getCoverUrl(
@@ -545,11 +572,18 @@ function mapIgdbGameToSearchResult(
     name: string;
   }
 ): GameSearchResult {
+  const releaseYear =
+    getReleaseYear(
+      game.first_release_date
+    );
+
   return {
     id: `game-${game.id}`,
     title: game.name,
-    subtitle: getReleaseYear(
-      game.first_release_date
+    subtitle: releaseYear,
+    releaseYear,
+    genres: getGenreNames(
+      game.genres
     ),
     imageUrl: getCoverUrl(
       game.cover?.image_id
@@ -572,6 +606,7 @@ function buildFieldsClause(): string {
     'total_rating,',
     'total_rating_count,',
     'cover.image_id,',
+    'genres.name,',
     'videos.name,',
     'videos.video_id;',
   ].join(' ');
@@ -774,22 +809,9 @@ async function searchIgdbGames(
   searchQuery
 )
     .slice(0, 10)
-    .map((game) => ({
-      id: `game-${game.id}`,
-      title: game.name ?? 'Untitled',
-      subtitle: getReleaseYear(
-        game.first_release_date
-      ),
-      imageUrl: getCoverUrl(
-        game.cover?.image_id
-      ),
-      rating: getFiveStarRating(
-        game.total_rating
-      ),
-      trailerVideoId: getTrailerVideoId(
-        game.videos
-      ),
-    }));
+    .map(
+      mapIgdbGameToSearchResult
+    );
 }
 
 async function getPopularIgdbGames(

@@ -2,6 +2,9 @@ import IconButton from '@/components/icon-button';
 import PreviewSaveButton from '@/components/preview-save-button';
 import { useTrailerPreview } from '@/context/trailer-preview-context';
 import { usePreviewSheetColors } from '@/hooks/use-preview-sheet-colors';
+import {
+  getTop3ItemPreviewMetadata,
+} from '@/utils/top3-item-metadata';
 import { Ionicons } from '@expo/vector-icons';
 import {
   Pressable,
@@ -58,6 +61,7 @@ function getYouTubeEmbedHtml(
 export default function TrailerPreviewSheet() {
   const {
     activeTrailerItem,
+    activeTrailerCategory,
     activeSaveContext,
     activeTrailerEmbedUrl,
     closeTrailer,
@@ -73,6 +77,14 @@ export default function TrailerPreviewSheet() {
   ) {
     return null;
   }
+
+  const trailerMetadata =
+    activeTrailerCategory
+      ? getTop3ItemPreviewMetadata(
+          activeTrailerItem,
+          activeTrailerCategory
+        )
+      : activeTrailerItem.subtitle ?? '';
 
   return (
     <>
@@ -134,7 +146,7 @@ export default function TrailerPreviewSheet() {
               {activeTrailerItem.title}
             </Text>
 
-            {activeTrailerItem.subtitle ? (
+            {trailerMetadata ? (
               <Text
                 style={[
                   styles.subtitle,
@@ -143,8 +155,8 @@ export default function TrailerPreviewSheet() {
                       previewColors.secondaryText,
                   },
                 ]}
-                numberOfLines={1}>
-                {activeTrailerItem.subtitle}
+                numberOfLines={2}>
+                {trailerMetadata}
               </Text>
             ) : null}
           </View>

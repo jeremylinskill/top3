@@ -21,6 +21,7 @@ import {
 
 type TrailerPreviewContextValue = {
   activeTrailerItem: Top3Item | null;
+  activeTrailerCategory: CategoryId | null;
   activeSaveContext: PreviewSaveContext | null;
   activeTrailerEmbedUrl: string | null;
   isTrailerLoading: boolean;
@@ -92,6 +93,11 @@ export function TrailerPreviewProvider({
   ] = useState<Top3Item | null>(null);
 
   const [
+    activeTrailerCategory,
+    setActiveTrailerCategory,
+  ] = useState<CategoryId | null>(null);
+
+  const [
     activeSaveContext,
     setActiveSaveContext,
   ] = useState<PreviewSaveContext | null>(null);
@@ -111,6 +117,7 @@ export function TrailerPreviewProvider({
   const closeTrailer = useCallback(() => {
     trailerRequestIdRef.current += 1;
     setActiveTrailerItem(null);
+    setActiveTrailerCategory(null);
     setActiveSaveContext(null);
     setActiveTrailerEmbedUrl(null);
     setIsTrailerLoading(false);
@@ -158,6 +165,7 @@ export function TrailerPreviewProvider({
         }
 
         setActiveTrailerItem(item);
+        setActiveTrailerCategory(category);
         setActiveSaveContext(
           saveContext ?? null
         );
@@ -207,6 +215,7 @@ export function TrailerPreviewProvider({
       }
 
       setActiveTrailerItem(item);
+      setActiveTrailerCategory(category);
       setActiveSaveContext(
         saveContext ?? null
       );
@@ -238,6 +247,7 @@ export function TrailerPreviewProvider({
     <TrailerPreviewContext.Provider
       value={{
         activeTrailerItem,
+        activeTrailerCategory,
         activeSaveContext,
         activeTrailerEmbedUrl,
         isTrailerLoading,

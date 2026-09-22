@@ -23,6 +23,10 @@ import {
 import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
 import { formatRelativeTime } from '@/utils/format-relative-time';
+import {
+  getTop3ItemMetadata,
+  usesGenreMetadataPresentation,
+} from '@/utils/top3-item-metadata';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import {
@@ -531,6 +535,14 @@ export default function Top3Card({
         <View style={styles.ranking}>
           {post.collection.items.map(
             (item, index) => {
+              const itemMetadata =
+                item
+                  ? getTop3ItemMetadata(
+                      item,
+                      post.collection.category
+                    )
+                  : '';
+
               const isSearchHighlighted =
                 item !== null &&
                 itemMatchesHighlight(
@@ -701,7 +713,7 @@ export default function Top3Card({
                         'Not selected'}
                     </AppText>
 
-                    {item?.subtitle ? (
+                    {itemMetadata ? (
                       <AppText
                         variant="subtitle"
                         tone={
@@ -710,14 +722,17 @@ export default function Top3Card({
                             : 'secondary'
                         }
                         style={styles.itemSubtitle}
-                        numberOfLines={1}
+                        numberOfLines={2}
                         ellipsizeMode="tail">
-                        {item.subtitle}
+                        {itemMetadata}
                       </AppText>
                     ) : null}
 
-                    {typeof item?.rating ===
-                    'number' ? (
+                    {!usesGenreMetadataPresentation(
+                      post.collection.category
+                    ) &&
+                    typeof item?.rating ===
+                      'number' ? (
                       <View
                         style={styles.ratingRow}>
                         <AppText

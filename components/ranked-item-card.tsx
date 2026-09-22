@@ -11,6 +11,10 @@ import {
 } from '@/constants/top3-categories';
 import { useAppColors } from '@/hooks/use-app-colors';
 import { Top3Item } from '@/types/top3-item';
+import {
+  getTop3ItemMetadata,
+  usesGenreMetadataPresentation,
+} from '@/utils/top3-item-metadata';
 import { Ionicons } from '@expo/vector-icons';
 import {
   Image,
@@ -141,8 +145,14 @@ export default function RankedItemCard({
             tone="tertiary"
             style={styles.metadata}
             numberOfLines={2}>
-            {item.subtitle ?? ''}
-            {typeof item.rating === 'number'
+            {getTop3ItemMetadata(
+              item,
+              category
+            )}
+            {!usesGenreMetadataPresentation(
+              category
+            ) &&
+            typeof item.rating === 'number'
               ? ` · ★ ${item.rating.toFixed(1)}`
               : ''}
           </AppText>
