@@ -286,6 +286,7 @@ const styles = StyleSheet.create({
 
   player: {
     width: '100%',
+    minHeight: 200,
     aspectRatio: 16 / 9,
     overflow: 'hidden',
     borderRadius: 10,
