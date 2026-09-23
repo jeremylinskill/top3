@@ -63,8 +63,22 @@ function routeFromNotificationData(
     getStringValue(data.actorUserId);
 
   if (
-    (type === 'like' ||
-      type === 'comment' ||
+    type === 'like' &&
+    collectionId
+  ) {
+    router.push({
+      pathname: '/published-top3',
+      params: {
+        postId: `post-${collectionId}`,
+      },
+    });
+
+    return;
+  }
+
+  if (
+    (type === 'comment' ||
+      type === 'comment_reply' ||
       type === 'comment_like') &&
     collectionId
   ) {
@@ -72,6 +86,7 @@ function routeFromNotificationData(
       pathname: '/published-top3',
       params: {
         postId: `post-${collectionId}`,
+        openComments: 'true',
       },
     });
 

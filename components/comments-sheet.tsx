@@ -1,8 +1,8 @@
-import IconButton from '@/components/icon-button';
 import ActionSheet, {
   ActionSheetAction,
 } from '@/components/action-sheet';
 import AppText from '@/components/app-text';
+import IconButton from '@/components/icon-button';
 import PrimaryButton from '@/components/primary-button';
 import UserAvatar from '@/components/user-avatar';
 import { AVATAR } from '@/constants/avatar';
@@ -115,6 +115,11 @@ export default function CommentsSheet({
 
   const [commentText, setCommentText] =
     useState('');
+
+  const [replyTarget, setReplyTarget] =
+    useState<Comment | null>(null);
+
+  const inputRef = useRef<TextInput>(null);
 
   const [keyboardHeight, setKeyboardHeight] =
     useState(0);
@@ -251,6 +256,7 @@ export default function CommentsSheet({
 
   function finishClosing() {
     setCommentText('');
+    setReplyTarget(null);
     setKeyboardHeight(0);
     setIsClosing(false);
     setIsRendered(false);
@@ -335,6 +341,28 @@ export default function CommentsSheet({
     ]
   );
 
+  function handleReplyToComment(
+    comment: Comment
+  ) {
+    if (
+      comment.id.startsWith(
+        'optimistic-comment-'
+      )
+    ) {
+      return;
+    }
+
+    setReplyTarget(comment);
+
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
+  }
+
+  function clearReplyTarget() {
+    setReplyTarget(null);
+  }
+
   async function handlePostComment() {
     if (
       !collectionId ||
@@ -354,10 +382,19 @@ export default function CommentsSheet({
         authorAvatarUrl:
           profile.avatarUrl,
         text: trimmedComment,
+        replyToCommentId:
+          replyTarget?.id,
+        replyToUserId:
+          replyTarget?.authorId,
+        replyToDisplayName:
+          replyTarget?.authorDisplayName,
+        replyToUsername:
+          replyTarget?.authorUsername,
       });
 
       if (newComment) {
         setCommentText('');
+        setReplyTarget(null);
         Keyboard.dismiss();
       }
     } catch (error) {
@@ -912,6 +949,11 @@ export default function CommentsSheet({
                             comment
                           )
                         }
+                        onReplyPress={() =>
+                          handleReplyToComment(
+                            comment
+                          )
+                        }
                       />
                     )
                   )}
@@ -929,81 +971,131 @@ export default function CommentsSheet({
                     colors.border,
                 },
               ]}>
-              <View style={styles.composerAvatar}>
-                <UserAvatar
-                  displayName={profile.displayName}
-                  avatarUrl={profile.avatarUrl}
-                  size={AVATAR.sm + 2}
-                  fontSize={15}
-                />
-              </View>
+              {replyTarget ? (
+                <View
+                  style={
+                    styles.replyComposerBar
+                  }>
+                  <AppText
+                    variant="metadata"
+                    tone="secondary"
+                    style={
+                      styles.replyComposerText
+                    }
+                    numberOfLines={1}>
+                    Replying to @{replyTarget.authorUsername}
+                  </AppText>
+
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.replyComposerCloseButton,
+                      pressed && styles.pressed,
+                    ]}
+                    onPress={clearReplyTarget}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel="Cancel reply">
+                    <Ionicons
+                      name="close"
+                      size={17}
+                      color={colors.secondaryText}
+                    />
+                  </Pressable>
+                </View>
+              ) : null}
 
               <View
-                style={[
-                  styles.inputContainer,
-                  {
-                    backgroundColor:
-                      colors.surface,
-                    borderColor:
-                      colors.border,
-                  },
-                ]}>
-                <TextInput
-                  style={[
-                    styles.input,
-                    { color: colors.text },
-                  ]}
-                  value={commentText}
-                  onChangeText={
-                    setCommentText
-                  }
-                  placeholder="Add a comment…"
-                  placeholderTextColor={
-                    colors.tertiaryText
-                  }
-                  multiline
-                  maxLength={500}
-                  returnKeyType="send"
-                  blurOnSubmit
-                  editable={!isClosing}
-                  onSubmitEditing={
-                    canPost
-                      ? handlePostComment
-                      : undefined
-                  }
-                  accessibilityLabel="Comment text"
-                />
+                style={styles.composerInputRow}>
+                <View
+                  style={styles.composerAvatar}>
+                  <UserAvatar
+                    displayName={profile.displayName}
+                    avatarUrl={profile.avatarUrl}
+                    size={AVATAR.sm + 2}
+                    fontSize={15}
+                  />
+                </View>
 
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.postButton,
-                    !canPost &&
-                      styles
-                        .postButtonDisabled,
-                    pressed &&
-                      canPost &&
-                      styles.pressed,
-                  ]}
-                  onPress={
-                    handlePostComment
-                  }
-                  disabled={!canPost}
-                  accessibilityRole="button"
-                  accessibilityState={{
-                    disabled: !canPost,
-                  }}
-                  accessibilityLabel="Post comment">
-                  <AppText
-                    variant="action"
-                    tone={
-                      canPost
-                        ? 'primary'
-                        : 'tertiary'
+                <View
+                  style={[
+                    styles.inputContainer,
+                    {
+                      backgroundColor:
+                        colors.surface,
+                      borderColor:
+                        colors.border,
+                    },
+                  ]}>
+                  <TextInput
+                    ref={inputRef}
+                    style={[
+                      styles.input,
+                      { color: colors.text },
+                    ]}
+                    value={commentText}
+                    onChangeText={
+                      setCommentText
                     }
-                    emphasis="strong">
-                    Post
-                  </AppText>
-                </Pressable>
+                    placeholder={
+                      replyTarget
+                        ? `Reply to @${replyTarget.authorUsername}…`
+                        : 'Add a comment…'
+                    }
+                    placeholderTextColor={
+                      colors.tertiaryText
+                    }
+                    multiline
+                    maxLength={500}
+                    returnKeyType="send"
+                    blurOnSubmit
+                    editable={!isClosing}
+                    onSubmitEditing={
+                      canPost
+                        ? handlePostComment
+                        : undefined
+                    }
+                    accessibilityLabel={
+                      replyTarget
+                        ? `Reply to ${replyTarget.authorDisplayName}`
+                        : 'Comment text'
+                    }
+                  />
+
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.postButton,
+                      !canPost &&
+                        styles
+                          .postButtonDisabled,
+                      pressed &&
+                        canPost &&
+                        styles.pressed,
+                    ]}
+                    onPress={
+                      handlePostComment
+                    }
+                    disabled={!canPost}
+                    accessibilityRole="button"
+                    accessibilityState={{
+                      disabled: !canPost,
+                    }}
+                    accessibilityLabel={
+                      replyTarget
+                        ? 'Post reply'
+                        : 'Post comment'
+                    }>
+                    <AppText
+                      variant="action"
+                      tone={
+                        canPost
+                          ? 'primary'
+                          : 'tertiary'
+                      }
+                      emphasis="strong">
+                      Post
+                    </AppText>
+                  </Pressable>
+                </View>
               </View>
             </View>
           </Animated.View>
@@ -1029,6 +1121,7 @@ type CommentRowProps = {
   isLiked: boolean;
   onLikePress: () => void;
   onMenuPress: () => void;
+  onReplyPress: () => void;
 };
 
 function CommentRow({
@@ -1037,6 +1130,7 @@ function CommentRow({
   isLiked,
   onLikePress,
   onMenuPress,
+  onReplyPress,
 }: CommentRowProps) {
   const colors = useAppColors();
 
@@ -1046,10 +1140,15 @@ function CommentRow({
     )?.replace(/^Updated\s+/i, '') ??
     'Just now';
 
-  const canLike =
+  const canInteract =
     !comment.id.startsWith(
       'optimistic-comment-'
     );
+
+  const replyToLabel =
+    comment.replyToUsername
+      ? `@${comment.replyToUsername}`
+      : comment.replyToDisplayName;
 
   return (
     <View style={styles.commentRow}>
@@ -1096,12 +1195,40 @@ function CommentRow({
             @{comment.authorUsername}
           </AppText>
 
+          {replyToLabel ? (
+            <AppText
+              variant="micro"
+              tone="tertiary"
+              style={styles.replyToLabel}>
+              Replying to {replyToLabel}
+            </AppText>
+          ) : null}
+
           <AppText
             variant="body"
             tone="primary"
             style={styles.commentText}>
             {comment.text}
           </AppText>
+
+          {canInteract ? (
+            <Pressable
+              style={({ pressed }) => [
+                styles.replyButton,
+                pressed && styles.pressed,
+              ]}
+              onPress={onReplyPress}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={`Reply to ${comment.authorDisplayName}`}>
+              <AppText
+                variant="micro"
+                tone="secondary"
+                emphasis="strong">
+                Reply
+              </AppText>
+            </Pressable>
+          ) : null}
         </View>
 
         <View
@@ -1133,18 +1260,18 @@ function CommentRow({
             style={({ pressed }) => [
               styles.commentLikeButton,
               pressed &&
-                canLike &&
+                canInteract &&
                 styles.pressed,
-              !canLike &&
+              !canInteract &&
                 styles.commentLikeButtonDisabled,
             ]}
             onPress={onLikePress}
-            disabled={!canLike}
+            disabled={!canInteract}
             hitSlop={10}
             accessibilityRole="button"
             accessibilityState={{
               selected: isLiked,
-              disabled: !canLike,
+              disabled: !canInteract,
             }}
             accessibilityLabel={
               isLiked
@@ -1302,8 +1429,20 @@ const styles = StyleSheet.create({
     marginTop: -1,
   },
 
-  commentText: {
+  replyToLabel: {
     marginTop: 7,
+  },
+
+  commentText: {
+    marginTop: 5,
+  },
+
+  replyButton: {
+    alignSelf: 'flex-start',
+    minHeight: 28,
+    justifyContent: 'center',
+    marginTop: 4,
+    paddingRight: 10,
   },
 
   commentLikeButton: {
@@ -1335,12 +1474,35 @@ const styles = StyleSheet.create({
   },
 
   composer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
     paddingHorizontal: 16,
     paddingTop: 10,
     borderTopWidth:
       StyleSheet.hairlineWidth,
+  },
+
+  replyComposerBar: {
+    minHeight: 28,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: AVATAR.sm + 12,
+    marginBottom: 4,
+  },
+
+  replyComposerText: {
+    flex: 1,
+    minWidth: 0,
+  },
+
+  replyComposerCloseButton: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  composerInputRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
   },
 
   composerAvatar: {

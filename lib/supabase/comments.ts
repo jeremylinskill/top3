@@ -8,6 +8,10 @@ export type CommentRecord = {
   authorUsername: string;
   authorAvatarUrl?: string;
   content: string;
+  replyToCommentId?: string;
+  replyToUserId?: string;
+  replyToDisplayName?: string;
+  replyToUsername?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -18,16 +22,27 @@ type CommentProfileRow = {
   avatar_url: string | null;
 };
 
+type ReplyToProfileRow = {
+  display_name: string | null;
+  username: string | null;
+};
+
 type CommentRow = {
   id: string;
   collection_id: string;
   user_id: string;
   content: string;
+  reply_to_comment_id: string | null;
+  reply_to_user_id: string | null;
   created_at: string;
   updated_at: string;
   profiles:
     | CommentProfileRow
     | CommentProfileRow[]
+    | null;
+  reply_to_profile:
+    | ReplyToProfileRow
+    | ReplyToProfileRow[]
     | null;
 };
 
@@ -41,12 +56,18 @@ const COMMENT_SELECT = `
   collection_id,
   user_id,
   content,
+  reply_to_comment_id,
+  reply_to_user_id,
   created_at,
   updated_at,
   profiles!comments_user_id_fkey (
     display_name,
     username,
     avatar_url
+  ),
+  reply_to_profile:profiles!comments_reply_to_user_id_fkey (
+    display_name,
+    username
   )
 `;
 
@@ -60,12 +81,27 @@ function getProfileFromRow(
   return profiles;
 }
 
+function getReplyToProfileFromRow(
+  profiles: CommentRow['reply_to_profile']
+): ReplyToProfileRow | null {
+  if (Array.isArray(profiles)) {
+    return profiles[0] ?? null;
+  }
+
+  return profiles;
+}
+
 function mapCommentRow(
   row: CommentRow
 ): CommentRecord {
   const profile = getProfileFromRow(
     row.profiles
   );
+
+  const replyToProfile =
+    getReplyToProfileFromRow(
+      row.reply_to_profile
+    );
 
   return {
     id: row.id,
@@ -81,6 +117,18 @@ function mapCommentRow(
       profile?.avatar_url ??
       undefined,
     content: row.content,
+    replyToCommentId:
+      row.reply_to_comment_id ??
+      undefined,
+    replyToUserId:
+      row.reply_to_user_id ??
+      undefined,
+    replyToDisplayName:
+      replyToProfile?.display_name ??
+      undefined,
+    replyToUsername:
+      replyToProfile?.username ??
+      undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -182,10 +230,14 @@ export async function getCommentCounts(
 export async function createComment(
   userId: string,
   collectionId: string,
-  content: string
+  content: string,
+  replyToCommentId?: string
 ): Promise<CommentRecord> {
   const normalizedContent =
     content.trim();
+
+  const normalizedReplyToCommentId =
+    replyToCommentId?.trim() || null;
 
   if (!normalizedContent) {
     throw new Error(
@@ -199,6 +251,8 @@ export async function createComment(
       user_id: userId,
       collection_id: collectionId,
       content: normalizedContent,
+      reply_to_comment_id:
+        normalizedReplyToCommentId,
     })
     .select(COMMENT_SELECT)
     .single<CommentRow>();

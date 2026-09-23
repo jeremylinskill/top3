@@ -1,6 +1,6 @@
-import IconButton from '@/components/icon-button';
 import ActionSheet from '@/components/action-sheet';
 import AppText from '@/components/app-text';
+import IconButton from '@/components/icon-button';
 import PageHeader from '@/components/page-header';
 import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
@@ -44,6 +44,9 @@ function getNotificationMessage(
       return collectionTitle
         ? `commented on your ${collectionTitle}.`
         : 'commented on your list.';
+
+    case 'comment_reply':
+      return 'replied to your comment.';
 
     case 'comment_like':
       return 'liked your comment.';
@@ -215,11 +218,21 @@ export default function NotificationsScreen() {
       }
 
       if (notification.collectionId) {
+        const shouldOpenComments =
+          notification.type === 'comment' ||
+          notification.type === 'comment_reply' ||
+          notification.type === 'comment_like';
+
         router.push({
           pathname: '/published-top3',
           params: {
             postId:
               `post-${notification.collectionId}`,
+            ...(shouldOpenComments
+              ? {
+                  openComments: 'true',
+                }
+              : {}),
           },
         });
       }
@@ -650,6 +663,9 @@ export default function NotificationsScreen() {
                                 </AppText>
                                 .
                               </>
+                            ) : notification.type ===
+                              'comment_reply' ? (
+                              'replied to your comment.'
                             ) : notification.type ===
                               'comment_like' ? (
                               'liked your comment.'

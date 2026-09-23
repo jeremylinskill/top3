@@ -34,6 +34,10 @@ export type Comment = {
   authorUsername: string;
   authorAvatarUrl?: string;
   text: string;
+  replyToCommentId?: string;
+  replyToUserId?: string;
+  replyToDisplayName?: string;
+  replyToUsername?: string;
   createdAt: string;
 };
 
@@ -44,6 +48,10 @@ type AddCommentInput = {
   authorUsername: string;
   authorAvatarUrl?: string;
   text: string;
+  replyToCommentId?: string;
+  replyToUserId?: string;
+  replyToDisplayName?: string;
+  replyToUsername?: string;
 };
 
 type CommentCounts = Record<string, number>;
@@ -121,6 +129,14 @@ function mapCommentRecord(
     authorAvatarUrl:
       comment.authorAvatarUrl,
     text: comment.content,
+    replyToCommentId:
+      comment.replyToCommentId,
+    replyToUserId:
+      comment.replyToUserId,
+    replyToDisplayName:
+      comment.replyToDisplayName,
+    replyToUsername:
+      comment.replyToUsername,
     createdAt: comment.createdAt,
   };
 }
@@ -830,6 +846,14 @@ export function CommentProvider({
         authorAvatarUrl:
           input.authorAvatarUrl,
         text: trimmedText,
+        replyToCommentId:
+          input.replyToCommentId,
+        replyToUserId:
+          input.replyToUserId,
+        replyToDisplayName:
+          input.replyToDisplayName,
+        replyToUsername:
+          input.replyToUsername,
         createdAt:
           new Date().toISOString(),
       };
@@ -859,7 +883,8 @@ export function CommentProvider({
           await createComment(
             currentUserId,
             collectionId,
-            trimmedText
+            trimmedText,
+            input.replyToCommentId
           );
 
         trackAnalyticsEvent(

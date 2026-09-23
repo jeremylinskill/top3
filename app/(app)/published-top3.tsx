@@ -58,11 +58,21 @@ export default function PublishedTop3Screen() {
   const colors = useAppColors();
   const params = useLocalSearchParams<{
     postId?: string | string[];
+    openComments?: string | string[];
   }>();
 
   const postId = Array.isArray(params.postId)
     ? params.postId[0]
     : params.postId;
+
+  const openComments = Array.isArray(
+    params.openComments
+  )
+    ? params.openComments[0]
+    : params.openComments;
+
+  const shouldOpenComments =
+    openComments === 'true';
 
   const { profile } = useProfile();
 
@@ -98,6 +108,18 @@ export default function PublishedTop3Screen() {
     trackedCollectionViewPostIdRef.current =
       null;
   }, [postId]);
+
+  useEffect(() => {
+    if (
+      post &&
+      shouldOpenComments
+    ) {
+      setIsCommentsVisible(true);
+    }
+  }, [
+    post,
+    shouldOpenComments,
+  ]);
 
   useEffect(() => {
     let isMounted = true;
