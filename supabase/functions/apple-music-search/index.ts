@@ -182,6 +182,7 @@ type SongSearchResult = {
   id: string;
   title: string;
   subtitle?: string;
+  genres?: string[];
   imageUrl?: string;
   previewUrl?: string;
   appleMusicUrl?: string;
@@ -200,6 +201,7 @@ type AlbumSearchResult = {
   id: string;
   title: string;
   subtitle?: string;
+  genres?: string[];
   imageUrl?: string;
   previewUrl?: string;
   appleMusicUrl?: string;
@@ -2177,6 +2179,7 @@ function rankAndDeduplicateAlbums(
       id: album.id,
       title: album.title,
       subtitle: album.subtitle,
+      genres: album.genreNames,
       imageUrl: album.imageUrl,
       previewUrl:
         album.previewUrl,
@@ -2504,6 +2507,7 @@ function rankAndDeduplicateSongs(
       id: song.id,
       title: song.title,
       subtitle: song.subtitle,
+      genres: song.genreNames,
       imageUrl: song.imageUrl,
       previewUrl: song.previewUrl,
       appleMusicUrl:
@@ -2934,6 +2938,8 @@ async function getPopularJazzSongs(
         candidate.song.title,
       subtitle:
         candidate.song.subtitle,
+      genres:
+        candidate.song.genreNames,
       imageUrl:
         candidate.song.imageUrl,
       previewUrl:
@@ -3200,6 +3206,8 @@ async function getPopularBluesSongs(
         candidate.song.title,
       subtitle:
         candidate.song.subtitle,
+      genres:
+        candidate.song.genreNames,
       imageUrl:
         candidate.song.imageUrl,
       previewUrl:
@@ -3819,6 +3827,8 @@ async function getPopularFolkSongs(
         candidate.song.title,
       subtitle:
         candidate.song.subtitle,
+      genres:
+        candidate.song.genreNames,
       imageUrl:
         candidate.song.imageUrl,
       previewUrl:
@@ -4021,6 +4031,7 @@ async function getPopularAppleMusicSongs(
       id: song.id,
       title: song.title,
       subtitle: song.subtitle,
+      genres: song.genreNames,
       imageUrl: song.imageUrl,
       previewUrl: song.previewUrl,
       appleMusicUrl:
@@ -4598,6 +4609,8 @@ async function getPopularBluesAlbums(
         album.title,
       subtitle:
         album.subtitle,
+      genres:
+        album.genreNames,
       imageUrl:
         album.imageUrl,
       previewUrl:
@@ -5139,6 +5152,8 @@ async function getPopularJazzAlbums(
         album.title,
       subtitle:
         album.subtitle,
+      genres:
+        album.genreNames,
       imageUrl:
         album.imageUrl,
       previewUrl:
@@ -5386,6 +5401,7 @@ async function getPopularAppleMusicAlbums(
       id: album.id,
       title: album.title,
       subtitle: album.subtitle,
+      genres: album.genreNames,
       imageUrl: album.imageUrl,
       previewUrl:
         album.previewUrl,

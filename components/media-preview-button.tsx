@@ -421,7 +421,11 @@ export function useMediaPreview(
     }
 
     if (kind === 'audio') {
-      await togglePreview(item, saveContext);
+      await togglePreview(
+        item,
+        category,
+        saveContext
+      );
       return;
     }
 

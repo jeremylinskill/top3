@@ -1,6 +1,6 @@
-import IconButton from '@/components/icon-button';
 import ActionSheet from '@/components/action-sheet';
 import AppText from '@/components/app-text';
+import IconButton from '@/components/icon-button';
 import { MediaPreviewItemButton } from '@/components/media-preview-button';
 import PageHeader from '@/components/page-header';
 import PrimaryButton from '@/components/primary-button';
@@ -16,6 +16,9 @@ import {
 } from '@/constants/top3-categories';
 import { useSavedItems } from '@/context/saved-items-context';
 import { useAppColors } from '@/hooks/use-app-colors';
+import {
+  getTop3ItemMetadata,
+} from '@/utils/top3-item-metadata';
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
 import {
@@ -377,6 +380,12 @@ export default function SavedScreen() {
                 )
               );
 
+              const itemMetadata =
+                getTop3ItemMetadata(
+                  savedItem.item,
+                  savedItem.category
+                );
+
               return (
                 <View
                   key={`${savedItem.category}:${savedItem.item.id}`}
@@ -446,17 +455,14 @@ export default function SavedScreen() {
                       {savedItem.item.title}
                     </AppText>
 
-                    {savedItem.item.subtitle ? (
+                    {itemMetadata ? (
                       <AppText
                         variant="subtitle"
                         tone="secondary"
                         style={styles.itemSubtitle}
-                        numberOfLines={1}
+                        numberOfLines={2}
                         ellipsizeMode="tail">
-                        {
-                          savedItem.item
-                            .subtitle
-                        }
+                        {itemMetadata}
                       </AppText>
                     ) : null}
                   </View>

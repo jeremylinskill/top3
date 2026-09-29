@@ -22,6 +22,10 @@ import {
 } from '@/providers/search';
 import { getPublishedPosts } from '@/services/post-service';
 import { Top3Item } from '@/types/top3-item';
+import {
+  getTop3ItemMetadata,
+  usesGenreMetadataPresentation,
+} from '@/utils/top3-item-metadata';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -955,6 +959,12 @@ const pageTitle = selectedType
     item: Top3Item,
     source: SearchSource
   ) {
+    const itemMetadata =
+      getTop3ItemMetadata(
+        item,
+        activeCollection?.category ?? ''
+      ) || 'Details unavailable';
+
     return (
       <Pressable
         key={`${source}:${item.id}`}
@@ -1018,8 +1028,11 @@ const pageTitle = selectedType
             variant="bodyLarge"
             tone="tertiary"
             style={styles.metadata}>
-            {item.subtitle || 'Details unavailable'}
-            {typeof item.rating === 'number'
+            {itemMetadata}
+            {!usesGenreMetadataPresentation(
+              activeCollection?.category ?? ''
+            ) &&
+            typeof item.rating === 'number'
               ? ` · ★ ${item.rating.toFixed(1)}`
               : ''}
           </AppText>

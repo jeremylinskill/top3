@@ -7,6 +7,12 @@ const GENRE_METADATA_CATEGORIES =
     'games',
   ]);
 
+const MUSIC_METADATA_CATEGORIES =
+  new Set([
+    'songs',
+    'albums',
+  ]);
+
 export function usesGenreMetadataPresentation(
   category: string
 ): boolean {
@@ -44,10 +50,51 @@ function getDisplayGenres(
   );
 }
 
+function getPrimaryMusicGenre(
+  item: Top3Item
+): string {
+  return (
+    item.genres
+      ?.map((genre) => genre.trim())
+      .filter(
+        (genre): genre is string =>
+          genre.length > 0
+      )
+      .map(getDisplayGenreName)
+      .find(
+        (genre) =>
+          genre.toLowerCase() !== 'music'
+      ) ?? ''
+  );
+}
+
+function getMusicMetadata(
+  item: Top3Item
+): string {
+  const parts = [
+    item.subtitle?.trim(),
+    getPrimaryMusicGenre(item),
+  ].filter(
+    (part): part is string =>
+      typeof part === 'string' &&
+      part.length > 0
+  );
+
+  return parts.join(' · ');
+}
+
 export function getTop3ItemMetadata(
   item: Top3Item,
   category: string
 ): string {
+  if (
+    MUSIC_METADATA_CATEGORIES.has(
+      category
+    )
+  ) {
+    return getMusicMetadata(item);
+  }
+
   if (
     !usesGenreMetadataPresentation(
       category

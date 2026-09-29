@@ -17,6 +17,10 @@ import {
   calculateCommunityTop3,
   CommunityTop3Result,
 } from '@/utils/calculate-community-top3';
+import {
+  getTop3ItemMetadata,
+  usesGenreMetadataPresentation,
+} from '@/utils/top3-item-metadata';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import {
@@ -498,17 +502,26 @@ if (isMounted) {
                         {entry.item.title}
                       </AppText>
 
-                      {entry.item.subtitle ? (
+                      {getTop3ItemMetadata(
+                        entry.item,
+                        result.category
+                      ) ? (
                         <AppText
                           variant="subtitle"
                           numberOfLines={1}
                           style={styles.itemSubtitle}>
-                          {entry.item.subtitle}
+                          {getTop3ItemMetadata(
+                            entry.item,
+                            result.category
+                          )}
                         </AppText>
                       ) : null}
 
-                      {typeof entry.item.rating ===
-                      'number' ? (
+                      {!usesGenreMetadataPresentation(
+                        result.category
+                      ) &&
+                      typeof entry.item.rating ===
+                        'number' ? (
                         <AppText
                           variant="caption"
                           tone="secondary"

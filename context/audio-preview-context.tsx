@@ -25,6 +25,7 @@ import {
 
 type AudioPreviewContextValue = {
   activePreviewItem: Top3Item | null;
+  activePreviewCategory: string | null;
   activeSaveContext: PreviewSaveContext | null;
   activePreviewItemId: string | null;
   isPreviewPlaying: boolean;
@@ -35,6 +36,7 @@ type AudioPreviewContextValue = {
   previewProgress: number;
   togglePreview: (
     item: Top3Item,
+    category: string,
     saveContext?: PreviewSaveContext
   ) => Promise<void>;
   stopPreview: () => void;
@@ -63,6 +65,10 @@ export function AudioPreviewProvider({
 }: AudioPreviewProviderProps) {
   const [activePreviewItem, setActivePreviewItem] =
     useState<Top3Item | null>(null);
+  const [
+    activePreviewCategory,
+    setActivePreviewCategory,
+  ] = useState<string | null>(null);
   const [activeSaveContext, setActiveSaveContext] =
     useState<PreviewSaveContext | null>(null);
   const [isPreviewVisible, setIsPreviewVisible] =
@@ -149,6 +155,7 @@ export function AudioPreviewProvider({
       setIsPreviewLoading(false);
       setIsPreviewVisible(false);
       setActivePreviewItem(null);
+      setActivePreviewCategory(null);
       setActiveSaveContext(null);
     }
   }, [
@@ -162,6 +169,7 @@ export function AudioPreviewProvider({
     setIsPreviewLoading(false);
     setIsPreviewVisible(false);
     setActivePreviewItem(null);
+    setActivePreviewCategory(null);
     setActiveSaveContext(null);
   }, [previewPlayer]);
 
@@ -239,6 +247,7 @@ export function AudioPreviewProvider({
 
   async function togglePreview(
     item: Top3Item,
+    category: string,
     saveContext?: PreviewSaveContext
   ) {
     if (
@@ -291,6 +300,7 @@ export function AudioPreviewProvider({
         }
       }
 
+      setActivePreviewCategory(category);
       setActiveSaveContext(
         saveContext ?? null
       );
@@ -319,6 +329,7 @@ export function AudioPreviewProvider({
 
     if (isPodcastItem) {
       setActivePreviewItem(item);
+      setActivePreviewCategory(category);
       setActiveSaveContext(
         saveContext ?? null
       );
@@ -361,6 +372,7 @@ export function AudioPreviewProvider({
           setIsPreviewLoading(false);
           setIsPreviewVisible(false);
           setActivePreviewItem(null);
+          setActivePreviewCategory(null);
           setActiveSaveContext(null);
           return;
         }
@@ -424,6 +436,7 @@ export function AudioPreviewProvider({
         setIsPreviewLoading(false);
         setIsPreviewVisible(false);
         setActivePreviewItem(null);
+        setActivePreviewCategory(null);
         setActiveSaveContext(null);
 
         if (__DEV__) {
@@ -444,6 +457,7 @@ export function AudioPreviewProvider({
         setIsPreviewLoading(false);
         setIsPreviewVisible(false);
         setActivePreviewItem(null);
+        setActivePreviewCategory(null);
         setActiveSaveContext(null);
       }
 
@@ -483,6 +497,7 @@ export function AudioPreviewProvider({
         return playableItem;
       }
     );
+    setActivePreviewCategory(category);
     setActiveSaveContext(
       saveContext ?? null
     );
@@ -496,6 +511,7 @@ export function AudioPreviewProvider({
     <AudioPreviewContext.Provider
       value={{
         activePreviewItem,
+        activePreviewCategory,
         activeSaveContext,
         activePreviewItemId,
         isPreviewPlaying: previewStatus.playing,

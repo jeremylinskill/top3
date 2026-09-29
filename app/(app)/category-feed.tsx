@@ -37,6 +37,10 @@ import {
   calculateCommunityTop3,
   CommunityTop3Result,
 } from '@/utils/calculate-community-top3';
+import {
+  getTop3ItemMetadata,
+  usesGenreMetadataPresentation,
+} from '@/utils/top3-item-metadata';
 import { Ionicons } from '@expo/vector-icons';
 import {
   router,
@@ -1667,19 +1671,28 @@ if (isMounted) {
                           {entry.item.title}
                         </AppText>
 
-                        {entry.item.subtitle ? (
+                        {getTop3ItemMetadata(
+                          entry.item,
+                          category.id
+                        ) ? (
                           <AppText
                             variant="subtitle"
                             tone="secondary"
                             style={styles.itemSubtitle}
                             numberOfLines={1}
                             ellipsizeMode="tail">
-                            {entry.item.subtitle}
+                            {getTop3ItemMetadata(
+                              entry.item,
+                              category.id
+                            )}
                           </AppText>
                         ) : null}
 
-                        {typeof entry.item.rating ===
-                        'number' ? (
+                        {!usesGenreMetadataPresentation(
+                          category.id
+                        ) &&
+                        typeof entry.item.rating ===
+                          'number' ? (
                           <View
                             style={styles.ratingRow}>
                             <AppText

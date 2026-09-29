@@ -2,6 +2,9 @@ import IconButton from '@/components/icon-button';
 import PreviewSaveButton from '@/components/preview-save-button';
 import { useAudioPreview } from '@/context/audio-preview-context';
 import { usePreviewSheetColors } from '@/hooks/use-preview-sheet-colors';
+import {
+  getTop3ItemMetadata,
+} from '@/utils/top3-item-metadata';
 import { Ionicons } from '@expo/vector-icons';
 import {
     ActivityIndicator,
@@ -57,6 +60,7 @@ function formatTime(seconds: number): string {
 export default function AudioPreviewSheet() {
   const {
     activePreviewItem,
+    activePreviewCategory,
     activeSaveContext,
     isPreviewVisible,
     isPreviewLoading,
@@ -98,6 +102,14 @@ export default function AudioPreviewSheet() {
 
   const previewItem =
     activePreviewItem;
+
+  const previewMetadata =
+    activePreviewCategory
+      ? getTop3ItemMetadata(
+          previewItem,
+          activePreviewCategory
+        )
+      : previewItem.subtitle ?? '';
 
   const externalUrl =
     isApplePodcast
@@ -204,7 +216,7 @@ export default function AudioPreviewSheet() {
               }
             </Text>
 
-            {activePreviewItem.subtitle ? (
+            {previewMetadata ? (
               <Text
                 style={[
                   styles.subtitle,
@@ -214,9 +226,7 @@ export default function AudioPreviewSheet() {
                   },
                 ]}
                 numberOfLines={1}>
-                {
-                  activePreviewItem.subtitle
-                }
+                {previewMetadata}
               </Text>
             ) : null}
           </View>

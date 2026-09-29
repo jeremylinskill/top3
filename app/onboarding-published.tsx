@@ -13,6 +13,10 @@ import { getPublishedPostsByUser } from '@/lib/supabase/collections';
 import { getPopularSuggestionsByCategory } from '@/providers/search';
 import { Post } from '@/types/post';
 import { Top3Item } from '@/types/top3-item';
+import {
+  getTop3ItemMetadata,
+  usesGenreMetadataPresentation,
+} from '@/utils/top3-item-metadata';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import {
@@ -993,18 +997,27 @@ export default function OnboardingPublishedScreen() {
                           {item.title}
                         </AppText>
 
-                        {item.subtitle ? (
+                        {getTop3ItemMetadata(
+                          item,
+                          publishedPost.collection.category
+                        ) ? (
                           <AppText
                             variant="subtitle"
                             style={styles.itemSubtitle}
                             numberOfLines={1}
                             ellipsizeMode="tail">
-                            {item.subtitle}
+                            {getTop3ItemMetadata(
+                              item,
+                              publishedPost.collection.category
+                            )}
                           </AppText>
                         ) : null}
 
-                        {typeof item.rating ===
-                        'number' ? (
+                        {!usesGenreMetadataPresentation(
+                          publishedPost.collection.category
+                        ) &&
+                        typeof item.rating ===
+                          'number' ? (
                           <View
                             style={
                               styles.ratingRow
