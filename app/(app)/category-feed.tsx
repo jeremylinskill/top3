@@ -3,6 +3,7 @@ import ActionSheet, {
 } from '@/components/action-sheet';
 import AppText from '@/components/app-text';
 import CommentsSheet from '@/components/comments-sheet';
+import IconButton from '@/components/icon-button';
 import { MediaPreviewItemButton } from '@/components/media-preview-button';
 import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
@@ -16,6 +17,7 @@ import { useBlock } from '@/context/block-context';
 import { useComments } from '@/context/comment-context';
 import { useLike } from '@/context/like-context';
 import { useProfile } from '@/context/profile-context';
+import { useSavedItems } from '@/context/saved-items-context';
 import { useTop3 } from '@/context/top3-context';
 import { useAppColors } from '@/hooks/use-app-colors';
 import {
@@ -218,6 +220,12 @@ export default function CategoryFeedScreen() {
     getCommentCount,
     isLoading: isLoadingComments,
   } = useComments();
+
+  const {
+    isSaved,
+    toggleSavedItem,
+    isLoading: isLoadingSavedItems,
+  } = useSavedItems();
 
   const [allPosts, setAllPosts] = useState<
     Post[]
@@ -1745,6 +1753,46 @@ if (isMounted) {
                       ]}
                       checkTrailerAvailability={false}
                     />
+
+                    <View style={styles.saveButton}>
+                      <IconButton
+                        backgroundColor={colors.surface}
+                        onPress={() => {
+                          toggleSavedItem(
+                            category.id,
+                            entry.item,
+                            {
+                              topic: normalizedTopic,
+                            }
+                          );
+                        }}
+                        disabled={isLoadingSavedItems}
+                        selected={isSaved(
+                          category.id,
+                          entry.item.id
+                        )}
+                        accessibilityLabel={
+                          isSaved(
+                            category.id,
+                            entry.item.id
+                          )
+                            ? `Remove ${entry.item.title} from Saved`
+                            : `Save ${entry.item.title}`
+                        }>
+                        <Ionicons
+                          name={
+                            isSaved(
+                              category.id,
+                              entry.item.id
+                            )
+                              ? 'bookmark'
+                              : 'bookmark-outline'
+                          }
+                          size={19}
+                          color={colors.text}
+                        />
+                      </IconButton>
+                    </View>
                   </View>
                 )
               )}
@@ -2033,6 +2081,10 @@ const styles = StyleSheet.create({
   },
 
   previewButton: {
+    marginLeft: 10,
+  },
+
+  saveButton: {
     marginLeft: 10,
   },
 
