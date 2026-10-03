@@ -163,7 +163,8 @@ async function requestAmplitudeUserDeletion(
         },
         body: JSON.stringify({
           user_ids: [userId],
-          delete_from_org: "True",
+          delete_from_org:
+            Deno.env.get("AMPLITUDE_DELETE_FROM_ORG")?.trim() || "True",
           ignore_invalid_ids: "True",
         }),
       }

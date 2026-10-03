@@ -1015,13 +1015,6 @@ CREATE TRIGGER create_like_notification_after_insert
   FOR EACH ROW
   EXECUTE FUNCTION public.create_like_notification();
 
-CREATE TRIGGER send_push_notification
-  AFTER INSERT ON public.notifications
-  FOR EACH ROW
-  EXECUTE FUNCTION
-    supabase_functions.http_request('https://nxtowcheatxouypzqkzc.supabase.co/functions/v1/send-push-notification', 'POST',
-    '{"Content-type":"application/json","apikey":"SUPABASE_API_KEY_REQUIRED_AT_DEPLOYMENT"}', '{}', '5000');
-
 CREATE TRIGGER validate_profile_content_trigger
   BEFORE INSERT OR UPDATE OF display_name, username, bio ON public.profiles
   FOR EACH ROW
