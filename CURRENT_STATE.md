@@ -1,13 +1,13 @@
 CURRENT_STATE.md
 
-Project: Top3 Version: 3.2 Status: V1 Launch Readiness Last Updated:
-September 16, 2026 Current Branch: feature/dark-mode
+Project: Top3 Version: 3.2 Status: Post-launch Active Development Last Updated:
+October 5, 2026 Current Branch: feature/create-flow-rework
 
 Last Verified Commit
 
-92106eb
+d70def4
 
-Unify Discover search result cards
+Separate dev Supabase infrastructure
 
 Dashboard
 
@@ -17,30 +17,18 @@ Project Status
 
 Current Feature
 
-V1 App Store launch readiness, dark-mode integration, Podcasts support,
-and final release-candidate validation.
+Movie Themes / Search / Discover refinement, with Development and
+Production backend separation complete.
 
-Production iOS Build 8 remains the current TestFlight release candidate.
-Build 9 has not been created yet. The active feature/dark-mode branch is
-based on the Build 8 application state and currently contains five
-verified post-Build-8 commits:
+The production iOS app is live. Active development is continuing on
+feature/create-flow-rework.
 
-• c5362d8 --- Add dark mode and inverted preview themes
+The Development / Production infrastructure separation is complete and
+verified in commit d70def4 --- Separate dev Supabase infrastructure.
 
-• dca2bab --- Refine auth buttons and restore onboarding flow
-
-• 6b2acfa --- Add podcast category and previews
-
-• ccee6d7 --- Improve Discover search matching
-
-• 92106eb --- Unify Discover search result cards
-
-The current branch passes npm run typecheck. The onboarding category
-layout, Podcasts create/search/preview flow, Apple Podcasts external-link
-navigation, inverted preview theming, Discover search matching, and shared
-Discover result-card presentation have all been verified on a physical
-iPhone. These post-Build-8 changes are not yet represented by a new
-TestFlight build.
+The remaining working-tree changes belong to the active Movie Themes /
+Search / Discover feature work and should not yet be treated as a
+completed product-state change.
 
 The production Top 3 website is live at top3taste.com. The site provides
 the public launch/support surfaces and a branded HTTPS authentication
@@ -65,6 +53,83 @@ On Search, tapping an audio-preview play/pause control dismisses the iOS
 keyboard before toggling playback. Movie, TV, and Video Game trailer
 playback also dismisses the keyboard before opening the trailer
 experience.
+
+Development & Production Environments
+
+Status: ✅ Complete
+
+Top3 now uses separate backend and analytics environments for routine
+development and Production.
+
+Supabase projects:
+
+• Development --- Top3 - Dev
+  Project ref: kkltzygebomopysklaqq
+  URL: https://kkltzygebomopysklaqq.supabase.co
+
+• Production --- existing production Top3 project
+  Project ref: nxtowcheatxouypzqkzc
+  URL: https://nxtowcheatxouypzqkzc.supabase.co
+
+Local development and the EAS development environment use the
+Development Supabase project. Production EAS configuration remains
+pointed at Production.
+
+The Supabase CLI is normally linked to Development. Before database
+pushes, Edge Function deployments, secret changes, or other backend
+mutations, confirm the intended project explicitly.
+
+The Development database uses the same tracked migration history as
+Production and currently has the eight active application Edge Functions:
+
+• apple-music-search
+• video-game-search
+• apple-auth-token
+• delete-account
+• moderation
+• repair-collection-artwork
+• youtube-video-status
+• send-push-notification
+
+Development Auth is configured for Email, Apple, and Google. Apple uses
+Development-specific signing credentials. Google uses the existing Web
+and iOS OAuth client IDs with the current native-iOS nonce compatibility
+setting. App authentication callbacks allow top3://**.
+
+The Development avatars Storage bucket mirrors the Production contract:
+public, 5 MB maximum file size, image/jpeg, image/png, and image/webp,
+with the migrated user-scoped Storage policies.
+
+Amplitude is also separated by environment. Local development and EAS
+development send events to Top3 - Dev. Production continues to use the
+Production analytics project.
+
+Development sets AMPLITUDE_DELETE_FROM_ORG=False so account-deletion
+testing remains scoped to Development analytics.
+
+Development push delivery uses an environment-neutral Postgres trigger
+that reads project_url and push_notification_webhook from Supabase Vault,
+then calls send-push-notification asynchronously through pg_net.
+
+Production retains its established push configuration. Before the new
+Vault-backed push migration is ever promoted to Production, compatible
+Production Vault values and Edge Function configuration must be in place.
+
+Verified in Development:
+
+• Email signup and confirmation
+• Sign in with Apple
+• Google Sign-In
+• Apple refresh-token persistence
+• avatar upload and persistence
+• Apple Music search
+• Expo push-token registration
+• end-to-end push delivery to a physical iPhone
+• Amplitude events arriving in Top3 - Dev
+
+Private keys, service-role credentials, webhook secrets, refresh tokens,
+and other privileged values must never be committed to Git or placed in
+EXPO_PUBLIC_* variables.
 
 Design System, Dark Mode & Startup Polish
 
@@ -101,16 +166,17 @@ without a manually maintained onboarding category order.
 
 Current Priority
 
-Complete the documentation and regression pass for feature/dark-mode while
-keeping Build 8 as the current TestFlight release candidate. Do not
-create Build 9 yet; consolidate the verified dark-mode, onboarding,
-Podcasts, authentication-button, and Discover changes before deciding
-whether a replacement TestFlight build is required.
+Complete the active Movie Themes / Search / Discover refinement on
+feature/create-flow-rework.
 
-Continue validating authentication email flows, release-candidate
-behaviour, App Store Connect submission details, production
-configuration, and final regression coverage. Fix only launch-relevant
-issues before the V1 release.
+Keep routine development and testing on the dedicated Development
+Supabase and Amplitude environments. Do not make Production database,
+Edge Function, Auth, Storage, secret, or analytics changes unless they
+are part of an intentional Production promotion.
+
+The current Movie Themes / Search / Discover work should be completed,
+typechecked, tested on device where relevant, and committed before its
+final behaviour is added to the product documentation.
 
 The current Feed architecture is acceptable for initial low-volume
 launch and real-user validation, but it is not the intended large-scale
@@ -2672,13 +2738,20 @@ deferred until post-launch; the production domain is top3taste.com.
 Do not recommend migrating Following again---it has already been
 completed.
 
-Remember that production iOS Build 8 is the current TestFlight release
-candidate. feature/dark-mode contains verified post-Build-8 work through
-92106eb, including dark mode, inverted preview themes, refined
-authentication buttons / onboarding, Podcasts, improved Discover search
-matching, and shared Discover search-result cards. Do not assume those
-changes are present in Build 8, and do not create Build 9 until the
-current documentation / regression checkpoint is complete.
+Remember that the production iOS app is live. Active development is on
+feature/create-flow-rework, and the current uncommitted Movie Themes /
+Search / Discover changes should not be treated as completed product
+state until they are tested and committed.
+
+Remember that normal local and EAS development use the dedicated
+Development Supabase and Amplitude environments. The Supabase CLI is
+normally linked to Development. Confirm the target explicitly before any
+database push, Edge Function deployment, secret change, Auth change,
+Storage change, or other backend mutation that could affect Production.
+
+Do not promote the Vault-backed push migration to Production until the
+required Production Vault values and Edge Function configuration are in
+place.
 
 Remember that the production Top 3 domain is top3taste.com. Email signup
 confirmation uses the branded HTTPS bridge at

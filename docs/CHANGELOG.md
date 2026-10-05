@@ -2,6 +2,134 @@ CHANGELOG.md
 
 This document records significant milestones in the evolution of Top3.
 
+v3.4 --- Development & Production Environment Separation
+
+Released: October 5, 2026
+
+This checkpoint separates routine Top3 development from the live Production
+backend and analytics environments.
+
+Development now has dedicated Supabase and Amplitude environments for test
+users, data, authentication, Storage, push notifications, Edge Functions, and
+analytics while Production remains isolated for live users.
+
+Added
+
+Development Supabase Environment
+
+Created the dedicated Top3 - Dev Supabase project.
+
+Configured local development and EAS development to use the Development
+Supabase project.
+
+Linked the Supabase CLI to Development for normal backend development work.
+
+Mirrored the eight active application Edge Functions into Development:
+
+- apple-music-search
+- video-game-search
+- apple-auth-token
+- delete-account
+- moderation
+- repair-collection-artwork
+- youtube-video-status
+- send-push-notification
+
+Development Authentication & Storage
+
+Configured Email, Apple, and Google authentication in Development.
+
+Added Development-specific Sign in with Apple and Apple Music signing
+credentials while keeping private key material server-side.
+
+Created the Development avatars Storage bucket with the same public access,
+file-size, MIME-type, and user-scoped policy contract used by the application.
+
+Development Analytics
+
+Created the Top3 - Dev Amplitude project.
+
+Configured local development and EAS development to send analytics to
+Development rather than Production.
+
+Added environment-aware account-deletion behaviour through
+AMPLITUDE_DELETE_FROM_ORG and configured Development to avoid organization-wide
+Amplitude deletion during test-account cleanup.
+
+Environment-Neutral Push Delivery
+
+Added migration 20261003161535_add_push_notification_webhook.sql.
+
+Development push delivery now uses a Postgres trigger, Supabase Vault, pg_net,
+and the send-push-notification Edge Function rather than a hard-coded
+Production project URL.
+
+The Development trigger reads project_url and push_notification_webhook from
+Vault.
+
+Configured send-push-notification so database-triggered requests can reach the
+function while the function validates the dedicated named webhook secret.
+
+Production retains its established push configuration until the Vault-backed
+migration is intentionally promoted with compatible Production configuration in
+place.
+
+Improved
+
+Environment Safety
+
+Removed the Production-specific push webhook definition from the fresh-schema
+baseline so new environments do not inherit a hard-coded Production endpoint.
+
+Established Development as the normal target for local Supabase CLI work.
+
+Production database pushes, Edge Function deployments, secret changes, Auth
+changes, Storage changes, and analytics changes now require an intentional
+promotion step.
+
+Added .env.example with safe placeholders and guidance separating client-safe
+EXPO_PUBLIC_* values from privileged server-side configuration.
+
+Verified
+
+Verified Development migration history matches the tracked migration set.
+
+Verified all eight active Edge Functions are active in Development.
+
+Verified native Sign in with Apple in Development.
+
+Verified native Google Sign-In in Development.
+
+Verified Email signup and confirmation in Development.
+
+Verified Apple refresh-token persistence in Development.
+
+Verified avatar upload and persistence in Development Storage.
+
+Verified Apple Music search through the Development Edge Function.
+
+Verified Development Expo push-token registration.
+
+Verified end-to-end Development push delivery from notification insert through
+Vault, pg_net, the Edge Function, Expo Push Service, and a physical iPhone.
+
+Verified fresh analytics events arrive in Top3 - Dev rather than Production.
+
+Verified TypeScript passes after the infrastructure changes.
+
+Checkpoint
+
+Committed d70def4 --- Separate dev Supabase infrastructure.
+
+Committed eedba15 --- Add development environment template.
+
+Production backend data and configuration were intentionally left unchanged
+during the Development-environment setup.
+
+The active Movie Themes / Search / Discover work remains outside this
+checkpoint and will be documented after that feature set is completed, tested,
+and committed.
+
 v3.3 --- Dark Mode, Podcasts & Discover Integration
 
 Released: September 16, 2026

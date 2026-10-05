@@ -1,9 +1,9 @@
 # Product Decisions
 
-Version: 1.1
+Version: 1.2
 Status: Active
 Owner: Jeremy Linskill
-Last Updated: September 16, 2026
+Last Updated: October 5, 2026
 
 ## Purpose
 
@@ -395,6 +395,90 @@ Keeping one content identity avoids duplicated state and keeps editing, social i
 ### Date
 
 September 16, 2026
+
+### Status
+
+Active
+
+---
+
+## Decision 016
+
+### Title
+
+Keep Development and Production environments separate.
+
+### Decision
+
+Routine local development, EAS development builds, test accounts, test content, push-notification testing, and analytics validation must use dedicated Development environments rather than live Production environments.
+
+Production is reserved for real users and intentional release operations.
+
+### Rationale
+
+Day-to-day development should not risk changing live user data, authentication records, push tokens, Storage objects, or Production analytics.
+
+A separate Development environment allows realistic testing while protecting the integrity of the live product.
+
+### Date
+
+October 3, 2026
+
+### Status
+
+Active
+
+---
+
+## Decision 017
+
+### Title
+
+Production changes require an intentional promotion step.
+
+### Decision
+
+A successful Development database migration, Edge Function deployment, or configuration change must not be treated as automatically approved for Production.
+
+Production changes should be promoted deliberately only after required Production configuration and dependencies have been verified.
+
+### Rationale
+
+Some Production behaviour depends on environment-specific configuration that is not represented directly in application source or migration files.
+
+Separating Development validation from Production promotion reduces the risk of applying a technically valid change before the live environment is ready for it.
+
+### Date
+
+October 3, 2026
+
+### Status
+
+Active
+
+---
+
+## Decision 018
+
+### Title
+
+Development analytics remain separate from Production analytics.
+
+### Decision
+
+Development and QA activity must be recorded in a dedicated Development analytics project rather than the Production analytics project.
+
+Production analytics should represent real Production usage as cleanly as practical.
+
+### Rationale
+
+Development sessions, test accounts, regression testing, and repeated feature validation can significantly distort product usage data.
+
+Keeping analytics isolated by environment makes Production reporting more useful for understanding real user behaviour and product decisions.
+
+### Date
+
+October 3, 2026
 
 ### Status
 

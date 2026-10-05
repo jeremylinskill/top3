@@ -1,9 +1,9 @@
 # Top3 Architecture
 
-Version: 1.3
+Version: 1.4
 Status: Active
 Owner: Jeremy Linskill
-Last Updated: September 16, 2026
+Last Updated: October 5, 2026
 
 ## Purpose
 
@@ -311,6 +311,53 @@ Provider-specific concerns should not leak unnecessarily into application-facing
 
 Presentation components should not become alternate data-access layers.
 
+## Environment Architecture
+
+Top3 uses separate Development and Production runtime environments.
+
+Development:
+
+- Supabase project: Top3 - Dev
+- Supabase project ref: `kkltzygebomopysklaqq`
+- local development and EAS development target
+- Development Auth users and sessions
+- Development Storage objects and push tokens
+- Development Edge Function secrets and Vault configuration
+- Amplitude project: Top3 - Dev
+
+Production:
+
+- Supabase project ref: `nxtowcheatxouypzqkzc`
+- live user data and authentication
+- live Storage objects and push tokens
+- Production Edge Function secrets and backend configuration
+- Production Amplitude project
+
+Application code, tracked database migrations, and Edge Function source are
+shared across environments.
+
+Environment-specific URLs, publishable keys, analytics keys, private keys,
+webhook credentials, and provider secrets must come from environment
+configuration, Supabase secrets, or Vault rather than hard-coded source.
+
+Client-safe configuration includes:
+
+- `EXPO_PUBLIC_SUPABASE_URL`
+- `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `EXPO_PUBLIC_AMPLITUDE_API_KEY`
+
+Privileged values must never use the `EXPO_PUBLIC_` namespace.
+
+The Supabase CLI is normally linked to Development for day-to-day work.
+
+Production database pushes, Edge Function deployments, secret changes, Auth
+changes, Storage changes, and comparable backend mutations require an
+intentional Production promotion step.
+
+A change that works correctly in Development is not automatically safe to
+promote to Production. Production-specific dependencies must be verified before
+promotion.
+
 ## External Provider Paths
 
 ```text
@@ -351,9 +398,11 @@ The Podcasts provider currently uses Apple's public search / lookup and chart en
 
 ## Backend & Edge Function Boundaries
 
-Supabase Edge Functions are used when server-side credentials, account-lifecycle authority, or trusted backend actions are required.
+Supabase Edge Functions are used when server-side credentials, account-lifecycle authority, trusted backend actions, or protected provider access are required.
 
-Current architectural examples include:
+Edge Function source is shared in the repository and can be promoted independently to Development and Production. Each environment owns its own deployment state, secrets, and runtime configuration.
+
+Current active functions include:
 
 ```text
 apple-music-search
@@ -362,17 +411,30 @@ apple-music-search
 video-game-search
     IGDB access + Twitch OAuth
 
-send-push-notification
-    Trusted push delivery from database notification events
-
 apple-auth-token
     Sign in with Apple authorization-code exchange and refresh-token storage
 
 delete-account
     Permanent account deletion and Apple authorization revocation where required
+
+moderation
+    Trusted moderation actions
+
+repair-collection-artwork
+    Server-side collection artwork repair
+
+youtube-video-status
+    Server-side YouTube video-status validation
+
+send-push-notification
+    Trusted push delivery from database notification events
 ```
 
+`send-push-notification` uses `verify_jwt = false` because database-triggered requests do not carry a normal user JWT. The function instead authenticates the request with the dedicated named `push_notification_webhook` secret.
+
 Secrets must remain in server-side configuration and must never be moved into the mobile application for convenience.
+
+Development and Production must not share privileged runtime credentials merely because they share function source.
 
 ## Layer Responsibilities
 
@@ -536,6 +598,8 @@ AsyncStorage should not become a parallel source of truth for server-owned data.
 Authentication is implemented through the shared authentication service and Supabase Auth.
 
 Email, Apple, and Google are presentation choices around one shared account model.
+
+Development and Production use separate Supabase Auth stores and environment-specific authentication configuration. Development testing must not reuse Production users, sessions, Apple refresh tokens, or private Apple signing credentials.
 
 Provider-choice screens use shared button components for consistent light- and dark-mode presentation; the visual component does not own provider authentication logic.
 
@@ -708,7 +772,32 @@ Notification rows in Supabase are the authoritative event records for in-app not
 
 Push delivery is a consequence of those notification events, not a parallel client-generated notification model.
 
-Database notification inserts trigger the trusted `send-push-notification` Edge Function through the configured Database Webhook.
+Development push delivery uses:
+
+    public.notifications INSERT
+            ↓
+    Postgres trigger
+            ↓
+    Supabase Vault
+    project_url + push_notification_webhook
+            ↓
+    pg_net
+            ↓
+    send-push-notification Edge Function
+            ↓
+    Expo Push Service
+            ↓
+    Registered device
+
+The Development trigger is defined by `20261003161535_add_push_notification_webhook.sql`.
+
+The trigger reads its Supabase project URL and dedicated webhook credential from Vault rather than embedding Production-specific configuration in the migration.
+
+`send-push-notification` uses `verify_jwt = false` so the database-triggered request can reach the function. The Edge Function then validates the dedicated named `push_notification_webhook` secret itself.
+
+Production retains its established push configuration until the Vault-backed trigger is intentionally promoted.
+
+Before that migration is applied to Production, compatible Production `project_url` and `push_notification_webhook` Vault values and the required Edge Function configuration must already be in place.
 
 The mobile client is responsible for push-token registration, reassignment, cleanup, and tap routing—not for independently generating social push events.
 
@@ -769,6 +858,16 @@ Realtime architecture should similarly avoid global subscriptions when user-scop
 
 - Provider-specific credentials and secrets belong server-side when an Edge Function boundary is required.
 
+- Development and Production backend, authentication, Storage, push, and analytics environments must remain isolated.
+
+- Application code, migrations, and Edge Function source may be shared across environments, but runtime configuration and privileged credentials must remain environment-specific.
+
+- Production backend changes require an explicit promotion step after Development validation.
+
+- Privileged credentials must never be exposed through `EXPO_PUBLIC_*` variables.
+
+- Push webhook configuration must resolve from environment-specific runtime configuration rather than hard-coded Production endpoints or credentials.
+
 - Provider-specific search ranking, fallback, retry, and normalization logic belongs inside providers rather than screens.
 
 - Audio playback is application-wide shared state. Do not create card-specific audio players.
@@ -805,7 +904,8 @@ Planned areas include:
 - AI-assisted recommendations where they strengthen discovery rather than replace curated user lists;
 - continued discovery and recommendation improvements;
 - additional metadata-provider fallbacks where they improve resilience or coverage;
-- metadata persistence improvements that reduce view-time external hydration.
+- metadata persistence improvements that reduce view-time external hydration;
+- a repeatable Development → Production promotion runbook / tooling.
 
 ## Document Maintenance
 

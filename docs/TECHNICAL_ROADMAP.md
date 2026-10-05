@@ -1,10 +1,10 @@
 # Top3 Technical Roadmap
 
-Version: 1.1
+Version: 1.2
 Status: Active
 Owner: Jeremy Linskill
-Last Updated: September 16, 2026
-Last Verified Commit: `92106eb` — Unify Discover search result cards
+Last Updated: October 5, 2026
+Last Verified Commit: `d70def4` — Separate dev Supabase infrastructure
 
 ## Purpose
 
@@ -20,25 +20,34 @@ Product sequencing belongs in `ROADMAP.md`.
 
 ## Current Technical Milestone
 
-### V1 Launch Readiness
+### Post-Launch Active Development
 
 **Status**
 
 Current focus
 
-Production iOS Build 8 remains the current TestFlight release candidate.
+Top3 is live in Production.
 
-The `feature/dark-mode` branch contains verified post-Build-8 work through:
+Development and Production backend and analytics environments are now separated.
+Routine local development, EAS development builds, test accounts, backend
+changes, push testing, and analytics validation use Development rather than the
+live Production environment.
 
-- `c5362d8` — Add dark mode and inverted preview themes
-- `dca2bab` — Refine auth buttons and restore onboarding flow
-- `6b2acfa` — Add podcast category and previews
-- `ccee6d7` — Improve Discover search matching
-- `92106eb` — Unify Discover search result cards
+The Development infrastructure separation is implemented and verified through
+`d70def4` — Separate dev Supabase infrastructure.
 
-Build 9 has not been created.
+The active `feature/create-flow-rework` branch contains ongoing Movie Themes,
+Search, Discover, and creation-flow work that remains uncommitted and should not
+yet be treated as completed product state.
 
-Current engineering priority is documentation, regression verification, launch-readiness validation, and fixing only release-blocking issues before deciding whether another TestFlight build is required.
+Current engineering priorities are:
+
+- complete and verify the active Movie Themes / Search / Discover work;
+- keep routine backend development isolated to Development;
+- avoid Production mutations unless performing an intentional promotion;
+- verify environment-specific dependencies before any Production promotion;
+- update feature documentation only after the current feature work is tested
+  and committed.
 
 ## Search Providers
 
@@ -361,6 +370,33 @@ Complete
 
 Book preview presentation participates in the shared inverted preview-theme architecture.
 
+## Environment Architecture
+
+Top3 uses separate Development and Production runtime environments.
+
+Development is the normal target for:
+
+- local application development;
+- EAS development builds;
+- Supabase CLI database work;
+- test users and authentication;
+- Storage testing;
+- Edge Function development;
+- push-notification testing;
+- Amplitude development analytics.
+
+Production remains isolated for live users and intentional release operations.
+
+Application code, migrations, and Edge Function source are shared, but URLs,
+keys, secrets, Auth configuration, Storage state, Vault values, push
+credentials, and analytics configuration remain environment-specific.
+
+Privileged credentials must never be exposed through `EXPO_PUBLIC_*` variables.
+
+A successful Development change is not automatically ready for Production.
+Production changes require deliberate promotion after environment-specific
+dependencies have been verified.
+
 ## Backend
 
 ### Authentication
@@ -380,6 +416,11 @@ Supported:
 - returning-user routing
 - signed-out first-List onboarding
 - authentication at the publish boundary
+
+Development and Production use separate Supabase Auth stores and
+environment-specific provider configuration. Development testing must not reuse
+Production users, sessions, Apple refresh tokens, or private Apple signing
+credentials.
 
 ### Sign in with Apple Account Lifecycle
 
@@ -494,21 +535,41 @@ Includes:
 
 **Status**
 
-Complete for V1
+Complete for current scope
 
-Current architecture:
+Development architecture:
 
-```text
-public.notifications INSERT
-        ↓
-Database Webhook
-        ↓
-send-push-notification Edge Function
-        ↓
-Expo Push Service
-        ↓
-Registered device
-```
+    public.notifications INSERT
+            ↓
+    Postgres trigger
+            ↓
+    Supabase Vault
+    project_url + push_notification_webhook
+            ↓
+    pg_net
+            ↓
+    send-push-notification Edge Function
+            ↓
+    Expo Push Service
+            ↓
+    Registered device
+
+The Development trigger is defined by
+`20261003161535_add_push_notification_webhook.sql`.
+
+The trigger resolves the project URL and dedicated webhook credential from
+Vault rather than embedding Production-specific values in the migration.
+
+`send-push-notification` uses `verify_jwt = false` for the database-triggered
+request path and validates the dedicated named `push_notification_webhook`
+secret inside the function.
+
+Production retains its established push configuration until this architecture
+is intentionally promoted.
+
+Before applying the migration to Production, compatible Production
+`project_url` and `push_notification_webhook` Vault values and Edge Function
+configuration must already be in place.
 
 Current push events:
 
@@ -590,13 +651,22 @@ The production domain is already established at `top3taste.com`.
 
 **Status**
 
-V1 foundation complete
+V1 foundation complete with Development / Production isolation
 
 Amplitude is the current product analytics platform.
 
-Current tracking includes major onboarding, creation, publishing, discovery, social, Taste Match, notification, and sharing events.
+Development and QA activity is sent to the dedicated Top3 - Dev Amplitude
+project. Production analytics remain isolated for live Production usage.
 
-New events should be added in response to real product questions rather than speculatively.
+Current tracking includes major onboarding, creation, publishing, discovery,
+social, Taste Match, notification, and sharing events.
+
+Development account deletion uses environment-specific
+`AMPLITUDE_DELETE_FROM_ORG=False` behaviour so test-account cleanup does not
+perform organization-wide Amplitude deletion.
+
+New events should be added in response to real product questions rather than
+speculatively.
 
 ## Feed Architecture
 
@@ -658,18 +728,25 @@ This is an intentional post-launch migration, not a forgotten blocker.
 - Moderation-removal Realtime propagation ✅
 - V1 analytics foundation ✅
 - Database index foundation for future Feed pagination ✅
+- Separate Development and Production Supabase environments ✅
+- Separate Development and Production Amplitude environments ✅
+- Development-specific Auth, Storage, Edge Function, and secret configuration ✅
+- Vault-backed environment-neutral Development push delivery ✅
+- Safe environment-variable template via `.env.example` ✅
 
 ### Active / Ongoing
 
-- launch regression validation
+- complete and verify Movie Themes / Search / Discover work
+- maintain Development / Production configuration parity where required
 - provider resiliency
 - search relevance
 - performance optimization
 - documentation accuracy
-- release-candidate stability
+- intentional Production promotion discipline
 
 ### Post-Launch
 
+- formal Development → Production promotion runbook / tooling
 - cursor-paginated server-generated Feed
 - bounded server-side recommendation candidate generation
 - Universal Links / public web share fallback
@@ -681,16 +758,17 @@ This is an intentional post-launch migration, not a forgotten blocker.
 
 For each significant change:
 
-1. inspect the current architecture;
-2. identify the actual source of truth;
-3. modify as few files as practical;
-4. prefer shared abstractions over duplicated behaviour;
-5. run `npm run typecheck`;
-6. run provider / Edge Function validation where required;
-7. test end-to-end on a physical device where relevant;
-8. commit a coherent vertical slice;
-9. push the verified checkpoint;
-10. update documentation when application state materially changes.
+1. confirm the intended environment before any backend mutation;
+2. inspect the current architecture;
+3. identify the actual source of truth;
+4. modify as few files as practical;
+5. prefer shared abstractions over duplicated behaviour;
+6. run `npm run typecheck`;
+7. run provider / Edge Function validation where required;
+8. test end-to-end on a physical device where relevant;
+9. commit a coherent vertical slice;
+10. push the verified checkpoint;
+11. update documentation when application state materially changes.
 
 Do not prematurely rebuild working V1 systems solely for hypothetical scale.
 
