@@ -1,0 +1,58 @@
+[
+  {
+    "id": "rolling-stone-250-guitarists-2023",
+    "role": "guitarist",
+    "publication": "Rolling Stone",
+    "title": "The 250 Greatest Guitarists of All Time",
+    "year": 2023,
+    "list_size": 250,
+    "source_type": "editorial",
+    "methodology": "editors_and_writers",
+    "weight": 1.0,
+    "active": true,
+    "url": "https://au.rollingstone.com/music/music-lists/250-greatest-guitarists-all-time-51028/",
+    "ranking_model": "global_ranked"
+  },
+  {
+    "id": "guitar-world-100-guitarists",
+    "role": "guitarist",
+    "publication": "Guitar World",
+    "title": "The 100 Greatest Guitarists of All Time",
+    "year": 2023,
+    "list_size": 100,
+    "source_type": "specialist_editorial_reader_poll",
+    "methodology": "category_reader_polls_plus_editorial_selection",
+    "weight": 1.0,
+    "active": true,
+    "url": "https://www.guitarworld.com/features/the-100-greatest-guitarists-of-all-time",
+    "ranking_model": "category_ranked"
+  },
+  {
+    "id": "udiscover-75-guitarists-2026",
+    "role": "guitarist",
+    "publication": "uDiscover Music",
+    "title": "The 75 Best Guitarists of All Time",
+    "year": 2026,
+    "list_size": 75,
+    "source_type": "editorial",
+    "methodology": "editorial_selection",
+    "ranking_model": "global_ranked",
+    "weight": 1.0,
+    "url": "https://www.udiscovermusic.com/stories/best-guitarists-in-music-history/",
+    "active": true
+  },
+  {
+    "id": "spin-100-guitarists-2012",
+    "role": "guitarist",
+    "publication": "SPIN",
+    "title": "The 100 Greatest Guitarists of All Time",
+    "year": 2012,
+    "list_size": 100,
+    "source_type": "editorial",
+    "methodology": "staff_alternative_canon",
+    "ranking_model": "global_ranked",
+    "weight": 1.0,
+    "url": "https://www.spinmagazine.com/2012/05/greatest-guitarists-all-time/",
+    "active": true
+  }
+]

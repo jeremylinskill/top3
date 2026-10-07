@@ -25,6 +25,11 @@ import {
 } from '@/lib/supabase/profiles';
 import { getPublishedPosts } from '@/services/post-service';
 import {
+  getTrendingCategories,
+  getTrendingTopics,
+  getTrendingWindowPosts,
+} from '@/services/trending-service';
+import {
   clearRecentSearches,
   getRecentSearches,
   saveRecentSearch,
@@ -84,7 +89,6 @@ type MatchingCollection = {
 
 type DiscoverBrowseMode = 'people' | 'trending';
 
-const TRENDING_WINDOW_DAYS = 30;
 const MAX_TRENDING_CATEGORIES = 3;
 const MAX_TRENDING_TOPICS = 3;
 
@@ -564,151 +568,42 @@ export default function DiscoverScreen() {
     );
   }, [visiblePosts]);
 
-  const trendingPosts = useMemo(() => {
-    const cutoffTime =
-      Date.now() -
-      TRENDING_WINDOW_DAYS * 24 * 60 * 60 * 1000;
-
-    const recentPosts = visiblePosts.filter((post) => {
-      const publishedTime = new Date(
-        post.publishedAt
-      ).getTime();
-
-      return (
-        Number.isFinite(publishedTime) &&
-        publishedTime >= cutoffTime
-      );
-    });
-
-    return recentPosts.length > 0
-      ? recentPosts
-      : visiblePosts;
-  }, [visiblePosts]);
-
-  const trendingCategories = useMemo(() => {
-    const counts = new Map<string, number>();
-
-    trendingPosts.forEach((post) => {
-      const categoryId = normalizeValue(
-        post.collection.category
-      );
-
-      const postTopic =
-        normalizeValue(post.collection.topic) ||
-        'general';
-
-      if (!categoryId || postTopic !== 'general') {
-        return;
-      }
-
-      counts.set(
-        categoryId,
-        (counts.get(categoryId) ?? 0) + 1
-      );
-    });
-
-    return DISCOVER_CATEGORIES
-      .map((category) => ({
-        ...category,
-        trendingCount:
-          counts.get(normalizeValue(category.id)) ?? 0,
-      }))
-      .filter((category) => category.trendingCount > 0)
-      .sort((first, second) => {
-        if (
-          second.trendingCount !== first.trendingCount
-        ) {
-          return (
-            second.trendingCount -
-            first.trendingCount
-          );
+  const trendingPosts = useMemo(
+    () =>
+      getTrendingWindowPosts(
+        visiblePosts,
+        {
+          fallbackToAll: false,
         }
+      ),
+    [visiblePosts]
+  );
 
-        return first.name.localeCompare(second.name);
-      })
-      .slice(0, MAX_TRENDING_CATEGORIES);
-  }, [trendingPosts]);
+  const trendingCategories = useMemo(
+    () =>
+      getTrendingCategories(
+        trendingPosts,
+        MAX_TRENDING_CATEGORIES
+      ).map((category) => ({
+        id: category.categoryId,
+        name: category.categoryName,
+        icon: category.categoryIcon,
+        trendingCount:
+          category.listCount,
+      })),
+    [trendingPosts]
+  );
 
   const trendingTopics = useMemo<
     DiscoverTopic[]
-  >(() => {
-    const topicMap = new Map<
-      string,
-      DiscoverTopic
-    >();
-
-    trendingPosts.forEach((post) => {
-      const categoryId = normalizeValue(
-        post.collection.category
-      );
-      const rawTopic =
-        post.collection.topic?.trim();
-
-      if (!categoryId || !rawTopic) {
-        return;
-      }
-
-      const normalizedTopic =
-        normalizeValue(rawTopic);
-
-      if (
-        !normalizedTopic ||
-        normalizedTopic === 'general'
-      ) {
-        return;
-      }
-
-      const category = TOP3_CATEGORIES.find(
-        (item) =>
-          normalizeValue(item.id) === categoryId
-      );
-
-      if (!category) {
-        return;
-      }
-
-      const topicId =
-        `${categoryId}:${normalizedTopic}`;
-      const existingTopic = topicMap.get(topicId);
-
-      if (existingTopic) {
-        existingTopic.listCount += 1;
-        return;
-      }
-
-      topicMap.set(topicId, {
-        id: topicId,
-        categoryId: category.id,
-        categoryName: category.name,
-        categoryIcon: category.icon,
-        topic: formatTopicLabel(rawTopic),
-        listCount: 1,
-      });
-    });
-
-    return Array.from(topicMap.values())
-      .sort((first, second) => {
-        if (
-          second.listCount !== first.listCount
-        ) {
-          return (
-            second.listCount - first.listCount
-          );
-        }
-
-        const topicComparison =
-          first.topic.localeCompare(second.topic);
-
-        if (topicComparison !== 0) {
-          return topicComparison;
-        }
-
-        return first.categoryName.localeCompare(
-          second.categoryName
-        );
-      })
-      .slice(0, MAX_TRENDING_TOPICS);
-  }, [trendingPosts]);
+  >(
+    () =>
+      getTrendingTopics(
+        trendingPosts,
+        MAX_TRENDING_TOPICS
+      ),
+    [trendingPosts]
+  );
 
   const featuredTopics = useMemo<
     DiscoverTopic[]

@@ -11,6 +11,8 @@ type CollectionRow = {
   category: string;
   type: string | null;
   topic: string | null;
+  theme_id: string | null;
+  collection_option_id: string | null;
   title: string;
   status: CollectionStatus;
   items: unknown;
@@ -24,6 +26,8 @@ type CreateCollectionInput = {
   category: string;
   type?: string;
   topic?: string;
+  themeId?: string;
+  collectionOptionId?: string;
   title: string;
   items?: Top3List['items'];
 };
@@ -32,6 +36,8 @@ type UpdateCollectionInput = {
   category?: string;
   type?: string;
   topic?: string;
+  themeId?: string;
+  collectionOptionId?: string;
   title?: string;
   items?: Top3List['items'];
 };
@@ -95,9 +101,31 @@ function collectionMatchesIdentity(
   collection: Top3List,
   input: Pick<
     CreateCollectionInput,
-    'category' | 'type' | 'topic'
+    | 'category'
+    | 'type'
+    | 'topic'
+    | 'collectionOptionId'
   >
 ): boolean {
+  const collectionOptionId =
+    normalizeOptionalValue(
+      collection.collectionOptionId
+    );
+  const inputCollectionOptionId =
+    normalizeOptionalValue(
+      input.collectionOptionId
+    );
+
+  if (
+    collectionOptionId &&
+    inputCollectionOptionId
+  ) {
+    return (
+      collectionOptionId.toLowerCase() ===
+      inputCollectionOptionId.toLowerCase()
+    );
+  }
+
   return (
     normalizeIdentityValue(
       collection.category
@@ -128,6 +156,9 @@ function mapCollectionRow(
     category: row.category,
     type: row.type ?? undefined,
     topic: row.topic ?? undefined,
+    themeId: row.theme_id ?? undefined,
+    collectionOptionId:
+      row.collection_option_id ?? undefined,
     title: row.title,
     items: normalizeItems(row.items),
     createdAt: row.created_at,
@@ -295,6 +326,14 @@ export async function createCollection(
   const normalizedTopic =
     normalizeOptionalValue(input.topic);
 
+  const normalizedThemeId =
+    normalizeOptionalValue(input.themeId);
+
+  const normalizedCollectionOptionId =
+    normalizeOptionalValue(
+      input.collectionOptionId
+    );
+
   const { data, error } = await supabase
     .from('collections')
     .insert({
@@ -302,6 +341,9 @@ export async function createCollection(
       category: input.category.trim(),
       type: normalizedType,
       topic: normalizedTopic,
+      theme_id: normalizedThemeId,
+      collection_option_id:
+        normalizedCollectionOptionId,
       title: input.title,
       status: 'draft',
       items:
@@ -352,6 +394,8 @@ export async function updateCollection(
     category?: string;
     type?: string | null;
     topic?: string | null;
+    theme_id?: string | null;
+    collection_option_id?: string | null;
     title?: string;
     items?: Top3List['items'];
     updated_at: string;
@@ -371,6 +415,20 @@ export async function updateCollection(
   if (input.topic !== undefined) {
     updates.topic =
       normalizeOptionalValue(input.topic);
+  }
+
+  if (input.themeId !== undefined) {
+    updates.theme_id =
+      normalizeOptionalValue(input.themeId);
+  }
+
+  if (
+    input.collectionOptionId !== undefined
+  ) {
+    updates.collection_option_id =
+      normalizeOptionalValue(
+        input.collectionOptionId
+      );
   }
 
   if (input.title !== undefined) {

@@ -16,12 +16,14 @@ type SearchInputProps = Omit<
   value: string;
   onChangeText: (value: string) => void;
   onClear?: () => void;
+  borderless?: boolean;
 };
 
 export default function SearchInput({
   value,
   onChangeText,
   onClear,
+  borderless = false,
   placeholder,
   placeholderTextColor,
   autoCapitalize = 'none',
@@ -49,6 +51,7 @@ export default function SearchInput({
           borderColor: colors.border,
           backgroundColor: colors.surface,
         },
+        borderless && styles.borderless,
       ]}>
       <Ionicons
         name="search-outline"
@@ -105,6 +108,10 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingLeft: 16,
     paddingRight: 8,
+  },
+
+  borderless: {
+    borderWidth: 0,
   },
 
   searchIcon: {

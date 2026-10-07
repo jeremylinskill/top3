@@ -1,0 +1,23 @@
+musician_id,alias,normalized_alias,alias_type,active,notes
+musician-tupac-shakur,2Pac,2pac,stage_name,true,
+musician-st-vincent,Annie Clark,annie clark,birth_name,true,
+musician-notorious-big,Biggie,biggie,nickname,true,
+musician-d-angelo,Dangelo,dangelo,search_variant,true,Search form without apostrophe or spacing.
+musician-del-the-funky-homosapien,Del tha Funkee Homosapien,del tha funkee homosapien,alternate_name,true,
+musician-dolores-o-riordan,Dolores ORiordan,dolores oriordan,search_variant,true,Search form without apostrophe.
+musician-elizabeth-cotten,Elizabeth Cotton,elizabeth cotton,common_misspelling,true,
+musician-freddie-king,Freddy King,freddy king,alternate_name,true,
+musician-guy-picciotto,Guy Pucciotto,guy pucciotto,common_misspelling,true,
+musician-jimmy-blanton,Jimmie Blanton,jimmie blanton,alternate_spelling,true,
+musician-kelly-johnson,Kelley Johnson,kelley johnson,alternate_spelling,true,
+musician-dj-kool-herc,Kool Herc,kool herc,alternate_name,true,
+musician-larry-graham,Larry Graham Jr.,larry graham jr,alternate_name,true,
+musician-lemmy,Lemmy Kilmister,lemmy kilmister,alternate_name,true,
+musician-yasiin-bey,Mos Def,mos def,former_stage_name,true,
+musician-notorious-big,Notorious BIG,notorious big,search_variant,true,Common search form without punctuation or leading 'The'.
+musician-sinead-o-connor,Sinead OConnor,sinead oconnor,search_variant,true,Search form without diacritic or apostrophe.
+musician-thundercat,Stephen Thundercat Bruner,stephen thundercat bruner,alternate_name,true,
+musician-stu-hamm,Stuart Hamm,stuart hamm,alternate_name,true,
+musician-too-hort,Too Short,too short,search_variant,true,Search form without dollar sign.
+musician-tupac-shakur,Tupac,tupac,alternate_name,true,
+musician-jeezy,Young Jeezy,young jeezy,former_stage_name,true,

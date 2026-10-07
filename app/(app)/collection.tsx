@@ -713,7 +713,7 @@ function openSearch(rank: number) {
           <RankedItemCard
             rank={rank}
             item={row.item}
-            placeholder={`Choose item #${rank}`}
+            placeholder={`Choose your #${rank}`}
             category={category}
             onPress={() =>
               openItemActions(
@@ -781,7 +781,7 @@ function openSearch(rank: number) {
                 <RankedItemCard
                   rank={rank}
                   item={null}
-                  placeholder={`Choose item #${rank}`}
+                  placeholder={`Choose your #${rank}`}
                   category={category}
                   onPress={() =>
                     openSearch(rank)

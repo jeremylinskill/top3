@@ -1,0 +1,122 @@
+{
+  "rolling-stone-250-guitarists-2023": {
+    "23": [
+      "James Hetfield",
+      "Kirk Hammett"
+    ],
+    "38": [
+      "Angus Young",
+      "Malcolm Young"
+    ],
+    "43": [
+      "Jonny Greenwood",
+      "Ed O’Brien"
+    ],
+    "57": [
+      "Thurston Moore",
+      "Lee Ranaldo"
+    ],
+    "83": [
+      "Adrian Smith",
+      "Dave Murray"
+    ],
+    "113": [
+      "Allen Collins",
+      "Gary Rossington"
+    ],
+    "124": [
+      "Mike McCready",
+      "Stone Gossard"
+    ],
+    "160": [
+      "Kim Deal",
+      "Kelley Deal"
+    ],
+    "177": [
+      "Rodrigo Sánchez",
+      "Gabriela Quintero"
+    ],
+    "194": [
+      "Brian Robertson",
+      "Scott Gorham"
+    ],
+    "219": [
+      "Glenn Tipton",
+      "K.K. Downing"
+    ],
+    "225": [
+      "Fred ‘Sonic’ Smith",
+      "Wayne Kramer"
+    ],
+    "243": [
+      "Aaron Dessner",
+      "Bryce Dessner"
+    ]
+  },
+  "guitar-world-100-guitarists": {
+    "rock:13": [
+      "Angus Young",
+      "Malcolm Young"
+    ],
+    "metal:10": [
+      "Glenn Tipton",
+      "KK Downing"
+    ],
+    "alternative_indie:13": [
+      "Thurston Moore",
+      "Lee Ranaldo"
+    ],
+    "alternative_indie:15": [
+      "Nick Valensi",
+      "Albert Hammond Jr."
+    ],
+    "contemporary:6": [
+      "Tim Henson",
+      "Scott LePage"
+    ],
+    "punk:4": [
+      "Ian MacKaye",
+      "Guy Pucciotto"
+    ]
+  },
+  "udiscover-75-guitarists-2026": {
+    "49": [
+      "Roger McGuinn",
+      "Clarence White"
+    ]
+  },
+  "spin-100-guitarists-2012": {
+    "1": [
+      "Lee Ranaldo",
+      "Thurston Moore"
+    ],
+    "7": [
+      "Tom Verlaine",
+      "Richard Lloyd"
+    ],
+    "14": [
+      "Kerry King",
+      "Jeff Hanneman"
+    ],
+    "17": [
+      "Lou Reed",
+      "Sterling Morrison"
+    ],
+    "50": [
+      "Wayne Kramer",
+      "Fred “Sonic” Smith"
+    ],
+    "56": [
+      "Kim Deal",
+      "Kelley Deal"
+    ],
+    "66": [
+      "Rowland S. Howard",
+      "Mick Harvey"
+    ],
+    "86": [
+      "Ian MacKaye",
+      "Guy Picciotto"
+    ]
+  }
+}

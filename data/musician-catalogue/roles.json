@@ -1,0 +1,45 @@
+[
+  {
+    "id": "vocalist",
+    "label": "Vocalists",
+    "singular": "Vocalist",
+    "wikidata_occupation_id": "Q177220",
+    "aliases": [
+      "singer",
+      "vocalist"
+    ],
+    "min_sitelinks": 40
+  },
+  {
+    "id": "guitarist",
+    "label": "Guitarists",
+    "singular": "Guitarist",
+    "wikidata_occupation_id": "Q855091",
+    "aliases": [
+      "guitarist",
+      "guitar player"
+    ],
+    "min_sitelinks": 20
+  },
+  {
+    "id": "drummer",
+    "label": "Drummers",
+    "singular": "Drummer",
+    "wikidata_occupation_id": "Q386854",
+    "aliases": [
+      "drummer"
+    ],
+    "min_sitelinks": 5
+  },
+  {
+    "id": "bassist",
+    "label": "Bassists",
+    "singular": "Bassist",
+    "wikidata_occupation_id": "Q584301",
+    "aliases": [
+      "bassist",
+      "bass player"
+    ],
+    "min_sitelinks": 2
+  }
+]

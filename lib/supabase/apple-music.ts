@@ -111,6 +111,36 @@ async function getPopularAppleMusic(
   });
 }
 
+export async function enrichAppleMusicArtistsByIds(
+  artistIds: string[]
+): Promise<Top3Item[]> {
+  const normalizedIds = [
+    ...new Set(
+      artistIds
+        .map((value) =>
+          value.trim()
+        )
+        .filter((value) =>
+          /^[0-9]+$/.test(
+            value
+          )
+        )
+    ),
+  ];
+
+  if (
+    normalizedIds.length === 0
+  ) {
+    return [];
+  }
+
+  return invokeAppleMusic({
+    mode: 'enrich',
+    resource: 'artists',
+    ids: normalizedIds,
+  });
+}
+
 export async function searchAppleMusicAlbums(
   query: string,
   topic?: string

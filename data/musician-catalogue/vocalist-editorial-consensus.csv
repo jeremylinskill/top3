@@ -1,0 +1,626 @@
+consensus_rank,musician_name,normalized_name,source_count,sources,rolling_stone_rank,consequence_rank,ranker_rank,average_rank_strength,consensus_score,name_variants,source_entity_ids
+1,Aretha Franklin,aretha franklin,3,Consequence | Ranker | Rolling Stone,1,2,3,0.995412,309.95412,Aretha Franklin,ranker:488370
+2,Whitney Houston,whitney houston,3,Consequence | Ranker | Rolling Stone,2,3,2,0.99098,309.909805,Whitney Houston,ranker:2385097
+3,Freddie Mercury,freddie mercury,3,Consequence | Ranker | Rolling Stone,14,1,1,0.978224,309.782245,Freddie Mercury,ranker:1022223
+4,Marvin Gaye,marvin gaye,3,Consequence | Ranker | Rolling Stone,20,4,7,0.95441,309.544102,Marvin Gaye,ranker:1533954
+5,Ray Charles,ray charles,3,Consequence | Ranker | Rolling Stone,6,14,17,0.938086,309.380857,Ray Charles,ranker:1878597
+6,Mariah Carey,mariah carey,3,Consequence | Ranker | Rolling Stone,5,15,24,0.93212,309.321203,Mariah Carey,ranker:1519508
+7,Sam Cooke,sam cooke,3,Consequence | Ranker | Rolling Stone,3,21,25,0.914658,309.146578,Sam Cooke,ranker:1969601
+8,Stevie Wonder,stevie wonder,3,Consequence | Ranker | Rolling Stone,7,23,9,0.910992,309.109917,Stevie Wonder,ranker:2098707
+9,Beyoncé,beyonce,3,Consequence | Ranker | Rolling Stone,8,6,114,0.902453,309.024531,Beyoncé,ranker:577168
+10,Ella Fitzgerald,ella fitzgerald,3,Consequence | Ranker | Rolling Stone,45,7,8,0.901823,309.018226,Ella Fitzgerald,ranker:929650
+11,Billie Holiday,billie holiday,3,Consequence | Ranker | Rolling Stone,4,24,31,0.899219,308.992188,Billie Holiday,ranker:582962
+12,Adele,adele,3,Consequence | Ranker | Rolling Stone,22,18,27,0.891712,308.91712,Adele,ranker:401136
+13,Otis Redding,otis redding,3,Consequence | Ranker | Rolling Stone,9,26,29,0.885331,308.853306,Otis Redding,ranker:1736657
+14,Robert Plant,robert plant,3,Consequence | Ranker | Rolling Stone,63,5,12,0.875964,308.759639,Robert Plant,ranker:1922073
+15,Patsy Cline,patsy cline,3,Consequence | Ranker | Rolling Stone,13,27,30,0.874653,308.746529,Patsy Cline,ranker:1764038
+16,Frank Sinatra,frank sinatra,3,Consequence | Ranker | Rolling Stone,19,34,4,0.856907,308.569066,Frank Sinatra,ranker:1020193
+17,Nina Simone,nina simone,3,Consequence | Ranker | Rolling Stone,21,12,120,0.856813,308.568126,Nina Simone,ranker:1682249
+18,Al Green,al green,3,Consequence | Ranker | Rolling Stone,10,31,65,0.844842,308.448425,Al Green,ranker:444116
+19,Elvis Presley,elvis presley,3,Consequence | Ranker | Rolling Stone,17,40,6,0.838834,308.388337,Elvis Presley,ranker:932239
+20,Roy Orbison,roy orbison,3,Consequence | Ranker | Rolling Stone,71,11,33,0.829541,308.29541,Roy Orbison,ranker:1945018
+21,James Brown,james brown,3,Consequence | Ranker | Rolling Stone,44,17,75,0.828924,308.289241,James Brown,ranker:1259631
+22,Michael Jackson,michael jackson,3,Consequence | Ranker | Rolling Stone,86,9,5,0.828243,308.282434,Michael Jackson,ranker:1574447
+23,Hank Williams,hank williams,3,Consequence | Ranker | Rolling Stone,30,16,142,0.814838,308.148381,Hank Williams,ranker:1125181
+24,Dolly Parton,dolly parton,3,Consequence | Ranker | Rolling Stone,27,37,40,0.811427,308.114273,Dolly Parton,ranker:873111
+25,Luther Vandross,luther vandross,3,Consequence | Ranker | Rolling Stone,31,33,71,0.79927,307.992696,Luther Vandross,ranker:1488645
+26,Smokey Robinson,smokey robinson,3,Consequence | Ranker | Rolling Stone,23,39,60,0.799183,307.991834,Smokey Robinson,ranker:2050068
+27,Kurt Cobain,kurt cobain,3,Consequence | Ranker | Rolling Stone,36,25,106,0.796463,307.964629,Kurt Cobain,ranker:1398360
+28,Tina Turner,tina turner,3,Consequence | Ranker | Rolling Stone,55,36,22,0.778882,307.788821,Tina Turner,ranker:2248980
+29,Prince,prince,3,Consequence | Ranker | Rolling Stone,16,60,15,0.767674,307.676742,Prince,ranker:1837662
+30,Etta James,etta james,3,Consequence | Ranker | Rolling Stone,41,47,34,0.75797,307.579696,Etta James,ranker:958770
+31,Chris Cornell,chris cornell,3,Consequence | Ranker | Rolling Stone,80,19,93,0.7509,307.508996,Chris Cornell,ranker:728128
+32,John Lennon,john lennon,3,Consequence | Ranker | Rolling Stone,12,66,26,0.747457,307.474568,John Lennon,ranker:1310216
+33,David Bowie,david bowie,3,Consequence | Ranker | Rolling Stone,32,61,19,0.735064,307.350645,David Bowie,ranker:821677
+34,Janis Joplin,janis joplin,3,Consequence | Ranker | Rolling Stone,78,41,47,0.708259,307.082586,Janis Joplin,ranker:1267603
+35,Bob Dylan,bob dylan,3,Consequence | Ranker | Rolling Stone,15,56,176,0.684527,306.845266,Bob Dylan,ranker:604347
+36,Joni Mitchell,joni mitchell,3,Consequence | Ranker | Rolling Stone,50,53,127,0.665916,306.659157,Joni Mitchell,ranker:1319388
+37,Steve Perry,steve perry,3,Consequence | Ranker | Rolling Stone,82,59,20,0.657436,306.574359,Steve Perry,ranker:2097967
+38,Mahalia Jackson,mahalia jackson,3,Consequence | Ranker | Rolling Stone,28,35,302,0.656535,306.565351,Mahalia Jackson,ranker:1500155
+39,Karen Carpenter,karen carpenter,3,Consequence | Ranker | Rolling Stone,123,44,28,0.63438,306.343802,Karen Carpenter,ranker:1348584
+40,Stevie Nicks,stevie nicks,3,Consequence | Ranker | Rolling Stone,93,64,21,0.621565,306.215649,Stevie Nicks,ranker:2098684
+41,Curtis Mayfield,curtis mayfield,3,Consequence | Ranker | Rolling Stone,38,43,299,0.61468,306.146801,Curtis Mayfield,ranker:796247
+42,Linda Ronstadt,linda ronstadt,3,Consequence | Ranker | Rolling Stone,47,85,45,0.613258,306.132578,Linda Ronstadt,ranker:1450474
+43,Kate Bush,kate bush,3,Consequence | Ranker | Rolling Stone,60,46,232,0.608632,306.086317,Kate Bush,ranker:1352548
+44,Little Richard,little richard,3,Consequence | Ranker | Rolling Stone,11,88,175,0.584093,305.840932,Little Richard,ranker:1457315
+45,Amy Winehouse,amy winehouse,3,Consequence | Ranker | Rolling Stone,83,78,36,0.58202,305.820198,Amy Winehouse,ranker:453556
+46,Jeff Buckley,jeff buckley,3,Consequence | Ranker | Rolling Stone,131,22,219,0.578448,305.784484,Jeff Buckley,ranker:1279348
+47,Elton John,elton john,3,Consequence | Ranker | Rolling Stone,100,75,16,0.575855,305.758551,Elton John,ranker:931934
+48,Ozzy Osbourne,ozzy osbourne,3,Consequence | Ranker | Rolling Stone,112,38,202,0.566781,305.667806,Ozzy Osbourne,ranker:1742531
+49,Ariana Grande,ariana grande,3,Consequence | Ranker | Rolling Stone,43,83,156,0.558926,305.589264,Ariana Grande,ranker:61989638
+50,Johnny Cash,johnny cash,3,Consequence | Ranker | Rolling Stone,85,89,13,0.555674,305.556742,Johnny Cash,ranker:1300391
+51,Bill Withers,bill withers,3,Consequence | Ranker | Rolling Stone,106,51,170,0.552596,305.525958,Bill Withers,ranker:586433
+52,Diana Ross,diana ross,3,Consequence | Ranker | Rolling Stone,87,84,42,0.551455,305.514546,Diana Ross,ranker:852979
+53,Björk,bjork,3,Consequence | Ranker | Rolling Stone,64,54,295,0.536534,305.36534,Björk,ranker:591225
+54,Mavis Staples,mavis staples,3,Consequence | Ranker | Rolling Stone,46,48,392,0.527668,305.276682,Mavis Staples,ranker:1546041
+55,Chaka Khan,chaka khan,3,Consequence | Ranker | Rolling Stone,29,87,246,0.513964,305.139639,Chaka Khan,ranker:696470
+56,Bruce Springsteen,bruce springsteen,3,Consequence | Ranker | Rolling Stone,77,91,117,0.498848,304.988484,Bruce Springsteen,ranker:635964
+57,Rob Halford,rob halford,3,Consequence | Ranker | Rolling Stone,129,13,424,0.486949,304.869488,Rob Halford,ranker:1925171
+58,Thom Yorke,thom yorke,3,Consequence | Ranker | Rolling Stone,34,52,500,0.468367,304.683666,Thom Yorke,ranker:2239675
+59,Axl Rose,axl rose,3,Consequence | Ranker | Rolling Stone,134,76,102,0.463034,304.630336,Axl Rose,ranker:519316
+60,Leonard Cohen,leonard cohen,3,Consequence | Ranker | Rolling Stone,103,68,284,0.430785,304.307848,Leonard Cohen,ranker:1433196
+61,Bono,bono,3,Consequence | Ranker | Rolling Stone,140,80,152,0.40899,304.089903,Bono,ranker:1767030
+62,Iggy Pop,iggy pop,3,Consequence | Ranker | Rolling Stone,176,42,314,0.377734,303.777338,Iggy Pop,ranker:1209124
+63,Neil Young,neil young,3,Consequence | Ranker | Rolling Stone,133,90,173,0.374225,303.742251,Neil Young,ranker:1660007
+64,Lauryn Hill,lauryn hill,3,Consequence | Ranker | Rolling Stone,136,72,298,0.353493,303.534934,Lauryn Hill,ranker:1419114
+65,Fiona Apple,fiona apple,3,Consequence | Ranker | Rolling Stone,111,70,457,0.305034,303.050339,Fiona Apple,ranker:992886
+66,Patti Smith,patti smith,3,Consequence | Ranker | Rolling Stone,117,95,414,0.23706,302.370601,Patti Smith,ranker:1764384
+67,Morrissey,morrissey,3,Consequence | Ranker | Rolling Stone,166,77,421,0.211316,302.113156,Morrissey,ranker:1616277
+68,Paul McCartney,paul mccartney,2,Ranker | Rolling Stone,26,,18,0.614412,206.144121,Paul McCartney,ranker:1768827
+69,Louis Armstrong,louis armstrong,2,Ranker | Rolling Stone,39,,35,0.582258,205.822581,Louis Armstrong,ranker:1476461
+70,Dusty Springfield,dusty springfield,2,Ranker | Rolling Stone,35,,107,0.545002,205.450022,Dusty Springfield,ranker:897893
+71,Van Morrison,van morrison,2,Ranker | Rolling Stone,37,,110,0.539821,205.398206,Van Morrison,ranker:2325249
+72,Barry White,barry white,2,Ranker | Rolling Stone,56,,58,0.539741,205.397408,Barry White,ranker:546112
+73,Rod Stewart,rod stewart,2,Ranker | Rolling Stone,49,,87,0.533762,205.337616,Rod Stewart,ranker:1929407
+74,Ann Wilson,ann wilson,2,Consequence | Ranker,,30,62,0.531783,205.31783,Ann Wilson,ranker:470256
+75,Lady Gaga,lady gaga,2,Ranker | Rolling Stone,58,,66,0.531507,205.315067,Lady Gaga,ranker:11345473
+76,Mick Jagger,mick jagger,2,Ranker | Rolling Stone,52,,104,0.518358,205.18358,Mick Jagger,ranker:1579366
+77,Brian Wilson,brian wilson,2,Ranker | Rolling Stone,57,,95,0.515477,205.154773,Brian Wilson,ranker:627089
+78,George Michael,george michael,2,Ranker | Rolling Stone,62,,92,0.508934,205.089336,George Michael,ranker:1059143
+79,Willie Nelson,willie nelson,2,Ranker | Rolling Stone,54,,115,0.508292,205.082924,Willie Nelson,ranker:2398496
+80,Toni Braxton,toni braxton,2,Ranker | Rolling Stone,48,,145,0.500028,205.000276,Toni Braxton,ranker:2260074
+81,Celine Dion,celine dion,2,Consequence | Ranker,,49,14,0.497114,204.97114,Celine Dion,ranker:689840
+82,Sade,sade,2,Consequence | Rolling Stone,51,29,,0.488638,204.886385,Sade,
+83,Bob Marley,bob marley,2,Ranker | Rolling Stone,98,,39,0.480989,204.809886,Bob Marley,ranker:605064
+84,Mary J. Blige,mary j blige,2,Ranker | Rolling Stone,25,,259,0.468957,204.689565,Mary J. Blige,ranker:1535741
+85,Gladys Knight,gladys knight,2,Ranker | Rolling Stone,101,,52,0.468027,204.680269,Gladys Knight,ranker:1075674
+86,Rihanna,rihanna,2,Ranker | Rolling Stone,68,,150,0.463474,204.634743,Rihanna,ranker:1910648
+87,Patti LaBelle,patti labelle,2,Ranker | Rolling Stone,74,,143,0.457698,204.576975,Patti LaBelle,ranker:1764354
+88,Chuck Berry,chuck berry,2,Ranker | Rolling Stone,96,,125,0.431836,204.318356,Chuck Berry,ranker:732726
+89,Donna Summer,donna summer,2,Ranker | Rolling Stone,122,,68,0.423083,204.230831,Donna Summer,ranker:877643
+90,Roberta Flack,roberta flack,2,Consequence | Ranker,,58,96,0.41675,204.167499,Roberta Flack,ranker:1916794
+91,George Jones,george jones,2,Ranker | Rolling Stone,24,,349,0.415686,204.156865,George Jones,ranker:1058488
+92,Wilson Pickett,wilson pickett,2,Ranker | Rolling Stone,76,,207,0.415275,204.152754,Wilson Pickett,ranker:2400238
+93,Roger Daltrey,roger daltrey,2,Ranker | Rolling Stone,109,,138,0.402124,204.021236,Roger Daltrey,ranker:1930002
+94,Teddy Pendergrass,teddy pendergrass,2,Consequence | Rolling Stone,42,62,,0.392603,203.926027,Teddy Pendergrass,
+95,Eddie Vedder,eddie vedder,2,Ranker | Rolling Stone,105,,180,0.383183,203.831827,Eddie Vedder,ranker:910614
+96,Christina Aguilera,christina aguilera,2,Ranker | Rolling Stone,141,,84,0.381489,203.814893,Christina Aguilera,ranker:725023
+97,Emmylou Harris,emmylou harris,2,Ranker | Rolling Stone,79,,260,0.377894,203.778937,Emmylou Harris,ranker:938728
+98,Selena,selena,2,Ranker | Rolling Stone,89,,238,0.374574,203.745743,Selena,ranker:1999876
+99,Muddy Waters,muddy waters,2,Ranker | Rolling Stone,72,,294,0.368862,203.68862,Muddy Waters,ranker:1627187
+100,Taylor Swift,taylor swift,2,Ranker | Rolling Stone,102,,217,0.365619,203.656193,Taylor Swift,ranker:2153992
+101,Barbra Streisand,barbra streisand,2,Ranker | Rolling Stone,147,,99,0.362281,203.622815,Barbra Streisand,ranker:541722
+102,Alison Krauss,alison krauss,2,Consequence | Ranker,,63,159,0.361453,203.614534,Alison Krauss,ranker:433506
+103,John Fogerty,john fogerty,2,Ranker | Rolling Stone,118,,184,0.358965,203.589652,John Fogerty,ranker:1306695
+104,Carrie Underwood,carrie underwood,2,Ranker | Rolling Stone,158,,88,0.350572,203.505715,Carrie Underwood,ranker:678602
+105,Loretta Lynn,loretta lynn,2,Ranker | Rolling Stone,132,,162,0.348946,203.489456,Loretta Lynn,ranker:1472030
+106,Bessie Smith,bessie smith,2,Ranker | Rolling Stone,33,,438,0.346277,203.462766,Bessie Smith,ranker:573757
+107,Minnie Riperton,minnie riperton,2,Ranker | Rolling Stone,65,,369,0.3348,203.347998,Minnie Riperton,ranker:1594414
+108,Mike Patton,mike patton,2,Consequence | Ranker,,8,508,0.333574,203.335738,Mike Patton,ranker:1586268
+109,Buddy Holly,buddy holly,2,Ranker | Rolling Stone,174,,79,0.329265,203.292654,Buddy Holly,ranker:639919
+110,Alicia Keys,alicia keys,2,Ranker | Rolling Stone,185,,57,0.324271,203.242709,Alicia Keys,ranker:432779
+111,David Ruffin,david ruffin,2,Ranker | Rolling Stone,66,,401,0.313589,203.135887,David Ruffin,ranker:826184
+112,Bob Seger,bob seger,2,Ranker | Rolling Stone,181,,89,0.311435,203.114351,Bob Seger,ranker:605496
+113,Jackie Wilson,jackie wilson,2,Ranker | Rolling Stone,121,,254,0.311205,203.11205,Jackie Wilson,ranker:1251377
+114,Anita Baker,anita baker,2,Ranker | Rolling Stone,92,,334,0.310941,203.109412,Anita Baker,ranker:466402
+115,Kelly Clarkson,kelly clarkson,2,Ranker | Rolling Stone,194,,55,0.310417,203.104166,Kelly Clarkson,ranker:1359806
+116,Chrissie Hynde,chrissie hynde,2,Ranker | Rolling Stone,114,,275,0.31011,203.101098,Chrissie Hynde,ranker:723362
+117,Debbie Harry,debbie harry,2,Ranker | Rolling Stone,168,,130,0.30818,203.081801,Debbie Harry,ranker:832444
+118,Tom Waits,tom waits,2,Consequence | Ranker,,28,452,0.300422,203.004218,Tom Waits,ranker:2259330
+119,D’Angelo,d angelo,2,Consequence | Rolling Stone,75,74,,0.296922,202.969223,DAngelo | D’Angelo,
+120,George Strait,george strait,2,Ranker | Rolling Stone,156,,186,0.294093,202.940926,George Strait,ranker:1060383
+121,Usher,usher,2,Ranker | Rolling Stone,97,,348,0.294019,202.940189,Usher,ranker:2313962
+122,Aaron Neville,aaron neville,2,Ranker | Rolling Stone,104,,329,0.293893,202.938932,Aaron Neville,ranker:387728
+123,Tammy Wynette,tammy wynette,2,Ranker | Rolling Stone,127,,267,0.293218,202.932182,Tammy Wynette,ranker:2147181
+124,Ronnie Spector,ronnie spector,2,Ranker | Rolling Stone,70,,426,0.291626,202.91626,Ronnie Spector,ranker:1935873
+125,Sinéad O'Connor,sinead o connor,2,Consequence | Ranker,,81,182,0.286806,202.868058,Sinéad O'Connor | Sinéad OConnor,ranker:2537150
+126,Big Mama Thornton,big mama thornton,2,Consequence | Ranker,,45,386,0.283476,202.834758,Big Mama Thornton,ranker:581612
+127,Merle Haggard,merle haggard,2,Ranker | Rolling Stone,138,,272,0.27174,202.717403,Merle Haggard,ranker:1565940
+128,Darlene Love,darlene love,2,Ranker | Rolling Stone,144,,265,0.265964,202.659635,Darlene Love,ranker:816226
+129,Lou Reed,lou reed,2,Ranker | Rolling Stone,107,,368,0.265059,202.650585,Lou Reed,ranker:1478302
+130,Bonnie Raitt,bonnie raitt,2,Ranker | Rolling Stone,187,,153,0.262313,202.623128,Bonnie Raitt,ranker:610298
+131,Brenda Lee,brenda lee,2,Ranker | Rolling Stone,161,,239,0.253361,202.533608,Brenda Lee,ranker:623982
+132,Lana Del Rey,lana del rey,2,Ranker | Rolling Stone,175,,228,0.236626,202.366257,Lana Del Rey,ranker:63420914
+133,Michael Stipe,michael stipe,2,Ranker | Rolling Stone,152,,326,0.215323,202.153226,Michael Stipe,ranker:1576548
+134,Layne Staley,layne staley,2,Consequence | Ranker,,55,459,0.205239,202.052392,Layne Staley,ranker:1420900
+135,Ronnie James Dio,ronnie james dio,2,Consequence | Rolling Stone,165,57,,0.203408,202.034076,Ronnie James Dio,
+136,Florence Welch,florence welch,2,Ranker | Rolling Stone,128,,427,0.193863,201.938631,Florence Welch,ranker:63525773
+137,Joan Baez,joan baez,2,Ranker | Rolling Stone,189,,280,0.181429,201.814291,Joan Baez,ranker:1293641
+138,Bryan Ferry,bryan ferry,2,Ranker | Rolling Stone,150,,395,0.176548,201.765482,Bryan Ferry,ranker:637507
+139,Robert Smith,robert smith,2,Ranker | Rolling Stone,157,,385,0.170928,201.709279,Robert Smith,ranker:1922686
+140,Robert Johnson,robert johnson,2,Ranker | Rolling Stone,124,,476,0.170649,201.706487,Robert Johnson,ranker:1920475
+141,Bruce Dickinson,bruce dickinson,2,Consequence | Ranker,,73,419,0.169053,201.690532,Bruce Dickinson,ranker:635415
+142,Erykah Badu,erykah badu,2,Ranker | Rolling Stone,115,,505,0.16802,201.680196,Erykah Badu,ranker:953633
+143,PJ Harvey,pj harvey,2,Ranker | Rolling Stone,145,,428,0.164777,201.647769,PJ Harvey,ranker:1810993
+144,Donny Hathaway,donny hathaway,2,Ranker | Rolling Stone,126,,498,0.153868,201.538676,Donny Hathaway,ranker:877868
+145,Solomon Burke,solomon burke,2,Consequence | Rolling Stone,183,65,,0.146321,201.463208,Solomon Burke,
+146,Jazmine Sullivan,jazmine sullivan,2,Consequence | Rolling Stone,182,67,,0.141262,201.412619,Jazmine Sullivan,
+147,Levon Helm,levon helm,2,Ranker | Rolling Stone,148,,472,0.13289,201.328897,Levon Helm,ranker:1440519
+148,Sandy Denny,sandy denny,2,Ranker | Rolling Stone,164,,431,0.13112,201.311196,Sandy Denny,ranker:1972056
+149,Joe Strummer,joe strummer,2,Consequence | Rolling Stone,125,99,,0.128995,201.289951,Joe Strummer,
+150,Françoise Hardy,francoise hardy,2,Ranker | Rolling Stone,162,,447,0.124702,201.247017,Françoise Hardy,ranker:1016515
+151,Marianne Faithfull,marianne faithfull,2,Ranker | Rolling Stone,173,,417,0.124591,201.245912,Marianne Faithfull,ranker:1519677
+152,Dolores O'Riordan,dolores o riordan,2,Consequence | Ranker,,86,432,0.117346,201.173456,Dolores O'Riordan | Dolores ORiordan,ranker:873284
+153,Chris Stapleton,chris stapleton,2,Consequence | Rolling Stone,170,82,,0.110857,201.108573,Chris Stapleton,
+154,Billie Eilish,billie eilish,2,Ranker | Rolling Stone,198,,470,0.050359,200.503586,Billie Eilish,ranker:85373349
+155,Brandy,brandy,2,Consequence | Rolling Stone,193,100,,0.011725,200.117253,Brandy,
+156,Luciano Pavarotti,luciano pavarotti,1,Ranker,,,10,0.327839,103.278388,Luciano Pavarotti,ranker:1482712
+157,Nat King Cole,nat king cole,1,Ranker,,,11,0.327228,103.272283,Nat King Cole,ranker:1654548
+158,Billy Joel,billy joel,1,Ranker,,,23,0.319902,103.199023,Billy Joel,ranker:583753
+159,Julie Andrews,julie andrews,1,Ranker,,,32,0.314408,103.144078,Julie Andrews,ranker:1333426
+160,Andrea Bocelli,andrea bocelli,1,Ranker,,,37,0.311355,103.113553,Andrea Bocelli,ranker:457551
+161,Bing Crosby,bing crosby,1,Ranker,,,38,0.310745,103.107448,Bing Crosby,ranker:587038
+162,Judy Garland,judy garland,1,Ranker,,,41,0.308913,103.089133,Judy Garland,ranker:1331292
+163,Phil Collins,phil collins,1,Ranker,,,43,0.307692,103.076923,Phil Collins,ranker:1795529
+164,Lionel Richie,lionel richie,1,Ranker,,,44,0.307082,103.070818,Lionel Richie,ranker:1452660
+165,Dean Martin,dean martin,1,Ranker,,,46,0.305861,103.058608,Dean Martin,ranker:831281
+166,Celia Cruz,celia cruz,1,Rolling Stone,18,,,0.304858,103.048576,Celia Cruz,
+167,Jim Morrison,jim morrison,1,Ranker,,,48,0.30464,103.046398,Jim Morrison,ranker:1291311
+168,Art Garfunkel,art garfunkel,1,Ranker,,,49,0.304029,103.040293,Art Garfunkel,ranker:498461
+169,Tony Bennett,tony bennett,1,Ranker,,,50,0.303419,103.034188,Tony Bennett,ranker:2260714
+170,H.R.,hr,1,Consequence,,10,,0.30303,103.030303,H.R.,
+171,John Denver,john denver,1,Ranker,,,51,0.302808,103.028083,John Denver,ranker:1305432
+172,Neil Diamond,neil diamond,1,Ranker,,,53,0.301587,103.015873,Neil Diamond,ranker:1659549
+173,Bruno Mars,bruno mars,1,Ranker,,,54,0.300977,103.009768,Bruno Mars,ranker:31299119
+174,Tom Jones,tom jones,1,Ranker,,,56,0.299756,102.997558,Tom Jones,ranker:2258196
+175,Steven Tyler,steven tyler,1,Ranker,,,59,0.297924,102.979243,Steven Tyler,ranker:2096165
+176,Sting,sting,1,Ranker,,,61,0.296703,102.967033,Sting,ranker:2099959
+177,Bryan Adams,bryan adams,1,Ranker,,,63,0.295482,102.954823,Bryan Adams,ranker:637393
+178,Pat Benatar,pat benatar,1,Ranker,,,64,0.294872,102.948718,Pat Benatar,ranker:1764604
+179,Dionne Warwick,dionne warwick,1,Ranker,,,67,0.29304,102.930403,Dionne Warwick,ranker:860619
+180,Barry Gibb,barry gibb,1,Ranker,,,69,0.291819,102.918193,Barry Gibb,ranker:545635
+181,Jon Bon Jovi,jon bon jovi,1,Ranker,,,70,0.291209,102.912088,Jon Bon Jovi,ranker:1319687
+182,Annie Lennox,annie lennox,1,Ranker,,,72,0.289988,102.899878,Annie Lennox,ranker:469419
+183,P!nk,p nk,1,Ranker,,,73,0.289377,102.893773,P!nk,ranker:1805620
+184,Michael Bublé,michael buble,1,Ranker,,,74,0.288767,102.887668,Michael Bublé,ranker:1572873
+185,Don Henley,don henley,1,Ranker,,,76,0.287546,102.875458,Don Henley,ranker:879412
+186,Frankie Valli,frankie valli,1,Ranker,,,77,0.286935,102.869353,Frankie Valli,ranker:1017498
+187,Kenny Rogers,kenny rogers,1,Ranker,,,78,0.286325,102.863248,Kenny Rogers,ranker:1362401
+188,Carly Simon,carly simon,1,Ranker,,,80,0.285104,102.851038,Carly Simon,ranker:674510
+189,Eric Clapton,eric clapton,1,Ranker,,,81,0.284493,102.844933,Eric Clapton,ranker:948820
+190,Cher,cher,1,Ranker,,,82,0.283883,102.838828,Cher,ranker:711132
+191,Cyndi Lauper,cyndi lauper,1,Ranker,,,83,0.283272,102.832723,Cyndi Lauper,ranker:798916
+192,Shania Twain,shania twain,1,Ranker,,,85,0.282051,102.820513,Shania Twain,ranker:2012859
+193,George Harrison,george harrison,1,Ranker,,,86,0.281441,102.814408,George Harrison,ranker:1058005
+194,Carole King,carole king,1,Ranker,,,90,0.278999,102.789988,Carole King,ranker:676807
+195,Doris Day,doris day,1,Ranker,,,91,0.278388,102.783883,Doris Day,ranker:881369
+196,James Taylor,james taylor,1,Ranker,,,94,0.276557,102.765568,James Taylor,ranker:1264600
+197,Glen Campbell,glen campbell,1,Ranker,,,97,0.274725,102.747253,Glen Campbell,ranker:1077580
+198,Johnny Mathis,johnny mathis,1,Ranker,,,98,0.274115,102.741148,Johnny Mathis,ranker:1300937
+199,Reba McEntire,reba mcentire,1,Ranker,,,100,0.272894,102.728938,Reba McEntire,ranker:1881353
+200,Jim Croce,jim croce,1,Ranker,,,101,0.272283,102.722833,Jim Croce,ranker:1290389
+201,Huey Lewis,huey lewis,1,Ranker,,,103,0.271062,102.710623,Huey Lewis,ranker:1187190
+202,Jimi Hendrix,jimi hendrix,1,Ranker,,,105,0.269841,102.698413,Jimi Hendrix,ranker:1288474
+203,Kendrick Lamar,kendrick lamar,1,Consequence,,20,,0.26936,102.693603,Kendrick Lamar,
+204,Tom Petty,tom petty,1,Ranker,,,108,0.26801,102.680098,Tom Petty,ranker:62169354
+205,Aaliyah,aaliyah,1,Rolling Stone,40,,,0.268007,102.680067,Aaliyah,
+206,Paul Simon,paul simon,1,Ranker,,,109,0.267399,102.673993,Paul Simon,ranker:1769838
+207,Sarah McLachlan,sarah mclachlan,1,Ranker,,,111,0.266178,102.661783,Sarah McLachlan,ranker:1978383
+208,Sade Adu,sade adu,1,Ranker,,,112,0.265568,102.655678,Sade Adu,ranker:1958203
+209,Enya,enya,1,Ranker,,,113,0.264957,102.649573,Enya,ranker:944950
+210,B.B. King,bb king,1,Ranker,,,116,0.263126,102.631258,B.B. King,ranker:651860
+211,Meat Loaf,meat loaf,1,Ranker,,,118,0.261905,102.619048,Meat Loaf,ranker:1555529
+212,Phil Everly,phil everly,1,Ranker,,,119,0.261294,102.612943,Phil Everly,ranker:1795624
+213,Bobby Darin,bobby darin,1,Ranker,,,121,0.260073,102.600733,Bobby Darin,ranker:602829
+214,Cass Elliot,cass elliot,1,Ranker,,,122,0.259463,102.594628,Cass Elliot,ranker:10885621
+215,Joe Cocker,joe cocker,1,Ranker,,,123,0.258852,102.588523,Joe Cocker,ranker:1296428
+216,Bonnie Tyler,bonnie tyler,1,Ranker,,,124,0.258242,102.582418,Bonnie Tyler,ranker:610327
+217,Norah Jones,norah jones,1,Ranker,,,126,0.257021,102.570208,Norah Jones,ranker:1688286
+218,Billy Idol,billy idol,1,Ranker,,,128,0.2558,102.557998,Billy Idol,ranker:583727
+219,Bette Midler,bette midler,1,Ranker,,,129,0.255189,102.551893,Bette Midler,ranker:575894
+220,Shakira,shakira,1,Ranker,,,131,0.253968,102.539683,Shakira,ranker:2011542
+221,Ed Sheeran,ed sheeran,1,Ranker,,,132,0.253358,102.533578,Ed Sheeran,ranker:62056554
+222,Peter Gabriel,peter gabriel,1,Ranker,,,133,0.252747,102.527473,Peter Gabriel,ranker:1785728
+223,Andy Williams,andy williams,1,Ranker,,,134,0.252137,102.521368,Andy Williams,ranker:462381
+224,Alanis Morissette,alanis morissette,1,Ranker,,,135,0.251526,102.515263,Alanis Morissette,ranker:418271
+225,Faith Hill,faith hill,1,Ranker,,,136,0.250916,102.509158,Faith Hill,ranker:973976
+226,Marie Osmond,marie osmond,1,Ranker,,,137,0.250305,102.503053,Marie Osmond,ranker:1521748
+227,Daryl Hall,daryl hall,1,Ranker,,,139,0.249084,102.490842,Daryl Hall,ranker:817594
+228,Natalie Cole,natalie cole,1,Ranker,,,140,0.248474,102.484737,Natalie Cole,ranker:1648903
+229,Édith Piaf,edith piaf,1,Ranker,,,141,0.247863,102.478632,Édith Piaf,ranker:912302
+230,Miriam Makeba,miriam makeba,1,Rolling Stone,53,,,0.246231,102.462312,Miriam Makeba,
+231,Garth Brooks,garth brooks,1,Ranker,,,144,0.246032,102.460317,Garth Brooks,ranker:1045317
+232,Olivia Newton-John,olivia newton john,1,Ranker,,,146,0.244811,102.448107,Olivia Newton-John,ranker:1718051
+233,Joan Jett,joan jett,1,Ranker,,,147,0.2442,102.442002,Joan Jett,ranker:1293832
+234,John Legend,john legend,1,Ranker,,,148,0.24359,102.435897,John Legend,ranker:1310186
+235,Tracy Chapman,tracy chapman,1,Ranker,,,149,0.242979,102.429792,Tracy Chapman,ranker:2269578
+236,Jennifer Hudson,jennifer hudson,1,Ranker,,,151,0.241758,102.417582,Jennifer Hudson,ranker:1281438
+237,"Harry Connick, Jr.",harry connick jr,1,Ranker,,,154,0.239927,102.399267,"Harry Connick, Jr.",ranker:1133064
+238,Glenn Frey,glenn frey,1,Ranker,,,155,0.239316,102.393162,Glenn Frey,ranker:1077051
+239,Sia,sia,1,Ranker,,,157,0.238095,102.380952,Sia,ranker:2026061
+240,Plácido Domingo,placido domingo,1,Ranker,,,158,0.237485,102.374847,Plácido Domingo,ranker:1811318
+241,Gloria Estefan,gloria estefan,1,Ranker,,,160,0.236264,102.362637,Gloria Estefan,ranker:1078998
+242,Howlin&#8217; Wolf,howlin 8217 wolf,1,Rolling Stone,59,,,0.236181,102.361809,Howlin&#8217; Wolf,
+243,"Sammy Davis, Jr.",sammy davis jr,1,Ranker,,,161,0.235653,102.356532,"Sammy Davis, Jr.",ranker:1967051
+244,Justin Timberlake,justin timberlake,1,Ranker,,,163,0.234432,102.344322,Justin Timberlake,ranker:1337602
+245,Gordon Lightfoot,gordon lightfoot,1,Ranker,,,164,0.233822,102.338217,Gordon Lightfoot,ranker:1088496
+246,Amy Lee,amy lee,1,Ranker,,,165,0.233211,102.332112,Amy Lee,ranker:453396
+247,Umm Kulthum,umm kulthum,1,Rolling Stone,61,,,0.232831,102.328308,Umm Kulthum,
+248,Seal,seal,1,Ranker,,,166,0.232601,102.326007,Seal,ranker:1993657
+249,Anne Murray,anne murray,1,Ranker,,,167,0.23199,102.319902,Anne Murray,ranker:468958
+250,Jewel,jewel,1,Ranker,,,168,0.23138,102.313797,Jewel,ranker:1286898
+251,Don Everly,don everly,1,Ranker,,,169,0.230769,102.307692,Don Everly,ranker:879238
+252,Nancy Wilson,nancy wilson::ranker:1645449,1,Ranker,,,171,0.229548,102.295482,Nancy Wilson,ranker:1645449
+253,DMX,dmx,1,Consequence,,32,,0.228956,102.289562,DMX,
+254,Michael Hutchence,michael hutchence,1,Ranker,,,172,0.228938,102.289377,Michael Hutchence,ranker:1574388
+255,Ben E. King,ben e king,1,Ranker,,,174,0.227717,102.277167,Ben E. King,ranker:568321
+256,Peggy Lee,peggy lee,1,Ranker,,,177,0.225885,102.258852,Peggy Lee,ranker:1774795
+257,Susan Boyle,susan boyle,1,Ranker,,,178,0.225275,102.252747,Susan Boyle,ranker:16875828
+258,Connie Francis,connie francis,1,Ranker,,,179,0.224664,102.246642,Connie Francis,ranker:768258
+259,Petula Clark,petula clark,1,Ranker,,,181,0.223443,102.234432,Petula Clark,ranker:1790335
+260,Dennis Brown,dennis brown,1,Rolling Stone,67,,,0.222781,102.227806,Dennis Brown,
+261,Frankie Avalon,frankie avalon,1,Ranker,,,183,0.222222,102.222222,Frankie Avalon,ranker:1017334
+262,Vera Lynn,vera lynn,1,Ranker,,,185,0.221001,102.210012,Vera Lynn,ranker:2330217
+263,Robert Palmer,robert palmer,1,Ranker,,,187,0.21978,102.197802,Robert Palmer,ranker:1921960
+264,Youssou N&#8217;Dour,youssou n 8217 dour,1,Rolling Stone,69,,,0.21943,102.194305,Youssou N&#8217;Dour,
+265,Donny Osmond,donny osmond,1,Ranker,,,188,0.21917,102.191697,Donny Osmond,ranker:877882
+266,Gwen Stefani,gwen stefani,1,Ranker,,,189,0.218559,102.185592,Gwen Stefani,ranker:1115307
+267,Cat Stevens,cat stevens,1,Ranker,,,190,0.217949,102.179487,Cat Stevens,ranker:686082
+268,Chester Bennington,chester bennington,1,Ranker,,,191,0.217338,102.173382,Chester Bennington,ranker:712302
+269,Barry Manilow,barry manilow,1,Ranker,,,192,0.216728,102.167277,Barry Manilow,ranker:545813
+270,Robin Gibb,robin gibb,1,Ranker,,,193,0.216117,102.161172,Robin Gibb,ranker:1924032
+271,Maria Callas,maria callas,1,Ranker,,,194,0.215507,102.155067,Maria Callas,ranker:1520270
+272,Lesley Gore,lesley gore,1,Ranker,,,195,0.214896,102.148962,Lesley Gore,ranker:1436248
+273,Jerry Lee Lewis,jerry lee lewis,1,Ranker,,,196,0.214286,102.142857,Jerry Lee Lewis,ranker:1284272
+274,Enrico Caruso,enrico caruso,1,Ranker,,,197,0.213675,102.136752,Enrico Caruso,ranker:943416
+275,David Gilmour,david gilmour,1,Ranker,,,198,0.213065,102.130647,David Gilmour,ranker:823195
+276,Héctor Lavoe,hector lavoe,1,Rolling Stone,73,,,0.21273,102.127303,Héctor Lavoe,
+277,Liza Minnelli,liza minnelli,1,Ranker,,,199,0.212454,102.124542,Liza Minnelli,ranker:1461809
+278,Ritchie Valens,ritchie valens,1,Ranker,,,200,0.211844,102.118437,Ritchie Valens,ranker:1913367
+279,LeAnn Rimes,leann rimes,1,Ranker,,,201,0.211233,102.112332,LeAnn Rimes,ranker:1426072
+280,Adam Lambert,adam lambert,1,Ranker,,,203,0.210012,102.100122,Adam Lambert,ranker:23866500
+281,Brian Johnson,brian johnson,1,Ranker,,,204,0.209402,102.094017,Brian Johnson,ranker:626142
+282,Christine McVie,christine mcvie,1,Ranker,,,205,0.208791,102.087912,Christine McVie,ranker:725418
+283,Bon Scott,bon scott,1,Ranker,,,206,0.208181,102.081807,Bon Scott,ranker:610592
+284,Sarah Vaughan,sarah vaughan,1,Ranker,,,208,0.20696,102.069597,Sarah Vaughan,ranker:1978585
+285,Harry Belafonte,harry belafonte,1,Ranker,,,209,0.206349,102.063492,Harry Belafonte,ranker:1132881
+286,Alice Cooper,alice cooper,1,Ranker,,,210,0.205739,102.057387,Alice Cooper,ranker:432383
+287,Don McLean,don mclean,1,Ranker,,,211,0.205128,102.051282,Don McLean,ranker:879748
+288,Lindsey Buckingham,lindsey buckingham,1,Ranker,,,212,0.204518,102.045177,Lindsey Buckingham,ranker:1450974
+289,Lena Horne,lena horne,1,Ranker,,,213,0.203907,102.039072,Lena Horne,ranker:1431936
+290,Sheryl Crow,sheryl crow,1,Ranker,,,214,0.203297,102.032967,Sheryl Crow,ranker:2018415
+291,Michael Bolton,michael bolton,1,Ranker,,,215,0.202686,102.026862,Michael Bolton,ranker:1572745
+292,Lenny Kravitz,lenny kravitz,1,Ranker,,,216,0.202076,102.020757,Lenny Kravitz,ranker:1432455
+293,Eminem,eminem,1,Ranker,,,218,0.200855,102.008547,Eminem,ranker:937841
+294,Martina McBride,martina mcbride,1,Ranker,,,220,0.199634,101.996337,Martina McBride,ranker:1531137
+295,João Gilberto,joao gilberto,1,Rolling Stone,81,,,0.19933,101.9933,João Gilberto,
+296,Sam Smith,sam smith,1,Ranker,,,221,0.199023,101.990232,Sam Smith,ranker:80404061
+297,Montserrat Caballé,montserrat caballe,1,Ranker,,,222,0.198413,101.984127,Montserrat Caballé,ranker:1612126
+298,Davy Jones,davy jones,1,Ranker,,,223,0.197802,101.978022,Davy Jones,ranker:62013628
+299,Josh Groban,josh groban,1,Ranker,,,224,0.197192,101.971917,Josh Groban,ranker:1326538
+300,Peter Cetera,peter cetera,1,Ranker,,,225,0.196581,101.965812,Peter Cetera,ranker:1785079
+301,Dennis Wilson,dennis wilson,1,Ranker,,,226,0.195971,101.959707,Dennis Wilson,ranker:842406
+302,Michael McDonald,michael mcdonald,1,Ranker,,,227,0.19536,101.953602,Michael McDonald,ranker:1575295
+303,Lata Mangeshkar,lata mangeshkar,1,Rolling Stone,84,,,0.194305,101.943049,Lata Mangeshkar,
+304,Chris Isaak,chris isaak,1,Ranker,,,229,0.194139,101.941392,Chris Isaak,ranker:728706
+305,Waylon Jennings,waylon jennings,1,Ranker,,,230,0.193529,101.935287,Waylon Jennings,ranker:2365223
+306,Adam Levine,adam levine,1,Ranker,,,231,0.192918,101.929182,Adam Levine,ranker:399709
+307,Kylie Minogue,kylie minogue,1,Ranker,,,233,0.191697,101.916972,Kylie Minogue,ranker:1400691
+308,Paul Young,paul young,1,Ranker,,,234,0.191087,101.910867,Paul Young,ranker:1770553
+309,Laura Branigan,laura branigan,1,Ranker,,,235,0.190476,101.904762,Laura Branigan,ranker:1417635
+310,Steve Winwood,steve winwood,1,Ranker,,,236,0.189866,101.898657,Steve Winwood,ranker:2098583
+311,Shirley Bassey,shirley bassey,1,Ranker,,,237,0.189255,101.892552,Shirley Bassey,ranker:2021159
+312,Jimmie Rodgers,jimmie rodgers,1,Rolling Stone,88,,,0.187605,101.876047,Jimmie Rodgers,
+313,A-ha,a ha,1,Ranker,,,240,0.187424,101.874237,A-ha,ranker:386239
+314,Lou Rawls,lou rawls,1,Ranker,,,241,0.186813,101.868132,Lou Rawls,ranker:1478300
+315,Mario Lanza,mario lanza,1,Ranker,,,242,0.186203,101.862027,Mario Lanza,ranker:1523564
+316,Roger Waters,roger waters,1,Ranker,,,243,0.185592,101.855922,Roger Waters,ranker:1930837
+317,Carl Wilson,carl wilson,1,Ranker,,,244,0.184982,101.849817,Carl Wilson,ranker:675664
+318,Avril Lavigne,avril lavigne,1,Ranker,,,245,0.184371,101.843712,Avril Lavigne,ranker:518322
+319,Gal Costa,gal costa,1,Rolling Stone,90,,,0.184255,101.842546,Gal Costa,
+320,Janet Jackson,janet jackson,1,Ranker,,,247,0.18315,101.831502,Janet Jackson,ranker:1266607
+321,Nusrat Fateh Ali Khan,nusrat fateh ali khan,1,Rolling Stone,91,,,0.18258,101.825796,Nusrat Fateh Ali Khan,
+322,Leona Lewis,leona lewis,1,Ranker,,,248,0.18254,101.825397,Leona Lewis,ranker:1433624
+323,Richard Marx,richard marx,1,Ranker,,,249,0.181929,101.819292,Richard Marx,ranker:1905554
+324,Cliff Richard,cliff richard,1,Ranker,,,250,0.181319,101.813187,Cliff Richard,ranker:746569
+325,Harry Nilsson,harry nilsson,1,Ranker,,,251,0.180708,101.807082,Harry Nilsson,ranker:1133791
+326,Gloria Gaynor,gloria gaynor,1,Ranker,,,252,0.180098,101.800977,Gloria Gaynor,ranker:1079014
+327,Idina Menzel,idina menzel,1,Ranker,,,253,0.179487,101.794872,Idina Menzel,ranker:1207749
+328,Bobby Vinton,bobby vinton,1,Ranker,,,255,0.178266,101.782662,Bobby Vinton,ranker:603473
+329,Marilyn Horne,marilyn horne,1,Ranker,,,256,0.177656,101.776557,Marilyn Horne,ranker:1522082
+330,Toots Hibbert,toots hibbert,1,Rolling Stone,94,,,0.177554,101.775544,Toots Hibbert,
+331,Belinda Carlisle,belinda carlisle,1,Ranker,,,257,0.177045,101.770452,Belinda Carlisle,ranker:562794
+332,Nancy Wilson,nancy wilson::ranker:1645451,1,Ranker,,,258,0.176435,101.764347,Nancy Wilson,ranker:1645451
+333,Vicente Fernández,vicente fernandez,1,Rolling Stone,95,,,0.175879,101.758794,Vicente Fernández,
+334,Engelbert Humperdinck,engelbert humperdinck,1,Ranker,,,261,0.174603,101.746032,Engelbert Humperdinck,ranker:941958
+335,Israel Kamakawiwo'ole,israel kamakawiwo ole,1,Ranker,,,262,0.173993,101.739927,Israel Kamakawiwo'ole,ranker:1242275
+336,Marc Bolan,marc bolan,1,Ranker,,,263,0.173382,101.733822,Marc Bolan,ranker:1517096
+337,Katy Perry,katy perry,1,Ranker,,,264,0.172772,101.727717,Katy Perry,ranker:10865225
+338,David Gray,david gray,1,Ranker,,,266,0.171551,101.715507,David Gray,ranker:823288
+339,Jessie J,jessie j,1,Ranker,,,268,0.17033,101.703297,Jessie J,ranker:62039062
+340,Eddie Cochran,eddie cochran,1,Ranker,,,269,0.169719,101.697192,Eddie Cochran,ranker:910012
+341,Clyde McPhatter,clyde mcphatter,1,Rolling Stone,99,,,0.169179,101.691792,Clyde McPhatter,
+342,Gene Vincent,gene vincent,1,Ranker,,,270,0.169109,101.691087,Gene Vincent,ranker:61981233
+343,Dinah Washington,dinah washington,1,Ranker,,,271,0.168498,101.684982,Dinah Washington,ranker:859343
+344,Busta Rhymes,busta rhymes,1,Consequence,,50,,0.16835,101.683502,Busta Rhymes,
+345,James Blunt,james blunt,1,Ranker,,,273,0.167277,101.672772,James Blunt,ranker:1259464
+346,Alison Moyet,alison moyet,1,Ranker,,,274,0.166667,101.666667,Alison Moyet,ranker:433536
+347,Leontyne Price,leontyne price,1,Ranker,,,276,0.165446,101.654457,Leontyne Price,ranker:1434011
+348,Madonna,madonna,1,Ranker,,,277,0.164835,101.648352,Madonna,ranker:1496822
+349,Paul Anka,paul anka,1,Ranker,,,278,0.164225,101.642247,Paul Anka,ranker:1766231
+350,Jackson Browne,jackson browne,1,Ranker,,,279,0.163614,101.636142,Jackson Browne,ranker:1251598
+351,David Crosby,david crosby,1,Ranker,,,281,0.162393,101.623932,David Crosby,ranker:822309
+352,Grace Slick,grace slick,1,Ranker,,,282,0.161783,101.617827,Grace Slick,ranker:1092159
+353,Sarah Brightman,sarah brightman,1,Ranker,,,283,0.161172,101.611722,Sarah Brightman,ranker:1978058
+354,Lisa Stansfield,lisa stansfield,1,Ranker,,,285,0.159951,101.599512,Lisa Stansfield,ranker:1454179
+355,k.d. lang,kd lang,1,Ranker,,,286,0.159341,101.593407,k.d. lang,ranker:1401623
+356,Conway Twitty,conway twitty,1,Ranker,,,287,0.15873,101.587302,Conway Twitty,ranker:771977
+357,Tim McGraw,tim mcgraw,1,Ranker,,,288,0.15812,101.581197,Tim McGraw,ranker:2248280
+358,Agnetha Fältskog,agnetha faltskog,1,Ranker,,,289,0.157509,101.575092,Agnetha Fältskog,ranker:410064
+359,Jeff Lynne,jeff lynne,1,Ranker,,,290,0.156899,101.568987,Jeff Lynne,ranker:1279900
+360,Mick Hucknall,mick hucknall,1,Ranker,,,291,0.156288,101.562882,Mick Hucknall,ranker:1579359
+361,Jessye Norman,jessye norman,1,Ranker,,,292,0.155678,101.556777,Jessye Norman,ranker:1286044
+362,Renée Fleming,renee fleming,1,Ranker,,,293,0.155067,101.550672,Renée Fleming,ranker:1892720
+363,Caetano Veloso,caetano veloso,1,Rolling Stone,108,,,0.154104,101.541039,Caetano Veloso,
+364,Nancy Sinatra,nancy sinatra,1,Ranker,,,296,0.153236,101.532357,Nancy Sinatra,ranker:1645384
+365,Stevie Ray Vaughan,stevie ray vaughan,1,Ranker,,,297,0.152625,101.526252,Stevie Ray Vaughan,ranker:2098688
+366,Brendon Urie,brendon urie,1,Ranker,,,300,0.150794,101.507937,Brendon Urie,ranker:624089
+367,The Weeknd,the weeknd,1,Rolling Stone,110,,,0.150754,101.507538,The Weeknd,
+368,Harry Chapin,harry chapin,1,Ranker,,,301,0.150183,101.501832,Harry Chapin,ranker:1133025
+369,Chris Martin,chris martin,1,Ranker,,,303,0.148962,101.489621,Chris Martin,ranker:729040
+370,Mark Knopfler,mark knopfler,1,Ranker,,,304,0.148352,101.483516,Mark Knopfler,ranker:1527045
+371,David Lee Roth,david lee roth,1,Ranker,,,305,0.147741,101.477411,David Lee Roth,ranker:824455
+372,Renata Scotto,renata scotto,1,Ranker,,,306,0.147131,101.471306,Renata Scotto,ranker:1892255
+373,Gene Kelly,gene kelly,1,Ranker,,,307,0.14652,101.465201,Gene Kelly,ranker:1052615
+374,Debbie Reynolds,debbie reynolds,1,Ranker,,,308,0.14591,101.459096,Debbie Reynolds,ranker:832485
+375,La India,la india,1,Rolling Stone,113,,,0.145729,101.457286,La India,
+376,Steve Miller,steve miller,1,Ranker,,,309,0.145299,101.452991,Steve Miller,ranker:2097769
+377,Amy Grant,amy grant,1,Ranker,,,310,0.144689,101.446886,Amy Grant,ranker:453332
+378,Mary Wells,mary wells,1,Ranker,,,311,0.144078,101.440781,Mary Wells,ranker:1536442
+379,Melissa Etheridge,melissa etheridge,1,Ranker,,,312,0.143468,101.434676,Melissa Etheridge,ranker:1560831
+380,Ellie Goulding,ellie goulding,1,Ranker,,,313,0.142857,101.428571,Ellie Goulding,ranker:31795866
+381,Crystal Gayle,crystal gayle,1,Ranker,,,315,0.141636,101.416361,Crystal Gayle,ranker:792136
+382,Alan Jackson,alan jackson,1,Ranker,,,316,0.141026,101.410256,Alan Jackson,ranker:418945
+383,Chet Baker,chet baker,1,Rolling Stone,116,,,0.140704,101.407035,Chet Baker,
+384,Wynonna Judd,wynonna judd,1,Ranker,,,317,0.140415,101.404151,Wynonna Judd,ranker:2417145
+385,Boy George,boy george,1,Ranker,,,318,0.139805,101.398046,Boy George,ranker:617662
+386,Neil Sedaka,neil sedaka,1,Ranker,,,319,0.139194,101.391941,Neil Sedaka,ranker:1659913
+387,Ricky Martin,ricky martin,1,Ranker,,,320,0.138584,101.385836,Ricky Martin,ranker:1908337
+388,Elvis Costello,elvis costello,1,Ranker,,,321,0.137973,101.379731,Elvis Costello,ranker:932173
+389,Marty Robbins,marty robbins,1,Ranker,,,322,0.137363,101.373626,Marty Robbins,ranker:1533596
+390,Serge Gainsbourg,serge gainsbourg,1,Ranker,,,323,0.136752,101.367521,Serge Gainsbourg,ranker:2005039
+391,Gregg Allman,gregg allman,1,Ranker,,,324,0.136142,101.361416,Gregg Allman,ranker:1102202
+392,Barrington Levy,barrington levy,1,Rolling Stone,119,,,0.135678,101.356784,Barrington Levy,
+393,Vic Damone,vic damone,1,Ranker,,,325,0.135531,101.355311,Vic Damone,ranker:2336202
+394,Nelson Eddy,nelson eddy,1,Ranker,,,327,0.13431,101.343101,Nelson Eddy,ranker:1660604
+395,Charlie Rich,charlie rich,1,Rolling Stone,120,,,0.134003,101.340034,Charlie Rich,
+396,Fred Astaire,fred astaire,1,Ranker,,,328,0.1337,101.336996,Fred Astaire,ranker:1024279
+397,Christopher Cross,christopher cross,1,Ranker,,,330,0.132479,101.324786,Christopher Cross,ranker:726259
+398,Rosemary Clooney,rosemary clooney,1,Ranker,,,331,0.131868,101.318681,Rosemary Clooney,ranker:1938748
+399,Jennifer Warnes,jennifer warnes,1,Ranker,,,332,0.131258,101.312576,Jennifer Warnes,ranker:1281693
+400,Rufus Wainwright,rufus wainwright,1,Ranker,,,333,0.130647,101.306471,Rufus Wainwright,ranker:1948487
+401,Jack Johnson,jack johnson,1,Ranker,,,335,0.129426,101.294261,Jack Johnson,ranker:1253122
+402,KT Tunstall,kt tunstall,1,Ranker,,,336,0.128816,101.288156,KT Tunstall,ranker:1395976
+403,Thomas Hampson,thomas hampson,1,Ranker,,,337,0.128205,101.282051,Thomas Hampson,ranker:2236648
+404,Micky Dolenz,micky dolenz,1,Ranker,,,338,0.127595,101.275946,Micky Dolenz,ranker:1579193
+405,George Benson,george benson,1,Ranker,,,339,0.126984,101.269841,George Benson,ranker:1056236
+406,Bo Diddley,bo diddley,1,Ranker,,,340,0.126374,101.263736,Bo Diddley,ranker:617879
+407,Demi Lovato,demi lovato,1,Ranker,,,341,0.125763,101.257631,Demi Lovato,ranker:839320
+408,Eric Burdon,eric burdon,1,Ranker,,,342,0.125153,101.251526,Eric Burdon,ranker:948746
+409,Grace Bumbry,grace bumbry,1,Ranker,,,343,0.124542,101.245421,Grace Bumbry,ranker:1091982
+410,John Mayer,john mayer,1,Ranker,,,344,0.123932,101.239316,John Mayer,ranker:1311074
+411,Lawrence Brownlee,lawrence brownlee,1,Ranker,,,345,0.123321,101.233211,Lawrence Brownlee,ranker:32614871
+412,Woody Guthrie,woody guthrie,1,Ranker,,,346,0.122711,101.227106,Woody Guthrie,ranker:2409888
+413,Barbara Mandrell,barbara mandrell,1,Ranker,,,347,0.1221,101.221001,Barbara Mandrell,ranker:541061
+414,Stephen Stills,stephen stills,1,Ranker,,,350,0.120269,101.202686,Stephen Stills,ranker:2094239
+415,Paul Rodgers,paul rodgers,1,Ranker,,,351,0.119658,101.196581,Paul Rodgers,ranker:1769581
+416,Lou Gramm,lou gramm,1,Ranker,,,352,0.119048,101.190476,Lou Gramm,ranker:1478186
+417,Darius Rucker,darius rucker,1,Ranker,,,353,0.118437,101.184371,Darius Rucker,ranker:815328
+418,Pete Townshend,pete townshend,1,Ranker,,,354,0.117827,101.178266,Pete Townshend,ranker:1789306
+419,Courtney Love,courtney love,1,Rolling Stone,130,,,0.117253,101.172529,Courtney Love,
+420,Randy Travis,randy travis,1,Ranker,,,355,0.117216,101.172161,Randy Travis,ranker:1873262
+421,Isaac Hayes,isaac hayes,1,Ranker,,,356,0.116606,101.166056,Isaac Hayes,ranker:1238291
+422,Jack White,jack white,1,Ranker,,,357,0.115995,101.159951,Jack White,ranker:1254160
+423,Lotte Lehmann,lotte lehmann,1,Ranker,,,358,0.115385,101.153846,Lotte Lehmann,ranker:1474848
+424,Bernadette Peters,bernadette peters,1,Ranker,,,359,0.114774,101.147741,Bernadette Peters,ranker:570744
+425,Vince Gill,vince gill,1,Ranker,,,360,0.114164,101.141636,Vince Gill,ranker:2340772
+426,Gene Pitney,gene pitney,1,Ranker,,,361,0.113553,101.135531,Gene Pitney,ranker:1052741
+427,Ginger Rogers,ginger rogers,1,Ranker,,,362,0.112943,101.129426,Ginger Rogers,ranker:1072034
+428,Ringo Starr,ringo starr,1,Ranker,,,363,0.112332,101.123321,Ringo Starr,ranker:1911450
+429,Donovan,donovan,1,Ranker,,,364,0.111722,101.117216,Donovan,ranker:877949
+430,Keith Urban,keith urban,1,Ranker,,,365,0.111111,101.111111,Keith Urban,ranker:1359137
+431,Tori Amos,tori amos,1,Ranker,,,366,0.110501,101.105006,Tori Amos,ranker:2264028
+432,Beverly Sills,beverly sills,1,Ranker,,,367,0.10989,101.098901,Beverly Sills,ranker:576916
+433,IU,iu,1,Rolling Stone,135,,,0.108878,101.088777,IU,
+434,Charles Aznavour,charles aznavour,1,Ranker,,,370,0.108059,101.080586,Charles Aznavour,ranker:700822
+435,Brian May,brian may,1,Ranker,,,371,0.107448,101.074481,Brian May,ranker:626391
+436,Rita Coolidge,rita coolidge,1,Ranker,,,372,0.106838,101.068376,Rita Coolidge,ranker:1913194
+437,Sammy Hagar,sammy hagar,1,Ranker,,,373,0.106227,101.062271,Sammy Hagar,ranker:1967075
+438,Natalie Merchant,natalie merchant,1,Ranker,,,374,0.105617,101.056166,Natalie Merchant,ranker:1648972
+439,El DeBarge,el debarge,1,Rolling Stone,137,,,0.105528,101.055276,El DeBarge,
+440,Lorde,lorde,1,Ranker,,,375,0.105006,101.050061,Lorde,ranker:76992015
+441,Dido,dido,1,Ranker,,,376,0.104396,101.043956,Dido,ranker:855323
+442,Ol Dirty Bastard,ol dirty bastard,1,Consequence,,69,,0.104377,101.043771,Ol Dirty Bastard,
+443,Diana Damrau,diana damrau,1,Ranker,,,377,0.103785,101.037851,Diana Damrau,ranker:852815
+444,Pete Seeger,pete seeger,1,Ranker,,,378,0.103175,101.031746,Pete Seeger,ranker:1789238
+445,Julie London,julie london,1,Ranker,,,379,0.102564,101.025641,Julie London,ranker:1333640
+446,Rocío Dúrcal,rocio durcal,1,Rolling Stone,139,,,0.102178,101.021776,Rocío Dúrcal,
+447,Paul Robeson,paul robeson,1,Ranker,,,380,0.101954,101.019536,Paul Robeson,ranker:1769565
+448,Warren Zevon,warren zevon,1,Ranker,,,381,0.101343,101.013431,Warren Zevon,ranker:2361112
+449,Chris Daughtry,chris daughtry,1,Ranker,,,382,0.100733,101.007326,Chris Daughtry,ranker:728209
+450,Scott Walker,scott walker,1,Ranker,,,383,0.100122,101.001221,Scott Walker,ranker:1991523
+451,Sara Bareilles,sara bareilles,1,Ranker,,,384,0.099512,100.995116,Sara Bareilles,ranker:1978960
+452,Robbie Williams,robbie williams,1,Ranker,,,387,0.09768,100.976801,Robbie Williams,ranker:1916594
+453,Maynard James Keenan,maynard james keenan,1,Consequence,,71,,0.097643,100.976431,Maynard James Keenan,
+454,Russell Thompkins Jr.,russell thompkins jr,1,Rolling Stone,142,,,0.097152,100.971524,Russell Thompkins Jr.,
+455,Judy Collins,judy collins,1,Ranker,,,388,0.09707,100.970696,Judy Collins,ranker:1331256
+456,Joss Stone,joss stone,1,Ranker,,,389,0.096459,100.964591,Joss Stone,ranker:1327103
+457,Jimmy Buffett,jimmy buffett,1,Ranker,,,390,0.095849,100.958486,Jimmy Buffett,ranker:1288807
+458,Luciano,luciano,1,Rolling Stone,143,,,0.095477,100.954774,Luciano,
+459,Ray Davies,ray davies,1,Ranker,,,391,0.095238,100.952381,Ray Davies,ranker:1878689
+460,Anni-Frid Lyngstad,anni frid lyngstad,1,Ranker,,,393,0.094017,100.940171,Anni-Frid Lyngstad,ranker:469628
+461,Shirley Manson,shirley manson,1,Ranker,,,394,0.093407,100.934066,Shirley Manson,ranker:2021276
+462,Harry Styles,harry styles,1,Ranker,,,396,0.092186,100.921856,Harry Styles,ranker:63446522
+463,Charlotte Church,charlotte church,1,Ranker,,,397,0.091575,100.915751,Charlotte Church,ranker:706748
+464,Dave Matthews,dave matthews,1,Ranker,,,398,0.090965,100.909646,Dave Matthews,ranker:820121
+465,Ruth Brown,ruth brown,1,Rolling Stone,146,,,0.090452,100.904523,Ruth Brown,
+466,The Highwaymen,the highwaymen,1,Ranker,,,399,0.090354,100.903541,The Highwaymen,ranker:6132800
+467,Yves Montand,yves montand,1,Ranker,,,400,0.089744,100.897436,Yves Montand,ranker:2435446
+468,Jim Reeves,jim reeves,1,Ranker,,,402,0.088523,100.885226,Jim Reeves,ranker:1291575
+469,Jonas Kaufmann,jonas kaufmann,1,Ranker,,,403,0.087912,100.879121,Jonas Kaufmann,ranker:10372164
+470,Graham Nash,graham nash,1,Ranker,,,404,0.087302,100.873016,Graham Nash,ranker:1093192
+471,Paula Abdul,paula abdul,1,Ranker,,,405,0.086691,100.866911,Paula Abdul,ranker:1765349
+472,Brandon Flowers,brandon flowers,1,Ranker,,,406,0.086081,100.860806,Brandon Flowers,ranker:620654
+473,B. J. Thomas,b j thomas,1,Ranker,,,407,0.08547,100.854701,B. J. Thomas,ranker:652183
+474,Wanda Jackson,wanda jackson,1,Rolling Stone,149,,,0.085427,100.854271,Wanda Jackson,
+475,Ian Curtis,ian curtis,1,Ranker,,,408,0.08486,100.848596,Ian Curtis,ranker:1204151
+476,Nick Cave,nick cave,1,Ranker,,,409,0.084249,100.842491,Nick Cave,ranker:1675939
+477,Rob Thomas,rob thomas,1,Ranker,,,410,0.083639,100.836386,Rob Thomas,ranker:1925586
+478,Marie Fredriksson,marie fredriksson,1,Ranker,,,411,0.083028,100.830281,Marie Fredriksson,ranker:1521577
+479,Tim Buckley,tim buckley,1,Ranker,,,412,0.082418,100.824176,Tim Buckley,ranker:2247630
+480,Martha Reeves,martha reeves,1,Rolling Stone,151,,,0.082077,100.820771,Martha Reeves,
+481,Mel Tormé,mel torme,1,Ranker,,,413,0.081807,100.818071,Mel Tormé,ranker:1562215
+482,Ricky Nelson,ricky nelson,1,Ranker,,,415,0.080586,100.805861,Ricky Nelson,ranker:1908356
+483,Paul Weller,paul weller,1,Ranker,,,416,0.079976,100.799756,Paul Weller,ranker:1770376
+484,Peabo Bryson,peabo bryson,1,Ranker,,,418,0.078755,100.787546,Peabo Bryson,ranker:1772192
+485,Mahlathini,mahlathini,1,Rolling Stone,153,,,0.078727,100.78727,Mahlathini,
+486,Bret Michaels,bret michaels,1,Ranker,,,420,0.077534,100.775336,Bret Michaels,ranker:625018
+487,Dion,dion,1,Rolling Stone,154,,,0.077052,100.770519,Dion,
+488,Eva Cassidy,eva cassidy,1,Ranker,,,422,0.076313,100.763126,Eva Cassidy,ranker:963540
+489,Patti Page,patti page,1,Ranker,,,423,0.075702,100.757021,Patti Page,ranker:1764370
+490,Corin Tucker,corin tucker,1,Rolling Stone,155,,,0.075377,100.753769,Corin Tucker,
+491,Brad Delp,brad delp,1,Ranker,,,425,0.074481,100.744811,Brad Delp,ranker:619067
+492,Astrud Gilberto,astrud gilberto,1,Ranker,,,429,0.072039,100.720391,Astrud Gilberto,ranker:505435
+493,Edie Brickell,edie brickell,1,Ranker,,,430,0.071429,100.714286,Edie Brickell,ranker:911870
+494,Judee Sill,judee sill,1,Consequence,,79,,0.070707,100.707071,Judee Sill,
+495,Britney Spears,britney spears,1,Ranker,,,433,0.069597,100.695971,Britney Spears,ranker:631101
+496,Arlo Guthrie,arlo guthrie,1,Ranker,,,434,0.068987,100.689866,Arlo Guthrie,ranker:491282
+497,Mississippi John Hurt,mississippi john hurt,1,Rolling Stone,159,,,0.068677,100.686767,Mississippi John Hurt,
+498,Suzanne Vega,suzanne vega,1,Ranker,,,435,0.068376,100.683761,Suzanne Vega,ranker:2129344
+499,Morten Harket,morten harket,1,Ranker,,,436,0.067766,100.677656,Morten Harket,ranker:1616826
+500,"""Weird Al"" Yankovic",weird al yankovic,1,Ranker,,,437,0.067155,100.671551,"""Weird Al"" Yankovic",ranker:2368952
+501,Mercedes Sosa,mercedes sosa,1,Rolling Stone,160,,,0.067002,100.670017,Mercedes Sosa,
+502,Joe Jackson,joe jackson,1,Ranker,,,439,0.065934,100.659341,Joe Jackson,ranker:1297004
+503,Lulu,lulu,1,Ranker,,,440,0.065324,100.653236,Lulu,ranker:1486861
+504,Macy Gray,macy gray,1,Ranker,,,441,0.064713,100.647131,Macy Gray,ranker:1495273
+505,Natalie Maines,natalie maines,1,Ranker,,,442,0.064103,100.641026,Natalie Maines,ranker:1648966
+506,Syd Barrett,syd barrett,1,Ranker,,,443,0.063492,100.634921,Syd Barrett,ranker:2134406
+507,Jerry Garcia,jerry garcia,1,Ranker,,,444,0.062882,100.628816,Jerry Garcia,ranker:1284104
+508,John Lee Hooker,john lee hooker,1,Ranker,,,445,0.062271,100.622711,John Lee Hooker,ranker:1310164
+509,Bobby &#8220;Blue&#8221; Bland,bobby 8220 blue 8221 bland,1,Rolling Stone,163,,,0.061977,100.619765,Bobby &#8220;Blue&#8221; Bland,
+510,Geddy Lee,geddy lee,1,Ranker,,,446,0.061661,100.616606,Geddy Lee,ranker:1049796
+511,Alannah Myles,alannah myles,1,Ranker,,,448,0.06044,100.604396,Alannah Myles,ranker:418283
+512,Gary Moore,gary moore,1,Ranker,,,449,0.059829,100.598291,Gary Moore,ranker:1046314
+513,Howlin' Wolf,howlin wolf,1,Ranker,,,450,0.059219,100.592186,Howlin' Wolf,ranker:1184500
+514,Donald Fagen,donald fagen,1,Ranker,,,451,0.058608,100.586081,Donald Fagen,ranker:876002
+515,Siouxsie Sioux,siouxsie sioux,1,Ranker,,,453,0.057387,100.573871,Siouxsie Sioux,ranker:2038287
+516,Buddy Guy,buddy guy,1,Ranker,,,454,0.056777,100.567766,Buddy Guy,ranker:639901
+517,Al Martino,al martino,1,Ranker,,,455,0.056166,100.561661,Al Martino,ranker:444451
+518,Sebastian Bach,sebastian bach,1,Ranker,,,456,0.055556,100.555556,Sebastian Bach,ranker:1995626
+519,Marc Anthony,marc anthony,1,Rolling Stone,167,,,0.055276,100.552764,Marc Anthony,
+520,Samuel Ramey,samuel ramey,1,Ranker,,,458,0.054335,100.543346,Samuel Ramey,ranker:1968870
+521,Albert King,albert king,1,Ranker,,,460,0.053114,100.531136,Albert King,ranker:422070
+522,Jason Mraz,jason mraz,1,Ranker,,,461,0.052503,100.525031,Jason Mraz,ranker:1272051
+523,Sylvester,sylvester,1,Rolling Stone,169,,,0.051926,100.519263,Sylvester,
+524,Diana Krall,diana krall,1,Ranker,,,462,0.051893,100.518926,Diana Krall,ranker:852902
+525,Leon Russell,leon russell,1,Ranker,,,463,0.051282,100.512821,Leon Russell,ranker:1434362
+526,David Coverdale,david coverdale,1,Ranker,,,464,0.050672,100.506716,David Coverdale,ranker:822265
+527,Bobby McFerrin,bobby mcferrin,1,Ranker,,,465,0.050061,100.500611,Bobby McFerrin,ranker:603183
+528,Dave Gahan,dave gahan,1,Ranker,,,466,0.049451,100.494505,Dave Gahan,ranker:823073
+529,Sonny Boy Williamson II,sonny boy williamson ii,1,Ranker,,,467,0.04884,100.4884,Sonny Boy Williamson II,ranker:2061345
+530,Odetta,odetta,1,Rolling Stone,171,,,0.048576,100.485762,Odetta,
+531,Geoff Tate,geoff tate,1,Ranker,,,468,0.04823,100.482295,Geoff Tate,ranker:1054548
+532,Burton Cummings,burton cummings,1,Ranker,,,469,0.047619,100.47619,Burton Cummings,ranker:648182
+533,Juan Gabriel,juan gabriel,1,Rolling Stone,172,,,0.046901,100.469012,Juan Gabriel,
+534,Country Joe McDonald,country joe mcdonald,1,Ranker,,,471,0.046398,100.46398,Country Joe McDonald,ranker:780349
+535,Greg Lake,greg lake,1,Ranker,,,473,0.045177,100.45177,Greg Lake,ranker:1103331
+536,Joan Osborne,joan osborne,1,Ranker,,,474,0.044567,100.445665,Joan Osborne,ranker:1293941
+537,Paul Stanley,paul stanley,1,Ranker,,,475,0.043956,100.43956,Paul Stanley,ranker:1769929
+538,Joan Sutherland,joan sutherland,1,Ranker,,,477,0.042735,100.42735,Joan Sutherland,ranker:1293991
+539,Loreena McKennitt,loreena mckennitt,1,Ranker,,,478,0.042125,100.421245,Loreena McKennitt,ranker:1471587
+540,Jennifer Lopez,jennifer lopez,1,Ranker,,,479,0.041514,100.41514,Jennifer Lopez,ranker:1281515
+541,Kacey Musgraves,kacey musgraves,1,Ranker,,,480,0.040904,100.409035,Kacey Musgraves,ranker:74331002
+542,Richie Havens,richie havens,1,Ranker,,,481,0.040293,100.40293,Richie Havens,ranker:1907264
+543,Ian Anderson,ian anderson,1,Ranker,,,482,0.039683,100.396825,Ian Anderson,ranker:1203922
+544,Boz Scaggs,boz scaggs,1,Ranker,,,483,0.039072,100.39072,Boz Scaggs,ranker:617838
+545,Patty Loveless,patty loveless,1,Rolling Stone,177,,,0.038526,100.38526,Patty Loveless,
+546,Hayley Williams,hayley williams,1,Ranker,,,484,0.038462,100.384615,Hayley Williams,ranker:1138814
+547,Tupac Shakur,tupac shakur,1,Ranker,,,485,0.037851,100.37851,Tupac Shakur,ranker:2286941
+548,Nick Drake,nick drake,1,Ranker,,,486,0.037241,100.372405,Nick Drake,ranker:1676052
+549,Tabu Ley Rochereau,tabu ley rochereau,1,Rolling Stone,178,,,0.036851,100.368509,Tabu Ley Rochereau,
+550,Jerry Lewis,jerry lewis,1,Ranker,,,487,0.03663,100.3663,Jerry Lewis,ranker:1284280
+551,Jerry Vale,jerry vale,1,Ranker,,,488,0.03602,100.360195,Jerry Vale,ranker:1284582
+552,Roger Taylor,roger taylor,1,Ranker,,,489,0.035409,100.35409,Roger Taylor,ranker:17207179
+553,Martha Wash,martha wash,1,Rolling Stone,179,,,0.035176,100.351759,Martha Wash,
+554,Big Joe Turner,big joe turner,1,Ranker,,,490,0.034799,100.347985,Big Joe Turner,ranker:581463
+555,Joe Williams,joe williams,1,Ranker,,,491,0.034188,100.34188,Joe Williams,ranker:1298130
+556,Paula Cole,paula cole,1,Ranker,,,492,0.033578,100.335775,Paula Cole,ranker:1765370
+557,SZA,sza,1,Rolling Stone,180,,,0.033501,100.335008,SZA,
+558,Paolo Nutini,paolo nutini,1,Ranker,,,493,0.032967,100.32967,Paolo Nutini,ranker:1752436
+559,Corinne Bailey Rae,corinne bailey rae,1,Ranker,,,494,0.032357,100.323565,Corinne Bailey Rae,ranker:775106
+560,Klaus Meine,klaus meine,1,Ranker,,,495,0.031746,100.31746,Klaus Meine,ranker:1383193
+561,Ian Gillan,ian gillan,1,Ranker,,,496,0.031136,100.311355,Ian Gillan,ranker:1204270
+562,Jessica Simpson,jessica simpson,1,Ranker,,,497,0.030525,100.30525,Jessica Simpson,ranker:1285857
+563,Anita O'Day,anita o day,1,Ranker,,,499,0.029304,100.29304,Anita O'Day,ranker:466522
+564,Miley Cyrus,miley cyrus,1,Ranker,,,501,0.028083,100.28083,Miley Cyrus,ranker:1588503
+565,Franco Corelli,franco corelli,1,Ranker,,,502,0.027473,100.274725,Franco Corelli,ranker:6415864
+566,Lzzy Hale,lzzy hale,1,Consequence,,92,,0.026936,100.26936,Lzzy Hale,
+567,Dorothy Dandridge,dorothy dandridge,1,Ranker,,,503,0.026862,100.26862,Dorothy Dandridge,ranker:61981468
+568,Karen O,karen o,1,Rolling Stone,184,,,0.026801,100.268007,Karen O,
+569,Jacques Brel,jacques brel,1,Ranker,,,504,0.026252,100.262515,Jacques Brel,ranker:1255376
+570,Jon Anderson,jon anderson,1,Ranker,,,506,0.025031,100.250305,Jon Anderson,ranker:1319619
+571,Jussi Björling,jussi bjorling,1,Ranker,,,507,0.02442,100.2442,Jussi Björling,ranker:1336873
+572,Mikael Åkerfeldt,mikael akerfeldt,1,Consequence,,93,,0.023569,100.23569,Mikael Åkerfeldt,
+573,Ofra Haza,ofra haza,1,Rolling Stone,186,,,0.023451,100.234506,Ofra Haza,
+574,Rosanne Cash,rosanne cash,1,Ranker,,,509,0.023199,100.23199,Rosanne Cash,ranker:1938057
+575,Brandi Carlile,brandi carlile,1,Ranker,,,510,0.022589,100.225885,Brandi Carlile,ranker:620541
+576,R. Kelly,r kelly,1,Ranker,,,511,0.021978,100.21978,R. Kelly,ranker:1955529
+577,Sherrill Milnes,sherrill milnes,1,Ranker,,,512,0.021368,100.213675,Sherrill Milnes,ranker:61981548
+578,Nico,nico,1,Ranker,,,513,0.020757,100.20757,Nico,ranker:1676808
+579,Notorious B.I.G.,notorious big,1,Consequence,,94,,0.020202,100.20202,Notorious B.I.G.,
+580,Zayn Malik,zayn malik,1,Ranker,,,514,0.020147,100.201465,Zayn Malik,ranker:63432498
+581,Fela Kuti,fela kuti,1,Rolling Stone,188,,,0.020101,100.201005,Fela Kuti,
+582,Snoop Dogg,snoop dogg,1,Ranker,,,515,0.019536,100.19536,Snoop Dogg,ranker:2051727
+583,Lightnin' Hopkins,lightnin hopkins,1,Ranker,,,516,0.018926,100.189255,Lightnin' Hopkins,ranker:1446962
+584,Tarja Turunen,tarja turunen,1,Ranker,,,517,0.018315,100.18315,Tarja Turunen,ranker:2150769
+585,Bobby Bland,bobby bland,1,Ranker,,,518,0.017705,100.177045,Bobby Bland,ranker:602699
+586,Amos Lee,amos lee,1,Ranker,,,519,0.017094,100.17094,Amos Lee,ranker:451648
+587,Frank Ocean,frank ocean,1,Rolling Stone,190,,,0.01675,100.167504,Frank Ocean,
+588,Margaret Price,margaret price,1,Ranker,,,520,0.016484,100.164835,Margaret Price,ranker:1518700
+589,Gerard Way,gerard way,1,Ranker,,,521,0.015873,100.15873,Gerard Way,ranker:9630081
+590,Ryan Adams,ryan adams,1,Ranker,,,522,0.015263,100.152625,Ryan Adams,ranker:1953601
+591,Jung Kook,jung kook,1,Rolling Stone,191,,,0.015075,100.150754,Jung Kook,
+592,Tori Kelly,tori kelly,1,Ranker,,,523,0.014652,100.14652,Tori Kelly,ranker:2264044
+593,Barbara Frittoli,barbara frittoli,1,Ranker,,,524,0.014042,100.140415,Barbara Frittoli,ranker:540884
+594,Shane MacGowan,shane macgowan,1,Consequence,,96,,0.013468,100.13468,Shane MacGowan,
+595,Cecilia Bartoli,cecilia bartoli,1,Ranker,,,525,0.013431,100.13431,Cecilia Bartoli,ranker:688308
+596,Anohni,anohni,1,Rolling Stone,192,,,0.0134,100.134003,Anohni,
+597,Ben Harper,ben harper,1,Ranker,,,526,0.012821,100.128205,Ben Harper,ranker:568472
+598,Suzy Bogguss,suzy bogguss,1,Ranker,,,527,0.01221,100.1221,Suzy Bogguss,ranker:2129589
+599,Gary Morris,gary morris,1,Ranker,,,528,0.0116,100.115995,Gary Morris,ranker:1046321
+600,Peter Breinholt,peter breinholt,1,Ranker,,,529,0.010989,100.10989,Peter Breinholt,ranker:6306459
+601,Koko Taylor,koko taylor,1,Ranker,,,530,0.010379,100.103785,Koko Taylor,ranker:1387331
+602,Frances Quinlan,frances quinlan,1,Consequence,,97,,0.010101,100.10101,Frances Quinlan,
+603,Joe Tex,joe tex,1,Ranker,,,531,0.009768,100.09768,Joe Tex,ranker:1297967
+604,Justin Bieber,justin bieber,1,Ranker,,,532,0.009158,100.091575,Justin Bieber,ranker:32489978
+605,Damien Rice,damien rice,1,Ranker,,,533,0.008547,100.08547,Damien Rice,ranker:807086
+606,Poly Styrene,poly styrene,1,Rolling Stone,195,,,0.008375,100.083752,Poly Styrene,
+607,Jimmy Reed,jimmy reed,1,Ranker,,,534,0.007937,100.079365,Jimmy Reed,ranker:1289561
+608,Jacqui McShee,jacqui mcshee,1,Ranker,,,535,0.007326,100.07326,Jacqui McShee,ranker:1255953
+609,Serj Tankian,serj tankian,1,Consequence,,98,,0.006734,100.06734,Serj Tankian,
+610,Lara Fabian,lara fabian,1,Ranker,,,536,0.006716,100.067155,Lara Fabian,ranker:1412377
+611,Paul Westerberg,paul westerberg,1,Rolling Stone,196,,,0.0067,100.067002,Paul Westerberg,
+612,Sara Watkins,sara watkins,1,Ranker,,,537,0.006105,100.06105,Sara Watkins,ranker:1979184
+613,Liam Gallagher,liam gallagher,1,Ranker,,,538,0.005495,100.054945,Liam Gallagher,ranker:1443461
+614,Burna Boy,burna boy,1,Rolling Stone,197,,,0.005025,100.050251,Burna Boy,
+615,Joey Ramone,joey ramone,1,Ranker,,,539,0.004884,100.04884,Joey Ramone,ranker:1295933
+616,Molly O'Day,molly o day,1,Ranker,,,540,0.004274,100.042735,Molly O'Day,ranker:6276414
+617,Feist,feist,1,Ranker,,,541,0.003663,100.03663,Feist,ranker:1436435
+618,Jackie Evancho,jackie evancho,1,Ranker,,,542,0.003053,100.030525,Jackie Evancho,ranker:32368327
+619,Tom Chaplin,tom chaplin,1,Ranker,,,543,0.002442,100.02442,Tom Chaplin,ranker:2257435
+620,Gretchen Wilson,gretchen wilson,1,Ranker,,,544,0.001832,100.018315,Gretchen Wilson,ranker:1104071
+621,Glenn Danzig,glenn danzig,1,Rolling Stone,199,,,0.001675,100.01675,Glenn Danzig,
+622,Allan Jones,allan jones,1,Ranker,,,545,0.001221,100.01221,Allan Jones,ranker:435117
+623,Joe Dassin,joe dassin,1,Ranker,,,546,0.000611,100.006105,Joe Dassin,ranker:1296531
+624,Mireille Mathieu,mireille mathieu,1,Ranker,,,547,0.0,100.0,Mireille Mathieu,ranker:1595827
+625,Rosalía,rosalia,1,Rolling Stone,200,,,0.0,100.0,Rosalía,

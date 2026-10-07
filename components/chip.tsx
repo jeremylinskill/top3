@@ -10,6 +10,7 @@ type ChipProps = {
   icon?: string;
   selected?: boolean;
   onPress?: () => void;
+  borderless?: boolean;
 };
 
 export default function Chip({
@@ -17,6 +18,7 @@ export default function Chip({
   icon,
   selected = false,
   onPress,
+  borderless = false,
 }: ChipProps) {
   const colors = useAppColors();
 
@@ -37,6 +39,7 @@ export default function Chip({
             ? colors.primary
             : colors.border,
         },
+        borderless && styles.borderlessChip,
         pressed && styles.pressedChip,
       ]}>
       <AppText
@@ -61,6 +64,10 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
     borderWidth: 1,
     borderRadius: 14,
+  },
+
+  borderlessChip: {
+    borderWidth: 0,
   },
 
   pressedChip: {

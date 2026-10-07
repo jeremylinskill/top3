@@ -1,0 +1,192 @@
+consensus_rank,musician_name,normalized_name,source_count,sources,rolling_stone_rank,drumeo_rank,consequence_rank,musicradar_reader_poll_rank,average_rank_strength,consensus_score,name_variants
+1,John Bonham,john bonham,4,Consequence | Drumeo | MusicRadar Reader Poll | Rolling Stone,1,3,1,1,0.994949,409.949495,John Bonham
+2,Neil Peart,neil peart,4,Consequence | Drumeo | MusicRadar Reader Poll | Rolling Stone,4,2,3,4,0.969542,409.695424,Neil Peart
+3,Buddy Rich,buddy rich,4,Consequence | Drumeo | MusicRadar Reader Poll | Rolling Stone,15,1,2,2,0.957019,409.570192,Buddy Rich
+4,Keith Moon,keith moon,4,Consequence | Drumeo | MusicRadar Reader Poll | Rolling Stone,2,17,7,3,0.931715,409.317151,Keith Moon
+5,Stewart Copeland,stewart copeland,4,Consequence | Drumeo | MusicRadar Reader Poll | Rolling Stone,10,10,8,12,0.880746,408.807462,Stewart Copeland
+6,Mitch Mitchell,mitch mitchell,4,Consequence | Drumeo | MusicRadar Reader Poll | Rolling Stone,8,22,15,8,0.858225,408.582251,Mitch Mitchell
+7,Ringo Starr,ringo starr,4,Consequence | Drumeo | MusicRadar Reader Poll | Rolling Stone,14,7,17,15,0.840188,408.401876,Ringo Starr
+8,Ginger Baker,ginger baker,4,Consequence | Drumeo | MusicRadar Reader Poll | Rolling Stone,3,40,11,14,0.804886,408.048856,Ginger Baker
+9,Gene Krupa,gene krupa,4,Consequence | Drumeo | MusicRadar Reader Poll | Rolling Stone,7,16,4,29,0.796537,407.965368,Gene Krupa
+10,Dave Grohl,dave grohl,4,Consequence | Drumeo | MusicRadar Reader Poll | Rolling Stone,27,27,29,7,0.767368,407.673676,Dave Grohl
+11,Vinnie Colaiuta,vinnie colaiuta,4,Consequence | Drumeo | MusicRadar Reader Poll | Rolling Stone,49,4,9,22,0.743867,407.438672,Vinnie Colaiuta
+12,Steve Gadd,steve gadd,4,Consequence | Drumeo | MusicRadar Reader Poll | Rolling Stone,24,6,41,21,0.726242,407.26242,Steve Gadd
+13,Danny Carey,danny carey,4,Consequence | Drumeo | MusicRadar Reader Poll | Rolling Stone,26,42,14,16,0.723974,407.239744,Danny Carey
+14,Elvin Jones,elvin jones,4,Consequence | Drumeo | MusicRadar Reader Poll | Rolling Stone,23,12,10,49,0.649041,406.490414,Elvin Jones
+15,Phil Collins,phil collins,4,Consequence | Drumeo | MusicRadar Reader Poll | Rolling Stone,43,15,50,20,0.63791,406.379097,Phil Collins
+16,Billy Cobham,billy cobham,4,Consequence | Drumeo | MusicRadar Reader Poll | Rolling Stone,45,8,39,34,0.606885,406.068852,Billy Cobham
+17,Charlie Watts,charlie watts,4,Consequence | Drumeo | MusicRadar Reader Poll | Rolling Stone,12,45,25,39,0.606627,406.066275,Charlie Watts
+18,Terry Bozzio,terry bozzio,4,Consequence | Drumeo | MusicRadar Reader Poll | Rolling Stone,17,23,47,37,0.604205,406.042053,Terry Bozzio
+19,Steve Smith,steve smith,4,Consequence | Drumeo | MusicRadar Reader Poll | Rolling Stone,36,47,37,25,0.582096,405.820965,Steve Smith
+20,Ian Paice,ian paice,4,Consequence | Drumeo | MusicRadar Reader Poll | Rolling Stone,21,24,98,17,0.564832,405.64832,Ian Paice
+21,Jeff Porcaro,jeff porcaro,4,Consequence | Drumeo | MusicRadar Reader Poll | Rolling Stone,37,34,52,42,0.487786,404.87786,Jeff Porcaro
+22,Carmine Appice,carmine appice,4,Consequence | Drumeo | MusicRadar Reader Poll | Rolling Stone,28,50,71,33,0.468048,404.680478,Carmine Appice
+23,Travis Barker,travis barker,4,Consequence | Drumeo | MusicRadar Reader Poll | Rolling Stone,99,67,65,10,0.378324,403.783241,Travis Barker
+24,Tomas Haake,tomas haake,4,Consequence | Drumeo | MusicRadar Reader Poll | Rolling Stone,93,73,76,44,0.177077,401.770769,Tomas Haake
+25,Tony Williams,tony williams,3,Consequence | Drumeo | Rolling Stone,19,5,6,,0.681818,306.818182,Tony Williams
+26,Hal Blaine,hal blaine,3,Consequence | Drumeo | Rolling Stone,5,11,38,,0.621212,306.212121,Hal Blaine
+27,Dave Weckl,dave weckl,3,Consequence | Drumeo | MusicRadar Reader Poll,,25,5,13,0.618068,306.180684,Dave Weckl
+28,Bill Bruford,bill bruford,3,Consequence | Drumeo | Rolling Stone,16,19,23,,0.611111,306.111111,Bill Bruford
+29,Levon Helm,levon helm,3,Consequence | Drumeo | Rolling Stone,22,21,21,,0.59596,305.959596,Levon Helm
+30,Mike Portnoy,mike portnoy,3,Consequence | Drumeo | MusicRadar Reader Poll,,60,19,5,0.535147,305.351474,Mike Portnoy
+31,Bernard Purdie,bernard purdie,3,Consequence | MusicRadar Reader Poll | Rolling Stone,20,,24,28,0.506184,305.061843,Bernard Purdie
+32,Carl Palmer,carl palmer,3,Consequence | Drumeo | MusicRadar Reader Poll,,33,12,35,0.467945,304.679448,Carl Palmer
+33,Bill Ward,bill ward,3,Consequence | Drumeo | Rolling Stone,42,48,35,,0.441919,304.419192,Bill Ward
+34,Dennis Chambers,dennis chambers,3,Consequence | Drumeo | Rolling Stone,63,14,51,,0.434343,304.343434,Dennis Chambers
+35,Art Blakey,art blakey,3,Consequence | Drumeo | MusicRadar Reader Poll,,32,26,38,0.41981,304.198103,Art Blakey
+36,Dave Lombardo,dave lombardo,3,Consequence | Drumeo | Rolling Stone,47,77,13,,0.411616,304.116162,Dave Lombardo
+37,Jack DeJohnette,jack dejohnette,3,Consequence | Drumeo | Rolling Stone,40,28,72,,0.40404,304.040404,Jack DeJohnette
+38,Joey Jordison,joey jordison,3,Consequence | Drumeo | MusicRadar Reader Poll,,94,27,11,0.398475,303.984745,Joey Jordison
+39,Jim Keltner,jim keltner,3,Consequence | Drumeo | Rolling Stone,38,36,78,,0.373737,303.737374,Jim Keltner
+40,Chad Smith,chad smith,3,Consequence | MusicRadar Reader Poll | Rolling Stone,64,,77,6,0.37348,303.734797,Chad Smith
+41,Nicko McBrain,nicko mcbrain,3,Consequence | Drumeo | MusicRadar Reader Poll,,55,70,18,0.352659,303.526592,Nicko McBrain
+42,Alex Van Halen,alex van halen,3,Consequence | Drumeo | Rolling Stone,51,64,48,,0.34596,303.459596,Alex Van Halen
+43,Sheila E.,sheila e,3,Consequence | Drumeo | Rolling Stone,58,56,60,,0.318182,303.181818,Sheila E.
+44,Lars Ulrich,lars ulrich,3,Consequence | Drumeo | MusicRadar Reader Poll,,54,86,19,0.309678,303.096784,Lars Ulrich
+45,Steve Jordan,steve jordan,3,Consequence | Drumeo | Rolling Stone,80,61,61,,0.247475,302.474747,Steve Jordan
+46,Phil Rudd,phil rudd,3,Consequence | Drumeo | Rolling Stone,86,44,74,,0.242424,302.424242,Phil Rudd
+47,Chris Adler,chris adler,3,Consequence | Drumeo | MusicRadar Reader Poll,,75,97,23,0.208462,302.084622,Chris Adler
+48,Kenny Aronoff,kenny aronoff,3,Consequence | Drumeo | Rolling Stone,66,79,81,,0.186869,301.868687,Kenny Aronoff
+49,Matt Cameron,matt cameron,3,Drumeo | MusicRadar Reader Poll | Rolling Stone,52,98,,50,0.126263,301.262626,Matt Cameron
+50,Max Roach,max roach,2,Consequence | Drumeo,,9,18,,0.436869,204.368687,Max Roach
+51,Joe Morello,joe morello,2,Consequence | Drumeo,,18,28,,0.388889,203.888889,Joe Morello
+52,Cindy Blackman Santana,cindy blackman santana,2,Consequence | Drumeo,,37,20,,0.361111,203.611111,Cindy Blackman Santana
+53,James Gadson,james gadson,2,Consequence | Rolling Stone,32,,32,,0.343434,203.434343,James Gadson
+54,Benny Benjamin,benny benjamin,2,Consequence | Rolling Stone,11,,54,,0.340909,203.409091,Benny Benjamin
+55,David Garibaldi,david garibaldi,2,Consequence | Drumeo,,20,45,,0.340909,203.409091,David Garibaldi
+56,Al Jackson Jr.,al jackson jr,2,Consequence | Rolling Stone,9,,62,,0.325758,203.257576,Al Jackson Jr.
+57,Carter Beauford,carter beauford,2,Drumeo | Rolling Stone,41,41,,,0.29798,202.979798,Carter Beauford
+58,Clyde Stubblefield,clyde stubblefield,2,Consequence | Drumeo,,46,36,,0.29798,202.979798,Clyde Stubblefield
+59,Roger Hawkins,roger hawkins,2,Consequence | Rolling Stone,31,,55,,0.287879,202.878788,Roger Hawkins
+60,Tony Allen,tony allen,2,Consequence | Rolling Stone,33,,57,,0.277778,202.777778,Tony Allen
+61,Louis Bellson,louis bellson,2,Consequence | Drumeo,,29,63,,0.272727,202.727273,Louis Bellson
+62,Peter Erskine,peter erskine,2,Consequence | Drumeo,,26,66,,0.272727,202.727273,Peter Erskine
+63,Roy Haynes,roy haynes,2,Consequence | Drumeo,,35,59,,0.267677,202.676768,Roy Haynes
+64,Tré Cool,tre cool,2,Drumeo | MusicRadar Reader Poll,,38,,31,0.253504,202.535044,Tre Cool | Tré Cool
+65,Jojo Mayer,jojo mayer,2,Drumeo | MusicRadar Reader Poll,,62,,24,0.228613,202.286127,Jojo Mayer
+66,John “JR” Robinson,john jr robinson,2,Consequence | Drumeo,,90,31,,0.199495,201.994949,John JR Robinson | John “JR” Robinson
+67,Manu Katché,manu katche,2,Drumeo | Rolling Stone,57,68,,,0.189394,201.893939,Manu Katché
+68,Dale Crover,dale crover,2,Consequence | Rolling Stone,69,,58,,0.184343,201.843434,Dale Crover
+69,Jon Theodore,jon theodore,2,Consequence | Rolling Stone,88,,40,,0.181818,201.818182,Jon Theodore
+70,Jimmy Chamberlin,jimmy chamberlin,2,Drumeo | Rolling Stone,53,78,,,0.174242,201.742424,Jimmy Chamberlin
+71,Tony Royster Jr.,tony royster jr,2,Consequence | MusicRadar Reader Poll,,,85,27,0.155226,201.552257,Tony Royster Jr | Tony Royster Jr.
+72,Janet Weiss,janet weiss,2,Consequence | Rolling Stone,90,,49,,0.15404,201.540404,Janet Weiss
+73,Josh Freese,josh freese,2,Consequence | Drumeo,,93,46,,0.15404,201.540404,Josh Freese
+74,Matt Garstka,matt garstka,2,Consequence | Drumeo,,96,44,,0.151515,201.515152,Matt Garstka
+75,Michael Shrieve,michael shrieve,2,Drumeo | Rolling Stone,74,66,,,0.151515,201.515152,Michael Shrieve
+76,Max Weinberg,max weinberg,2,Drumeo | Rolling Stone,55,89,,,0.141414,201.414141,Max Weinberg
+77,Tommy Lee,tommy lee,2,MusicRadar Reader Poll | Rolling Stone,85,,,30,0.13992,201.399196,Tommy Lee
+78,Clem Burke,clem burke,2,Consequence | Rolling Stone,61,,87,,0.131313,201.313131,Clem Burke
+79,Mark Guiliana,mark guiliana,2,Consequence | Drumeo,,74,75,,0.128788,201.287879,Mark Guiliana
+80,Larry Mullen Jr.,larry mullen jr,2,Drumeo | Rolling Stone,96,65,,,0.098485,200.984848,Larry Mullen Jr.
+81,Tony Thompson,tony thompson,2,Consequence | Rolling Stone,62,,99,,0.098485,200.984848,Tony Thompson
+82,Moe Tucker,moe tucker,2,Consequence | Rolling Stone,77,,90,,0.083333,200.833333,Moe Tucker
+83,Terri Lyne Carrington,terri lyne carrington,2,Consequence | Drumeo,,88,84,,0.070707,200.707071,Terri Lyne Carrington
+84,Brian Blade,brian blade,2,Consequence | Drumeo,,97,79,,0.060606,200.606061,Brian Blade
+85,Meg White,meg white,2,Consequence | Rolling Stone,94,,88,,0.045455,200.454545,Meg White
+86,Chris “Daddy” Dave,chris daddy dave,2,Drumeo | MusicRadar Reader Poll,,91,,48,0.032931,200.329314,Chris 'Daddy' Dave | Chris “Daddy” Dave
+87,Clyde Stubblefield and John &#8220;Jabo&#8221; Starks,clyde stubblefield and john 8220 jabo 8221 starks,1,Rolling Stone,6,,,,0.237374,102.373737,Clyde Stubblefield and John &#8220;Jabo&#8221; Starks
+88,Bernard “Pretty” Purdie,bernard pretty purdie,1,Drumeo,,13,,,0.219697,102.19697,Bernard “Pretty” Purdie
+89,D.J. Fontana,dj fontana,1,Rolling Stone,13,,,,0.219697,102.19697,D.J. Fontana
+90,Jabo Starks,jabo starks,1,Consequence,,,16,,0.212121,102.121212,Jabo Starks
+91,Thomas Lang,thomas lang,1,MusicRadar Reader Poll,,,,9,0.209184,102.091837,Thomas Lang
+92,Joseph &#8220;Zigaboo&#8221; Modeliste,joseph 8220 zigaboo 8221 modeliste,1,Rolling Stone,18,,,,0.207071,102.070707,Joseph &#8220;Zigaboo&#8221; Modeliste
+93,Karen Carpenter,karen carpenter,1,Consequence,,,22,,0.19697,101.969697,Karen Carpenter
+94,Earl Palmer,earl palmer,1,Rolling Stone,25,,,,0.189394,101.893939,Earl Palmer
+95,Carlton Barrett,carlton barrett,1,Rolling Stone,29,,,,0.179293,101.792929,Carlton Barrett
+96,Clifton James,clifton james,1,Rolling Stone,30,,,,0.176768,101.767677,Clifton James
+97,Zigaboo Modeliste,zigaboo modeliste,1,Consequence,,,30,,0.176768,101.767677,Zigaboo Modeliste
+98,“Philly Joe” Jones,philly joe jones,1,Drumeo,,30,,,0.176768,101.767677,“Philly Joe” Jones
+99,Roger Taylor,roger taylor,1,Drumeo,,31,,,0.174242,101.742424,Roger Taylor
+100,Charlie Benante,charlie benante,1,Consequence,,,33,,0.169192,101.691919,Charlie Benante
+101,Mickey Hart and Bill Kreutzmann,mickey hart and bill kreutzmann,1,Rolling Stone,34,,,,0.166667,101.666667,Mickey Hart and Bill Kreutzmann
+102,Questlove,questlove,1,Consequence,,,34,,0.166667,101.666667,Questlove
+103,Fred Below,fred below,1,Rolling Stone,35,,,,0.164141,101.641414,Fred Below
+104,Ahmir “?uestlove” Thompson,ahmir uestlove thompson,1,Drumeo,,39,,,0.15404,101.540404,Ahmir “?uestlove” Thompson
+105,Ramon &#8220;Tiki&#8221; Fullwood,ramon 8220 tiki 8221 fullwood,1,Rolling Stone,39,,,,0.15404,101.540404,Ramon &#8220;Tiki&#8221; Fullwood
+106,Bill Kreutzmann,bill kreutzmann,1,Consequence,,,42,,0.146465,101.464646,Bill Kreutzmann
+107,Vinny Appice,vinny appice,1,Consequence,,,43,,0.143939,101.439394,Vinny Appice
+108,“Papa Jo” Jones,papa jo jones,1,Drumeo,,43,,,0.143939,101.439394,“Papa Jo” Jones
+109,Jerry Allison,jerry allison,1,Rolling Stone,44,,,,0.141414,101.414141,Jerry Allison
+110,Dave Garibaldi,dave garibaldi,1,Rolling Stone,46,,,,0.136364,101.363636,Dave Garibaldi
+111,John &#8220;Drumbo&#8221; French,john 8220 drumbo 8221 french,1,Rolling Stone,48,,,,0.131313,101.313131,John &#8220;Drumbo&#8221; French
+112,Danny Seraphine,danny seraphine,1,Drumeo,,49,,,0.128788,101.287879,Danny Seraphine
+113,Cozy Powell,cozy powell,1,Rolling Stone,50,,,,0.126263,101.262626,Cozy Powell
+114,Omar Hakim,omar hakim,1,Drumeo,,51,,,0.123737,101.237374,Omar Hakim
+115,Brann Dailor,brann dailor,1,MusicRadar Reader Poll,,,,26,0.122449,101.22449,Brann Dailor
+116,Gavin Harrison,gavin harrison,1,Drumeo,,52,,,0.121212,101.212121,Gavin Harrison
+117,Alex Acuña,alex acuna,1,Drumeo,,53,,,0.118687,101.186869,Alex Acuña
+118,Kenny Clarke,kenny clarke,1,Consequence,,,53,,0.118687,101.186869,Kenny Clarke
+119,Ahmir &#8220;Questlove&#8221; Thompson,ahmir 8220 questlove 8221 thompson,1,Rolling Stone,54,,,,0.116162,101.161616,Ahmir &#8220;Questlove&#8221; Thompson
+120,Mario Duplantier,mario duplantier,1,Consequence,,,56,,0.111111,101.111111,Mario Duplantier
+121,Richie Hayward,richie hayward,1,Rolling Stone,56,,,,0.111111,101.111111,Richie Hayward
+122,Jimmy Cobb,jimmy cobb,1,Drumeo,,57,,,0.108586,101.085859,Jimmy Cobb
+123,Gene Hoglan,gene hoglan,1,Drumeo,,58,,,0.106061,101.060606,Gene Hoglan
+124,Jim Gordon,jim gordon,1,Rolling Stone,59,,,,0.103535,101.035354,Jim Gordon
+125,Tommy Aldridge,tommy aldridge,1,Drumeo,,59,,,0.103535,101.035354,Tommy Aldridge
+126,Mick Fleetwood,mick fleetwood,1,Rolling Stone,60,,,,0.10101,101.010101,Mick Fleetwood
+127,Antonio Sánchez,antonio sanchez,1,Drumeo,,63,,,0.093434,100.934343,Antonio Sánchez
+128,Dominic Howard,dominic howard,1,MusicRadar Reader Poll,,,,32,0.091837,100.918367,Dominic Howard
+129,Jerry Carrigan,jerry carrigan,1,Consequence,,,64,,0.090909,100.909091,Jerry Carrigan
+130,Sly Dunbar,sly dunbar,1,Rolling Stone,65,,,,0.088384,100.883838,Sly Dunbar
+131,Greg Errico,greg errico,1,Rolling Stone,67,,,,0.083333,100.833333,Greg Errico
+132,Viola Smith,viola smith,1,Consequence,,,67,,0.083333,100.833333,Viola Smith
+133,Abe Cunningham,abe cunningham,1,Consequence,,,68,,0.080808,100.808081,Abe Cunningham
+134,Jerome &#8220;Bigfoot&#8221; Brailey,jerome 8220 bigfoot 8221 brailey,1,Rolling Stone,68,,,,0.080808,100.808081,Jerome &#8220;Bigfoot&#8221; Brailey
+135,John Blackwell Jr.,john blackwell jr,1,Drumeo,,69,,,0.078283,100.782828,John Blackwell Jr.
+136,Mel Lewis,mel lewis,1,Consequence,,,69,,0.078283,100.782828,Mel Lewis
+137,Simon Phillips,simon phillips,1,Drumeo,,70,,,0.075758,100.757576,Simon Phillips
+138,Tommy Ramone,tommy ramone,1,Rolling Stone,70,,,,0.075758,100.757576,Tommy Ramone
+139,Butch Trucks and Jaimoe,butch trucks and jaimoe,1,Rolling Stone,71,,,,0.073232,100.732323,Butch Trucks and Jaimoe
+140,Joseph “Ziggy” Modeliste,joseph ziggy modeliste,1,Drumeo,,71,,,0.073232,100.732323,Joseph “Ziggy” Modeliste
+141,Steve White,steve white,1,MusicRadar Reader Poll,,,,36,0.071429,100.714286,Steve White
+142,Horacio “El Negro” Hernández,horacio el negro hernandez,1,Drumeo,,72,,,0.070707,100.707071,Horacio “El Negro” Hernández
+143,James &#8220;Diamond&#8221; Williams,james 8220 diamond 8221 williams,1,Rolling Stone,72,,,,0.070707,100.707071,James &#8220;Diamond&#8221; Williams
+144,Pete Thomas,pete thomas,1,Rolling Stone,73,,,,0.068182,100.681818,Pete Thomas
+145,Russ Kunkel,russ kunkel,1,Consequence,,,73,,0.068182,100.681818,Russ Kunkel
+146,Earl Hudson,earl hudson,1,Rolling Stone,75,,,,0.063131,100.631313,Earl Hudson
+147,Earl Young,earl young,1,Rolling Stone,76,,,,0.060606,100.606061,Earl Young
+148,Mike Mangini,mike mangini,1,Drumeo,,76,,,0.060606,100.606061,Mike Mangini
+149,Micky Waller,micky waller,1,Rolling Stone,78,,,,0.055556,100.555556,Micky Waller
+150,Mick Avory,mick avory,1,Rolling Stone,79,,,,0.05303,100.530303,Mick Avory
+151,Thomas Pridgen,thomas pridgen,1,MusicRadar Reader Poll,,,,40,0.05102,100.510204,Thomas Pridgen
+152,Igor Cavalera,igor cavalera,1,Consequence,,,80,,0.050505,100.505051,Igor Cavalera
+153,Todd Sucherman,todd sucherman,1,Drumeo,,80,,,0.050505,100.505051,Todd Sucherman
+154,JR Robinson,jr robinson,1,Rolling Stone,81,,,,0.04798,100.479798,JR Robinson
+155,Virgil Donati,virgil donati,1,Drumeo,,81,,,0.04798,100.479798,Virgil Donati
+156,The Rev,the rev,1,MusicRadar Reader Poll,,,,41,0.045918,100.459184,The Rev
+157,Glenn Kotche,glenn kotche,1,Rolling Stone,82,,,,0.045455,100.454545,Glenn Kotche
+158,Gregg Bissonette,gregg bissonette,1,Drumeo,,82,,,0.045455,100.454545,Gregg Bissonette
+159,Louis Cole,louis cole,1,Consequence,,,82,,0.045455,100.454545,Louis Cole
+160,Colin “Cozy” Powell,colin cozy powell,1,Drumeo,,83,,,0.042929,100.429293,Colin “Cozy” Powell
+161,Papa Joe Jones,papa joe jones,1,Consequence,,,83,,0.042929,100.429293,Papa Joe Jones
+162,Ronald Shannon Jackson,ronald shannon jackson,1,Rolling Stone,83,,,,0.042929,100.429293,Ronald Shannon Jackson
+163,John Stanier,john stanier,1,Rolling Stone,84,,,,0.040404,100.40404,John Stanier
+164,Jonathan “Sugarfoot” Moffett,jonathan sugarfoot moffett,1,Drumeo,,84,,,0.040404,100.40404,Jonathan “Sugarfoot” Moffett
+165,Marco Minnemann,marco minnemann,1,Drumeo,,85,,,0.037879,100.378788,Marco Minnemann
+166,Stanton Moore,stanton moore,1,MusicRadar Reader Poll,,,,43,0.035714,100.357143,Stanton Moore
+167,Benny Greb,benny greb,1,Drumeo,,86,,,0.035354,100.353535,Benny Greb
+168,George Hurley,george hurley,1,Rolling Stone,87,,,,0.032828,100.328283,George Hurley
+169,Larnell Lewis,larnell lewis,1,Drumeo,,87,,,0.032828,100.328283,Larnell Lewis
+170,Bill Stevenson,bill stevenson,1,Rolling Stone,89,,,,0.027778,100.277778,Bill Stevenson
+171,Matt Halpern,matt halpern,1,Consequence,,,89,,0.027778,100.277778,Matt Halpern
+172,Brian Bennett,brian bennett,1,MusicRadar Reader Poll,,,,45,0.02551,100.255102,Brian Bennett
+173,Brian Chippendale,brian chippendale,1,Rolling Stone,91,,,,0.022727,100.227273,Brian Chippendale
+174,Jon Fishman,jon fishman,1,Consequence,,,91,,0.022727,100.227273,Jon Fishman
+175,Andols Herrick,andols herrick,1,MusicRadar Reader Poll,,,,46,0.020408,100.204082,Andols Herrick
+176,Abe Laboriel Jr.,abe laboriel jr,1,Drumeo,,92,,,0.020202,100.20202,Abe Laboriel Jr.
+177,Ralph Molina,ralph molina,1,Rolling Stone,92,,,,0.020202,100.20202,Ralph Molina
+178,Stella Mozgawa,stella mozgawa,1,Consequence,,,92,,0.020202,100.20202,Stella Mozgawa
+179,Topper Headon,topper headon,1,Consequence,,,93,,0.017677,100.176768,Topper Headon
+180,Alex Rodriguez,alex rodriguez,1,MusicRadar Reader Poll,,,,47,0.015306,100.153061,Alex Rodriguez
+181,Robert Wyatt,robert wyatt,1,Consequence,,,94,,0.015152,100.151515,Robert Wyatt
+182,Chris Dave,chris dave,1,Rolling Stone,95,,,,0.012626,100.126263,Chris Dave
+183,Taylor Hawkins,taylor hawkins,1,Consequence,,,95,,0.012626,100.126263,Taylor Hawkins
+184,Will Calhoun,will calhoun,1,Drumeo,,95,,,0.012626,100.126263,Will Calhoun
+185,Gina Schock,gina schock,1,Consequence,,,96,,0.010101,100.10101,Gina Schock
+186,Cindy Blackman,cindy blackman,1,Rolling Stone,97,,,,0.007576,100.075758,Cindy Blackman
+187,Steven Adler,steven adler,1,Rolling Stone,98,,,,0.005051,100.050505,Steven Adler
+188,Anika Nilles,anika nilles,1,Drumeo,,99,,,0.002525,100.025253,Anika Nilles
+189,Christian Vander,christian vander,1,Rolling Stone,100,,,,0.0,100.0,Christian Vander
+190,Jimmy “The Rev” Sullivan,jimmy the rev sullivan,1,Drumeo,,100,,,0.0,100.0,Jimmy “The Rev” Sullivan
+191,Mikkey Dee,mikkey dee,1,Consequence,,,100,,0.0,100.0,Mikkey Dee

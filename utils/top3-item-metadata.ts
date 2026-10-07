@@ -21,6 +21,14 @@ export function usesGenreMetadataPresentation(
   );
 }
 
+function isPeopleItem(
+  item: Top3Item
+): boolean {
+  return String(item.id).startsWith(
+    'person-'
+  );
+}
+
 function getDisplayGenreName(
   genre: string
 ): string {
@@ -87,6 +95,10 @@ export function getTop3ItemMetadata(
   item: Top3Item,
   category: string
 ): string {
+  if (isPeopleItem(item)) {
+    return item.subtitle?.trim() ?? '';
+  }
+
   if (
     MUSIC_METADATA_CATEGORIES.has(
       category
@@ -110,6 +122,10 @@ export function getTop3ItemPreviewMetadata(
   item: Top3Item,
   category: string
 ): string {
+  if (isPeopleItem(item)) {
+    return item.subtitle?.trim() ?? '';
+  }
+
   if (
     !usesGenreMetadataPresentation(
       category

@@ -1,0 +1,14 @@
+{
+  "nancy wilson::ranker:1645449": {
+    "musician_id": "musician-nancy-wilson-1937",
+    "reason": "Nancy Wilson, jazz/R&B vocalist born in 1937"
+  },
+  "nancy wilson::ranker:1645451": {
+    "musician_id": "musician-nancy-wilson",
+    "reason": "Nancy Wilson of Heart; existing guitarist catalogue identity"
+  },
+  "the notorious big": {
+    "musician_id": "musician-notorious-big",
+    "reason": "The Notorious B.I.G.; reuse existing vocalist catalogue identity"
+  }
+}

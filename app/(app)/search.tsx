@@ -10,6 +10,8 @@ import SearchResultSkeleton from '@/components/search-result-skeleton';
 import SegmentedControl from '@/components/segmented-control';
 import { getCategoryArtworkRule } from '@/constants/category-artwork-rules';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
+import { TOP3_THEME_SUGGESTIONS } from '@/constants/top3-theme-suggestions';
+import { useCollectionOptions } from '@/context/collection-options-context';
 import { useOnboardingCollection } from '@/context/onboarding-collection-context';
 import { useSavedItems } from '@/context/saved-items-context';
 import { useTop3 } from '@/context/top3-context';
@@ -17,14 +19,21 @@ import { useAppColors } from '@/hooks/use-app-colors';
 import { trackAnalyticsEvent } from '@/lib/analytics';
 import { stopAllMediaPreviewsFromCoordinator } from '@/lib/media-preview-coordinator';
 import {
+  getPopularMoviePeople,
+  searchMoviePeople,
+} from '@/providers/movies-and-tv';
+import {
   getPopularSuggestionsByCategory,
   getSearchProvider,
 } from '@/providers/search';
+import {
+  fetchCollectionOptionSuggestions,
+  getCachedCollectionOptionSuggestions,
+} from '@/services/collection-option-service';
 import { getPublishedPosts } from '@/services/post-service';
 import { Top3Item } from '@/types/top3-item';
 import {
   getTop3ItemMetadata,
-  usesGenreMetadataPresentation,
 } from '@/utils/top3-item-metadata';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -37,17 +46,14 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 type SearchSource = 'search' | 'saved';
-
 const MINIMUM_SEARCH_LENGTH = 3;
 const MINIMUM_COLLECTIONS_FOR_POPULARITY = 50;
-
 const SEARCH_CACHE = new Map<string, Top3Item[]>();
-
 const CATEGORY_SUGGESTIONS: Record<
   string,
   Top3Item[]
@@ -141,49 +147,48 @@ const CATEGORY_SUGGESTIONS: Record<
     },
   ],
 };
-
 function normalizeValue(value?: string) {
   return value?.trim().toLowerCase() ?? '';
 }
-
 export default function SearchScreen() {
   const colors = useAppColors();
   const params = useLocalSearchParams();
-
   const rank = params.rank;
-
   const sourceParam = Array.isArray(params.source)
     ? params.source[0]
     : params.source;
-
   const {
     currentList,
     setItemAtRank: setCurrentListItemAtRank,
   } = useTop3();
-
+  const {
+    getOptionById,
+  } = useCollectionOptions();
   const {
     collection: onboardingCollection,
     setItemAtRank: setOnboardingItemAtRank,
   } = useOnboardingCollection();
-
   const {
     savedItems,
     isLoading: isLoadingSavedItems,
     hasLoadError: hasSavedItemsLoadError,
     retrySavedItemsLoad,
   } = useSavedItems();
-
   const isOnboardingSearch =
     sourceParam === 'onboarding';
-
   const activeCollection =
     isOnboardingSearch
       ? onboardingCollection
       : currentList;
-
+  const activeCollectionOption =
+    !isOnboardingSearch &&
+    currentList?.collectionOptionId
+      ? getOptionById(
+          currentList.collectionOptionId
+        )
+      : undefined;
   const [activeSource, setActiveSource] =
     useState<SearchSource>('search');
-
   const [searchQuery, setSearchQuery] = useState('');
   const [
     isDuplicateSelectionVisible,
@@ -198,22 +203,22 @@ export default function SearchScreen() {
     suggestionPool,
     setSuggestionPool,
   ] = useState<Top3Item[]>([]);
-
   const [
     popularSuggestions,
     setPopularSuggestions,
   ] = useState<Top3Item[]>([]);
-
   const [
     isLoadingSuggestions,
     setIsLoadingSuggestions,
   ] = useState(true);
-
+  const [
+    remoteOptionSuggestions,
+    setRemoteOptionSuggestions,
+  ] = useState<Top3Item[]>([]);
   const [
     seenSuggestionIds,
     setSeenSuggestionIds,
   ] = useState<string[]>([]);
-
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const suggestionsOpacity =
     useRef(new Animated.Value(1)).current;
@@ -226,29 +231,34 @@ export default function SearchScreen() {
   const trackedSearchKeys = useRef(
     new Set<string>()
   );
-
   const selectedCategory = TOP3_CATEGORIES.find(
     (category) => category.id === activeCollection?.category
   );
-
   const savedCategoryItems = useMemo(() => {
     if (!selectedCategory) {
       return [];
     }
-
     const activeTopic =
       normalizeValue(activeCollection?.topic) ||
       'general';
-
+    const isPeopleCollection =
+      activeCollection?.category === 'movies' &&
+      ((activeCollectionOption?.providerKey === 'tmdb' &&
+        activeCollectionOption.providerMode === 'movie_person') ||
+        normalizeValue(activeCollection?.type) ===
+          'actors' ||
+        normalizeValue(activeCollection?.type) ===
+          'directors');
     return savedItems
       .filter(
         (savedItem) =>
           savedItem.category ===
             selectedCategory.id &&
-          (activeTopic === 'general' ||
-            normalizeValue(
-              savedItem.sourceTopic
-            ) === activeTopic)
+          (isPeopleCollection
+            ? savedItem.item.id.startsWith('person-')
+            : activeTopic === 'general' ||
+              normalizeValue(savedItem.sourceTopic) ===
+                activeTopic)
       )
       .sort(
         (first, second) =>
@@ -256,100 +266,258 @@ export default function SearchScreen() {
           new Date(first.createdAt).getTime()
       );
   }, [
+    activeCollection?.category,
     activeCollection?.topic,
+    activeCollection?.type,
+    activeCollectionOption,
     savedItems,
     selectedCategory,
   ]);
-
-  const selectedType =
+  const configuredType =
     selectedCategory?.types?.find(
       (type) =>
         type.name.toLowerCase() ===
         activeCollection?.type?.toLowerCase()
     );
-
+  const normalizedActiveType =
+    normalizeValue(activeCollection?.type);
+  const configuredMoviePeopleType =
+    activeCollectionOption?.providerKey === 'tmdb' &&
+    activeCollectionOption.providerMode === 'movie_person' &&
+    typeof activeCollectionOption.providerConfig.personType === 'string'
+      ? normalizeValue(
+          activeCollectionOption.providerConfig.personType
+        )
+      : '';
+  const moviePeopleType =
+    configuredMoviePeopleType === 'actors' ||
+    configuredMoviePeopleType === 'directors'
+      ? configuredMoviePeopleType
+      : normalizedActiveType;
+  const isMoviePeopleType =
+    activeCollection?.category === 'movies' &&
+    (moviePeopleType === 'actors' ||
+      moviePeopleType === 'directors');
+  const remoteType =
+    activeCollectionOption?.kind === 'type'
+      ? {
+          id: activeCollectionOption.id,
+          name: activeCollectionOption.name,
+          icon: selectedCategory?.icon ?? '⭐',
+          searchItemName:
+            selectedCategory?.name
+              ?.replace(/s$/i, '')
+              .toLowerCase() ?? 'item',
+          topics:
+            selectedCategory?.topics ?? [],
+        }
+      : undefined;
+  const selectedType =
+    configuredType ??
+    (isMoviePeopleType
+      ? {
+          id:
+            activeCollectionOption?.id ??
+            moviePeopleType,
+          name:
+            activeCollectionOption?.name ??
+            (moviePeopleType === 'actors'
+              ? 'Actors'
+              : 'Directors'),
+          icon: '🎭',
+          searchItemName:
+            moviePeopleType === 'actors'
+              ? 'actor'
+              : 'director',
+          topics: selectedCategory?.topics ?? [],
+        }
+      : remoteType);
   const availableTopics =
-    selectedType?.topics ??
-    selectedCategory?.topics ??
-    [];
-
-  const selectedTopic =
+    isMoviePeopleType
+      ? selectedCategory?.topics ?? []
+      : selectedType?.topics ??
+        selectedCategory?.topics ??
+        [];
+  const matchedTopic =
     availableTopics.find(
       (topic) =>
         topic.name.toLowerCase() ===
         activeCollection?.topic?.toLowerCase()
-    ) ??
+    );
+  const selectedTopic =
+    matchedTopic ??
     availableTopics.find(
       (topic) => topic.id === 'general'
     );
-
+  const activeTopicName =
+    activeCollection?.topic?.trim();
+  const isCustomTopic =
+    Boolean(activeTopicName) &&
+    !matchedTopic;
+  const bundledCuratedSuggestions = useMemo(
+    () =>
+      activeTopicName
+        ? TOP3_THEME_SUGGESTIONS[
+            normalizeValue(activeTopicName)
+          ] ?? []
+        : [],
+    [activeTopicName]
+  );
+  const curatedOptionSuggestions = useMemo(
+    () =>
+      remoteOptionSuggestions.length > 0
+        ? remoteOptionSuggestions
+        : bundledCuratedSuggestions,
+    [
+      remoteOptionSuggestions,
+      bundledCuratedSuggestions,
+    ]
+  );
   const categoryName = selectedCategory?.name ?? 'Items';
-
   const artworkRule =
     getCategoryArtworkRule(
       activeCollection?.category ?? ''
     );
-
   const topicName =
-    selectedTopic?.id === 'general' &&
+    isCustomTopic
+      ? activeTopicName
+      : selectedTopic?.id === 'general' &&
+          selectedType
+        ? selectedType.name
+        : selectedTopic?.name;
+  const savedSelectionName =
     selectedType
       ? selectedType.name
-      : selectedTopic?.name;
-
-  const savedSelectionName =
-    normalizeValue(activeCollection?.topic) &&
-    normalizeValue(activeCollection?.topic) !==
-      'general' &&
-    topicName
-      ? topicName
-      : categoryName;
-
+      : normalizeValue(activeCollection?.topic) &&
+          normalizeValue(activeCollection?.topic) !==
+            'general' &&
+          topicName
+        ? topicName
+        : categoryName;
   const searchItemName =
-    selectedTopic?.searchItemName ??
-    selectedType?.searchItemName ??
-    'item';
-
+    isMoviePeopleType
+      ? selectedType?.searchItemName ?? 'person'
+      : selectedTopic?.searchItemName ??
+        selectedType?.searchItemName ??
+        'item';
   const searchIcon =
-    selectedTopic?.icon ??
-    selectedType?.icon ??
-    selectedCategory?.icon ??
-    '⭐';
-
+    isMoviePeopleType
+      ? selectedType?.icon ?? '🎭'
+      : selectedTopic?.icon ??
+        selectedType?.icon ??
+        selectedCategory?.icon ??
+        '⭐';
   const placeholderIcon =
-    selectedCategory?.placeholderIcon ?? 'image-outline';
-
+    isMoviePeopleType
+      ? 'person-outline'
+      : selectedCategory?.placeholderIcon ??
+        'image-outline';
   const isGeneralTopic =
     selectedTopic?.id === 'general' &&
     !selectedType;
-
   const fallbackSuggestions =
-    CATEGORY_SUGGESTIONS[
-      activeCollection?.category ?? ''
-    ] ?? [];
-
+    isMoviePeopleType
+      ? []
+      : isCustomTopic
+        ? curatedOptionSuggestions
+        : CATEGORY_SUGGESTIONS[
+            activeCollection?.category ?? ''
+          ] ?? [];
   const suggestions =
     isLoadingSuggestions
       ? []
       : popularSuggestions.length > 0
         ? popularSuggestions
         : fallbackSuggestions;
-
   const trimmedQuery = searchQuery.trim();
   const canSearch =
     trimmedQuery.length >= MINIMUM_SEARCH_LENGTH;
 
   useEffect(() => {
     let isMounted = true;
+    const optionId =
+      activeCollectionOption?.id;
 
+    setRemoteOptionSuggestions([]);
+
+    if (!optionId) {
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    const resolvedOptionId = optionId;
+
+    async function loadOptionSuggestions() {
+      const cachedSuggestions =
+        await getCachedCollectionOptionSuggestions(
+          resolvedOptionId
+        );
+
+      if (
+        isMounted &&
+        cachedSuggestions.length > 0
+      ) {
+        setRemoteOptionSuggestions(
+          cachedSuggestions.map(
+            (suggestion) => suggestion.item
+          )
+        );
+      }
+
+      try {
+        const freshSuggestions =
+          await fetchCollectionOptionSuggestions(
+            resolvedOptionId
+          );
+
+        if (!isMounted) {
+          return;
+        }
+
+        setRemoteOptionSuggestions(
+          freshSuggestions.map(
+            (suggestion) => suggestion.item
+          )
+        );
+      } catch (error) {
+        if (__DEV__) {
+          console.log(
+            'Failed to refresh collection option suggestions:',
+            error
+          );
+        }
+      }
+    }
+
+    void loadOptionSuggestions();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [activeCollectionOption?.id]);
+
+  useEffect(() => {
+    let isMounted = true;
     setIsLoadingSuggestions(true);
     setSuggestionPool([]);
     setPopularSuggestions([]);
     setSeenSuggestionIds([]);
-
     async function loadPopularSuggestions() {
       const categoryId = activeCollection?.category;
       const topic = activeCollection?.topic;
-
+      const themeSuggestions =
+        curatedOptionSuggestions;
+      function applyThemeSuggestions() {
+        const initialSuggestions =
+          themeSuggestions.slice(0, 5);
+        setSuggestionPool(themeSuggestions);
+        setPopularSuggestions(initialSuggestions);
+        setSeenSuggestionIds(
+          initialSuggestions.map((item) => item.id)
+        );
+        setIsLoadingSuggestions(false);
+      }
       if (!categoryId) {
         setSuggestionPool([]);
         setPopularSuggestions([]);
@@ -357,26 +525,29 @@ export default function SearchScreen() {
         setIsLoadingSuggestions(false);
         return;
       }
-
       async function loadProviderSuggestions(
         resolvedCategoryId: string
       ) {
         try {
           const providerResults =
-            await getPopularSuggestionsByCategory(
-              resolvedCategoryId,
-              topic,
-              20
-            );
-
+            isMoviePeopleType
+              ? await getPopularMoviePeople(
+                  moviePeopleType,
+                  20
+                )
+              : await getPopularSuggestionsByCategory(
+                  resolvedCategoryId,
+                  topic,
+                  20,
+                  undefined,
+                  activeCollectionOption
+                );
           if (!isMounted) {
             return;
           }
-
           if (providerResults.length > 0) {
             const initialSuggestions =
               providerResults.slice(0, 5);
-
             setSuggestionPool(
               providerResults
             );
@@ -389,10 +560,8 @@ export default function SearchScreen() {
               )
             );
             setIsLoadingSuggestions(false);
-
             return;
           }
-
           setSuggestionPool([]);
           setPopularSuggestions([]);
           setSeenSuggestionIds([]);
@@ -404,7 +573,6 @@ export default function SearchScreen() {
               error
             );
           }
-
           if (isMounted) {
             setSuggestionPool([]);
             setPopularSuggestions([]);
@@ -413,36 +581,33 @@ export default function SearchScreen() {
           }
         }
       }
-
+      if (isMoviePeopleType) {
+        await loadProviderSuggestions(categoryId);
+        return;
+      }
       try {
         const publishedPosts =
           await getPublishedPosts();
-
         const normalizedCategory =
           normalizeValue(categoryId);
-
         const normalizedTopic =
           normalizeValue(topic) || 'general';
-
         const matchingPosts =
           publishedPosts.filter((post) => {
             const postCategory =
               normalizeValue(
                 post.collection.category
               );
-
             const postTopic =
               normalizeValue(
                 post.collection.topic
               ) || 'general';
-
             return (
               postCategory ===
                 normalizedCategory &&
               postTopic === normalizedTopic
             );
           });
-
         if (
           matchingPosts.length >=
           MINIMUM_COLLECTIONS_FOR_POPULARITY
@@ -455,26 +620,21 @@ export default function SearchScreen() {
               appearances: number;
             }
           >();
-
           matchingPosts.forEach((post) => {
             post.collection.items.forEach(
               (item, index) => {
                 if (!item) {
                   return;
                 }
-
                 const itemKey =
                   item.id?.toString() ||
                   normalizeValue(item.title);
-
                 if (!itemKey) {
                   return;
                 }
-
                 const rankScore = 3 - index;
                 const existing =
                   scores.get(itemKey);
-
                 scores.set(itemKey, {
                   item,
                   score:
@@ -487,14 +647,12 @@ export default function SearchScreen() {
               }
             );
           });
-
           const communitySuggestions =
             Array.from(scores.values())
               .sort((a, b) => {
                 if (b.score !== a.score) {
                   return b.score - a.score;
                 }
-
                 if (
                   b.appearances !==
                   a.appearances
@@ -504,14 +662,12 @@ export default function SearchScreen() {
                     a.appearances
                   );
                 }
-
                 return a.item.title.localeCompare(
                   b.item.title
                 );
               })
               .slice(0, 5)
               .map((entry) => entry.item);
-
           if (
             isMounted &&
             communitySuggestions.length > 0
@@ -531,7 +687,10 @@ export default function SearchScreen() {
             return;
           }
         }
-
+        if (themeSuggestions.length > 0) {
+          applyThemeSuggestions();
+          return;
+        }
         await loadProviderSuggestions(categoryId);
       } catch (error) {
         if (__DEV__) {
@@ -540,21 +699,27 @@ export default function SearchScreen() {
             error
           );
         }
-
+        if (themeSuggestions.length > 0) {
+          applyThemeSuggestions();
+          return;
+        }
         await loadProviderSuggestions(categoryId);
       }
     }
-
     void loadPopularSuggestions();
-
     return () => {
       isMounted = false;
     };
   }, [
     activeCollection?.category,
     activeCollection?.topic,
+    activeCollection?.type,
+    isCustomTopic,
+    isMoviePeopleType,
+    moviePeopleType,
+    activeCollectionOption,
+    curatedOptionSuggestions,
   ]);
-
   function trackCompletedSearch(
     searchKey: string,
     categoryId: string
@@ -566,11 +731,9 @@ export default function SearchScreen() {
     ) {
       return;
     }
-
     trackedSearchKeys.current.add(
       searchKey
     );
-
     trackAnalyticsEvent(
       'search_performed',
       {
@@ -578,11 +741,9 @@ export default function SearchScreen() {
       }
     );
   }
-
   useEffect(() => {
     const effectSearchId =
       ++latestSearchId.current;
-
     async function loadResults() {
       if (!canSearch) {
         setSearchResults([]);
@@ -591,9 +752,7 @@ export default function SearchScreen() {
         setIsLoading(false);
         return;
       }
-
       const categoryId = activeCollection?.category;
-
       if (!categoryId) {
         setSearchResults([]);
         setHasSearched(true);
@@ -603,40 +762,43 @@ export default function SearchScreen() {
         setIsLoading(false);
         return;
       }
-
       const cacheKey = [
         categoryId,
+        activeCollection?.type?.trim().toLowerCase() ??
+          'general',
         activeCollection?.topic?.trim().toLowerCase() ??
           'general',
         trimmedQuery.toLowerCase(),
       ].join('|');
-
       const cachedResults = SEARCH_CACHE.get(cacheKey);
-
       if (cachedResults) {
         setSearchResults(cachedResults);
         setHasSearched(true);
         setSearchError(null);
         setIsLoading(false);
-
         trackCompletedSearch(
           cacheKey,
           categoryId
         );
-
         return;
       }
-
       const searchProvider =
-        getSearchProvider(categoryId);
-
+        isMoviePeopleType
+          ? (query: string, _topic?: string) =>
+              searchMoviePeople(
+                query,
+                moviePeopleType
+              )
+          : getSearchProvider(
+              categoryId,
+              activeCollectionOption
+            );
       if (!searchProvider) {
         if (__DEV__) {
           console.log(
             `No search provider exists for: ${categoryId}`
           );
         }
-
         setSearchResults([]);
         setHasSearched(true);
         setSearchError(
@@ -645,29 +807,23 @@ export default function SearchScreen() {
         setIsLoading(false);
         return;
       }
-
       setSearchError(null);
       setIsLoading(true);
-
       const searchId = effectSearchId;
-
       try {
         const results = await searchProvider(
           trimmedQuery,
           activeCollection?.topic
         );
-
         if (
           searchId !== latestSearchId.current
         ) {
           return;
         }
-
         SEARCH_CACHE.set(cacheKey, results);
         setSearchResults(results);
         setHasSearched(true);
         setSearchError(null);
-
         trackCompletedSearch(
           cacheKey,
           categoryId
@@ -678,19 +834,16 @@ export default function SearchScreen() {
         ) {
           return;
         }
-
         if (__DEV__) {
           console.log(
             `${categoryName} search failed:`,
             error
           );
         }
-
         const unavailableMessage =
           categoryId === 'games'
             ? 'Video game search is temporarily unavailable. Please try again in a few minutes.'
             : `${categoryName} search is temporarily unavailable. Please try again.`;
-
         setSearchResults([]);
         setHasSearched(true);
         setSearchError(unavailableMessage);
@@ -702,32 +855,30 @@ export default function SearchScreen() {
         }
       }
     }
-
     const timeoutId = setTimeout(loadResults, 200);
-
     return () => clearTimeout(timeoutId);
   }, [
     canSearch,
     categoryName,
     activeCollection?.category,
     activeCollection?.topic,
+    activeCollection?.type,
+    isMoviePeopleType,
+    moviePeopleType,
+    activeCollectionOption,
     trimmedQuery,
   ]);
-
   useEffect(() => {
     if (isLoading || searchResults.length === 0) {
       fadeAnim.setValue(0);
       return;
     }
-
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 200,
       useNativeDriver: true,
     }).start();
   }, [fadeAnim, isLoading, searchResults]);
-
-
   function refreshSuggestions() {
     if (
       suggestionPool.length <= 5 ||
@@ -735,7 +886,6 @@ export default function SearchScreen() {
     ) {
       return;
     }
-
     const unseenSuggestions =
       suggestionPool.filter(
         (suggestion) =>
@@ -743,17 +893,14 @@ export default function SearchScreen() {
             suggestion.id
           )
       );
-
     const shouldResetSeen =
       unseenSuggestions.length < 5;
-
     const refreshedSeenSuggestionIds =
       shouldResetSeen
         ? popularSuggestions.map(
             (suggestion) => suggestion.id
           )
         : seenSuggestionIds;
-
     const refreshedUnseenSuggestions =
       suggestionPool.filter(
         (suggestion) =>
@@ -761,14 +908,12 @@ export default function SearchScreen() {
             suggestion.id
           )
       );
-
     const currentSuggestionIds =
       new Set(
         popularSuggestions.map(
           (suggestion) => suggestion.id
         )
       );
-
     const source =
       refreshedUnseenSuggestions.length >= 5
         ? refreshedUnseenSuggestions
@@ -778,9 +923,7 @@ export default function SearchScreen() {
                 suggestion.id
               )
           );
-
     const shuffled = [...source];
-
     for (
       let index = shuffled.length - 1;
       index > 0;
@@ -789,7 +932,6 @@ export default function SearchScreen() {
       const randomIndex = Math.floor(
         Math.random() * (index + 1)
       );
-
       [
         shuffled[index],
         shuffled[randomIndex],
@@ -798,16 +940,13 @@ export default function SearchScreen() {
         shuffled[index],
       ];
     }
-
     isShuffling.current = true;
     shuffleRotation.setValue(0);
-
     Animated.timing(shuffleRotation, {
       toValue: 1,
       duration: 290,
       useNativeDriver: true,
     }).start();
-
     Animated.parallel([
       Animated.timing(
         suggestionsOpacity,
@@ -828,11 +967,9 @@ export default function SearchScreen() {
     ]).start(() => {
       const nextSuggestions =
         shuffled.slice(0, 5);
-
       setPopularSuggestions(
         nextSuggestions
       );
-
       setSeenSuggestionIds((current) => {
         const baseSeenIds =
           shouldResetSeen
@@ -841,7 +978,6 @@ export default function SearchScreen() {
                   suggestion.id
               )
             : current;
-
         return [
           ...new Set([
             ...baseSeenIds,
@@ -852,9 +988,7 @@ export default function SearchScreen() {
           ]),
         ];
       });
-
       suggestionsTranslateY.setValue(6);
-
       Animated.parallel([
         Animated.timing(
           suggestionsOpacity,
@@ -877,7 +1011,6 @@ export default function SearchScreen() {
       });
     });
   }
-
 function chooseSuggestion(
   suggestion: Top3Item
 ) {
@@ -885,31 +1018,25 @@ function chooseSuggestion(
     suggestion.title
   );
 }
-
   function selectItem(
     item: Top3Item,
     source: SearchSource = 'search'
   ) {
     const selectedRank = Number(rank);
-
     if (selectedRank < 1 || selectedRank > 3) {
       return;
     }
-
     const existingItemRank =
       activeCollection?.items.findIndex(
         (existingItem, index) =>
           existingItem?.id === item.id &&
           index !== selectedRank - 1
       ) ?? -1;
-
     if (existingItemRank !== -1) {
       setIsDuplicateSelectionVisible(true);
       return;
     }
-
     stopAllMediaPreviewsFromCoordinator();
-
     if (isOnboardingSearch) {
       setOnboardingItemAtRank(
         selectedRank,
@@ -921,7 +1048,6 @@ function chooseSuggestion(
         item
       );
     }
-
     trackAnalyticsEvent(
       'item_added',
       {
@@ -930,41 +1056,61 @@ function chooseSuggestion(
         source,
       }
     );
-
     router.back();
   }
-
-const pageTitle = selectedType
-  ? activeCollection?.topic
-    ? `Choose ${selectedType.name} • ${topicName}`
-    : `Choose ${selectedType.name}`
-  : activeCollection?.topic
-    ? `Choose ${categoryName} • ${topicName}`
-    : `Choose ${categoryName}`;
+const normalizedRank = Array.isArray(rank)
+  ? rank[0]
+  : rank;
+  const selectedRank = Number(normalizedRank);
+  const pageTitle = selectedType
+    ? activeCollection?.topic &&
+      selectedTopic?.id !== 'general'
+      ? `${topicName} ${selectedType.name}`
+      : selectedType.name
+    : isCustomTopic
+      ? topicName ?? categoryName
+      : activeCollection?.topic &&
+          selectedTopic?.id !== 'general'
+        ? `${topicName} ${categoryName}`
+        : categoryName;
+  const pageSubtitle =
+    selectedRank >= 1 && selectedRank <= 3
+      ? `Choose your #${selectedRank}.`
+      : undefined;
+  const searchArticle =
+    /^[aeiou]/i.test(searchItemName)
+      ? 'an'
+      : 'a';
 
   const searchPlaceholder =
-    `Search for a ${searchItemName}...`;
-
-  const resultsTitle = activeCollection?.topic
-    ? `${categoryName} • ${topicName} Results`
-    : `${categoryName} Results`;
-
+    `Search for ${searchArticle} ${searchItemName}...`;
+  const resultsTitle =
+    selectedType
+      ? `${selectedType.name} Results`
+      : isCustomTopic
+        ? `${categoryName} Results`
+        : activeCollection?.topic
+          ? `${categoryName} • ${topicName} Results`
+          : `${categoryName} Results`;
   const shuffleRotationDegrees =
     shuffleRotation.interpolate({
       inputRange: [0, 1],
       outputRange: ['0deg', '180deg'],
     });
-
   function renderSelectionRow(
     item: Top3Item,
     source: SearchSource
   ) {
     const itemMetadata =
-      getTop3ItemMetadata(
-        item,
-        activeCollection?.category ?? ''
-      ) || 'Details unavailable';
-
+      isMoviePeopleType
+        ? item.subtitle ??
+          (moviePeopleType === 'directors'
+            ? 'Director'
+            : 'Actor')
+        : getTop3ItemMetadata(
+            item,
+            activeCollection?.category ?? ''
+          ) || 'Details unavailable';
     return (
       <Pressable
         key={`${source}:${item.id}`}
@@ -1016,29 +1162,23 @@ const pageTitle = selectedType
             </View>
           )}
         </View>
-
         <View style={styles.resultDetails}>
           <AppText
             variant="selectionTitle"
             emphasis="semibold">
             {item.title}
           </AppText>
-
           <AppText
             variant="bodyLarge"
             tone="tertiary"
             style={styles.metadata}>
             {itemMetadata}
-            {!usesGenreMetadataPresentation(
-              activeCollection?.category ?? ''
-            ) &&
-            typeof item.rating === 'number'
+            {typeof item.rating === 'number'
               ? ` · ★ ${item.rating.toFixed(1)}`
               : ''}
           </AppText>
         </View>
-
-        {activeCollection?.category ? (
+        {activeCollection?.category && !isMoviePeopleType ? (
           <MediaPreviewItemButton
             item={item}
             category={activeCollection.category}
@@ -1056,19 +1196,22 @@ const pageTitle = selectedType
       </Pressable>
     );
   }
-
   return (
-    <SafeAreaView
-      style={[
-        styles.container,
-        {
-          backgroundColor: colors.background,
-        },
-      ]}>
+    <TouchableWithoutFeedback
+      onPress={Keyboard.dismiss}
+      accessible={false}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}>
       <ScreenHeader showBackButton />
-
-      <PageHeader title={pageTitle} />
-
+      <PageHeader
+        title={`${selectedCategory?.icon ?? '⭐'} ${pageTitle}`}
+        subtitle={pageSubtitle}
+      />
       <View
         style={[
           styles.segmentedContainer,
@@ -1097,12 +1240,10 @@ const pageTitle = selectedType
             if (nextSource === 'saved') {
               Keyboard.dismiss();
             }
-
             setActiveSource(nextSource);
           }}
         />
       </View>
-
       <View
         style={[
           styles.content,
@@ -1114,6 +1255,7 @@ const pageTitle = selectedType
           <>
             <View style={styles.searchInputWrapper}>
               <SearchInput
+                borderless
                 placeholder={searchPlaceholder}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
@@ -1126,7 +1268,6 @@ const pageTitle = selectedType
                 }}
               />
             </View>
-
             {!canSearch ? (
               <AppText
                 variant="subtitle"
@@ -1136,7 +1277,6 @@ const pageTitle = selectedType
                 characters to search.
               </AppText>
             ) : null}
-
             {!hasSearched &&
             !canSearch &&
             suggestions.length > 0 ? (
@@ -1147,7 +1287,6 @@ const pageTitle = selectedType
                     emphasis="semibold">
                     Suggestions
                   </AppText>
-
                   {suggestionPool.length > 5 ? (
                     <Pressable
                       style={({ pressed }) => [
@@ -1178,7 +1317,6 @@ const pageTitle = selectedType
                           color={colors.accent}
                         />
                       </Animated.View>
-
                       <AppText
                         variant="label"
                         tone="accent">
@@ -1187,7 +1325,6 @@ const pageTitle = selectedType
                     </Pressable>
                   ) : null}
                 </View>
-
                 <Animated.View
                   style={{
                     opacity: suggestionsOpacity,
@@ -1202,6 +1339,7 @@ const pageTitle = selectedType
                     {suggestions.map(
                       (suggestion) => (
                         <Chip
+                          borderless
                           key={suggestion.id}
                           label={suggestion.title}
                           onPress={() =>
@@ -1216,7 +1354,6 @@ const pageTitle = selectedType
                 </Animated.View>
               </View>
             ) : null}
-
             {isLoading ? (
               <>
                 <AppText
@@ -1224,10 +1361,11 @@ const pageTitle = selectedType
                   style={styles.sectionTitle}>
                   {resultsTitle}
                 </AppText>
-
                 <ScrollView
                   showsVerticalScrollIndicator={false}
                   keyboardShouldPersistTaps="handled"
+                  keyboardDismissMode="interactive"
+                  alwaysBounceVertical
                   contentContainerStyle={
                     styles.resultsContent
                   }>
@@ -1253,14 +1391,12 @@ const pageTitle = selectedType
                   color={colors.tertiaryText}
                   style={styles.messageErrorIcon}
                 />
-
                 <AppText
                   variant="sectionTitle"
                   emphasis="semibold"
                   style={styles.messageTitle}>
                   Search unavailable
                 </AppText>
-
                 <AppText
                   variant="bodyLarge"
                   tone="tertiary"
@@ -1273,14 +1409,12 @@ const pageTitle = selectedType
                 <Text style={styles.messageIcon}>
                   {searchIcon}
                 </Text>
-
                 <AppText
                   variant="sectionTitle"
                   emphasis="semibold"
                   style={styles.messageTitle}>
                   No {searchItemName} results found
                 </AppText>
-
                 <AppText
                   variant="bodyLarge"
                   tone="tertiary"
@@ -1295,7 +1429,6 @@ const pageTitle = selectedType
                   style={styles.sectionTitle}>
                   {resultsTitle}
                 </AppText>
-
                 <Animated.View
                   style={[
                     styles.resultsContainer,
@@ -1315,6 +1448,8 @@ const pageTitle = selectedType
                   <ScrollView
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode="interactive"
+                    alwaysBounceVertical
                     contentContainerStyle={
                       styles.resultsContent
                     }>
@@ -1353,21 +1488,18 @@ const pageTitle = selectedType
               color={colors.tertiaryText}
               style={styles.messageErrorIcon}
             />
-
             <AppText
               variant="sectionTitle"
               emphasis="semibold"
               style={styles.messageTitle}>
               Couldn’t load Saved
             </AppText>
-
             <AppText
               variant="bodyLarge"
               tone="tertiary"
               style={styles.messageText}>
               Check your connection and try again.
             </AppText>
-
             <PrimaryButton
               title="Try Again"
               onPress={retrySavedItemsLoad}
@@ -1382,7 +1514,6 @@ const pageTitle = selectedType
               color={colors.tertiaryText}
               style={styles.messageErrorIcon}
             />
-
             <AppText
               variant="sectionTitle"
               emphasis="semibold"
@@ -1391,7 +1522,6 @@ const pageTitle = selectedType
                 ? 'Nothing saved yet'
                 : `No saved ${savedSelectionName}`}
             </AppText>
-
             <AppText
               variant="bodyLarge"
               tone="tertiary"
@@ -1408,7 +1538,6 @@ const pageTitle = selectedType
               style={styles.sectionTitle}>
               Saved {savedSelectionName}
             </AppText>
-
             <ScrollView
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
@@ -1423,7 +1552,6 @@ const pageTitle = selectedType
           </>
         )}
       </View>
-
       <ActionSheet
         visible={isDuplicateSelectionVisible}
         title="Already in your Top 3"
@@ -1440,58 +1568,47 @@ const pageTitle = selectedType
           setIsDuplicateSelectionVisible(false);
         }}
       />
-
-    </SafeAreaView>
+      </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-
   segmentedContainer: {
     paddingHorizontal: 20,
-    paddingTop: 12,
+    paddingTop: 0,
     paddingBottom: 20,
   },
-
   content: {
     flex: 1,
     paddingHorizontal: 20,
   },
-
   searchInputWrapper: {
     marginBottom: 24,
   },
-
   searchHelper: {
     marginTop: -14,
     marginBottom: 20,
   },
-
   suggestionsSection: {
     marginTop: 4,
   },
-
   suggestionList: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
   },
-
   sectionTitle: {
     marginBottom: 16,
   },
-
   resultsContainer: {
     flex: 1,
   },
-
   emptySpace: {
     flex: 1,
   },
-
   messageContainer: {
     flex: 1,
     alignItems: 'center',
@@ -1499,54 +1616,44 @@ const styles = StyleSheet.create({
     paddingTop: 48,
     paddingHorizontal: 24,
   },
-
   messageIcon: {
     fontSize: 42,
     marginBottom: 12,
   },
-
   messageErrorIcon: {
     marginBottom: 12,
   },
-
   messageTitle: {
     marginBottom: 6,
     textAlign: 'center',
   },
-
   messageText: {
     textAlign: 'center',
     marginTop: 10,
   },
-
   retryButton: {
     alignSelf: 'stretch',
     marginTop: 20,
   },
-
   resultsContent: {
     paddingBottom: 24,
   },
-
   resultRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
   },
-
   imageContainer: {
     position: 'relative',
     width: 64,
     height: 96,
   },
-
   image: {
     width: 64,
     height: 96,
     borderRadius: 8,
   },
-
   previewButton: {
     flexShrink: 0,
     width: 36,
@@ -1556,7 +1663,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
   imagePlaceholder: {
     width: 64,
     height: 96,
@@ -1564,16 +1670,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
   resultDetails: {
     flex: 1,
     marginLeft: 16,
   },
-
   metadata: {
     marginTop: 6,
   },
-
   shuffleButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1582,16 +1685,13 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 999,
   },
-
   shuffleButtonPressed: {
     opacity: 0.65,
   },
-
   suggestionsHeader: {
   flexDirection: 'row',
   alignItems: 'center',
   justifyContent: 'space-between',
   marginBottom: 12,
 },
-
 });

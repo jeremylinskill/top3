@@ -1,3 +1,10 @@
+import {
+  MusicianRole,
+} from '@/lib/supabase/musicians';
+import {
+  CollectionOption,
+  TmdbDiscoverProviderConfig,
+} from '@/types/collection-option';
 import { Top3Item } from '@/types/top3-item';
 
 import {
@@ -7,6 +14,7 @@ import {
 import {
   getPopularMovies,
   getPopularTvShows,
+  getThemeMovieSuggestions,
   searchMovies,
   searchTvShows,
 } from './movies-and-tv';
@@ -18,6 +26,10 @@ import {
   searchArtists,
   searchSongs,
 } from './music';
+import {
+  getPopularMusicians,
+  searchMusicians,
+} from './musicians';
 import {
   getPopularPodcasts,
   searchPodcasts,
@@ -38,6 +50,15 @@ export type PopularSuggestionsProvider = (
   limit?: number,
   signal?: AbortSignal
 ) => Promise<Top3Item[]>;
+
+const MUSICIAN_ROLES = new Set<MusicianRole>([
+  'vocalist',
+  'guitarist',
+  'drummer',
+  'bassist',
+  'mc',
+  'dj',
+]);
 
 const SEARCH_PROVIDERS: Record<
   string,
@@ -69,9 +90,94 @@ const POPULAR_SUGGESTIONS_PROVIDERS: Partial<
   tv: getPopularTvShows,
 };
 
+function getMusicianRole(
+  option?: CollectionOption
+): MusicianRole | undefined {
+  if (
+    option?.providerKey !==
+      'top3_catalogue' ||
+    option.providerMode !==
+      'musician_role'
+  ) {
+    return undefined;
+  }
+
+  const role =
+    option.providerConfig.role;
+
+  if (
+    typeof role !== 'string' ||
+    !MUSICIAN_ROLES.has(
+      role as MusicianRole
+    )
+  ) {
+    return undefined;
+  }
+
+  return role as MusicianRole;
+}
+
+function getTmdbDiscoverProviderConfig(
+  option?: CollectionOption
+): TmdbDiscoverProviderConfig | undefined {
+  if (
+    option?.providerKey !== 'tmdb' ||
+    option.providerMode !== 'discover'
+  ) {
+    return undefined;
+  }
+
+  const config = option.providerConfig;
+
+  return {
+    ...(typeof config.primaryReleaseDateGte === 'string'
+      ? {
+          primaryReleaseDateGte:
+            config.primaryReleaseDateGte,
+        }
+      : {}),
+    ...(typeof config.primaryReleaseDateLte === 'string'
+      ? {
+          primaryReleaseDateLte:
+            config.primaryReleaseDateLte,
+        }
+      : {}),
+    ...(typeof config.withPeople === 'number'
+      ? {
+          withPeople: config.withPeople,
+        }
+      : {}),
+    ...(typeof config.withCompanies === 'number'
+      ? {
+          withCompanies:
+            config.withCompanies,
+        }
+      : {}),
+  };
+}
+
 export function getSearchProvider(
-  categoryId: string
+  categoryId: string,
+  collectionOption?: CollectionOption
 ): SearchProvider | undefined {
+  const musicianRole =
+    getMusicianRole(
+      collectionOption
+    );
+
+  if (musicianRole) {
+    return (
+      query,
+      _topic,
+      signal
+    ) =>
+      searchMusicians(
+        query,
+        musicianRole,
+        signal
+      );
+  }
+
   return SEARCH_PROVIDERS[
     categoryId
   ];
@@ -89,11 +195,13 @@ export async function searchByCategory(
   categoryId: string,
   query: string,
   topic?: string,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  collectionOption?: CollectionOption
 ): Promise<Top3Item[]> {
   const provider =
     getSearchProvider(
-      categoryId
+      categoryId,
+      collectionOption
     );
 
   if (!provider) {
@@ -113,8 +221,35 @@ export async function getPopularSuggestionsByCategory(
   categoryId: string,
   topic?: string,
   limit = 5,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  collectionOption?: CollectionOption
 ): Promise<Top3Item[]> {
+  const musicianRole =
+    getMusicianRole(
+      collectionOption
+    );
+
+  if (musicianRole) {
+    return getPopularMusicians(
+      musicianRole,
+      limit,
+      signal
+    );
+  }
+
+  const tmdbDiscoverConfig =
+    getTmdbDiscoverProviderConfig(
+      collectionOption
+    );
+
+  if (tmdbDiscoverConfig) {
+    return getThemeMovieSuggestions(
+      tmdbDiscoverConfig,
+      limit,
+      signal
+    );
+  }
+
   const provider =
     getPopularSuggestionsProvider(
       categoryId

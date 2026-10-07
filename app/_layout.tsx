@@ -4,6 +4,7 @@ import TrailerPreviewSheet from '@/components/trailer-preview-sheet';
 import { AudioPreviewProvider } from '@/context/audio-preview-context';
 import { BlockProvider } from '@/context/block-context';
 import { BookPreviewProvider } from '@/context/book-preview-context';
+import { CollectionOptionsProvider } from '@/context/collection-options-context';
 import { CommentProvider } from '@/context/comment-context';
 import { FollowProvider } from '@/context/follow-context';
 import { LikeProvider } from '@/context/like-context';
@@ -182,8 +183,9 @@ export default function RootLayout() {
                     <LikeProvider>
                       <SavedItemsProvider>
                         <CommentProvider>
-                          <Top3Provider>
-                            <AudioPreviewProvider>
+                          <CollectionOptionsProvider>
+                            <Top3Provider>
+                              <AudioPreviewProvider>
                               <TrailerPreviewProvider>
                                 <BookPreviewProvider>
                                   <ThemeProvider
@@ -219,8 +221,9 @@ export default function RootLayout() {
                                   </ThemeProvider>
                                 </BookPreviewProvider>
                               </TrailerPreviewProvider>
-                            </AudioPreviewProvider>
-                          </Top3Provider>
+                              </AudioPreviewProvider>
+                            </Top3Provider>
+                          </CollectionOptionsProvider>
                         </CommentProvider>
                       </SavedItemsProvider>
                     </LikeProvider>

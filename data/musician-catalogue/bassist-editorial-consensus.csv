@@ -1,0 +1,137 @@
+consensus_rank,musician_name,normalized_name,source_count,sources,rolling_stone_rank,bass_player_rank,musicradar_reader_poll_rank,udiscover_rank,average_rank_strength,consensus_score,name_variants
+1,Jaco Pastorius,jaco pastorius,4,"Rolling Stone, Bass Player, MusicRadar Reader Poll, uDiscover",8,2,2,1,0.956658,409.566584,Jaco Pastorius
+2,John Entwistle,john entwistle,4,"Rolling Stone, Bass Player, MusicRadar Reader Poll, uDiscover",3,7,3,6,0.941292,409.412922,John Entwistle
+3,Paul McCartney,paul mccartney,4,"Rolling Stone, Bass Player, MusicRadar Reader Poll, uDiscover",9,3,11,2,0.898483,408.984831,Paul McCartney
+4,James Jamerson,james jamerson,4,"Rolling Stone, Bass Player, MusicRadar Reader Poll, uDiscover",1,1,18,7,0.885488,408.854875,James Jamerson
+5,Jack Bruce,jack bruce,4,"Rolling Stone, Bass Player, MusicRadar Reader Poll, uDiscover",6,11,7,12,0.867699,408.676991,Jack Bruce
+6,Chris Squire,chris squire,4,"Rolling Stone, Bass Player, MusicRadar Reader Poll, uDiscover",18,26,8,5,0.795901,407.959012,Chris Squire
+7,Geddy Lee,geddy lee,4,"Rolling Stone, Bass Player, MusicRadar Reader Poll, uDiscover",24,13,1,15,0.787535,407.875352,Geddy Lee
+8,Stanley Clarke,stanley clarke,4,"Rolling Stone, Bass Player, MusicRadar Reader Poll, uDiscover",13,5,27,4,0.782133,407.821325,Stanley Clarke
+9,John Paul Jones,john paul jones,4,"Rolling Stone, Bass Player, MusicRadar Reader Poll, uDiscover",14,21,13,21,0.729351,407.293513,John Paul Jones
+10,Carol Kaye,carol kaye,4,"Rolling Stone, Bass Player, MusicRadar Reader Poll, uDiscover",5,25,39,3,0.715849,407.158490,Carol Kaye
+11,Larry Graham,larry graham,4,"Rolling Stone, Bass Player, MusicRadar Reader Poll, uDiscover",7,4,45,8,0.704915,407.049148,Larry Graham | Larry Graham Jr
+12,Charles Mingus,charles mingus,4,"Rolling Stone, Bass Player, MusicRadar Reader Poll, uDiscover",2,12,48,13,0.671769,406.717687,Charles Mingus
+13,Flea,flea,4,"Rolling Stone, Bass Player, MusicRadar Reader Poll, uDiscover",22,30,16,17,0.669020,406.690201,Flea
+14,Bootsy Collins,bootsy collins,4,"Rolling Stone, Bass Player, MusicRadar Reader Poll, uDiscover",4,18,41,20,0.649720,406.497200,Bootsy Collins
+15,Geezer Butler,geezer butler,4,"Rolling Stone, Bass Player, MusicRadar Reader Poll, uDiscover",21,45,20,22,0.592687,405.926871,Geezer Butler
+16,Les Claypool,les claypool,4,"Rolling Stone, Bass Player, MusicRadar Reader Poll, uDiscover",36,33,10,24,0.588221,405.882206,Les Claypool
+17,Donald “Duck” Dunn,donald duck dunn,4,"Rolling Stone, Bass Player, MusicRadar Reader Poll, uDiscover",15,40,42,19,0.537570,405.375696,Donald 'Duck' Dunn | Donald “Duck” Dunn
+18,Lemmy,lemmy,4,"Rolling Stone, Bass Player, MusicRadar Reader Poll, uDiscover",33,63,19,14,0.528147,405.281471,Lemmy | Lemmy Kilmister
+19,Cliff Burton,cliff burton,4,"Rolling Stone, Bass Player, MusicRadar Reader Poll, uDiscover",25,55,12,36,0.523028,405.230279,Cliff Burton
+20,Ron Carter,ron carter,3,"Rolling Stone, Bass Player, uDiscover",10,6,,9,0.654418,306.544183,Ron Carter
+21,Victor Wooten,victor wooten,3,"Bass Player, MusicRadar Reader Poll, uDiscover",,14,17,33,0.487391,304.873909,Victor Wooten
+22,Charlie Haden,charlie haden,3,"Rolling Stone, Bass Player, uDiscover",16,41,,27,0.452089,304.520889,Charlie Haden
+23,Willie Dixon,willie dixon,3,"Rolling Stone, Bass Player, uDiscover",12,94,,10,0.417362,304.173624,Willie Dixon
+24,Aston “Family Man” Barrett,aston family man barrett,3,"Rolling Stone, Bass Player, uDiscover",28,35,,25,0.415275,304.152752,Aston 'Family Man' Barrett | Aston “Family Man” Barrett
+25,George Porter Jr.,george porter jr,3,"Rolling Stone, Bass Player, uDiscover",41,28,,18,0.399033,303.990328,"George Porter Jr. | George Porter, Jr"
+26,Billy Sheehan,billy sheehan,3,"Bass Player, MusicRadar Reader Poll, uDiscover",,29,9,54,0.393106,303.931062,Billy Sheehan
+27,Phil Lesh,phil lesh,3,"Rolling Stone, Bass Player, uDiscover",11,57,,39,0.381640,303.816395,Phil Lesh
+28,Pino Palladino,pino palladino,3,"Rolling Stone, Bass Player, MusicRadar Reader Poll",38,15,32,,0.367708,303.677077,Pino Palladino
+29,Louis Johnson,louis johnson,3,"Rolling Stone, Bass Player, uDiscover",35,38,,29,0.353467,303.534666,Louis Johnson
+30,Steve Harris,steve harris,3,"Bass Player, MusicRadar Reader Poll, uDiscover",,51,6,55,0.348227,303.482272,Steve Harris
+31,Marcus Miller,marcus miller,3,"Bass Player, MusicRadar Reader Poll, uDiscover",,10,34,52,0.322794,303.227943,Marcus Miller
+32,Tony Levin,tony levin,3,"Rolling Stone, Bass Player, MusicRadar Reader Poll",42,36,28,,0.314677,303.146774,Tony Levin
+33,Bill Black,bill black,3,"Rolling Stone, Bass Player, uDiscover",40,85,,11,0.292603,302.926029,Bill Black
+34,David Hood,david hood,3,"Rolling Stone, Bass Player, uDiscover",27,82,,28,0.287801,302.878015,David Hood
+35,Bernard Edwards,bernard edwards,3,"Rolling Stone, Bass Player, MusicRadar Reader Poll",31,53,38,,0.276850,302.768501,Bernard Edwards
+36,Sting,sting,3,"Rolling Stone, Bass Player, uDiscover",32,75,,34,0.252190,302.521903,Sting
+37,Leland Sklar,leland sklar,3,"Rolling Stone, Bass Player, MusicRadar Reader Poll",47,31,43,,0.225263,302.252628,Leland Sklar
+38,Peter Hook,peter hook,3,"Rolling Stone, Bass Player, MusicRadar Reader Poll",46,77,23,,0.216244,302.162441,Peter Hook
+39,Mike Watt,mike watt,3,"Rolling Stone, Bass Player, uDiscover",43,89,,44,0.114418,301.144180,Mike Watt
+40,Esperanza Spalding,esperanza spalding,3,"Rolling Stone, Bass Player, uDiscover",45,76,,49,0.113894,301.138940,Esperanza Spalding
+41,Jack Casady,jack casady,2,"Bass Player, uDiscover",,23,,23,0.342593,203.425926,Jack Casady
+42,Verdine White,verdine white,2,"Rolling Stone, Bass Player",19,27,,,0.342507,203.425067,Verdine White
+43,Chuck Rainey,chuck rainey,2,"Bass Player, uDiscover",,17,,30,0.325337,203.253367,Chuck Rainey
+44,Israel Cachao López,israel cachao lopez,2,"Rolling Stone, Bass Player",26,24,,,0.314368,203.143682,Israel 'Cachao' López | Israel Cachao López
+45,Robbie Shakespeare,robbie shakespeare,2,"Rolling Stone, Bass Player",17,69,,,0.246650,202.466502,Robbie Shakespeare
+46,Meshell Ndegeocello,meshell ndegeocello,2,"Bass Player, uDiscover",,60,,35,0.193603,201.936027,Meshell Ndegeocello
+47,Mick Karn,mick karn,2,"Bass Player, MusicRadar Reader Poll",,95,15,,0.191198,201.911977,Mick Karn
+48,Tina Weymouth,tina weymouth,2,"Rolling Stone, uDiscover",29,,,37,0.190476,201.904762,Tina Weymouth
+49,Bill Wyman,bill wyman,2,"Rolling Stone, uDiscover",23,,,46,0.179422,201.794218,Bill Wyman
+50,Mark King,mark king,2,"Bass Player, MusicRadar Reader Poll",,78,26,,0.178005,201.780045,Mark King
+51,Nathan East,nathan east,2,"Bass Player, MusicRadar Reader Poll",,39,49,,0.159142,201.591424,Nathan East
+52,Justin Chancellor,justin chancellor,2,"Bass Player, MusicRadar Reader Poll",,79,31,,0.149969,201.499691,Justin Chancellor
+53,John Deacon,john deacon,2,"Bass Player, MusicRadar Reader Poll",,84,30,,0.142445,201.424449,John Deacon
+54,John Myung,john myung,2,"MusicRadar Reader Poll, uDiscover",,,24,53,0.141912,201.419123,John Myung
+55,Duff McKagan,duff mckagan,2,"Rolling Stone, MusicRadar Reader Poll",49,,25,,0.132653,201.326531,Duff McKagan
+56,Bob Babbitt,bob babbitt,2,"Bass Player, uDiscover",,59,,51,0.122054,201.220539,Bob Babbitt
+57,Bob Moore,bob moore,2,"Rolling Stone, Bass Player",30,96,,,0.112142,201.121418,Bob Moore
+58,Kim Gordon,kim gordon,2,"Rolling Stone, uDiscover",39,,,48,0.088530,200.885299,Kim Gordon
+59,Stu Hamm,stu hamm,2,"Bass Player, MusicRadar Reader Poll",,81,46,,0.068388,200.683880,Stu Hamm | Stuart Hamm
+60,Thundercat,thundercat,2,"Rolling Stone, Bass Player",50,90,,,0.025253,200.252525,Stephen 'Thundercat' Bruner | Thundercat
+61,Simon Gallup,simon gallup,1,MusicRadar Reader Poll,,,4,,0.234694,102.346939,Simon Gallup
+62,Anthony Jackson,anthony jackson,1,Bass Player,,8,,,0.232323,102.323232,Anthony Jackson
+63,Ray Brown,ray brown,1,Bass Player,,9,,,0.229798,102.297980,Ray Brown
+64,JJ Burnel,jj burnel,1,MusicRadar Reader Poll,,,5,,0.229592,102.295918,JJ Burnel
+65,Scott LaFaro,scott lafaro,1,Bass Player,,16,,,0.212121,102.121212,Scott LaFaro
+66,Rocco Prestia,rocco prestia,1,Bass Player,,19,,,0.204545,102.045455,Rocco Prestia
+67,John Patitucci,john patitucci,1,Bass Player,,20,,,0.202020,102.020202,John Patitucci
+68,Paul Chambers,paul chambers,1,Bass Player,,22,,,0.196970,101.969697,Paul Chambers
+69,Nikki Sixx,nikki sixx,1,MusicRadar Reader Poll,,,14,,0.183673,101.836735,Nikki Sixx
+70,John Wetton,john wetton,1,uDiscover,,,,16,0.180556,101.805556,John Wetton
+71,Will Lee,will lee,1,Bass Player,,32,,,0.171717,101.717172,Will Lee
+72,Oscar Pettiford,oscar pettiford,1,Bass Player,,34,,,0.166667,101.666667,Oscar Pettiford
+73,Jimmy Blanton,jimmy blanton,1,Bass Player,,37,,,0.159091,101.590909,Jimmie Blanton | Jimmy Blanton
+74,Rick Danko,rick danko,1,Rolling Stone,20,,,,0.153061,101.530612,Rick Danko
+75,Suzi Quatro,suzi quatro,1,MusicRadar Reader Poll,,,21,,0.147959,101.479592,Suzi Quatro
+76,Abraham Laboriel,abraham laboriel,1,Bass Player,,42,,,0.146465,101.464646,Abraham Laboriel
+77,Joe Osborn,joe osborn,1,Bass Player,,43,,,0.143939,101.439394,Joe Osborn
+78,Gene Simmons,gene simmons,1,MusicRadar Reader Poll,,,22,,0.142857,101.428571,Gene Simmons
+79,Paul Jackson,paul jackson,1,Bass Player,,44,,,0.141414,101.414141,Paul Jackson
+80,Berry Oakley,berry oakley,1,Bass Player,,46,,,0.136364,101.363636,Berry Oakley
+81,Bernard Odum,bernard odum,1,uDiscover,,,,26,0.134259,101.342593,Bernard Odum
+82,Eddie Gomez,eddie gomez,1,Bass Player,,47,,,0.133838,101.338384,Eddie Gomez
+83,Andrew Gouché,andrew gouche,1,Bass Player,,48,,,0.131313,101.313131,Andrew Gouché
+84,Willie Weeks,willie weeks,1,Bass Player,,49,,,0.128788,101.287879,Willie Weeks
+85,Bakithi Kumalo,bakithi kumalo,1,Bass Player,,50,,,0.126263,101.262626,Bakithi Kumalo
+86,Gary Willis,gary willis,1,Bass Player,,52,,,0.121212,101.212121,Gary Willis
+87,Jeff Berlin,jeff berlin,1,Bass Player,,54,,,0.116162,101.161616,Jeff Berlin
+88,Jerry Scheff,jerry scheff,1,uDiscover,,,,31,0.111111,101.111111,Jerry Scheff
+89,Steve Swallow,steve swallow,1,Bass Player,,56,,,0.111111,101.111111,Steve Swallow
+90,John Taylor,john taylor,1,MusicRadar Reader Poll,,,29,,0.107143,101.071429,John Taylor
+91,Percy Heath,percy heath,1,uDiscover,,,,32,0.106481,101.064815,Percy Heath
+92,Edgar Meyer,edgar meyer,1,Bass Player,,58,,,0.106061,101.060606,Edgar Meyer
+93,Jerry Jemmott,jerry jemmott,1,Bass Player,,61,,,0.098485,100.984848,Jerry Jemmott
+94,Matt Garrison,matt garrison,1,Bass Player,,62,,,0.095960,100.959596,Matt Garrison
+95,Oteil Burbridge,oteil burbridge,1,Bass Player,,64,,,0.090909,100.909091,Oteil Burbridge
+96,Richard Bona,richard bona,1,Bass Player,,65,,,0.088384,100.883838,Richard Bona
+97,Phil Lynott,phil lynott,1,MusicRadar Reader Poll,,,33,,0.086735,100.867347,Phil Lynott
+98,Niels-Henning Ørsted Pedersen,niels henning rsted pedersen,1,Bass Player,,66,,,0.085859,100.858586,Niels-Henning Ørsted Pedersen
+99,Doug Wimbish,doug wimbish,1,Bass Player,,67,,,0.083333,100.833333,Doug Wimbish
+100,Richard Davis,richard davis,1,Rolling Stone,34,,,,0.081633,100.816327,Richard Davis
+101,Dave Holland,dave holland,1,Bass Player,,68,,,0.080808,100.808081,Dave Holland
+102,Mike Rutherford,mike rutherford,1,uDiscover,,,,38,0.078704,100.787037,Mike Rutherford
+103,Roger Waters,roger waters,1,MusicRadar Reader Poll,,,35,,0.076531,100.765306,Roger Waters
+104,Jimmy Johnson,jimmy johnson,1,Bass Player,,70,,,0.075758,100.757576,Jimmy Johnson
+105,Christian McBride,christian mcbride,1,Bass Player,,71,,,0.073232,100.732323,Christian McBride
+106,Robert Trujillo,robert trujillo,1,MusicRadar Reader Poll,,,36,,0.071429,100.714286,Robert Trujillo
+107,Victor Bailey,victor bailey,1,Bass Player,,72,,,0.070707,100.707071,Victor Bailey
+108,Bruce Thomas,bruce thomas,1,uDiscover,,,,40,0.069444,100.694444,Bruce Thomas
+109,Michael Manring,michael manring,1,Bass Player,,73,,,0.068182,100.681818,Michael Manring
+110,Bruce Foxton,bruce foxton,1,MusicRadar Reader Poll,,,37,,0.066327,100.663265,Bruce Foxton
+111,John McVie,john mcvie,1,Rolling Stone,37,,,,0.066327,100.663265,John McVie
+112,Dee Murray,dee murray,1,Bass Player,,74,,,0.065657,100.656566,Dee Murray
+113,Kasim Sulton,kasim sulton,1,uDiscover,,,,41,0.064815,100.648148,Kasim Sulton
+114,Joey Spampinato,joey spampinato,1,uDiscover,,,,42,0.060185,100.601852,Joey Spampinato
+115,Dave Pegg,dave pegg,1,uDiscover,,,,43,0.055556,100.555556,Dave Pegg
+116,Chris Wolstenholme,chris wolstenholme,1,MusicRadar Reader Poll,,,40,,0.051020,100.510204,Chris Wolstenholme
+117,Tim Bogert,tim bogert,1,Bass Player,,80,,,0.050505,100.505051,Tim Bogert
+118,Nick Lowe,nick lowe,1,uDiscover,,,,45,0.046296,100.462963,Nick Lowe
+119,Jonas Hellborg,jonas hellborg,1,Bass Player,,83,,,0.042929,100.429293,Jonas Hellborg
+120,Gail Ann Dorsey,gail ann dorsey,1,uDiscover,,,,47,0.037037,100.370370,Gail Ann Dorsey
+121,Red Mitchell,red mitchell,1,Bass Player,,86,,,0.035354,100.353535,Red Mitchell
+122,Michael Rhodes,michael rhodes,1,Bass Player,,87,,,0.032828,100.328283,Michael Rhodes
+123,Colin Moulding,colin moulding,1,MusicRadar Reader Poll,,,44,,0.030612,100.306122,Colin Moulding
+124,Joseph Makwela,joseph makwela,1,Rolling Stone,44,,,,0.030612,100.306122,Joseph Makwela
+125,Bobby Rodriguez,bobby rodriguez,1,Bass Player,,88,,,0.030303,100.303030,Bobby Rodriguez
+126,Mel Schacher,mel schacher,1,uDiscover,,,,50,0.023148,100.231481,Mel Schacher
+127,Hadrien Feraud,hadrien feraud,1,Bass Player,,91,,,0.022727,100.227273,Hadrien Feraud
+128,Bobby Vega,bobby vega,1,Bass Player,,92,,,0.020202,100.202020,Bobby Vega
+129,Bill Laswell,bill laswell,1,Bass Player,,93,,,0.017677,100.176768,Bill Laswell
+130,Roger Glover,roger glover,1,MusicRadar Reader Poll,,,47,,0.015306,100.153061,Roger Glover
+131,Kim Deal,kim deal,1,Rolling Stone,48,,,,0.010204,100.102041,Kim Deal
+132,Ron Baker,ron baker,1,Bass Player,,97,,,0.007576,100.075758,Ron Baker
+133,Leroy 'Slam' Stewart,leroy slam stewart,1,Bass Player,,98,,,0.005051,100.050505,Leroy 'Slam' Stewart
+134,Walter Page,walter page,1,Bass Player,,99,,,0.002525,100.025253,Walter Page
+135,Mike Dirnt,mike dirnt,1,MusicRadar Reader Poll,,,50,,0.000000,100.000000,Mike Dirnt
+136,Percy Jones,percy jones,1,Bass Player,,100,,,0.000000,100.000000,Percy Jones

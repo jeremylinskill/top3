@@ -1,0 +1,276 @@
+consensus_rank,musician_name,normalized_name,source_count,sources,billboard_vibe_rank,hiphop_golden_age_rank,beats_rhymes_lists_rank,ranker_rank,average_rank_strength,consensus_score,name_variants,source_entity_ids
+1,Nas,nas,4,"Billboard/VIBE, Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",3,3,1,5,0.975670,409.756703,Nas,ranker:1647889
+2,Rakim,rakim,4,"Billboard/VIBE, Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",13,2,7,14,0.905777,409.057769,Rakim,ranker:1869033
+3,Tupac Shakur,tupac shakur,4,"Billboard/VIBE, Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",4,16,3,2,0.902132,409.021324,2Pac | Tupac | Tupac Shakur,ranker:2286941
+4,Jay-Z,jay z,4,"Billboard/VIBE, Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",1,18,2,10,0.901917,409.019165,JAY-Z | Jay-Z,ranker:1273519
+5,The Notorious B.I.G.,the notorious big,4,"Billboard/VIBE, Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",6,20,6,1,0.864925,408.649248,Biggie | Notorious B.I.G. | The Notorious B.I.G.,ranker:2210754
+6,Eminem,eminem,4,"Billboard/VIBE, Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",5,21,5,4,0.864509,408.645088,Eminem,ranker:937841
+7,André 3000,andre 3000,4,"Billboard/VIBE, Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",12,15,4,9,0.857030,408.570301,Andre 3000 | André 3000,ranker:460347
+8,Ice Cube,ice cube,4,"Billboard/VIBE, Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",18,12,8,7,0.833584,408.335837,Ice Cube,ranker:1206369
+9,LL Cool J,ll cool j,4,"Billboard/VIBE, Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",14,9,21,30,0.813921,408.139207,LL Cool J,ranker:1463379
+10,KRS-One,krs one,4,"Billboard/VIBE, Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",24,1,9,59,0.805588,408.055883,KRS-One,ranker:1394745
+11,Scarface,scarface,4,"Billboard/VIBE, Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",16,17,11,31,0.787172,407.871724,Scarface,ranker:1984897
+12,Big Daddy Kane,big daddy kane,4,"Billboard/VIBE, Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",20,6,22,62,0.764717,407.647168,Big Daddy Kane,ranker:581022
+13,Kendrick Lamar,kendrick lamar,4,"Billboard/VIBE, Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",2,44,10,3,0.750822,407.508221,Kendrick Lamar,ranker:62130966
+14,Black Thought,black thought,4,"Billboard/VIBE, Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",28,4,16,82,0.729648,407.296482,Black Thought,ranker:594444
+15,Ghostface Killah,ghostface killah,4,"Billboard/VIBE, Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",22,24,19,19,0.712409,407.124086,Ghostface Killah,ranker:1067962
+16,Snoop Dogg,snoop dogg,4,"Billboard/VIBE, Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",9,40,33,8,0.672533,406.725333,Snoop Dogg,ranker:2051727
+17,Chuck D,chuck d,4,"Billboard/VIBE, Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",34,8,14,108,0.658188,406.581881,Chuck D,ranker:732803
+18,Redman,redman,4,"Billboard/VIBE, Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",42,23,24,20,0.601863,406.018632,Redman,ranker:1883526
+19,Q-Tip,q tip,4,"Billboard/VIBE, Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",27,31,39,45,0.575189,405.751889,Q-Tip,ranker:9650505
+20,Common,common,4,"Billboard/VIBE, Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",37,25,27,57,0.573319,405.733190,Common,ranker:761668
+21,Busta Rhymes,busta rhymes,4,"Billboard/VIBE, Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",33,36,36,29,0.542328,405.423284,Busta Rhymes,ranker:649261
+22,Big Pun,big pun,4,"Billboard/VIBE, Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",26,42,57,25,0.498322,404.983218,Big Pun,ranker:581817
+23,Ice-T,ice t,4,"Billboard/VIBE, Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",45,10,83,70,0.454874,404.548741,Ice T | Ice-T,ranker:1206533
+24,Yasiin Bey,yasiin bey,4,"Billboard/VIBE, Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",36,48,58,32,0.407301,404.073011,Mos Def | Yasiin Bey,ranker:1618391
+25,MC Lyte,mc lyte,4,"Billboard/VIBE, Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",47,38,99,140,0.192781,401.927814,MC Lyte,ranker:1554741
+26,Lil Wayne,lil wayne,3,"Billboard/VIBE, Beats, Rhymes & Lists, Ranker",7,,13,13,0.677320,306.773200,Lil Wayne,ranker:900679
+27,Drake,drake,3,"Billboard/VIBE, Beats, Rhymes & Lists, Ranker",8,,17,24,0.651333,306.513327,Drake,ranker:510514
+28,MF DOOM,mf doom,3,"Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",,14,15,23,0.626751,306.267513,MF DOOM | MF Doom,ranker:809773
+29,Kanye West,kanye west,3,"Billboard/VIBE, Beats, Rhymes & Lists, Ranker",11,,34,11,0.605842,306.058423,Kanye West,ranker:1347110
+30,J. Cole,j cole,3,"Billboard/VIBE, Beats, Rhymes & Lists, Ranker",15,,32,12,0.589504,305.895043,J. Cole,ranker:32493281
+31,50 Cent,50 cent,3,"Billboard/VIBE, Beats, Rhymes & Lists, Ranker",17,,35,15,0.568783,305.687833,50 Cent,ranker:366178
+32,DMX,dmx,3,"Billboard/VIBE, Beats, Rhymes & Lists, Ranker",21,,28,17,0.564091,305.640911,DMX,ranker:870228
+33,Method Man,method man,3,"Billboard/VIBE, Beats, Rhymes & Lists, Ranker",25,,20,18,0.562905,305.629046,Method Man,ranker:1569101
+34,Kool G Rap,kool g rap,3,"Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",,7,18,138,0.542145,305.421447,Kool G Rap,ranker:1389329
+35,Pusha T,pusha t,3,"Billboard/VIBE, Beats, Rhymes & Lists, Ranker",29,,26,50,0.495972,304.959723,Pusha T,ranker:62039562
+36,Missy Elliott,missy elliott,3,"Billboard/VIBE, Beats, Rhymes & Lists, Ranker",19,,61,66,0.442923,304.429226,Missy Elliott,ranker:1598133
+37,GZA,gza,3,"Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",,33,44,41,0.438933,304.389331,GZA,ranker:1116381
+38,Guru,guru,3,"Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",,13,56,128,0.425377,304.253768,Guru,ranker:1113097
+39,Lupe Fiasco,lupe fiasco,3,"Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",,41,12,103,0.418141,304.181406,Lupe Fiasco,ranker:1487978
+40,Big L,big l,3,"Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",,39,49,21,0.415302,304.153025,Big L,ranker:581531
+41,Lauryn Hill,lauryn hill,3,"Billboard/VIBE, Beats, Rhymes & Lists, Ranker",30,,65,27,0.414934,304.149345,Lauryn Hill,ranker:1419114
+42,Pharoahe Monch,pharoahe monch,3,"Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",,11,45,199,0.393751,303.937508,Pharoahe Monch,ranker:9641592
+43,T.I.,ti,3,"Billboard/VIBE, Beats, Rhymes & Lists, Ranker",32,,51,84,0.384202,303.842016,T.I.,ranker:142642
+44,Ludacris,ludacris,3,"Billboard/VIBE, Beats, Rhymes & Lists, Ranker",39,,41,79,0.378642,303.786418,Ludacris,ranker:1484229
+45,Masta Ace,masta ace,3,"Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",,22,25,216,0.371467,303.714668,Masta Ace,ranker:1538740
+46,Nicki Minaj,nicki minaj,3,"Billboard/VIBE, Beats, Rhymes & Lists, Ranker",10,,86,122,0.370808,303.708077,Nicki Minaj,ranker:11363664
+47,Inspectah Deck,inspectah deck,3,"Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",,30,54,101,0.370163,303.701632,Inspectah Deck,ranker:1224314
+48,Treach,treach,3,"Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",,26,38,178,0.355485,303.554852,Treach,ranker:2274474
+49,Future,future,3,"Billboard/VIBE, Beats, Rhymes & Lists, Ranker",35,,73,43,0.353536,303.535360,Future,ranker:63525027
+50,Kool Keith,kool keith,3,"Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",,5,59,242,0.346853,303.468527,Kool Keith,ranker:1389338
+51,Jadakiss,jadakiss,3,"Billboard/VIBE, Beats, Rhymes & Lists, Ranker",46,,31,109,0.338768,303.387682,Jadakiss,ranker:1255990
+52,Aesop Rock,aesop rock,3,"Hip Hop Golden Age, Beats, Rhymes & Lists, Ranker",,27,40,211,0.312980,303.129797,Aesop Rock,ranker:406458
+53,E-40,e 40,3,"Billboard/VIBE, Beats, Rhymes & Lists, Ranker",41,,69,78,0.298711,302.987110,E-40,ranker:901524
+54,Bun B,bun b,3,"Billboard/VIBE, Beats, Rhymes & Lists, Ranker",43,,30,170,0.296796,302.967957,Bun B,ranker:643879
+55,Gucci Mane,gucci mane,3,"Billboard/VIBE, Beats, Rhymes & Lists, Ranker",38,,90,71,0.267850,302.678496,Gucci Mane,ranker:1109293
+56,Lil' Kim,lil kim,3,"Billboard/VIBE, Beats, Rhymes & Lists, Ranker",31,,79,179,0.225459,302.254593,Lil Kim | Lil' Kim | Lil’ Kim,ranker:1448657
+57,Rick Ross,rick ross,3,"Billboard/VIBE, Beats, Rhymes & Lists, Ranker",50,,93,93,0.177481,301.774807,Rick Ross,ranker:1909049
+58,Melle Mel,melle mel,3,"Billboard/VIBE, Hip Hop Golden Age, Ranker",48,50,,197,0.068047,300.680472,Melle Mel,ranker:81683404
+59,Raekwon,raekwon,2,"Beats, Rhymes & Lists, Ranker",,,23,28,0.417974,204.179739,Raekwon,ranker:1865340
+60,Big Boi,big boi,2,"Beats, Rhymes & Lists, Ranker",,,29,72,0.359685,203.596851,Big Boi,ranker:580653
+61,Prodigy,prodigy,2,"Beats, Rhymes & Lists, Ranker",,,37,88,0.323797,203.237968,Prodigy,ranker:1840367
+62,"Royce da 5'9""",royce da 5 9,2,"Beats, Rhymes & Lists, Ranker",,,47,67,0.319133,203.191325,"Royce da 5'9"" | Royce da 5’9″",ranker:1944366
+63,Kurupt,kurupt,2,"Beats, Rhymes & Lists, Ranker",,,52,75,0.298663,202.986631,Kurupt,ranker:1398722
+64,Slick Rick,slick rick,2,"Beats, Rhymes & Lists, Ranker",,,62,51,0.296940,202.969400,Slick Rick,ranker:2046410
+65,Dr. Dre,dr dre,2,"Billboard/VIBE, Ranker",40,,,6,0.296118,202.961184,Dr. Dre,ranker:891691
+66,Tech N9ne,tech n9ne,2,"Beats, Rhymes & Lists, Ranker",,,60,60,0.293167,202.931670,Tech N9ne,ranker:2156023
+67,RZA,rza,2,"Beats, Rhymes & Lists, Ranker",,,84,36,0.256090,202.560903,RZA,ranker:1954966
+68,Killer Mike,killer mike,2,"Beats, Rhymes & Lists, Ranker",,,50,143,0.237047,202.370469,Killer Mike,ranker:1374046
+69,Freddie Gibbs,freddie gibbs,2,"Beats, Rhymes & Lists, Ranker",,,72,96,0.227570,202.275698,Freddie Gibbs,ranker:62175980
+70,The Game,the game,2,"Beats, Rhymes & Lists, Ranker",,,89,53,0.226797,202.267974,The Game,ranker:2194065
+71,Talib Kweli,talib kweli,2,"Beats, Rhymes & Lists, Ranker",,,82,83,0.215062,202.150624,Talib Kweli,ranker:2145552
+72,Styles P,styles p,2,"Beats, Rhymes & Lists, Ranker",,,43,185,0.213547,202.135472,Styles P,ranker:2108698
+73,Roc Marciano,roc marciano,2,"Hip Hop Golden Age, Beats, Rhymes & Lists",,34,48,,0.212946,202.129458,Roc Marciano,
+74,Fabolous,fabolous,2,"Beats, Rhymes & Lists, Ranker",,,67,127,0.209804,202.098039,Fabolous,ranker:971744
+75,AZ,az,2,"Beats, Rhymes & Lists, Ranker",,,70,135,0.194385,201.943850,AZ,ranker:521089
+76,Too $hort,too hort,2,"Beats, Rhymes & Lists, Ranker",,,91,81,0.194296,201.942959,Too $hort | Too Short,ranker:2262763
+77,DJ Quik,dj quik,2,"Beats, Rhymes & Lists, Ranker",,,63,159,0.188532,201.885324,DJ Quik,ranker:868806
+78,Twista,twista,2,"Beats, Rhymes & Lists, Ranker",,,95,77,0.188116,201.881165,Twista,ranker:2290543
+79,Jeezy,jeezy,2,"Beats, Rhymes & Lists, Ranker",,,75,129,0.187641,201.876411,Jeezy | Young Jeezy,ranker:2430719
+80,Kurtis Blow,kurtis blow,2,"Billboard/VIBE, Ranker",23,,,207,0.185794,201.857943,Kurtis Blow,ranker:1398265
+81,Chief Keef,chief keef,2,"Beats, Rhymes & Lists, Ranker",,,97,80,0.180125,201.801248,Chief Keef,ranker:74190703
+82,Krayzie Bone,krayzie bone,2,"Beats, Rhymes & Lists, Ranker",,,85,111,0.180036,201.800357,Krayzie Bone,ranker:1392869
+83,Queen Latifah,queen latifah,2,"Billboard/VIBE, Ranker",44,,,112,0.171789,201.717887,Queen Latifah,ranker:1858921
+84,Juicy J,juicy j,2,"Beats, Rhymes & Lists, Ranker",,,88,116,0.167558,201.675579,Juicy J,ranker:6232677
+85,Phife Dawg,phife dawg,2,"Beats, Rhymes & Lists, Ranker",,,66,173,0.167231,201.672311,Phife Dawg,ranker:1792330
+86,Gift of Gab,gift of gab,2,"Hip Hop Golden Age, Beats, Rhymes & Lists",,45,46,,0.161874,201.618738,Gift Of Gab | Gift of Gab,
+87,El-P,el p,2,"Beats, Rhymes & Lists, Ranker",,,42,243,0.159210,201.592097,El-P,ranker:922015
+88,Cam'ron,cam ron,2,"Beats, Rhymes & Lists, Ranker",,,76,168,0.146881,201.468806,Cam'ron | Cam’ron,ranker:142563
+89,Canibus,canibus,2,"Hip Hop Golden Age, Beats, Rhymes & Lists",,35,74,,0.142187,201.421872,Canibus,
+90,Posdnuos,posdnuos,2,"Hip Hop Golden Age, Beats, Rhymes & Lists",,28,92,,0.132447,201.324469,Posdnuos,
+91,Ab-Soul,ab soul,2,"Beats, Rhymes & Lists, Ranker",,,80,175,0.129917,201.299168,Ab-Soul,ranker:74169306
+92,Del the Funky Homosapien,del the funky homosapien,2,"Beats, Rhymes & Lists, Ranker",,,78,210,0.100654,201.006536,Del tha Funkee Homosapien | Del the Funky Homosapien,ranker:838937
+93,Rapsody,rapsody,2,"Beats, Rhymes & Lists, Ranker",,,81,203,0.099941,200.999406,Rapsody,ranker:63489510
+94,Mase,mase,2,"Beats, Rhymes & Lists, Ranker",,,98,180,0.079560,200.795603,Mase,ranker:1537289
+95,Kool Moe Dee,kool moe dee,2,"Hip Hop Golden Age, Ranker",,47,,209,0.061385,200.613846,Kool Moe Dee,ranker:1389347
+96,Blu,blu,2,"Beats, Rhymes & Lists, Ranker",,,77,253,0.061022,200.610220,Blu,ranker:6304481
+97,Project Pat,project pat,2,"Beats, Rhymes & Lists, Ranker",,,100,212,0.043137,200.431373,Project Pat,ranker:1841946
+98,Ras Kass,ras kass,2,"Beats, Rhymes & Lists, Ranker",,,96,250,0.015983,200.159834,Ras Kass,ranker:1875667
+99,Eazy-E,eazy e,1,Ranker,,,,16,0.235294,102.352941,Eazy-E,ranker:907126
+100,A$AP Rocky,a ap rocky,1,Ranker,,,,22,0.229412,102.294118,A$AP Rocky,ranker:63452000
+101,Travis Scott,travis scott,1,Ranker,,,,26,0.225490,102.254902,Travis Scott,ranker:74635386
+102,XXXTentacion,xxxtentacion,1,Ranker,,,,33,0.218627,102.186275,XXXTentacion,ranker:85371778
+103,Ol' Dirty Bastard,ol dirty bastard,1,Ranker,,,,34,0.217647,102.176471,Ol' Dirty Bastard,ranker:1719165
+104,Donald Glover,donald glover,1,Ranker,,,,35,0.216667,102.166667,Donald Glover,ranker:876056
+105,"Tyler, the Creator",tyler the creator,1,Ranker,,,,37,0.214706,102.147059,"Tyler, the Creator",ranker:63246698
+106,Nate Dogg,nate dogg,1,Ranker,,,,38,0.213725,102.137255,Nate Dogg,ranker:1649405
+107,Kid Cudi,kid cudi,1,Ranker,,,,39,0.212745,102.127451,Kid Cudi,ranker:32540759
+108,Run–DMC,run dmc,1,Ranker,,,,40,0.211765,102.117647,Run–DMC,ranker:1949632
+109,Logic,logic,1,Ranker,,,,42,0.209804,102.098039,Logic,ranker:76581019
+110,Chance The Rapper,chance the rapper,1,Ranker,,,,44,0.207843,102.078431,Chance The Rapper,ranker:76985743
+111,Wiz Khalifa,wiz khalifa,1,Ranker,,,,46,0.205882,102.058824,Wiz Khalifa,ranker:2405280
+112,Joey Bada$$,joey bada,1,Ranker,,,,47,0.204902,102.049020,Joey Bada$$,ranker:77708285
+113,Juice WRLD,juice wrld,1,Ranker,,,,48,0.203922,102.039216,Juice WRLD,ranker:85375015
+114,Denzel Curry,denzel curry,1,Ranker,,,,49,0.202941,102.029412,Denzel Curry,ranker:75495344
+115,Mac Miller,mac miller,1,Ranker,,,,52,0.200000,102.000000,Mac Miller,ranker:62155560
+116,21 Savage,21 savage,1,Ranker,,,,54,0.198039,101.980392,21 Savage,ranker:85371779
+117,Meek Mill,meek mill,1,Ranker,,,,55,0.197059,101.970588,Meek Mill,ranker:62012119
+118,Xzibit,xzibit,1,Ranker,,,,56,0.196078,101.960784,Xzibit,ranker:2421366
+119,Big Sean,big sean,1,Ranker,,,,58,0.194118,101.941176,Big Sean,ranker:9648754
+120,Schoolboy Q,schoolboy q,1,Ranker,,,,61,0.191176,101.911765,Schoolboy Q,ranker:63291647
+121,2 Chainz,2 chainz,1,Ranker,,,,63,0.189216,101.892157,2 Chainz,ranker:67578782
+122,Nelly,nelly,1,Ranker,,,,64,0.188235,101.882353,Nelly,ranker:1660396
+123,Joyner Lucas,joyner lucas,1,Ranker,,,,65,0.187255,101.872549,Joyner Lucas,ranker:85371788
+124,Lil Uzi Vert,lil uzi vert,1,Ranker,,,,68,0.184314,101.843137,Lil Uzi Vert,ranker:85371802
+125,Warren G,warren g,1,Ranker,,,,69,0.183333,101.833333,Warren G,ranker:2360829
+126,Darryl McDaniels,darryl mcdaniels,1,Ranker,,,,73,0.179412,101.794118,Darryl McDaniels,ranker:817117
+127,J.I.D,jid,1,Ranker,,,,74,0.178431,101.784314,J.I.D,ranker:85375105
+128,Grandmaster Flash and the Furious Five,grandmaster flash and the furious five,1,Ranker,,,,76,0.176471,101.764706,Grandmaster Flash and the Furious Five,ranker:1094126
+129,Quavo,quavo,1,Ranker,,,,85,0.167647,101.676471,Quavo,ranker:81680275
+130,Proof,proof,1,Ranker,,,,86,0.166667,101.666667,Proof,ranker:1842668
+131,Coolio,coolio,1,Ranker,,,,87,0.165686,101.656863,Coolio,ranker:772558
+132,Young Thug,young thug,1,Ranker,,,,89,0.163725,101.637255,Young Thug,ranker:74529377
+133,T-Pain,t pain,1,Ranker,,,,90,0.162745,101.627451,T-Pain,ranker:2138976
+134,Ski Mask The Slump God,ski mask the slump god,1,Ranker,,,,91,0.161765,101.617647,Ski Mask The Slump God,ranker:85371783
+135,Lil Baby,lil baby,1,Ranker,,,,92,0.160784,101.607843,Lil Baby,ranker:85375164
+136,FERG,ferg,1,Ranker,,,,94,0.158824,101.588235,FERG,ranker:80588866
+137,R.A. The Rugged Man,ra the rugged man,1,Hip Hop Golden Age,,19,,,0.158163,101.581633,R.A. The Rugged Man,
+138,Polo G,polo g,1,Ranker,,,,95,0.157843,101.578431,Polo G,ranker:85377424
+139,Hopsin,hopsin,1,Ranker,,,,97,0.155882,101.558824,Hopsin,ranker:62050865
+140,Offset,offset,1,Ranker,,,,98,0.154902,101.549020,Offset,ranker:6330521
+141,Lil Dicky,lil dicky,1,Ranker,,,,99,0.153922,101.539216,Lil Dicky,ranker:84579553
+142,Will Smith,will smith,1,Ranker,,,,100,0.152941,101.529412,Will Smith,ranker:2399718
+143,MC Ren,mc ren,1,Ranker,,,,102,0.150980,101.509804,MC Ren,ranker:1554809
+144,NF,nf,1,Ranker,,,,104,0.149020,101.490196,NF,ranker:11431427
+145,G-Eazy,g eazy,1,Ranker,,,,105,0.148039,101.480392,G-Eazy,ranker:67578178
+146,Post Malone,post malone,1,Ranker,,,,106,0.147059,101.470588,Post Malone,ranker:85371786
+147,Fat Joe,fat joe,1,Ranker,,,,107,0.146078,101.460784,Fat Joe,ranker:980047
+148,King Von,king von,1,Ranker,,,,110,0.143137,101.431373,King Von,ranker:85382861
+149,Pharrell Williams,pharrell williams,1,Ranker,,,,113,0.140196,101.401961,Pharrell Williams,ranker:1791590
+150,YG,yg,1,Ranker,,,,114,0.139216,101.392157,YG,ranker:62032161
+151,Kodak Black,kodak black,1,Ranker,,,,115,0.138235,101.382353,Kodak Black,ranker:85371787
+152,Roddy Ricch,roddy ricch,1,Ranker,,,,117,0.136275,101.362745,Roddy Ricch,ranker:85376836
+153,Playboi Carti,playboi carti,1,Ranker,,,,118,0.135294,101.352941,Playboi Carti,ranker:85372970
+154,DaBaby,dababy,1,Ranker,,,,119,0.134314,101.343137,DaBaby,ranker:85377217
+155,Vince Staples,vince staples,1,Ranker,,,,120,0.133333,101.333333,Vince Staples,ranker:75231431
+156,Afroman,afroman,1,Ranker,,,,121,0.132353,101.323529,Afroman,ranker:407911
+157,MC Hammer,mc hammer,1,Ranker,,,,123,0.130392,101.303922,MC Hammer,ranker:1554690
+158,The D.O.C.,the doc,1,Ranker,,,,124,0.129412,101.294118,The D.O.C.,ranker:2188344
+159,Earl Sweatshirt,earl sweatshirt,1,Ranker,,,,125,0.128431,101.284314,Earl Sweatshirt,ranker:62228932
+160,Benny the Butcher,benny the butcher,1,Ranker,,,,126,0.127451,101.274510,Benny the Butcher,ranker:85377399
+161,A Boogie wit da Hoodie,a boogie wit da hoodie,1,Ranker,,,,130,0.123529,101.235294,A Boogie wit da Hoodie,ranker:85374258
+162,Anderson .Paak,anderson paak,1,Ranker,,,,131,0.122549,101.225490,Anderson .Paak,ranker:85371781
+163,Obie Trice,obie trice,1,Ranker,,,,132,0.121569,101.215686,Obie Trice,ranker:1706299
+164,NLE Choppa,nle choppa,1,Ranker,,,,133,0.120588,101.205882,NLE Choppa,ranker:9874283
+165,B.o.B,bob,1,Ranker,,,,134,0.119608,101.196078,B.o.B,ranker:41903643
+166,MC Eiht,mc eiht,1,"Beats, Rhymes & Lists",,,53,,0.118687,101.186869,MC Eiht,
+167,Wyclef Jean,wyclef jean,1,Ranker,,,,136,0.117647,101.176471,Wyclef Jean,ranker:2416818
+168,Immortal Technique,immortal technique,1,Ranker,,,,137,0.116667,101.166667,Immortal Technique,ranker:1214351
+169,Gunna,gunna,1,Ranker,,,,139,0.114706,101.147059,Gunna,ranker:85375846
+170,Phonte,phonte,1,"Beats, Rhymes & Lists",,,55,,0.113636,101.136364,Phonte,
+171,Biz Markie,biz markie,1,Ranker,,,,141,0.112745,101.127451,Biz Markie,ranker:591100
+172,Lil Tjay,lil tjay,1,Ranker,,,,142,0.111765,101.117647,Lil Tjay,ranker:85377278
+173,YNW Melly,ynw melly,1,Ranker,,,,144,0.109804,101.098039,YNW Melly,ranker:85377153
+174,Waka Flocka Flame,waka flocka flame,1,Ranker,,,,145,0.108824,101.088235,Waka Flocka Flame,ranker:34254778
+175,Fetty Wap,fetty wap,1,Ranker,,,,146,0.107843,101.078431,Fetty Wap,ranker:81688450
+176,billy woods,billy woods,1,Hip Hop Golden Age,,29,,,0.107143,101.071429,billy woods,
+177,YoungBoy Never Broke Again,youngboy never broke again,1,Ranker,,,,147,0.106863,101.068627,YoungBoy Never Broke Again,ranker:85373363
+178,Master P,master p,1,Ranker,,,,148,0.105882,101.058824,Master P,ranker:1539266
+179,Lil Jon,lil jon,1,Ranker,,,,149,0.104902,101.049020,Lil Jon,ranker:1448650
+180,Jay Rock,jay rock,1,Ranker,,,,150,0.103922,101.039216,Jay Rock,ranker:44727300
+181,Macklemore,macklemore,1,Ranker,,,,151,0.102941,101.029412,Macklemore,ranker:63329659
+182,Swae Lee,swae lee,1,Ranker,,,,152,0.101961,101.019608,Swae Lee,ranker:85374561
+183,B-Real,b real,1,Ranker,,,,153,0.100980,101.009804,B-Real,ranker:527934
+184,Lloyd Banks,lloyd banks,1,Ranker,,,,154,0.100000,101.000000,Lloyd Banks,ranker:1462989
+185,Lil Yachty,lil yachty,1,Ranker,,,,155,0.099020,100.990196,Lil Yachty,ranker:85371784
+186,will.i.am,william,1,Ranker,,,,156,0.098039,100.980392,will.i.am,ranker:2399518
+187,Ty Dolla $ign,ty dolla ign,1,Ranker,,,,157,0.097059,100.970588,Ty Dolla $ign,ranker:63255886
+188,Sir Mix-a-Lot,sir mix a lot,1,Ranker,,,,158,0.096078,100.960784,Sir Mix-a-Lot,ranker:2039630
+189,Heavy D,heavy d,1,Ranker,,,,160,0.094118,100.941176,Heavy D,ranker:1142267
+190,Bizzy Bone,bizzy bone,1,Ranker,,,,161,0.093137,100.931373,Bizzy Bone,ranker:591088
+191,Lil Durk,lil durk,1,Ranker,,,,162,0.092157,100.921569,Lil Durk,ranker:80644869
+192,Ka,ka,1,Hip Hop Golden Age,,32,,,0.091837,100.918367,Ka,
+193,Eve,eve,1,Ranker,,,,163,0.091176,100.911765,Eve,ranker:965480
+194,Sean Price,sean price,1,"Beats, Rhymes & Lists",,,64,,0.090909,100.909091,Sean Price,
+195,Trippie Redd,trippie redd,1,Ranker,,,,164,0.090196,100.901961,Trippie Redd,ranker:85372616
+196,Kevin Gates,kevin gates,1,Ranker,,,,165,0.089216,100.892157,Kevin Gates,ranker:62052547
+197,Wale,wale,1,Ranker,,,,166,0.088235,100.882353,Wale,ranker:2354786
+198,Ja Rule,ja rule,1,Ranker,,,,167,0.087255,100.872549,Ja Rule,ranker:1274942
+199,Cordae,cordae,1,Ranker,,,,169,0.085294,100.852941,Cordae,ranker:85376158
+200,Layzie Bone,layzie bone,1,Ranker,,,,171,0.083333,100.833333,Layzie Bone,ranker:1420958
+201,Doja Cat,doja cat,1,Ranker,,,,172,0.082353,100.823529,Doja Cat,ranker:85376843
+202,Beanie Sigel,beanie sigel,1,"Beats, Rhymes & Lists",,,68,,0.080808,100.808081,Beanie Sigel,
+203,Machine Gun Kelly,machine gun kelly,1,Ranker,,,,174,0.080392,100.803922,Machine Gun Kelly,ranker:62062434
+204,Yelawolf,yelawolf,1,Ranker,,,,176,0.078431,100.784314,Yelawolf,ranker:62068751
+205,Cardi B,cardi b,1,Ranker,,,,177,0.077451,100.774510,Cardi B,ranker:85371794
+206,Big K.R.I.T.,big krit,1,Ranker,,,,181,0.073529,100.735294,Big K.R.I.T.,ranker:62252072
+207,Elzhi,elzhi,1,"Beats, Rhymes & Lists",,,71,,0.073232,100.732323,Elzhi,
+208,Takeoff,takeoff,1,Ranker,,,,182,0.072549,100.725490,Takeoff,ranker:81691039
+209,Chamillionaire,chamillionaire,1,Ranker,,,,183,0.071569,100.715686,Chamillionaire,ranker:697287
+210,Juvenile,juvenile,1,Ranker,,,,184,0.070588,100.705882,Juvenile,ranker:1338428
+211,Megan Thee Stallion,megan thee stallion,1,Ranker,,,,186,0.068627,100.686275,Megan Thee Stallion,ranker:85374232
+212,Lisa Lopes,lisa lopes,1,Ranker,,,,187,0.067647,100.676471,Lisa Lopes,ranker:1453992
+213,Erick Sermon,erick sermon,1,Ranker,,,,188,0.066667,100.666667,Erick Sermon,ranker:948456
+214,J-Live,j live,1,Hip Hop Golden Age,,37,,,0.066327,100.663265,J-Live,
+215,Skepta,skepta,1,Ranker,,,,189,0.065686,100.656863,Skepta,ranker:9617739
+216,Joseph Simmons,joseph simmons,1,Ranker,,,,190,0.064706,100.647059,Joseph Simmons,ranker:1324685
+217,Doug E. Fresh,doug e fresh,1,Ranker,,,,191,0.063725,100.637255,Doug E. Fresh,ranker:884539
+218,Trick Daddy,trick daddy,1,Ranker,,,,192,0.062745,100.627451,Trick Daddy,ranker:2277768
+219,Remy Ma,remy ma,1,Ranker,,,,193,0.061765,100.617647,Remy Ma,ranker:9623468
+220,Mystikal,mystikal,1,Ranker,,,,194,0.060784,100.607843,Mystikal,ranker:1638226
+221,BigXthaPlug,bigxthaplug,1,Ranker,,,,195,0.059804,100.598039,BigXthaPlug,ranker:1003040467
+222,Ace Hood,ace hood,1,Ranker,,,,196,0.058824,100.588235,Ace Hood,ranker:30905236
+223,Lil Nas X,lil nas x,1,Ranker,,,,198,0.056863,100.568627,Lil Nas X,ranker:85377176
+224,No Malice,no malice,1,Ranker,,,,200,0.054902,100.549020,No Malice,ranker:6295399
+225,Boosie Badazz,boosie badazz,1,Ranker,,,,201,0.053922,100.539216,Boosie Badazz,ranker:6254579
+226,Grand Puba,grand puba,1,Ranker,,,,202,0.052941,100.529412,Grand Puba,ranker:1095096
+227,Havoc,havoc,1,Ranker,,,,204,0.050980,100.509804,Havoc,ranker:1137746
+228,Isaiah Rashad,isaiah rashad,1,Ranker,,,,205,0.050000,100.500000,Isaiah Rashad,ranker:82114734
+229,Danny Brown,danny brown,1,Ranker,,,,206,0.049020,100.490196,Danny Brown,ranker:67577838
+230,Tee Grizzley,tee grizzley,1,Ranker,,,,208,0.047059,100.470588,Tee Grizzley,ranker:85374560
+231,Aminé,amine,1,Ranker,,,,213,0.042157,100.421569,Aminé,ranker:85371792
+232,Vic Mensa,vic mensa,1,Ranker,,,,214,0.041176,100.411765,Vic Mensa,ranker:80652026
+233,Cappadonna,cappadonna,1,Ranker,,,,215,0.040196,100.401961,Cappadonna,ranker:668741
+234,Daz Dillinger,daz dillinger,1,Ranker,,,,217,0.038235,100.382353,Daz Dillinger,ranker:829097
+235,N.O.R.E.,nore,1,Ranker,,,,218,0.037255,100.372549,N.O.R.E.,ranker:9870576
+236,Rich the Kid,rich the kid,1,Ranker,,,,219,0.036275,100.362745,Rich the Kid,ranker:85371797
+237,Skyzoo,skyzoo,1,Hip Hop Golden Age,,43,,,0.035714,100.357143,Skyzoo,
+238,Adam Horovitz,adam horovitz,1,Ranker,,,,220,0.035294,100.352941,Adam Horovitz,ranker:399585
+239,M.I.A.,mia,1,Ranker,,,,221,0.034314,100.343137,M.I.A.,ranker:1640629
+240,U-God,u god,1,Ranker,,,,222,0.033333,100.333333,U-God,ranker:2294786
+241,Pimp C,pimp c,1,"Beats, Rhymes & Lists",,,87,,0.032828,100.328283,Pimp C,
+242,Joe Budden,joe budden,1,Ranker,,,,223,0.032353,100.323529,Joe Budden,ranker:1296303
+243,Young Buck,young buck,1,Ranker,,,,224,0.031373,100.313725,Young Buck,ranker:2430530
+244,LeCrae,lecrae,1,Ranker,,,,225,0.030392,100.303922,LeCrae,ranker:6261815
+245,Lil Skies,lil skies,1,Ranker,,,,226,0.029412,100.294118,Lil Skies,ranker:85372984
+246,Grandmaster Caz,grandmaster caz,1,Ranker,,,,227,0.028431,100.284314,Grandmaster Caz,ranker:6315252
+247,Dres,dres,1,Ranker,,,,228,0.027451,100.274510,Dres,ranker:36761937
+248,Foxy Brown,foxy brown,1,Ranker,,,,229,0.026471,100.264706,Foxy Brown,ranker:1012680
+249,Schoolly D,schoolly d,1,Ranker,,,,230,0.025490,100.254902,Schoolly D,ranker:1987083
+250,Lord Finesse,lord finesse,1,Ranker,,,,231,0.024510,100.245098,Lord Finesse,ranker:1470949
+251,Jimmy Spicer,jimmy spicer,1,Ranker,,,,232,0.023529,100.235294,Jimmy Spicer,ranker:1289682
+252,Spoonie Gee,spoonie gee,1,Ranker,,,,233,0.022549,100.225490,Spoonie Gee,ranker:2077827
+253,YBN Nahmir,ybn nahmir,1,Ranker,,,,234,0.021569,100.215686,YBN Nahmir,ranker:85373566
+254,Bizarre,bizarre,1,Ranker,,,,235,0.020588,100.205882,Bizarre,ranker:591003
+255,Aceyalone,aceyalone,1,Hip Hop Golden Age,,46,,,0.020408,100.204082,Aceyalone,
+256,MURS,murs,1,Ranker,,,,236,0.019608,100.196078,MURS,ranker:1631845
+257,Roxanne Shanté,roxanne shante,1,Ranker,,,,237,0.018627,100.186275,Roxanne Shanté,ranker:1942770
+258,Killa Cam,killa cam,1,Ranker,,,,238,0.017647,100.176471,Killa Cam,ranker:73568232
+259,Da Brat,da brat,1,Ranker,,,,239,0.016667,100.166667,Da Brat,ranker:829163
+260,Mac Dre,mac dre,1,Ranker,,,,240,0.015686,100.156863,Mac Dre,ranker:1495322
+261,Brother Ali,brother ali,1,"Beats, Rhymes & Lists",,,94,,0.015152,100.151515,Brother Ali,
+262,Rammellzee,rammellzee,1,Ranker,,,,241,0.014706,100.147059,Rammellzee,ranker:1870928
+263,Open Mike Eagle,open mike eagle,1,Ranker,,,,244,0.011765,100.117647,Open Mike Eagle,ranker:74626637
+264,Lil' Flip,lil flip,1,Ranker,,,,245,0.010784,100.107843,Lil' Flip,ranker:1448617
+265,Kuniva,kuniva,1,Ranker,,,,246,0.009804,100.098039,Kuniva,ranker:1397517
+266,Trina,trina,1,Ranker,,,,247,0.008824,100.088235,Trina,ranker:2278473
+267,MC Ride,mc ride,1,Ranker,,,,248,0.007843,100.078431,MC Ride,ranker:73519785
+268,Sheek Louch,sheek louch,1,Ranker,,,,249,0.006863,100.068627,Sheek Louch,ranker:2015850
+269,Killah Priest,killah priest,1,Hip Hop Golden Age,,49,,,0.005102,100.051020,Killah Priest,
+270,Rev. Run,rev run,1,Billboard/VIBE,49,,,,0.005102,100.051020,Rev. Run,
+271,The Lady of Rage,the lady of rage,1,Ranker,,,,251,0.004902,100.049020,The Lady of Rage,ranker:1404207
+272,JME,jme,1,Ranker,,,,252,0.003922,100.039216,JME,ranker:9614678
+273,Luther Campbell,luther campbell,1,Ranker,,,,254,0.001961,100.019608,Luther Campbell,ranker:1488564
+274,Esham,esham,1,Ranker,,,,255,0.000980,100.009804,Esham,ranker:954530
+275,The Last Emperor,the last emperor,1,Ranker,,,,256,0.000000,100.000000,The Last Emperor,ranker:1415112

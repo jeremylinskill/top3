@@ -27,6 +27,8 @@ type CreateListInput = {
   category: string;
   type?: string;
   topic?: string;
+  themeId?: string;
+  collectionOptionId?: string;
   title: string;
 };
 
@@ -326,6 +328,11 @@ export function Top3Provider({
       input.topic?.trim().toLowerCase() ??
       'general';
 
+    const normalizedCollectionOptionId =
+      input.collectionOptionId
+        ?.trim()
+        .toLowerCase();
+
     const existingList = lists.find((list) => {
       const existingCategory =
         list.category.trim().toLowerCase();
@@ -337,6 +344,21 @@ export function Top3Provider({
       const existingTopic =
         list.topic?.trim().toLowerCase() ??
         'general';
+
+      const existingCollectionOptionId =
+        list.collectionOptionId
+          ?.trim()
+          .toLowerCase();
+
+      if (
+        normalizedCollectionOptionId &&
+        existingCollectionOptionId
+      ) {
+        return (
+          existingCollectionOptionId ===
+          normalizedCollectionOptionId
+        );
+      }
 
       return (
         existingCategory ===
@@ -391,6 +413,9 @@ export function Top3Provider({
         category: input.category,
         type: input.type,
         topic: input.topic,
+        themeId: input.themeId,
+        collectionOptionId:
+          input.collectionOptionId,
         title: input.title,
         items: [null, null, null],
       });

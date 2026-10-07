@@ -12,6 +12,7 @@ type SearchRequestBody = {
   query?: unknown;
   topic?: unknown;
   limit?: unknown;
+  ids?: unknown;
 };
 
 type AppleMusicArtwork = {
@@ -90,6 +91,16 @@ type AppleMusicResource =
   | "albums"
   | "artists"
   | "songs";
+
+type AppleMusicArtistsResponse = {
+  data?: AppleMusicArtist[];
+  errors?: Array<{
+    id?: string;
+    title?: string;
+    detail?: string;
+    status?: string;
+  }>;
+};
 
 type AppleMusicSearchResponse = {
   results?: {
@@ -241,6 +252,7 @@ const APPLE_SEARCH_LIMIT = 25;
 const RESULT_LIMIT = 10;
 const MAX_QUERY_LENGTH = 100;
 const MAX_POPULAR_RESULT_LIMIT = 50;
+const MAX_ARTIST_ENRICHMENT_IDS = 25;
 
 const APPLE_CHART_LIMIT = 200;
 const CHART_CACHE_TTL_MS =
@@ -6050,6 +6062,183 @@ async function getFallbackArtistPreviewUrl(
   return undefined;
 }
 
+async function enrichAppleMusicArtistsByIds(
+  artistIds: string[]
+): Promise<ArtistSearchResult[]> {
+  const developerToken =
+    await getDeveloperToken();
+
+  const url =
+    new URL(
+      `${APPLE_MUSIC_API_BASE_URL}/catalog/${DEFAULT_STOREFRONT}/artists`
+    );
+
+  url.searchParams.set(
+    "ids",
+    artistIds.join(",")
+  );
+
+  const response =
+    await fetch(
+      url.toString(),
+      {
+        method: "GET",
+        headers: {
+          Accept:
+            "application/json",
+          Authorization:
+            `Bearer ${developerToken}`,
+        },
+      }
+    );
+
+  const responseText =
+    await response.text();
+
+  let data:
+    | AppleMusicArtistsResponse
+    | null = null;
+
+  if (responseText) {
+    try {
+      data =
+        JSON.parse(
+          responseText
+        ) as AppleMusicArtistsResponse;
+    } catch {
+      console.error(
+        "Apple Music returned a non-JSON artist enrichment response:",
+        response.status,
+        responseText
+      );
+    }
+  }
+
+  if (!response.ok) {
+    console.error(
+      "Apple Music artist enrichment failed:",
+      response.status,
+      data ?? responseText
+    );
+
+    if (
+      response.status === 401 ||
+      response.status === 403
+    ) {
+      throw new Error(
+        "Apple Music authentication failed."
+      );
+    }
+
+    if (response.status === 429) {
+      throw new Error(
+        "Apple Music is temporarily rate limited."
+      );
+    }
+
+    throw new Error(
+      `Apple Music artist enrichment failed with status ${response.status}.`
+    );
+  }
+
+  return (
+    data?.data ?? []
+  )
+    .map(
+      (
+        artist,
+        originalIndex
+      ) =>
+        mapArtist(
+          artist,
+          originalIndex
+        )
+    )
+    .filter(
+      (
+        artist
+      ): artist is RankedArtist =>
+        artist !== null
+    )
+    .map((artist) => ({
+      id: artist.id,
+      title: artist.title,
+      subtitle:
+        artist.subtitle,
+      imageUrl:
+        artist.imageUrl,
+      appleMusicUrl:
+        artist.appleMusicUrl,
+    }));
+}
+
+async function resolveAppleMusicArtists(
+  query: string
+): Promise<ArtistSearchResult[]> {
+  const developerToken =
+    await getDeveloperToken();
+
+  const artists =
+    await getArtistTopResults(
+      developerToken,
+      query
+    );
+
+  const seenArtistIds =
+    new Set<string>();
+
+  const results:
+    ArtistSearchResult[] = [];
+
+  artists.forEach(
+    (
+      artist,
+      originalIndex
+    ) => {
+      const mapped =
+        mapArtist(
+          artist,
+          originalIndex
+        );
+
+      if (!mapped) {
+        return;
+      }
+
+      const appleArtistId =
+        mapped.id.replace(
+          /^apple-music-artist-/,
+          ""
+        );
+
+      if (
+        seenArtistIds.has(
+          appleArtistId
+        )
+      ) {
+        return;
+      }
+
+      seenArtistIds.add(
+        appleArtistId
+      );
+
+      results.push({
+        id: mapped.id,
+        title: mapped.title,
+        subtitle:
+          mapped.subtitle,
+        imageUrl:
+          mapped.imageUrl,
+        appleMusicUrl:
+          mapped.appleMusicUrl,
+      });
+    }
+  );
+
+  return results;
+}
+
 async function searchAppleMusicArtists(
   query: string,
   topic?: string
@@ -6476,6 +6665,190 @@ export default {
           return jsonResponse({
             results: [],
           });
+        }
+      }
+
+      if (mode === "enrich") {
+        if (
+          resource !== "artists"
+        ) {
+          return jsonResponse(
+            {
+              error:
+                "Enrich mode only supports artists.",
+            },
+            400
+          );
+        }
+
+        if (
+          !Array.isArray(
+            body.ids
+          )
+        ) {
+          return jsonResponse(
+            {
+              error:
+                "Artist IDs are required.",
+            },
+            400
+          );
+        }
+
+        const artistIds = [
+          ...new Set(
+            body.ids
+              .filter(
+                (
+                  value
+                ): value is string =>
+                  typeof value ===
+                  "string"
+              )
+              .map((value) =>
+                value.trim()
+              )
+              .filter(
+                (value) =>
+                  /^[0-9]+$/.test(
+                    value
+                  )
+              )
+          ),
+        ];
+
+        if (
+          artistIds.length === 0
+        ) {
+          return jsonResponse(
+            {
+              error:
+                "At least one valid Apple Music artist ID is required.",
+            },
+            400
+          );
+        }
+
+        if (
+          artistIds.length >
+          MAX_ARTIST_ENRICHMENT_IDS
+        ) {
+          return jsonResponse(
+            {
+              error:
+                `Artist enrichment supports at most ${MAX_ARTIST_ENRICHMENT_IDS} IDs per request.`,
+            },
+            400
+          );
+        }
+
+        try {
+          const results =
+            await enrichAppleMusicArtistsByIds(
+              artistIds
+            );
+
+          return jsonResponse({
+            results,
+          });
+        } catch (error) {
+          console.error(
+            "Apple Music artist enrichment failed:",
+            error
+          );
+
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Apple Music artist enrichment is temporarily unavailable.";
+
+          return jsonResponse(
+            {
+              error: message,
+            },
+            502
+          );
+        }
+      }
+
+      if (mode === "resolve") {
+        if (
+          resource !== "artists"
+        ) {
+          return jsonResponse(
+            {
+              error:
+                "Resolve mode only supports artists.",
+            },
+            400
+          );
+        }
+
+        if (
+          typeof body.query !==
+          "string"
+        ) {
+          return jsonResponse(
+            {
+              error:
+                "A music search query is required.",
+            },
+            400
+          );
+        }
+
+        const query =
+          body.query.trim();
+
+        if (!query) {
+          return jsonResponse(
+            {
+              error:
+                "A music search query is required.",
+            },
+            400
+          );
+        }
+
+        if (
+          query.length >
+          MAX_QUERY_LENGTH
+        ) {
+          return jsonResponse(
+            {
+              error:
+                `Search queries must be ${MAX_QUERY_LENGTH} characters or fewer.`,
+            },
+            400
+          );
+        }
+
+        try {
+          const results =
+            await resolveAppleMusicArtists(
+              query
+            );
+
+          return jsonResponse({
+            results,
+          });
+        } catch (error) {
+          console.error(
+            "Apple Music artist resolution failed:",
+            error
+          );
+
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Apple Music artist resolution is temporarily unavailable.";
+
+          return jsonResponse(
+            {
+              error: message,
+            },
+            502
+          );
         }
       }
 

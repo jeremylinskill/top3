@@ -1,0 +1,160 @@
+consensus_rank,musician_name,normalized_name,source_count,sources,djmag_rank,xxl_position,musicradar_position,skiddle_position,djmag_rank_strength,consensus_score,name_variants
+1,Carl Cox,carl cox,3,"DJ Mag, MusicRadar, Skiddle",25,,11,2,0.757576,307.575758,Carl Cox
+2,David Guetta,david guetta,2,"DJ Mag, Skiddle",1,,,4,1.000000,210.000000,David Guetta
+3,Armin van Buuren,armin van buuren,2,"DJ Mag, Skiddle",5,,,5,0.959596,209.595960,Armin Van Buuren | Armin van Buuren
+4,Charlotte de Witte,charlotte de witte,2,"DJ Mag, Skiddle",9,,,17,0.919192,209.191919,Charlotte de Witte
+5,Peggy Gou,peggy gou,2,"DJ Mag, Skiddle",12,,,10,0.888889,208.888889,Peggy Gou
+6,Calvin Harris,calvin harris,2,"DJ Mag, Skiddle",16,,,19,0.848485,208.484848,Calvin Harris
+7,Black Coffee,black coffee,2,"DJ Mag, Skiddle",17,,,11,0.838384,208.383838,Black Coffee
+8,Tiësto,tiesto,2,"DJ Mag, Skiddle",21,,,8,0.797980,207.979798,Tiesto | Tiësto
+9,Skrillex,skrillex,2,"DJ Mag, Skiddle",31,,,3,0.696970,206.969697,Skrillex
+10,Fred again..,fred again,2,"DJ Mag, Skiddle",33,,,35,0.676768,206.767677,Fred again.. | Fred again...
+11,Eric Prydz,eric prydz,2,"DJ Mag, Skiddle",37,,,9,0.636364,206.363636,Eric Prydz
+12,Amelie Lens,amelie lens,2,"DJ Mag, Skiddle",38,,,13,0.626263,206.262626,Amelie Lens
+13,Deadmau5,deadmau5,2,"DJ Mag, Skiddle",82,,,7,0.181818,201.818182,Deadmau5
+14,Honey Dijon,honey dijon,2,"DJ Mag, Skiddle",97,,,16,0.030303,200.303030,Honey Dijon
+15,DJ Cash Money,dj cash money,2,"XXL, MusicRadar",,43,10,,0.000000,200.000000,DJ Cash Money
+16,DJ Kool Herc,dj kool herc,2,"XXL, Skiddle",,1,,30,0.000000,200.000000,DJ Kool Herc | Kool Herc
+17,DJ Qbert,dj qbert,2,"XXL, MusicRadar",,35,17,,0.000000,200.000000,DJ Qbert
+18,Grandmaster Flash,grandmaster flash,2,"XXL, MusicRadar",,4,20,,0.000000,200.000000,Grandmaster Flash
+19,Jam Master Jay,jam master jay,2,"XXL, MusicRadar",,14,13,,0.000000,200.000000,Jam Master Jay
+20,Martin Garrix,martin garrix,1,DJ Mag,2,,,,0.989899,109.898990,Martin Garrix
+21,Alok,alok,1,DJ Mag,3,,,,0.979798,109.797980,Alok
+22,Timmy Trumpet,timmy trumpet,1,DJ Mag,6,,,,0.949495,109.494949,Timmy Trumpet
+23,FISHER,fisher,1,DJ Mag,7,,,,0.939394,109.393939,FISHER
+24,Afrojack,afrojack,1,DJ Mag,8,,,,0.929293,109.292929,Afrojack
+25,Anyma,anyma,1,DJ Mag,10,,,,0.909091,109.090909,Anyma
+26,Vintage Culture,vintage culture,1,DJ Mag,11,,,,0.898990,108.989899,Vintage Culture
+27,Don Diablo,don diablo,1,DJ Mag,13,,,,0.878788,108.787879,Don Diablo
+28,Steve Aoki,steve aoki,1,DJ Mag,14,,,,0.868687,108.686869,Steve Aoki
+29,Hardwell,hardwell,1,DJ Mag,15,,,,0.858586,108.585859,Hardwell
+30,Lost Frequencies,lost frequencies,1,DJ Mag,19,,,,0.818182,108.181818,Lost Frequencies
+31,Reinier Zonneveld,reinier zonneveld,1,DJ Mag,22,,,,0.787879,107.878788,Reinier Zonneveld
+32,KSHMR,kshmr,1,DJ Mag,23,,,,0.777778,107.777778,KSHMR
+33,Alan Walker,alan walker,1,DJ Mag,24,,,,0.767677,107.676768,Alan Walker
+34,Oliver Heldens,oliver heldens,1,DJ Mag,26,,,,0.747475,107.474747,Oliver Heldens
+35,Jamie Jones,jamie jones,1,DJ Mag,27,,,,0.737374,107.373737,Jamie Jones
+36,R3hab,r3hab,1,DJ Mag,28,,,,0.727273,107.272727,R3hab
+37,Nicky Romero,nicky romero,1,DJ Mag,29,,,,0.717172,107.171717,Nicky Romero
+38,Claptone,claptone,1,DJ Mag,30,,,,0.707071,107.070707,Claptone
+39,Joel Corry,joel corry,1,DJ Mag,35,,,,0.656566,106.565657,Joel Corry
+40,Indira Paganotto,indira paganotto,1,DJ Mag,36,,,,0.646465,106.464646,Indira Paganotto
+41,Paul van Dyk,paul van dyk,1,DJ Mag,39,,,,0.616162,106.161616,Paul van Dyk
+42,DJ Snake,dj snake,1,DJ Mag,40,,,,0.606061,106.060606,DJ Snake
+43,Dom Dolla,dom dolla,1,DJ Mag,41,,,,0.595960,105.959596,Dom Dolla
+44,Marshmello,marshmello,1,DJ Mag,42,,,,0.585859,105.858586,Marshmello
+45,Zedd,zedd,1,DJ Mag,44,,,,0.565657,105.656566,Zedd
+46,John Summit,john summit,1,DJ Mag,46,,,,0.545455,105.454545,John Summit
+47,Quintino,quintino,1,DJ Mag,47,,,,0.535354,105.353535,Quintino
+48,Michael Bibi,michael bibi,1,DJ Mag,48,,,,0.525253,105.252525,Michael Bibi
+49,Boris Brejcha,boris brejcha,1,DJ Mag,49,,,,0.515152,105.151515,Boris Brejcha
+50,Korolova,korolova,1,DJ Mag,50,,,,0.505051,105.050505,Korolova
+51,Alesso,alesso,1,DJ Mag,51,,,,0.494949,104.949495,Alesso
+52,James Hype,james hype,1,DJ Mag,52,,,,0.484848,104.848485,James Hype
+53,Maddix,maddix,1,DJ Mag,53,,,,0.474747,104.747475,Maddix
+54,HUGEL,hugel,1,DJ Mag,54,,,,0.464646,104.646465,HUGEL
+55,Solomun,solomun,1,DJ Mag,55,,,,0.454545,104.545455,Solomun
+56,Mochakk,mochakk,1,DJ Mag,56,,,,0.444444,104.444444,Mochakk
+57,Lilly Palmer,lilly palmer,1,DJ Mag,57,,,,0.434343,104.343434,Lilly Palmer
+58,Nora En Pure,nora en pure,1,DJ Mag,58,,,,0.424242,104.242424,Nora En Pure
+59,ATB,atb,1,DJ Mag,59,,,,0.414141,104.141414,ATB
+60,Deborah De Luca,deborah de luca,1,DJ Mag,60,,,,0.404040,104.040404,Deborah De Luca
+61,Sara Landry,sara landry,1,DJ Mag,62,,,,0.383838,103.838384,Sara Landry
+62,Kölsch,kolsch,1,DJ Mag,65,,,,0.353535,103.535354,Kölsch
+63,Nico Moreno,nico moreno,1,DJ Mag,67,,,,0.333333,103.333333,Nico Moreno
+64,GORDO,gordo,1,DJ Mag,68,,,,0.323232,103.232323,GORDO
+65,PAWSA,pawsa,1,DJ Mag,69,,,,0.313131,103.131313,PAWSA
+66,Liu,liu,1,DJ Mag,71,,,,0.292929,102.929293,Liu
+67,Mike Williams,mike williams,1,DJ Mag,72,,,,0.282828,102.828283,Mike Williams
+68,KAAZE,kaaze,1,DJ Mag,74,,,,0.262626,102.626263,KAAZE
+69,Miss Monique,miss monique,1,DJ Mag,75,,,,0.252525,102.525253,Miss Monique
+70,Burak Yeter,burak yeter,1,DJ Mag,76,,,,0.242424,102.424242,Burak Yeter
+71,Mau P,mau p,1,DJ Mag,77,,,,0.232323,102.323232,Mau P
+72,I Hate Models,i hate models,1,DJ Mag,79,,,,0.212121,102.121212,I Hate Models
+73,Chris Stussy,chris stussy,1,DJ Mag,81,,,,0.191919,101.919192,Chris Stussy
+74,WUKONG,wukong,1,DJ Mag,83,,,,0.171717,101.717172,WUKONG
+75,Fedde Le Grand,fedde le grand,1,DJ Mag,84,,,,0.161616,101.616162,Fedde Le Grand
+76,Ferry Corsten,ferry corsten,1,DJ Mag,85,,,,0.151515,101.515152,Ferry Corsten
+77,Plastik Funk,plastik funk,1,DJ Mag,86,,,,0.141414,101.414141,Plastik Funk
+78,B Jones,b jones,1,DJ Mag,88,,,,0.121212,101.212121,B Jones
+79,Giuseppe Ottaviani,giuseppe ottaviani,1,DJ Mag,89,,,,0.111111,101.111111,Giuseppe Ottaviani
+80,Cuebrick,cuebrick,1,DJ Mag,90,,,,0.101010,101.010101,Cuebrick
+81,Mariana Bo,mariana bo,1,DJ Mag,91,,,,0.090909,100.909091,Mariana Bo
+82,Fantasm,fantasm,1,DJ Mag,93,,,,0.070707,100.707071,Fantasm
+83,Chris Lake,chris lake,1,DJ Mag,95,,,,0.050505,100.505051,Chris Lake
+84,Faustix,faustix,1,DJ Mag,96,,,,0.040404,100.404040,Faustix
+85,Nils van Zandt,nils van zandt,1,DJ Mag,98,,,,0.020202,100.202020,Nils van Zandt
+86,Topic,topic,1,DJ Mag,99,,,,0.010101,100.101010,Topic
+87,A-Trak,a trak,1,XXL,,40,,,0.000000,100.000000,A-Trak
+88,Adam Beyer,adam beyer,1,Skiddle,,,,12,0.000000,100.000000,Adam Beyer
+89,Afrika Bambaataa,afrika bambaataa,1,XXL,,31,,,0.000000,100.000000,Afrika Bambaataa
+90,Andrew Weatherall,andrew weatherall,1,Skiddle,,,,29,0.000000,100.000000,Andrew Weatherall
+91,Andy C,andy c,1,Skiddle,,,,14,0.000000,100.000000,Andy C
+92,Avicii,avicii,1,Skiddle,,,,6,0.000000,100.000000,Avicii
+93,Ben Klock,ben klock,1,Skiddle,,,,32,0.000000,100.000000,Ben Klock
+94,Brucie B,brucie b,1,XXL,,34,,,0.000000,100.000000,Brucie B
+95,Cosmic Kev,cosmic kev,1,XXL,,22,,,0.000000,100.000000,Cosmic Kev
+96,Cut Chemist,cut chemist,1,MusicRadar,,,14,,0.000000,100.000000,Cut Chemist
+97,David Mancuso,david mancuso,1,MusicRadar,,,1,,0.000000,100.000000,David Mancuso
+98,David Rodigan,david rodigan,1,MusicRadar,,,8,,0.000000,100.000000,David Rodigan
+99,DJ Alfredo,dj alfredo,1,MusicRadar,,,2,,0.000000,100.000000,DJ Alfredo
+100,DJ Andy Smith,dj andy smith,1,MusicRadar,,,5,,0.000000,100.000000,DJ Andy Smith
+101,DJ Babu,dj babu,1,XXL,,38,,,0.000000,100.000000,DJ Babu
+102,DJ Chuck Chillout,dj chuck chillout,1,XXL,,37,,,0.000000,100.000000,DJ Chuck Chillout
+103,DJ Chuckie,dj chuckie,1,MusicRadar,,,3,,0.000000,100.000000,DJ Chuckie
+104,DJ Clark Kent,dj clark kent,1,XXL,,19,,,0.000000,100.000000,DJ Clark Kent
+105,DJ Clue,dj clue,1,XXL,,30,,,0.000000,100.000000,DJ Clue
+106,DJ Doo Wop,dj doo wop,1,XXL,,17,,,0.000000,100.000000,DJ Doo Wop
+107,DJ Drama,dj drama,1,XXL,,10,,,0.000000,100.000000,DJ Drama
+108,DJ Enuff,dj enuff,1,XXL,,28,,,0.000000,100.000000,DJ Enuff
+109,DJ Envy,dj envy,1,XXL,,39,,,0.000000,100.000000,DJ Envy
+110,DJ EZ,dj ez,1,Skiddle,,,,26,0.000000,100.000000,DJ EZ
+111,DJ Green Lantern,dj green lantern,1,XXL,,16,,,0.000000,100.000000,DJ Green Lantern
+112,DJ Greg Street,dj greg street,1,XXL,,44,,,0.000000,100.000000,DJ Greg Street
+113,DJ Hollywood,dj hollywood,1,XXL,,42,,,0.000000,100.000000,DJ Hollywood
+114,DJ Jazzy Jeff,dj jazzy jeff,1,XXL,,29,,,0.000000,100.000000,DJ Jazzy Jeff
+115,DJ Jazzy Joyce,dj jazzy joyce,1,XXL,,11,,,0.000000,100.000000,DJ Jazzy Joyce
+116,DJ Kay Slay,dj kay slay,1,XXL,,18,,,0.000000,100.000000,DJ Kay Slay
+117,DJ Khaled,dj khaled,1,XXL,,7,,,0.000000,100.000000,DJ Khaled
+118,DJ Marky,dj marky,1,MusicRadar,,,6,,0.000000,100.000000,DJ Marky
+119,DJ Paulette,dj paulette,1,Skiddle,,,,20,0.000000,100.000000,DJ Paulette
+120,DJ Premier,dj premier,1,XXL,,2,,,0.000000,100.000000,DJ Premier
+121,DJ Scratch,dj scratch,1,XXL,,24,,,0.000000,100.000000,DJ Scratch
+122,DJ Screw,dj screw,1,XXL,,5,,,0.000000,100.000000,DJ Screw
+123,DJ Whoo Kid,dj whoo kid,1,XXL,,21,,,0.000000,100.000000,DJ Whoo Kid
+124,DJ Yoda,dj yoda,1,MusicRadar,,,15,,0.000000,100.000000,DJ Yoda
+125,DJ Z-Trip,dj z trip,1,MusicRadar,,,19,,0.000000,100.000000,DJ Z-Trip
+126,Frankie Knuckles,frankie knuckles,1,Skiddle,,,,18,0.000000,100.000000,Frankie Knuckles
+127,Funkmaster Flex,funkmaster flex,1,XXL,,15,,,0.000000,100.000000,Funkmaster Flex
+128,Grand Wizzard Theodore,grand wizzard theodore,1,XXL,,6,,,0.000000,100.000000,Grand Wizzard Theodore
+129,Grandmaster Flowers,grandmaster flowers,1,XXL,,12,,,0.000000,100.000000,Grandmaster Flowers
+130,Jeff Mills,jeff mills,1,Skiddle,,,,22,0.000000,100.000000,Jeff Mills
+131,Kid Capri,kid capri,1,XXL,,8,,,0.000000,100.000000,Kid Capri
+132,Kid Koala,kid koala,1,MusicRadar,,,9,,0.000000,100.000000,Kid Koala
+133,King Tech,king tech,1,XXL,,36,,,0.000000,100.000000,King Tech
+134,Kool DJ Red Alert,kool dj red alert,1,XXL,,9,,,0.000000,100.000000,Kool DJ Red Alert
+135,Larry Levan,larry levan,1,Skiddle,,,,25,0.000000,100.000000,Larry Levan
+136,Lil Jon,lil jon,1,XXL,,3,,,0.000000,100.000000,Lil Jon
+137,Marley Marl,marley marl,1,XXL,,25,,,0.000000,100.000000,Marley Marl
+138,Marlon Hoffstadt,marlon hoffstadt,1,DJ Mag,100,,,,0.000000,100.000000,Marlon Hoffstadt
+139,"Michael ""5000"" Watts",michael 5000 watts,1,XXL,,45,,,0.000000,100.000000,"Michael ""5000"" Watts"
+140,Mister Cee,mister cee,1,XXL,,32,,,0.000000,100.000000,Mister Cee
+141,Mr. Magic,mr magic,1,XXL,,13,,,0.000000,100.000000,Mr. Magic
+142,Mr. Scruff,mr scruff,1,MusicRadar,,,16,,0.000000,100.000000,Mr. Scruff
+143,Norman Jay MBE,norman jay mbe,1,MusicRadar,,,12,,0.000000,100.000000,Norman Jay MBE
+144,Paul Oakenfold,paul oakenfold,1,Skiddle,,,,24,0.000000,100.000000,Paul Oakenfold
+145,Pete Rock,pete rock,1,XXL,,41,,,0.000000,100.000000,Pete Rock
+146,Richie Hawtin,richie hawtin,1,Skiddle,,,,21,0.000000,100.000000,Richie Hawtin
+147,Roc Raida,roc raida,1,XXL,,33,,,0.000000,100.000000,Roc Raida
+148,Roger Sanchez,roger sanchez,1,Skiddle,,,,23,0.000000,100.000000,Roger Sanchez
+149,Ron G,ron g,1,XXL,,26,,,0.000000,100.000000,Ron G
+150,Ron Hardy,ron hardy,1,Skiddle,,,,34,0.000000,100.000000,Ron Hardy
+151,Sir Spyro,sir spyro,1,Skiddle,,,,27,0.000000,100.000000,Sir Spyro
+152,Spinderella,spinderella,1,XXL,,47,,,0.000000,100.000000,Spinderella
+153,Statik Selektah,statik selektah,1,XXL,,48,,,0.000000,100.000000,Statik Selektah
+154,Stretch Armstrong,stretch armstrong,1,XXL,,27,,,0.000000,100.000000,Stretch Armstrong
+155,Terminator X,terminator x,1,XXL,,46,,,0.000000,100.000000,Terminator X
+156,Theo Parrish,theo parrish,1,Skiddle,,,,31,0.000000,100.000000,Theo Parrish
+157,Tim Westwood,tim westwood,1,XXL,,20,,,0.000000,100.000000,Tim Westwood
+158,Tony Touch,tony touch,1,XXL,,23,,,0.000000,100.000000,Tony Touch
+159,Youngsta,youngsta,1,Skiddle,,,,28,0.000000,100.000000,Youngsta

@@ -1,0 +1,140 @@
+{
+  "guitarist": {
+    "target_count": 350,
+    "expansion_threshold": 0.3,
+    "excluded_names": [
+      "Jam Master Jay"
+    ],
+    "sources": {
+      "rolling_stone": {
+        "list_size": 250,
+        "rank_field": "rolling_stone_rank"
+      },
+      "udiscover": {
+        "list_size": 75,
+        "rank_field": "udiscover_rank"
+      },
+      "spin": {
+        "list_size": 100,
+        "rank_field": "spin_rank"
+      }
+    },
+    "selection_mode": "all_editorial_except_exclusions"
+  },
+  "vocalist": {
+    "target_count": 625,
+    "expansion_threshold": 0.0,
+    "excluded_names": [],
+    "sources": {
+      "rolling_stone": {
+        "list_size": 200,
+        "rank_field": "rolling_stone_rank"
+      },
+      "consequence": {
+        "list_size": 100,
+        "rank_field": "consequence_rank"
+      },
+      "ranker": {
+        "list_size": 547,
+        "rank_field": "ranker_rank"
+      }
+    },
+    "selection_mode": "all_editorial_except_exclusions"
+  },
+  "drummer": {
+    "target_count": 191,
+    "expansion_threshold": 0.0,
+    "excluded_names": [],
+    "sources": {
+      "rolling_stone": {
+        "list_size": 100,
+        "rank_field": "rolling_stone_rank"
+      },
+      "drumeo": {
+        "list_size": 100,
+        "rank_field": "drumeo_rank"
+      },
+      "consequence": {
+        "list_size": 100,
+        "rank_field": "consequence_rank"
+      },
+      "musicradar_reader_poll": {
+        "list_size": 50,
+        "rank_field": "musicradar_reader_poll_rank"
+      }
+    },
+    "selection_mode": "all_editorial_except_exclusions"
+  },
+  "bassist": {
+    "target_count": 136,
+    "expansion_threshold": 0.0,
+    "excluded_names": [],
+    "sources": {
+      "rolling_stone": {
+        "list_size": 50,
+        "rank_field": "rolling_stone_rank"
+      },
+      "bass_player": {
+        "list_size": 100,
+        "rank_field": "bass_player_rank"
+      },
+      "musicradar_reader_poll": {
+        "list_size": 50,
+        "rank_field": "musicradar_reader_poll_rank"
+      },
+      "udiscover": {
+        "list_size": 55,
+        "rank_field": "udiscover_rank"
+      }
+    },
+    "selection_mode": "all_editorial_except_exclusions"
+  },
+  "mc": {
+    "target_count": 275,
+    "expansion_threshold": 0.0,
+    "excluded_names": [],
+    "sources": {
+      "billboard_vibe": {
+        "list_size": 50,
+        "rank_field": "billboard_vibe_rank"
+      },
+      "hiphop_golden_age": {
+        "list_size": 50,
+        "rank_field": "hiphop_golden_age_rank"
+      },
+      "beats_rhymes_lists": {
+        "list_size": 100,
+        "rank_field": "beats_rhymes_lists_rank"
+      },
+      "ranker": {
+        "list_size": 256,
+        "rank_field": "ranker_rank"
+      }
+    },
+    "selection_mode": "all_editorial_except_exclusions"
+  },
+  "dj": {
+    "target_count": 159,
+    "expansion_threshold": 0.0,
+    "excluded_names": [],
+    "sources": {
+      "djmag": {
+        "list_size": 100,
+        "rank_field": "djmag_rank"
+      },
+      "xxl": {
+        "list_size": 48,
+        "rank_field": ""
+      },
+      "musicradar": {
+        "list_size": 20,
+        "rank_field": ""
+      },
+      "skiddle": {
+        "list_size": 35,
+        "rank_field": ""
+      }
+    },
+    "selection_mode": "all_editorial_except_exclusions"
+  }
+}

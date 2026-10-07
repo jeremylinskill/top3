@@ -14,6 +14,12 @@ export type Top3List = {
   topic?: string;
 
 
+  themeId?: string;
+
+
+  collectionOptionId?: string;
+
+
   title: string;
 
 

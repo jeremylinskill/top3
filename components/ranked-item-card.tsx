@@ -144,7 +144,11 @@ export default function RankedItemCard({
             variant="subtitle"
             tone="tertiary"
             style={styles.metadata}
-            numberOfLines={2}>
+            numberOfLines={
+              String(item.id).startsWith('person-')
+                ? 3
+                : 2
+            }>
             {getTop3ItemMetadata(
               item,
               category
@@ -161,7 +165,7 @@ export default function RankedItemCard({
             variant="subtitle"
             tone="tertiary"
             style={styles.placeholderText}>
-            Tap to choose
+            Tap to make a selection
           </AppText>
         )}
       </View>

@@ -1,0 +1,352 @@
+consensus_rank,musician_name,normalized_name,source_count,sources,global_source_count,rolling_stone_rank,guitar_world_category,guitar_world_category_rank,udiscover_rank,spin_rank,global_rank_strength,consensus_score,name_variants
+1,Prince,prince,4,Guitar World | Rolling Stone | SPIN | uDiscover,3,14,trailblazers,1,46,6,0.763059,407.630593,Prince
+2,Frank Zappa,frank zappa,4,Guitar World | Rolling Stone | SPIN | uDiscover,3,46,rock,19,43,16,0.700065,407.000648,Frank Zappa
+3,Thurston Moore,thurston moore,4,Guitar World | Rolling Stone | SPIN | uDiscover,3,57,alternative_indie,13,57,1,0.672781,406.727812,Thurston Moore
+4,Kurt Cobain,kurt cobain,4,Guitar World | Rolling Stone | SPIN | uDiscover,3,88,alternative_indie,7,48,4,0.661721,406.617214,Kurt Cobain
+5,Tony Iommi,tony iommi,4,Guitar World | Rolling Stone | SPIN | uDiscover,3,13,metal,1,65,18,0.638408,406.384084,Tony Iommi
+6,Eddie Hazel,eddie hazel,3,Rolling Stone | SPIN | uDiscover,3,29,,,29,9,0.809455,308.094546,Eddie Hazel
+7,Neil Young,neil young,3,Rolling Stone | SPIN | uDiscover,3,30,,,31,20,0.76207,307.620698,Neil Young
+8,Jimi Hendrix,jimi hendrix,3,Guitar World | Rolling Stone | uDiscover,2,1,rock,2,1,,0.666667,306.666667,Jimi Hendrix
+9,Chuck Berry,chuck berry,3,Guitar World | Rolling Stone | uDiscover,2,2,early_innovators,1,2,,0.660823,306.608235,Chuck Berry
+10,Robert Fripp,robert fripp,3,Rolling Stone | SPIN | uDiscover,3,59,,,44,25,0.647854,306.478543,Robert Fripp
+11,B.B. King,bb king,3,Guitar World | Rolling Stone | uDiscover,2,8,blues,2,4,,0.643782,306.437823,B.B. King | BB King
+12,Jimmy Page,jimmy page,3,Guitar World | Rolling Stone | uDiscover,2,3,rock,3,7,,0.636962,306.369623,Jimmy Page
+13,Jeff Beck,jeff beck,3,Guitar World | Rolling Stone | uDiscover,2,5,rock,9,9,,0.625276,306.252759,Jeff Beck
+14,The Edge,the edge,3,Rolling Stone | SPIN | uDiscover,3,47,,,62,13,0.623242,306.232415,The Edge
+15,Duane Allman,duane allman,3,Guitar World | Rolling Stone | uDiscover,2,10,rock,16,12,,0.605069,306.050689,Duane Allman
+16,Eric Clapton,eric clapton,3,Guitar World | Rolling Stone | uDiscover,2,35,rock,5,5,,0.603133,306.031333,Eric Clapton
+17,Lee Ranaldo,lee ranaldo,3,Guitar World | Rolling Stone | SPIN,2,57,alternative_indie,13,,1,0.5917,305.917001,Lee Ranaldo
+18,Eddie Van Halen,eddie van halen,3,Guitar World | Rolling Stone | uDiscover,2,4,rock,4,17,,0.590579,305.905785,Eddie Van Halen
+19,George Harrison,george harrison,3,Guitar World | Rolling Stone | uDiscover,2,31,rock,20,10,,0.585965,305.859655,George Harrison
+20,Johnny Ramone,johnny ramone,3,Guitar World | Rolling Stone | SPIN,2,44,punk,1,,8,0.585534,305.855341,Johnny Ramone
+21,Brian May,brian may,3,Guitar World | Rolling Stone | uDiscover,2,33,rock,1,11,,0.578784,305.787836,Brian May
+22,Kevin Shields,kevin shields,3,Guitar World | Rolling Stone | SPIN,2,67,alternative_indie,14,,2,0.574946,305.749462,Kevin Shields
+23,J Mascis,j mascis,3,Guitar World | Rolling Stone | SPIN,2,74,alternative_indie,6,,5,0.555474,305.554744,J Mascis | J. Mascis
+24,Wes Montgomery,wes montgomery,3,Guitar World | Rolling Stone | uDiscover,2,82,jazz_fusion,3,3,,0.549224,305.492239,Wes Montgomery
+25,Keith Richards,keith richards,3,Guitar World | Rolling Stone | uDiscover,2,15,rock,18,23,,0.548826,305.488259,Keith Richards
+26,Stevie Ray Vaughan,stevie ray vaughan,3,Guitar World | Rolling Stone | uDiscover,2,20,blues,1,22,,0.546637,305.46637,Stevie Ray Vaughan
+27,Jack White,jack white,3,Guitar World | Rolling Stone | SPIN,2,32,alternative_indie,3,,33,0.517423,305.174232,Jack White
+28,Jonny Greenwood,jonny greenwood,3,Guitar World | Rolling Stone | SPIN,2,43,alternative_indie,5,,29,0.516166,305.161657,Jonny Greenwood
+29,Tom Morello,tom morello,3,Guitar World | Rolling Stone | SPIN,2,18,alternative_indie,4,,40,0.512596,305.125958,Tom Morello
+30,Johnny Marr,johnny marr,3,Guitar World | Rolling Stone | SPIN,2,56,alternative_indie,1,,26,0.508864,305.088637,Johnny Marr
+31,Carlos Santana,carlos santana,3,Guitar World | Rolling Stone | uDiscover,2,11,rock,11,34,,0.504631,305.046311,Carlos Santana
+32,Robert Johnson,robert johnson,3,Guitar World | Rolling Stone | uDiscover,2,16,blues,6,35,,0.493433,304.934332,Robert Johnson
+33,Buddy Guy,buddy guy,3,Guitar World | Rolling Stone | uDiscover,2,27,blues,3,33,,0.487717,304.877166,Buddy Guy
+34,Pete Townshend,pete townshend,3,Guitar World | Rolling Stone | uDiscover,2,37,rock,21,32,,0.478834,304.788343,Pete Townshend
+35,Slash,slash,3,Guitar World | Rolling Stone | uDiscover,2,105,rock,10,13,,0.473389,304.733891,Slash
+36,Scotty Moore,scotty moore,3,Guitar World | Rolling Stone | uDiscover,2,60,early_innovators,4,28,,0.466062,304.660624,Scotty Moore
+37,Steve Howe,steve howe,3,Guitar World | Rolling Stone | uDiscover,2,123,rock,23,15,,0.440284,304.402837,Steve Howe
+38,Bob Mould,bob mould,3,Rolling Stone | SPIN | uDiscover,3,134,,,51,48,0.43848,304.384801,Bob Mould
+39,John McLaughlin,john mclaughlin,3,Guitar World | Rolling Stone | SPIN,2,72,jazz_fusion,4,,44,0.426839,304.268387,John McLaughlin
+40,Richard Thompson,richard thompson,3,Guitar World | Rolling Stone | uDiscover,2,63,acoustic,2,38,,0.417001,304.170013,Richard Thompson
+41,Les Paul,les paul,3,Guitar World | Rolling Stone | uDiscover,2,68,early_innovators,3,37,,0.414812,304.148124,Les Paul
+42,David Gilmour,david gilmour,3,Guitar World | Rolling Stone | uDiscover,2,28,rock,6,53,,0.396288,303.962879,David Gilmour
+43,Django Reinhardt,django reinhardt,3,Guitar World | Rolling Stone | uDiscover,2,70,jazz_fusion,1,47,,0.36709,303.6709,Django Reinhardt
+44,Alex Lifeson,alex lifeson,3,Guitar World | Rolling Stone | uDiscover,2,58,rock,8,55,,0.347118,303.471182,Alex Lifeson
+45,Adrian Belew,adrian belew,3,Rolling Stone | SPIN | uDiscover,3,118,,,59,71,0.346422,303.46422,Adrian Belew
+46,Dimebag Darrell,dimebag darrell,3,Guitar World | Rolling Stone | SPIN,2,131,metal,2,,46,0.341122,303.411221,Dimebag Darrell
+47,Angus Young,angus young,3,Guitar World | Rolling Stone | uDiscover,2,38,rock,13,67,,0.319838,303.198379,Angus Young
+48,Bert Jansch,bert jansch,3,Guitar World | Rolling Stone | SPIN,2,81,acoustic,1,,75,0.310413,303.104134,Bert Jansch
+49,Rory Gallagher,rory gallagher,3,Guitar World | Rolling Stone | uDiscover,2,175,blues,7,30,,0.303104,303.031043,Rory Gallagher
+50,Mark Knopfler,mark knopfler,3,Guitar World | Rolling Stone | uDiscover,2,96,rock,12,54,,0.300753,303.007526,Mark Knopfler
+51,Ritchie Blackmore,ritchie blackmore,3,Guitar World | Rolling Stone | uDiscover,2,75,rock,7,61,,0.297333,302.973335,Ritchie Blackmore
+52,Joe Satriani,joe satriani,3,Guitar World | Rolling Stone | uDiscover,2,94,shred,3,74,,0.21334,302.133398,Joe Satriani
+53,Joe Walsh,joe walsh,3,Guitar World | Rolling Stone | uDiscover,2,130,rock,17,69,,0.18767,301.876696,Joe Walsh
+54,Steve Vai,steve vai,3,Guitar World | Rolling Stone | uDiscover,2,127,shred,1,72,,0.178172,301.781721,Steve Vai
+55,Sister Rosetta Tharpe,sister rosetta tharpe,2,Rolling Stone | uDiscover,2,6,,,6,,0.637451,206.374507,Sister Rosetta Tharpe
+56,John Fahey,john fahey,2,Rolling Stone | SPIN,2,40,,,,3,0.607724,206.077238,John Fahey
+57,Jimmy Nolen,jimmy nolen,2,Rolling Stone | SPIN,2,12,,,,22,0.581234,205.81234,Jimmy Nolen
+58,Tom Verlaine,tom verlaine,2,Rolling Stone | SPIN,2,51,,,,7,0.57953,205.795302,Tom Verlaine
+59,Steve Cropper,steve cropper,2,Rolling Stone | uDiscover,2,45,,,8,,0.576233,205.762329,Steve Cropper
+60,Chet Atkins,chet atkins,2,Rolling Stone | uDiscover,2,39,,,18,,0.53922,205.392199,Chet Atkins
+61,Nile Rodgers,nile rodgers,2,Rolling Stone | SPIN,2,7,,,,41,0.523954,205.239544,Nile Rodgers
+62,PJ Harvey,pj harvey,2,Rolling Stone | SPIN,2,49,,,,27,0.514868,205.148676,PJ Harvey
+63,Charlie Christian,charlie christian,2,Rolling Stone | uDiscover,2,78,,,14,,0.505029,205.050291,Charlie Christian
+64,Lou Reed,lou reed,2,Rolling Stone | SPIN,2,89,,,,17,0.49499,204.949901,Lou Reed
+65,Kerry King,kerry king,2,Rolling Stone | SPIN,2,100,,,,14,0.490366,204.903655,Kerry King
+66,Sonny Sharrock,sonny sharrock,2,Rolling Stone | SPIN,2,86,,,,21,0.485538,204.855381,Sonny Sharrock
+67,Elizabeth Cotten,elizabeth cotten,2,Rolling Stone | uDiscover,2,36,,,36,,0.462155,204.621549,Elizabeth Cotten | Elizabeth Cotton
+68,Link Wray,link wray,2,Rolling Stone | uDiscover,2,98,,,19,,0.455733,204.557328,Link Wray
+69,Carrie Brownstein,carrie brownstein,2,Rolling Stone | SPIN,2,64,,,,39,0.454383,204.543832,Carrie Brownstein
+70,Ron Asheton,ron asheton,2,Rolling Stone | SPIN,2,149,,,,11,0.434871,204.348708,Ron Asheton
+71,Stephen Malkmus,stephen malkmus,2,Rolling Stone | SPIN,2,97,,,,38,0.413573,204.135735,Stephen Malkmus
+72,Robert Quine,robert quine,2,Rolling Stone | SPIN,2,114,,,,32,0.411018,204.110178,Robert Quine
+73,Ali Farka Touré,ali farka toure,2,Rolling Stone | SPIN,2,104,,,,37,0.40757,204.075697,Ali Farka Touré
+74,James Burton,james burton,2,Rolling Stone | uDiscover,2,24,,,52,,0.406147,204.061471,James Burton
+75,Peter Green,peter green,2,Rolling Stone | uDiscover,2,62,,,41,,0.404827,204.048265,Peter Green
+76,Dick Dale,dick dale,2,Rolling Stone | uDiscover,2,121,,,27,,0.388907,203.88907,Dick Dale
+77,Ry Cooder,ry cooder,2,Rolling Stone | uDiscover,2,66,,,45,,0.381454,203.814537,Ry Cooder
+78,D. Boon,d boon,2,Rolling Stone | SPIN,2,171,,,,19,0.378484,203.784836,D. Boon
+79,Nels Cline,nels cline,2,Rolling Stone | SPIN,2,115,,,,43,0.372642,203.726421,Nels Cline
+80,King Sunny Ade,king sunny ade,2,Rolling Stone | SPIN,2,122,,,,42,0.366638,203.666383,King Sunny Ade
+81,Greg Ginn,greg ginn,2,Rolling Stone | SPIN,2,195,,,,15,0.359823,203.598231,Greg Ginn
+82,Vernon Reid,vernon reid,2,Rolling Stone | SPIN,2,42,,,,78,0.352521,203.525212,Vernon Reid
+83,Kirk Hammett,kirk hammett,2,Rolling Stone | uDiscover,2,23,,,66,,0.344423,203.444227,Kirk Hammett
+84,Albert Collins,albert collins,2,Rolling Stone | uDiscover,2,117,,,40,,0.335703,203.357032,Albert Collins
+85,St. Vincent,st vincent,2,Rolling Stone | SPIN,2,26,,,,93,0.323435,203.234352,Annie Clark | St. Vincent
+86,Joni Mitchell,joni mitchell,2,Guitar World | Rolling Stone,1,9,acoustic,3,,,0.322624,203.226238,Joni Mitchell
+87,Freddie King,freddie king,2,Guitar World | Rolling Stone,1,19,blues,10,,,0.309237,203.092369,Freddie King | Freddy King
+88,Clarence White,clarence white,2,Rolling Stone | uDiscover,2,107,,,49,,0.30855,203.085495,Clarence White
+89,Mick Ronson,mick ronson,2,Rolling Stone | SPIN,2,109,,,,65,0.3066,203.066001,Mick Ronson
+90,Randy Rhoads,randy rhoads,2,Guitar World | Rolling Stone,1,21,metal,3,,,0.30656,203.065596,Randy Rhoads
+91,Albert King,albert king,2,Guitar World | Rolling Stone,1,22,blues,4,,,0.305221,203.052209,Albert King
+92,James Hetfield,james hetfield,2,Guitar World | Rolling Stone,1,23,metal,4,,,0.303882,203.038822,James Hetfield
+93,John Frusciante,john frusciante,2,Guitar World | Rolling Stone,1,25,alternative_indie,2,,,0.301205,203.012048,John Frusciante
+94,Rowland S. Howard,rowland s howard,2,Rolling Stone | SPIN,2,112,,,,66,0.299217,202.992171,Rowland S. Howard
+95,Johnny Thunders,johnny thunders,2,Rolling Stone | SPIN,2,158,,,,52,0.284775,202.847755,Johnny Thunders
+96,Malcolm Young,malcolm young,2,Guitar World | Rolling Stone,1,38,rock,13,,,0.283802,202.838019,Malcolm Young
+97,Justin Broadrick,justin broadrick,2,Rolling Stone | SPIN,2,207,,,,34,0.279786,202.797858,Justin Broadrick
+98,Leo Nocentelli,leo nocentelli,2,Rolling Stone | uDiscover,2,93,,,60,,0.277742,202.777416,Leo Nocentelli
+99,Kim Thayil,kim thayil,2,Rolling Stone | SPIN,2,126,,,,67,0.277108,202.771084,Kim Thayil
+100,John Fogerty,john fogerty,2,Rolling Stone | uDiscover,2,101,,,58,,0.276041,202.760411,John Fogerty
+101,Glenn Branca,glenn branca,2,Rolling Stone | SPIN,2,227,,,,28,0.273214,202.732141,Glenn Branca
+102,Pat Metheny,pat metheny,2,Rolling Stone | uDiscover,2,157,,,42,,0.273147,202.731466,Pat Metheny
+103,Roger McGuinn,roger mcguinn,2,Rolling Stone | uDiscover,2,135,,,49,,0.271066,202.710662,Roger McGuinn
+104,Kelley Deal,kelley deal,2,Rolling Stone | SPIN,2,160,,,,56,0.26863,202.686301,Kelley Deal
+105,Kim Deal,kim deal,2,Rolling Stone | SPIN,2,160,,,,56,0.26863,202.686301,Kim Deal
+106,Marc Ribot,marc ribot,2,Rolling Stone | SPIN,2,187,,,,47,0.262789,202.627885,Marc Ribot
+107,Derek Trucks,derek trucks,2,Rolling Stone | uDiscover,2,80,,,68,,0.259109,202.591085,Derek Trucks
+108,James Blood Ulmer,james blood ulmer,2,Rolling Stone | SPIN,2,221,,,,36,0.25431,202.543102,James Blood Ulmer
+109,Warren Haynes,warren haynes,2,Rolling Stone | uDiscover,2,120,,,64,,0.223579,202.23579,Warren Haynes
+110,Adrian Smith,adrian smith,2,Guitar World | Rolling Stone,1,83,metal,8,,,0.223561,202.235609,Adrian Smith
+111,Muddy Waters,muddy waters,2,Guitar World | Rolling Stone,1,84,blues,8,,,0.222222,202.222222,Muddy Waters
+112,Larry Carlton,larry carlton,2,Guitar World | Rolling Stone,1,85,jazz_fusion,5,,,0.220884,202.208835,Larry Carlton
+113,Stone Gossard,stone gossard,2,Rolling Stone | SPIN,2,124,,,,85,0.21918,202.191797,Stone Gossard
+114,Marissa Paternoster,marissa paternoster,2,Rolling Stone | SPIN,2,150,,,,77,0.21131,202.113099,Marissa Paternoster
+115,Fred ‘Sonic’ Smith,fred sonic smith,2,Rolling Stone | SPIN,2,225,,,,50,0.201817,202.018174,Fred ‘Sonic’ Smith | Fred “Sonic” Smith
+116,Wayne Kramer,wayne kramer,2,Rolling Stone | SPIN,2,225,,,,50,0.201817,202.018174,Wayne Kramer
+117,Billy Gibbons,billy gibbons,2,Guitar World | Rolling Stone,1,102,rock,15,,,0.198126,201.981258,Billy Gibbons
+118,Viv Albertine,viv albertine,2,Rolling Stone | SPIN,2,125,,,,91,0.197639,201.97639,Viv Albertine
+119,Lindsey Buckingham,lindsey buckingham,2,Guitar World | Rolling Stone,1,110,rock,22,,,0.187416,201.874163,Lindsey Buckingham
+120,Greg Sage,greg sage,2,Rolling Stone | SPIN,2,236,,,,53,0.176991,201.769908,Greg Sage
+121,Nils Lofgren,nils lofgren,2,Rolling Stone | uDiscover,2,132,,,73,,0.166974,201.669742,Nils Lofgren
+122,Nita Strauss,nita strauss,2,Guitar World | Rolling Stone,1,129,contemporary,1,,,0.161981,201.619813,Nita Strauss
+123,Ira Kaplan,ira kaplan,2,Rolling Stone | SPIN,2,143,,,,97,0.153341,201.533406,Ira Kaplan
+124,Joe Perry,joe perry,2,Guitar World | Rolling Stone,1,136,rock,25,,,0.15261,201.526104,Joe Perry
+125,Yvette Young,yvette young,2,Guitar World | Rolling Stone,1,155,contemporary,10,,,0.127175,201.271754,Yvette Young
+126,Marnie Stern,marnie stern,2,Rolling Stone | SPIN,2,188,,,,87,0.12677,201.267697,Marnie Stern
+127,Billy Corgan,billy corgan,2,Guitar World | SPIN,1,,alternative_indie,12,,63,0.124579,201.245791,Billy Corgan
+128,Tim Henson,tim henson,2,Guitar World | Rolling Stone,1,161,contemporary,6,,,0.119143,201.191432,Tim Henson
+129,Johnny Winter,johnny winter,2,Guitar World | Rolling Stone,1,166,blues,9,,,0.11245,201.124498,Johnny Winter
+130,Keiji Haino,keiji haino,2,Rolling Stone | SPIN,2,214,,,,81,0.112166,201.121658,Keiji Haino
+131,Steve Hackett,steve hackett,2,Rolling Stone | uDiscover,2,216,,,63,,0.099569,200.995694,Steve Hackett
+132,Nick Zinner,nick zinner,2,Rolling Stone | SPIN,2,211,,,,89,0.089246,200.892459,Nick Zinner
+133,Hank Marvin,hank marvin,2,Guitar World | uDiscover,1,,early_innovators,2,56,,0.085586,200.855856,Hank Marvin
+134,Kristin Hersh,kristin hersh,2,SPIN | uDiscover,2,,,,70,82,0.083129,200.831286,Kristin Hersh
+135,Jerry Cantrell,jerry cantrell,2,Guitar World | Rolling Stone,1,189,alternative_indie,11,,,0.08166,200.8166,Jerry Cantrell
+136,Christone ‘Kingfish’ Ingram,christone kingfish ingram,2,Guitar World | Rolling Stone,1,200,contemporary,5,,,0.066934,200.669344,Christone ‘Kingfish’ Ingram
+137,Eric Johnson,eric johnson,2,Guitar World | Rolling Stone,1,205,shred,9,,,0.060241,200.60241,Eric Johnson
+138,Josh Homme,josh homme,2,Guitar World | SPIN,1,,alternative_indie,10,,83,0.057239,200.572391,Josh Homme
+139,Guy Picciotto,guy picciotto,2,Guitar World | SPIN,1,,punk,4,,86,0.047138,200.47138,Guy Picciotto | Guy Pucciotto
+140,Ian MacKaye,ian mackaye,2,Guitar World | SPIN,1,,punk,4,,86,0.047138,200.47138,Ian MacKaye
+141,Glenn Tipton,glenn tipton,2,Guitar World | Rolling Stone,1,219,metal,10,,,0.041499,200.414993,Glenn Tipton
+142,K.K. Downing,kk downing,2,Guitar World | Rolling Stone,1,219,metal,10,,,0.041499,200.414993,K.K. Downing | KK Downing
+143,Steve Jones,steve jones,2,Guitar World | Rolling Stone,1,228,punk,2,,,0.029451,200.294511,Steve Jones
+144,Richard Lloyd,richard lloyd,1,SPIN,1,,,,,7,0.313131,103.131313,Richard Lloyd
+145,Mother Maybelle Carter,mother maybelle carter,1,Rolling Stone,1,17,,,,,0.311914,103.119143,Mother Maybelle Carter
+146,Jam Master Jay,jam master jay,1,SPIN,1,,,,,10,0.30303,103.030303,Jam Master Jay
+147,Andy Gill,andy gill,1,SPIN,1,,,,,12,0.296296,102.962963,Andy Gill
+148,Jeff Hanneman,jeff hanneman,1,SPIN,1,,,,,14,0.289562,102.895623,Jeff Hanneman
+149,Jerry Garcia,jerry garcia,1,Rolling Stone,1,34,,,,,0.289157,102.891566,Jerry Garcia
+150,Bo Diddley,bo diddley,1,Rolling Stone,1,41,,,,,0.279786,102.797858,Bo Diddley
+151,Sterling Morrison,sterling morrison,1,SPIN,1,,,,,17,0.279461,102.794613,Sterling Morrison
+152,Ed O’Brien,ed o brien,1,Rolling Stone,1,43,,,,,0.277108,102.771084,Ed O’Brien
+153,Curtis Mayfield,curtis mayfield,1,Rolling Stone,1,48,,,,,0.270415,102.70415,Curtis Mayfield
+154,Elmore James,elmore james,1,Rolling Stone,1,50,,,,,0.267738,102.677376,Elmore James
+155,Martin Carthy,martin carthy,1,uDiscover,1,,,,16,,0.265766,102.657658,Martin Carthy
+156,John Lee Hooker,john lee hooker,1,Rolling Stone,1,52,,,,,0.26506,102.650602,John Lee Hooker
+157,Trey Anastasio,trey anastasio,1,Rolling Stone,1,53,,,,,0.263722,102.637216,Trey Anastasio
+158,Bonnie Raitt,bonnie raitt,1,Rolling Stone,1,54,,,,,0.262383,102.623829,Bonnie Raitt
+159,Mick Taylor,mick taylor,1,Rolling Stone,1,55,,,,,0.261044,102.610442,Mick Taylor
+160,Robin Guthrie,robin guthrie,1,SPIN,1,,,,,23,0.259259,102.592593,Robin Guthrie
+161,Steve Albini,steve albini,1,SPIN,1,,,,,24,0.255892,102.558923,Steve Albini
+162,John Mayer,john mayer,1,Rolling Stone,1,61,,,,,0.253012,102.53012,John Mayer
+163,Robert White,robert white,1,uDiscover,1,,,,20,,0.247748,102.477477,Robert White
+164,T-Bone Walker,t bone walker,1,Rolling Stone,1,65,,,,,0.247657,102.476573,T-Bone Walker
+165,Albert Lee,albert lee,1,uDiscover,1,,,,21,,0.243243,102.432432,Albert Lee
+166,Robbie Robertson,robbie robertson,1,Rolling Stone,1,69,,,,,0.242303,102.423025,Robbie Robertson
+167,Franco Luambo,franco luambo,1,Rolling Stone,1,71,,,,,0.239625,102.396252,Franco Luambo
+168,Hubert Sumlin,hubert sumlin,1,Rolling Stone,1,73,,,,,0.236948,102.369478,Hubert Sumlin
+169,King Buzzo,king buzzo,1,SPIN,1,,,,,30,0.23569,102.356902,King Buzzo
+170,Joan Jett,joan jett,1,Rolling Stone,1,76,,,,,0.232932,102.329317,Joan Jett
+171,Derek Bailey,derek bailey,1,SPIN,1,,,,,31,0.232323,102.323232,Derek Bailey
+172,Willie Nelson,willie nelson,1,Rolling Stone,1,77,,,,,0.231593,102.31593,Willie Nelson
+173,Junior Marvin,junior marvin,1,uDiscover,1,,,,24,,0.22973,102.297297,Junior Marvin
+174,Ernie Isley,ernie isley,1,Rolling Stone,1,79,,,,,0.228916,102.289157,Ernie Isley
+175,Glen Campbell,glen campbell,1,uDiscover,1,,,,25,,0.225225,102.252252,Glen Campbell
+176,Dave Murray,dave murray,1,Rolling Stone,1,83,,,,,0.223561,102.235609,Dave Murray
+177,George Benson,george benson,1,uDiscover,1,,,,26,,0.220721,102.207207,George Benson
+178,Dr. Know,dr know,1,SPIN,1,,,,,35,0.218855,102.188552,Dr. Know
+179,Poison Ivy,poison ivy,1,Rolling Stone,1,87,,,,,0.218206,102.182062,Poison Ivy
+180,Mdou Moctar,mdou moctar,1,Rolling Stone,1,90,,,,,0.21419,102.141901,Mdou Moctar
+181,Cat Coore,cat coore,1,Rolling Stone,1,91,,,,,0.212851,102.128514,Cat Coore
+182,Wata,wata,1,Rolling Stone,1,92,,,,,0.211513,102.115127,Wata
+183,Mary Timony,mary timony,1,Rolling Stone,1,95,,,,,0.207497,102.074967,Mary Timony
+184,Tosin Abasi,tosin abasi,1,Rolling Stone,1,99,,,,,0.202142,102.021419,Tosin Abasi
+185,Nancy Wilson,nancy wilson,1,Rolling Stone,1,103,,,,,0.196787,101.967871,Nancy Wilson
+186,Peter Buck,peter buck,1,Rolling Stone,1,106,,,,,0.192771,101.927711,Peter Buck
+187,Merle Travis,merle travis,1,Rolling Stone,1,108,,,,,0.190094,101.900937,Merle Travis
+188,Kelly Johnson,kelly johnson,1,Rolling Stone,1,111,,,,,0.186078,101.860776,Kelley Johnson
+189,Rhys Chatham,rhys chatham,1,SPIN,1,,,,,45,0.185185,101.851852,Rhys Chatham
+190,Allen Collins,allen collins,1,Rolling Stone,1,113,,,,,0.1834,101.834003,Allen Collins
+191,Gary Rossington,gary rossington,1,Rolling Stone,1,113,,,,,0.1834,101.834003,Gary Rossington
+192,Ana da Silva,ana da silva,1,Rolling Stone,1,116,,,,,0.179384,101.793842,Ana da Silva
+193,Donita Sparks,donita sparks,1,Rolling Stone,1,119,,,,,0.175368,101.753681,Donita Sparks
+194,Zoot Horn Rollo,zoot horn rollo,1,SPIN,1,,,,,49,0.171717,101.717172,Zoot Horn Rollo
+195,Mike McCready,mike mccready,1,Rolling Stone,1,124,,,,,0.168675,101.686747,Mike McCready
+196,Robbie Basho,robbie basho,1,SPIN,1,,,,,51,0.164983,101.649832,Robbie Basho
+197,Bob Stinson,bob stinson,1,Rolling Stone,1,128,,,,,0.16332,101.633199,Bob Stinson
+198,Big Jim Sullivan,big jim sullivan,1,uDiscover,1,,,,39,,0.162162,101.621622,Big Jim Sullivan
+199,Robert Cray,robert cray,1,Rolling Stone,1,133,,,,,0.156627,101.566265,Robert Cray
+200,Euronymous,euronymous,1,SPIN,1,,,,,54,0.154882,101.548822,Euronymous
+201,Fred Frith,fred frith,1,SPIN,1,,,,,55,0.151515,101.515152,Fred Frith
+202,Liz Phair,liz phair,1,Rolling Stone,1,137,,,,,0.151272,101.512718,Liz Phair
+203,Teenie Hodges,teenie hodges,1,Rolling Stone,1,138,,,,,0.149933,101.499331,Teenie Hodges
+204,Susan Tedeschi,susan tedeschi,1,Rolling Stone,1,139,,,,,0.148594,101.485944,Susan Tedeschi
+205,Stephen Stills,stephen stills,1,Rolling Stone,1,140,,,,,0.147256,101.472557,Stephen Stills
+206,Fredrik Thordendal,fredrik thordendal,1,Rolling Stone,1,141,,,,,0.145917,101.45917,Fredrik Thordendal
+207,Doug Martsch,doug martsch,1,SPIN,1,,,,,57,0.144781,101.447811,Doug Martsch
+208,João Gilberto,joao gilberto,1,Rolling Stone,1,142,,,,,0.144578,101.445783,João Gilberto
+209,Odetta,odetta,1,Rolling Stone,1,144,,,,,0.141901,101.419009,Odetta
+210,Syd Barrett,syd barrett,1,SPIN,1,,,,,58,0.141414,101.414141,Syd Barrett
+211,Dickey Betts,dickey betts,1,Rolling Stone,1,145,,,,,0.140562,101.405622,Dickey Betts
+212,Mike Bloomfield,mike bloomfield,1,Rolling Stone,1,146,,,,,0.139224,101.392236,Mike Bloomfield
+213,Curt Kirkwood,curt kirkwood,1,SPIN,1,,,,,59,0.138047,101.380471,Curt Kirkwood
+214,Memphis Minnie,memphis minnie,1,Rolling Stone,1,147,,,,,0.137885,101.378849,Memphis Minnie
+215,Ike Turner,ike turner,1,Rolling Stone,1,148,,,,,0.136546,101.365462,Ike Turner
+216,Chuck Schuldiner,chuck schuldiner,1,SPIN,1,,,,,60,0.13468,101.346801,Chuck Schuldiner
+217,Pete Cosey,pete cosey,1,Rolling Stone,1,151,,,,,0.13253,101.325301,Pete Cosey
+218,Shuggie Otis,shuggie otis,1,SPIN,1,,,,,61,0.131313,101.313131,Shuggie Otis
+219,Ani DiFranco,ani difranco,1,Rolling Stone,1,152,,,,,0.131191,101.311914,Ani DiFranco
+220,Otis Rush,otis rush,1,Rolling Stone,1,153,,,,,0.129853,101.298527,Otis Rush
+221,Bill Frisell,bill frisell,1,Rolling Stone,1,154,,,,,0.128514,101.285141,Bill Frisell
+222,Tony Maiden,tony maiden,1,SPIN,1,,,,,62,0.127946,101.279461,Tony Maiden
+223,Carl Perkins,carl perkins,1,Rolling Stone,1,156,,,,,0.125837,101.258367,Carl Perkins
+224,John Lennon,john lennon,1,Rolling Stone,1,159,,,,,0.121821,101.218206,John Lennon
+225,Wino,wino,1,SPIN,1,,,,,64,0.121212,101.212121,Wino
+226,Rosinha de Valença,rosinha de valenca,1,Rolling Stone,1,162,,,,,0.117805,101.178046,Rosinha de Valença
+227,Wah Wah Watson,wah wah watson,1,Rolling Stone,1,163,,,,,0.116466,101.164659,Wah Wah Watson
+228,Dave Davies,dave davies,1,Rolling Stone,1,164,,,,,0.115127,101.151272,Dave Davies
+229,Mick Harvey,mick harvey,1,SPIN,1,,,,,66,0.114478,101.144781,Mick Harvey
+230,Rokia Traoré,rokia traore,1,Rolling Stone,1,165,,,,,0.113788,101.137885,Rokia Traoré
+231,Rick Nielsen,rick nielsen,1,uDiscover,1,,,,50,,0.112613,101.126126,Rick Nielsen
+232,James Williamson,james williamson,1,Rolling Stone,1,167,,,,,0.111111,101.111111,James Williamson
+233,John Cipollina,john cipollina,1,Rolling Stone,1,168,,,,,0.109772,101.097724,John Cipollina
+234,Jessie Mae Hemphill,jessie mae hemphill,1,Rolling Stone,1,169,,,,,0.108434,101.084337,Jessie Mae Hemphill
+235,Ben Weinman,ben weinman,1,SPIN,1,,,,,68,0.107744,101.077441,Ben Weinman
+236,Phil Manzanera,phil manzanera,1,Rolling Stone,1,170,,,,,0.107095,101.07095,Phil Manzanera
+237,Chrissie Hynde,chrissie hynde,1,Rolling Stone,1,172,,,,,0.104418,101.044177,Chrissie Hynde
+238,Eugene Chadbourne,eugene chadbourne,1,SPIN,1,,,,,69,0.104377,101.043771,Eugene Chadbourne
+239,Paul McCartney,paul mccartney,1,Rolling Stone,1,173,,,,,0.103079,101.03079,Paul McCartney
+240,Marty Stuart,marty stuart,1,Rolling Stone,1,174,,,,,0.10174,101.017403,Marty Stuart
+241,Jerry Harrison,jerry harrison,1,SPIN,1,,,,,70,0.10101,101.010101,Jerry Harrison
+242,Sadie Dupuis,sadie dupuis,1,Rolling Stone,1,176,,,,,0.099063,100.990629,Sadie Dupuis
+243,Gabriela Quintero,gabriela quintero,1,Rolling Stone,1,177,,,,,0.097724,100.977242,Gabriela Quintero
+244,Rodrigo Sánchez,rodrigo sanchez,1,Rolling Stone,1,177,,,,,0.097724,100.977242,Rodrigo Sánchez
+245,Skip James,skip james,1,Rolling Stone,1,178,,,,,0.096386,100.963855,Skip James
+246,Ernest Ranglin,ernest ranglin,1,Rolling Stone,1,179,,,,,0.095047,100.950469,Ernest Ranglin
+247,Arto Lindsay,arto lindsay,1,SPIN,1,,,,,72,0.094276,100.942761,Arto Lindsay
+248,Mike Campbell,mike campbell,1,Rolling Stone,1,180,,,,,0.093708,100.937082,Mike Campbell
+249,Larissa Strickland,larissa strickland,1,Rolling Stone,1,181,,,,,0.092369,100.923695,Larissa Strickland
+250,Earl ‘Chinna’ Smith,earl chinna smith,1,Rolling Stone,1,182,,,,,0.091031,100.910308,Earl ‘Chinna’ Smith
+251,Mick Barr,mick barr,1,SPIN,1,,,,,73,0.090909,100.909091,Mick Barr
+252,Roy Buchanan,roy buchanan,1,Rolling Stone,1,183,,,,,0.089692,100.896921,Roy Buchanan
+253,Eldon Shamblin,eldon shamblin,1,Rolling Stone,1,184,,,,,0.088353,100.883534,Eldon Shamblin
+254,Lenny Kaye,lenny kaye,1,SPIN,1,,,,,74,0.087542,100.875421,Lenny Kaye
+255,Peggy Jones,peggy jones,1,Rolling Stone,1,185,,,,,0.087015,100.870147,Peggy Jones
+256,Steve Lukather,steve lukather,1,Rolling Stone,1,186,,,,,0.085676,100.85676,Steve Lukather
+257,Bernard Sumner,bernard sumner,1,SPIN,1,,,,,76,0.080808,100.808081,Bernard Sumner
+258,Lightnin’ Hopkins,lightnin hopkins,1,Rolling Stone,1,190,,,,,0.080321,100.803213,Lightnin’ Hopkins
+259,Chalmers Edward ‘Spanky’ Alford,chalmers edward spanky alford,1,Rolling Stone,1,191,,,,,0.078983,100.789826,Chalmers Edward ‘Spanky’ Alford
+260,Lita Ford,lita ford,1,Rolling Stone,1,192,,,,,0.077644,100.776439,Lita Ford
+261,David Lindley,david lindley,1,Rolling Stone,1,193,,,,,0.076305,100.763052,David Lindley
+262,Brian Robertson,brian robertson,1,Rolling Stone,1,194,,,,,0.074967,100.749665,Brian Robertson
+263,Scott Gorham,scott gorham,1,Rolling Stone,1,194,,,,,0.074967,100.749665,Scott Gorham
+264,James Taylor,james taylor,1,Rolling Stone,1,196,,,,,0.072289,100.722892,James Taylor
+265,Nuno Bettencourt,nuno bettencourt,1,Rolling Stone,1,197,,,,,0.07095,100.709505,Nuno Bettencourt
+266,Duane Denison,duane denison,1,SPIN,1,,,,,79,0.070707,100.707071,Duane Denison
+267,Jerry Reed,jerry reed,1,Rolling Stone,1,198,,,,,0.069612,100.696118,Jerry Reed
+268,Bombino,bombino,1,Rolling Stone,1,199,,,,,0.068273,100.682731,Bombino
+269,Dave Navarro,dave navarro,1,SPIN,1,,,,,80,0.06734,100.673401,Dave Navarro
+270,Garry ‘Diaper Man’ Shider,garry diaper man shider,1,Rolling Stone,1,201,,,,,0.065596,100.655957,Garry ‘Diaper Man’ Shider
+271,Vince Gill,vince gill,1,Rolling Stone,1,202,,,,,0.064257,100.64257,Vince Gill
+272,Grant Green,grant green,1,Rolling Stone,1,203,,,,,0.062918,100.629183,Grant Green
+273,Lynn Taitt,lynn taitt,1,Rolling Stone,1,204,,,,,0.06158,100.615797,Lynn Taitt
+274,Hugh McCracken,hugh mccracken,1,Rolling Stone,1,206,,,,,0.058902,100.589023,Hugh McCracken
+275,Amadou Bagayoko,amadou bagayoko,1,Rolling Stone,1,208,,,,,0.056225,100.562249,Amadou Bagayoko
+276,Gary Clark Jr.,gary clark jr,1,Rolling Stone,1,209,,,,,0.054886,100.548862,Gary Clark Jr.
+277,Lydia Lunch,lydia lunch,1,SPIN,1,,,,,84,0.053872,100.538721,Lydia Lunch
+278,Kaki King,kaki king,1,Rolling Stone,1,210,,,,,0.053548,100.535475,Kaki King
+279,José Feliciano,jose feliciano,1,Rolling Stone,1,212,,,,,0.05087,100.508701,José Feliciano
+280,Lucy Dacus,lucy dacus,1,Rolling Stone,1,213,,,,,0.049531,100.495315,Lucy Dacus
+281,Kurt Vile,kurt vile,1,Rolling Stone,1,215,,,,,0.046854,100.468541,Kurt Vile
+282,Thomas McClary,thomas mcclary,1,Rolling Stone,1,217,,,,,0.044177,100.441767,Thomas McClary
+283,Lzzy Hale,lzzy hale,1,Rolling Stone,1,218,,,,,0.042838,100.42838,Lzzy Hale
+284,Dylan Carlson,dylan carlson,1,SPIN,1,,,,,88,0.040404,100.40404,Dylan Carlson
+285,Courtney Barnett,courtney barnett,1,Rolling Stone,1,220,,,,,0.040161,100.401606,Courtney Barnett
+286,Molly Tuttle,molly tuttle,1,Rolling Stone,1,222,,,,,0.037483,100.374833,Molly Tuttle
+287,Joseph Spence,joseph spence,1,Rolling Stone,1,223,,,,,0.036145,100.361446,Joseph Spence
+288,Marv Tarplin,marv tarplin,1,Rolling Stone,1,224,,,,,0.034806,100.348059,Marv Tarplin
+289,Trey Azagthoth,trey azagthoth,1,SPIN,1,,,,,90,0.03367,100.3367,Trey Azagthoth
+290,El Kempner,el kempner,1,Rolling Stone,1,226,,,,,0.032129,100.321285,El Kempner
+291,Barbara Lynn,barbara lynn,1,Rolling Stone,1,229,,,,,0.028112,100.281124,Barbara Lynn
+292,James Blackshaw,james blackshaw,1,SPIN,1,,,,,92,0.026936,100.26936,James Blackshaw
+293,Gustavo Cerati,gustavo cerati,1,Rolling Stone,1,230,,,,,0.026774,100.267738,Gustavo Cerati
+294,Etta Baker,etta baker,1,Rolling Stone,1,231,,,,,0.025435,100.254351,Etta Baker
+295,David Williams,david williams,1,Rolling Stone,1,232,,,,,0.024096,100.240964,David Williams
+296,H.E.R.,her,1,Rolling Stone,1,233,,,,,0.022758,100.227577,H.E.R.
+297,John McGeoch,john mcgeoch,1,Rolling Stone,1,234,,,,,0.021419,100.21419,John McGeoch
+298,Ibrahim Ag Alhabib,ibrahim ag alhabib,1,SPIN,1,,,,,94,0.020202,100.20202,Ibrahim Ag Alhabib
+299,Laura Marling,laura marling,1,Rolling Stone,1,235,,,,,0.02008,100.200803,Laura Marling
+300,Don Felder,don felder,1,uDiscover,1,,,,71,,0.018018,100.18018,Don Felder
+301,Jennifer Batten,jennifer batten,1,Rolling Stone,1,237,,,,,0.017403,100.174029,Jennifer Batten
+302,Bill Steer,bill steer,1,SPIN,1,,,,,95,0.016835,100.16835,Bill Steer
+303,Doug Gillard,doug gillard,1,Rolling Stone,1,238,,,,,0.016064,100.160643,Doug Gillard
+304,Duane Eddy,duane eddy,1,Rolling Stone,1,239,,,,,0.014726,100.147256,Duane Eddy
+305,David Pajo,david pajo,1,SPIN,1,,,,,96,0.013468,100.13468,David Pajo
+306,Erin Smith,erin smith,1,Rolling Stone,1,240,,,,,0.013387,100.133869,Erin Smith
+307,Keith Urban,keith urban,1,Rolling Stone,1,241,,,,,0.012048,100.120482,Keith Urban
+308,Lindsey Jordan,lindsey jordan,1,Rolling Stone,1,242,,,,,0.01071,100.107095,Lindsey Jordan
+309,Aaron Dessner,aaron dessner,1,Rolling Stone,1,243,,,,,0.009371,100.093708,Aaron Dessner
+310,Bryce Dessner,bryce dessner,1,Rolling Stone,1,243,,,,,0.009371,100.093708,Bryce Dessner
+311,Edilio Paredes,edilio paredes,1,Rolling Stone,1,244,,,,,0.008032,100.080321,Edilio Paredes
+312,Mark Morgan,mark morgan,1,SPIN,1,,,,,98,0.006734,100.06734,Mark Morgan
+313,Leslie West,leslie west,1,Rolling Stone,1,245,,,,,0.006693,100.066934,Leslie West
+314,Paul Simon,paul simon,1,Rolling Stone,1,246,,,,,0.005355,100.053548,Paul Simon
+315,Ricky Wilson,ricky wilson,1,Rolling Stone,1,247,,,,,0.004016,100.040161,Ricky Wilson
+316,Paul Saulnier,paul saulnier,1,SPIN,1,,,,,99,0.003367,100.03367,Paul Saulnier
+317,Robby Krieger,robby krieger,1,Rolling Stone,1,248,,,,,0.002677,100.026774,Robby Krieger
+318,Brittany Howard,brittany howard,1,Rolling Stone,1,249,,,,,0.001339,100.013387,Brittany Howard
+319,Albert Hammond Jr.,albert hammond jr,1,Guitar World,0,,alternative_indie,15,,,0.0,100.0,Albert Hammond Jr.
+320,Allan Holdsworth,allan holdsworth,1,Guitar World,0,,jazz_fusion,2,,,0.0,100.0,Allan Holdsworth
+321,Andy Summers,andy summers,1,Rolling Stone,1,250,,,,,0.0,100.0,Andy Summers
+322,Billie Joe Armstrong,billie joe armstrong,1,Guitar World,0,,punk,5,,,0.0,100.0,Billie Joe Armstrong
+323,Buckethead,buckethead,1,Guitar World,0,,shred,6,,,0.0,100.0,Buckethead
+324,Buddy Holly,buddy holly,1,Guitar World,0,,early_innovators,5,,,0.0,100.0,Buddy Holly
+325,Dave Mustaine,dave mustaine,1,Guitar World,0,,metal,6,,,0.0,100.0,Dave Mustaine
+326,Erja Lyytinen,erja lyytinen,1,Guitar World,0,,contemporary,2,,,0.0,100.0,Erja Lyytinen
+327,Gabor Szabo,gabor szabo,1,uDiscover,1,,,,75,,0.0,100.0,Gabor Szabo
+328,Gary Moore,gary moore,1,Guitar World,0,,rock,14,,,0.0,100.0,Gary Moore
+329,Graham Coxon,graham coxon,1,Guitar World,0,,alternative_indie,9,,,0.0,100.0,Graham Coxon
+330,Guthrie Govan,guthrie govan,1,Guitar World,0,,shred,7,,,0.0,100.0,Guthrie Govan
+331,Ichika Nito,ichika nito,1,Guitar World,0,,contemporary,8,,,0.0,100.0,Ichika Nito
+332,Jason Becker,jason becker,1,Guitar World,0,,shred,8,,,0.0,100.0,Jason Becker
+333,Jason Richardson,jason richardson,1,Guitar World,0,,contemporary,7,,,0.0,100.0,Jason Richardson
+334,Joe Bonamassa,joe bonamassa,1,Guitar World,0,,blues,5,,,0.0,100.0,Joe Bonamassa
+335,John Petrucci,john petrucci,1,Guitar World,0,,shred,5,,,0.0,100.0,John Petrucci
+336,Mark Tremonti,mark tremonti,1,Guitar World,0,,metal,5,,,0.0,100.0,Mark Tremonti
+337,Mateus Asato,mateus asato,1,Guitar World,0,,contemporary,3,,,0.0,100.0,Mateus Asato
+338,Matt Bellamy,matt bellamy,1,Guitar World,0,,alternative_indie,8,,,0.0,100.0,Matt Bellamy
+339,Michael Angelo Batio,michael angelo batio,1,Guitar World,0,,shred,10,,,0.0,100.0,Michael Angelo Batio
+340,Mick Jones,mick jones,1,Guitar World,0,,punk,3,,,0.0,100.0,Mick Jones
+341,Nick Drake,nick drake,1,Guitar World,0,,acoustic,4,,,0.0,100.0,Nick Drake
+342,Nick Johnston,nick johnston,1,Guitar World,0,,contemporary,9,,,0.0,100.0,Nick Johnston
+343,Nick Valensi,nick valensi,1,Guitar World,0,,alternative_indie,15,,,0.0,100.0,Nick Valensi
+344,Paul Gilbert,paul gilbert,1,Guitar World,0,,shred,4,,,0.0,100.0,Paul Gilbert
+345,Peter Frampton,peter frampton,1,Guitar World,0,,rock,24,,,0.0,100.0,Peter Frampton
+346,Plini,plini,1,Guitar World,0,,contemporary,4,,,0.0,100.0,Plini
+347,Scott LePage,scott lepage,1,Guitar World,0,,contemporary,6,,,0.0,100.0,Scott LePage
+348,SKRILLEX,skrillex,1,SPIN,1,,,,,100,0.0,100.0,SKRILLEX
+349,Synyster Gates,synyster gates,1,Guitar World,0,,metal,9,,,0.0,100.0,Synyster Gates
+350,Yngwie Malmsteen,yngwie malmsteen,1,Guitar World,0,,shred,2,,,0.0,100.0,Yngwie Malmsteen
+351,Zakk Wylde,zakk wylde,1,Guitar World,0,,metal,7,,,0.0,100.0,Zakk Wylde
