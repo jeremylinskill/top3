@@ -437,3 +437,9 @@ entrypoint = "./functions/apple-music-search/index.ts"
 
 [functions.send-push-notification]
 verify_jwt = false
+
+[functions.media-preview-byline]
+enabled = true
+verify_jwt = false
+import_map = "./functions/media-preview-byline/deno.json"
+entrypoint = "./functions/media-preview-byline/index.ts"

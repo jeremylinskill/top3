@@ -2,10 +2,12 @@ import IconButton from '@/components/icon-button';
 import PreviewSaveButton from '@/components/preview-save-button';
 import { useAudioPreview } from '@/context/audio-preview-context';
 import { usePreviewSheetColors } from '@/hooks/use-preview-sheet-colors';
+import { getMediaPreviewByline } from '@/lib/supabase/media-preview-byline';
 import {
   getTop3ItemMetadata,
 } from '@/utils/top3-item-metadata';
 import { Ionicons } from '@expo/vector-icons';
+import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Image,
@@ -22,6 +24,30 @@ function isAppleMusicItemId(
 ): boolean {
   return itemId.startsWith(
     'apple-music-'
+  );
+}
+
+function isAppleMusicArtistItemId(
+  itemId: string
+): boolean {
+  return itemId.startsWith(
+    'apple-music-artist-'
+  );
+}
+
+function isAppleMusicAlbumItemId(
+  itemId: string
+): boolean {
+  return itemId.startsWith(
+    'apple-music-album-'
+  );
+}
+
+function isAppleMusicSongItemId(
+  itemId: string
+): boolean {
+  return itemId.startsWith(
+    'apple-music-song-'
   );
 }
 
@@ -82,6 +108,133 @@ export default function AudioPreviewSheet() {
 
   const isApplePodcast =
     isApplePodcastItemId(itemId);
+
+  const isAppleMusicArtist =
+    isAppleMusicArtistItemId(
+      itemId
+    );
+
+  const isAppleMusicAlbum =
+    isAppleMusicAlbumItemId(
+      itemId
+    );
+
+  const isAppleMusicSong =
+    isAppleMusicSongItemId(
+      itemId
+    );
+
+  const usesMusicBylineLayout =
+    isAppleMusicArtist ||
+    isAppleMusicAlbum ||
+    isAppleMusicSong;
+
+  const [
+    musicPreviewByline,
+    setMusicPreviewByline,
+  ] = useState<string | null>(
+    null
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    setMusicPreviewByline(
+      null
+    );
+
+    if (
+      !isPreviewVisible ||
+      !activePreviewItem ||
+      !usesMusicBylineLayout
+    ) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const prefix =
+      isAppleMusicArtist
+        ? 'apple-music-artist-'
+        : isAppleMusicAlbum
+          ? 'apple-music-album-'
+          : 'apple-music-song-';
+
+    const appleMusicItemId =
+      activePreviewItem.id
+        .slice(prefix.length)
+        .trim();
+
+    if (!appleMusicItemId) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const request =
+      isAppleMusicArtist
+        ? {
+            entityKind:
+              'artist' as const,
+            appleMusicItemId,
+            title:
+              activePreviewItem.title,
+            artistName:
+              activePreviewItem.title,
+            appleMusicArtistId:
+              appleMusicItemId,
+          }
+        : isAppleMusicAlbum
+          ? {
+              entityKind:
+                'album' as const,
+              appleMusicItemId,
+              title:
+                activePreviewItem.title,
+              artistName:
+                activePreviewItem.subtitle,
+              appleMusicArtistId:
+                activePreviewItem.appleMusicArtistId,
+              releaseYear:
+                activePreviewItem.releaseYear,
+            }
+          : {
+              entityKind:
+                'song' as const,
+              appleMusicItemId,
+              title:
+                activePreviewItem.title,
+              artistName:
+                activePreviewItem.subtitle,
+              appleMusicArtistId:
+                activePreviewItem.appleMusicArtistId,
+              releaseYear:
+                activePreviewItem.releaseYear,
+              albumName:
+                activePreviewItem.albumName,
+            };
+
+    void getMediaPreviewByline(
+      request
+    ).then((byline) => {
+      if (!cancelled) {
+        setMusicPreviewByline(
+          byline
+        );
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    activePreviewItem,
+    isAppleMusicAlbum,
+    isAppleMusicArtist,
+    isAppleMusicSong,
+    isPreviewVisible,
+    usesMusicBylineLayout,
+  ]);
 
   const shouldShow =
     Boolean(
@@ -299,6 +452,8 @@ export default function AudioPreviewSheet() {
               styles.mediaDetails,
               !isApplePodcast &&
                 styles.musicMediaDetails,
+              usesMusicBylineLayout &&
+                styles.musicBylineMediaDetails,
             ]}>
             {isApplePodcast ? (
               <View
@@ -324,10 +479,28 @@ export default function AudioPreviewSheet() {
               </View>
             ) : null}
 
+            {usesMusicBylineLayout &&
+            musicPreviewByline ? (
+              <Text
+                style={[
+                  styles.musicByline,
+                  {
+                    color:
+                      previewColors.bodyText,
+                  },
+                ]}
+                numberOfLines={3}
+                ellipsizeMode="tail">
+                {musicPreviewByline}
+              </Text>
+            ) : null}
+
             {externalUrl ? (
               <Pressable
                 style={({ pressed }) => [
                   styles.mediaLink,
+                  usesMusicBylineLayout &&
+                    styles.musicBylineMediaLink,
                   pressed &&
                     styles.linkPressed,
                 ]}
@@ -528,12 +701,21 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
 
+  musicBylineMediaDetails: {
+    justifyContent: 'flex-start',
+  },
+
   podcastDescriptionSlot: {
     height: 72,
     overflow: 'hidden',
   },
 
   podcastDescription: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+
+  musicByline: {
     fontSize: 13,
     lineHeight: 18,
   },
@@ -561,6 +743,10 @@ const styles = StyleSheet.create({
     minHeight: 0,
     marginTop: 8,
     justifyContent: 'flex-start',
+  },
+
+  musicBylineMediaLink: {
+    marginTop: 'auto',
   },
 
   linkText: {

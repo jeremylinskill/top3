@@ -71,6 +71,12 @@ type AppleMusicAlbumRelationships = {
   tracks?: {
     data?: AppleMusicSong[];
   };
+  artists?: {
+    data?: Array<{
+      id?: string;
+      type?: string;
+    }>;
+  };
 };
 
 type AppleMusicAlbum = {
@@ -199,10 +205,13 @@ type SongSearchResult = {
   id: string;
   title: string;
   subtitle?: string;
+  releaseYear?: string;
   genres?: string[];
   imageUrl?: string;
   previewUrl?: string;
   appleMusicUrl?: string;
+  appleMusicArtistId?: string;
+  albumName?: string;
 };
 
 type RankedSong = SongSearchResult & {
@@ -218,10 +227,12 @@ type AlbumSearchResult = {
   id: string;
   title: string;
   subtitle?: string;
+  releaseYear?: string;
   genres?: string[];
   imageUrl?: string;
   previewUrl?: string;
   appleMusicUrl?: string;
+  appleMusicArtistId?: string;
 };
 
 type RankedAlbum = AlbumSearchResult & {
@@ -1184,6 +1195,14 @@ function mapAlbum(
       ?.artistName
       ?.trim() ?? "";
 
+  const appleMusicArtistId =
+    album.relationships
+      ?.artists
+      ?.data
+      ?.[0]
+      ?.id
+      ?.trim();
+
   const releaseDate =
     album.attributes
       ?.releaseDate
@@ -1214,6 +1233,8 @@ function mapAlbum(
       ),
     appleMusicUrl:
       album.attributes?.url?.trim() || undefined,
+    appleMusicArtistId:
+      appleMusicArtistId || undefined,
     artistName,
     releaseDate,
     genreNames,
@@ -2197,12 +2218,18 @@ function rankAndDeduplicateAlbums(
       id: album.id,
       title: album.title,
       subtitle: album.subtitle,
+      releaseYear:
+        album.releaseDate
+          .slice(0, 4) ||
+        undefined,
       genres: album.genreNames,
       imageUrl: album.imageUrl,
       previewUrl:
         album.previewUrl,
       appleMusicUrl:
         album.appleMusicUrl,
+      appleMusicArtistId:
+        album.appleMusicArtistId,
     });
 
     if (
@@ -2525,7 +2552,14 @@ function rankAndDeduplicateSongs(
       id: song.id,
       title: song.title,
       subtitle: song.subtitle,
+      releaseYear:
+        song.releaseDate
+          .slice(0, 4) ||
+        undefined,
       genres: song.genreNames,
+      albumName:
+        song.albumName ||
+        undefined,
       imageUrl: song.imageUrl,
       previewUrl: song.previewUrl,
       appleMusicUrl:
@@ -4098,7 +4132,7 @@ async function fetchAlbumsWithTracks(
 
   url.searchParams.set(
     "include",
-    "tracks"
+    "tracks,artists"
   );
 
   const response =
@@ -5859,7 +5893,7 @@ function buildSearchUrl(
   if (resource === "albums") {
     url.searchParams.set(
       "include",
-      "tracks"
+      "tracks,artists"
     );
   }
 
@@ -6727,12 +6761,65 @@ async function searchAppleMusicSongs(
     );
   }
 
-  return rankAndDeduplicateSongs(
-    topicFilteredSongs,
-    query,
-    chartSongIds,
-    topic
-  );
+  const rankedSongs =
+    rankAndDeduplicateSongs(
+      topicFilteredSongs,
+      query,
+      chartSongIds,
+      topic
+    );
+
+  if (rankedSongs.length === 0) {
+    return rankedSongs;
+  }
+
+  try {
+    const songsWithRelationships =
+      await fetchSongsWithAlbumRelationships(
+        developerToken,
+        rankedSongs.map(
+          (song) =>
+            song.id.replace(
+              /^apple-music-song-/,
+              ""
+            )
+        )
+      );
+
+    return rankedSongs.map(
+      (song) => {
+        const appleMusicSongId =
+          song.id.replace(
+            /^apple-music-song-/,
+            ""
+          );
+
+        const appleMusicArtistId =
+          songsWithRelationships
+            .get(appleMusicSongId)
+            ?.relationships
+            ?.artists
+            ?.data
+            ?.[0]
+            ?.id
+            ?.trim();
+
+        return {
+          ...song,
+          appleMusicArtistId:
+            appleMusicArtistId ||
+            undefined,
+        };
+      }
+    );
+  } catch (error) {
+    console.warn(
+      "Apple Music song artist relationship lookup failed; continuing without artist IDs:",
+      error
+    );
+
+    return rankedSongs;
+  }
 }
 
 export default {

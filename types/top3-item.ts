@@ -8,6 +8,8 @@ export type Top3Item = {
   rating?: number;
   previewUrl?: string;
   appleMusicUrl?: string;
+  appleMusicArtistId?: string;
+  albumName?: string;
   applePodcastId?: string;
   applePodcastsUrl?: string;
   podcastFeedUrl?: string;
