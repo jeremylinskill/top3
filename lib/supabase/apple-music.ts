@@ -196,6 +196,16 @@ export async function getPopularAppleMusicArtists(
   );
 }
 
+export async function getCurrentChartAppleMusicArtists(
+  limit = 20
+): Promise<Top3Item[]> {
+  return invokeAppleMusic({
+    mode: 'current_chart',
+    resource: 'artists',
+    limit,
+  });
+}
+
 export async function getPopularAppleMusicSongs(
   topic?: string,
   limit = 20

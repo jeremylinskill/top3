@@ -340,7 +340,8 @@ const ARTIST_THEME_FALLBACKS: CollectionOption[] = [
     active: true,
     displayOrder: 120,
     entityKind: 'artist',
-    providerMode: 'curated',
+    providerKey: 'apple_music',
+    providerMode: 'current_chart',
     providerConfig: {},
   },
   {

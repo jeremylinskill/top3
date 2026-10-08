@@ -19,6 +19,7 @@ import {
   searchTvShows,
 } from './movies-and-tv';
 import {
+  getCurrentChartArtists,
   getPopularAlbums,
   getPopularArtists,
   getPopularSongs,
@@ -232,6 +233,17 @@ export async function getPopularSuggestionsByCategory(
   if (musicianRole) {
     return getPopularMusicians(
       musicianRole,
+      limit,
+      signal
+    );
+  }
+
+  if (
+    collectionOption?.providerKey === 'apple_music' &&
+    collectionOption.providerMode === 'current_chart'
+  ) {
+    return getCurrentChartArtists(
+      undefined,
       limit,
       signal
     );

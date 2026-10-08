@@ -43,6 +43,12 @@ type AppleMusicSongRelationships = {
       type?: string;
     }>;
   };
+  artists?: {
+    data?: Array<{
+      id?: string;
+      type?: string;
+    }>;
+  };
 };
 
 type AppleMusicSong = {
@@ -2663,13 +2669,13 @@ async function fetchSongsWithAlbumRelationships(
   );
 
   /*
-   * We only need album identifiers here. `relate=albums`
-   * requests the relationship IDs without pulling full
-   * album resources into every Song object.
+   * Request album and artist relationship identifiers
+   * without pulling full related resources into every
+   * Song object.
    */
   url.searchParams.set(
     "relate",
-    "albums"
+    "albums,artists"
   );
 
   const response =
@@ -5657,6 +5663,175 @@ async function getPopularAppleMusicArtists(
     );
 }
 
+async function getCurrentChartAppleMusicArtists(
+  limit: number
+): Promise<ArtistSearchResult[]> {
+  const developerToken =
+    await getDeveloperToken();
+
+  const songIds =
+    await getSongChartIds(
+      developerToken
+    );
+
+  const cacheKey = [
+    DEFAULT_STOREFRONT,
+    "general",
+  ].join("|");
+
+  const chartSongs =
+    cachedSongCharts.get(
+      cacheKey
+    )?.songs ?? [];
+
+  if (
+    songIds.length === 0 ||
+    chartSongs.length === 0
+  ) {
+    return [];
+  }
+
+  const songsWithRelationships =
+    await fetchSongsWithAlbumRelationships(
+      developerToken,
+      songIds
+    );
+
+  const artistEvidence =
+    new Map<
+      string,
+      {
+        bestChartPosition: number;
+        chartAppearances: number;
+      }
+    >();
+
+  chartSongs.forEach(
+    (song, chartIndex) => {
+      const songId =
+        song.id?.trim();
+
+      if (!songId) {
+        return;
+      }
+
+      const artistIds =
+        songsWithRelationships
+          .get(songId)
+          ?.relationships
+          ?.artists
+          ?.data
+          ?.map(
+            (artist) =>
+              artist.id?.trim() ?? ""
+          )
+          .filter(Boolean) ?? [];
+
+      for (
+        const artistId of artistIds
+      ) {
+        const existing =
+          artistEvidence.get(
+            artistId
+          );
+
+        if (existing) {
+          existing.bestChartPosition =
+            Math.min(
+              existing.bestChartPosition,
+              chartIndex
+            );
+
+          existing.chartAppearances +=
+            1;
+
+          continue;
+        }
+
+        artistEvidence.set(
+          artistId,
+          {
+            bestChartPosition:
+              chartIndex,
+            chartAppearances: 1,
+          }
+        );
+      }
+    }
+  );
+
+  const rankedArtistIds =
+    Array.from(
+      artistEvidence.entries()
+    )
+      .sort(
+        (
+          [, first],
+          [, second]
+        ) =>
+          first.bestChartPosition -
+            second.bestChartPosition ||
+          second.chartAppearances -
+            first.chartAppearances
+      )
+      .slice(
+        0,
+        MAX_ARTIST_ENRICHMENT_IDS
+      )
+      .map(
+        ([artistId]) =>
+          artistId
+      );
+
+  if (
+    rankedArtistIds.length === 0
+  ) {
+    return [];
+  }
+
+  const enrichedArtists =
+    await enrichAppleMusicArtistsByIds(
+      rankedArtistIds
+    );
+
+  const enrichedById =
+    new Map(
+      enrichedArtists.map(
+        (artist) => [
+          artist.id.replace(
+            /^apple-music-artist-/,
+            ""
+          ),
+          artist,
+        ]
+      )
+    );
+
+  return rankedArtistIds
+    .map(
+      (artistId) =>
+        enrichedById.get(
+          artistId
+        )
+    )
+    .filter(
+      (
+        artist
+      ): artist is ArtistSearchResult =>
+        Boolean(artist)
+    )
+    .filter(
+      (artist) =>
+        normalizeText(
+          artist.subtitle ?? ""
+        ) !== "soundtrack"
+    )
+    .slice(
+      0,
+      limit
+    );
+}
+
 function buildSearchUrl(
   query: string,
   resource: AppleMusicResource
@@ -6628,6 +6803,45 @@ export default {
           },
           400
         );
+      }
+
+      if (mode === "current_chart") {
+        if (
+          resource !== "artists"
+        ) {
+          return jsonResponse(
+            {
+              error:
+                "Current chart mode only supports artists.",
+            },
+            400
+          );
+        }
+
+        try {
+          const limit =
+            getPopularResultLimit(
+              body.limit
+            );
+
+          const results =
+            await getCurrentChartAppleMusicArtists(
+              limit
+            );
+
+          return jsonResponse({
+            results,
+          });
+        } catch (error) {
+          console.warn(
+            "Apple Music current-chart Artist suggestions failed; returning an empty result set:",
+            error
+          );
+
+          return jsonResponse({
+            results: [],
+          });
+        }
       }
 
       if (mode === "popular") {

@@ -1,4 +1,5 @@
 import {
+    getCurrentChartAppleMusicArtists,
     getPopularAppleMusicAlbums,
     getPopularAppleMusicArtists,
     getPopularAppleMusicSongs,
@@ -59,6 +60,16 @@ export async function getPopularArtists(
 ): Promise<Top3Item[]> {
   return getPopularAppleMusicArtists(
     topic,
+    limit
+  );
+}
+
+export async function getCurrentChartArtists(
+  _topic?: string,
+  limit = 20,
+  _signal?: AbortSignal
+): Promise<Top3Item[]> {
+  return getCurrentChartAppleMusicArtists(
     limit
   );
 }
