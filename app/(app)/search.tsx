@@ -51,7 +51,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 type SearchSource = 'search' | 'saved';
-const MINIMUM_SEARCH_LENGTH = 3;
+const MINIMUM_SEARCH_LENGTH = 2;
 const MINIMUM_COLLECTIONS_FOR_POPULARITY = 50;
 const SEARCH_CACHE = new Map<string, Top3Item[]>();
 const CATEGORY_SUGGESTIONS: Record<
@@ -813,7 +813,9 @@ export default function SearchScreen() {
       try {
         const results = await searchProvider(
           trimmedQuery,
-          activeCollection?.topic
+          activeCollectionOption?.kind === 'theme'
+            ? undefined
+            : activeCollection?.topic
         );
         if (
           searchId !== latestSearchId.current
