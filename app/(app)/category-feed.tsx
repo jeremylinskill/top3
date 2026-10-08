@@ -1442,7 +1442,7 @@ if (isMounted) {
             options={[
               {
                 value: 'lists',
-                label: 'Lists',
+                label: 'Individual',
                 accessibilityLabel:
                   'Show published lists',
               },
