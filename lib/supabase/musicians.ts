@@ -13,6 +13,9 @@ export type MusicianSearchResult = {
   name: string;
   sortName: string;
   appleMusicArtistId?: string;
+  imageUrlOverride?: string;
+  previewArtistIdOverride?: string;
+  bylineOverride?: string;
   role: MusicianRole;
   roleRank: number;
   matchedAlias?: string;
@@ -23,6 +26,9 @@ type MusicianSearchRow = {
   name: string;
   sort_name: string;
   apple_music_artist_id: string | null;
+  image_url_override: string | null;
+  preview_artist_id_override: string | null;
+  byline_override: string | null;
   role: MusicianRole;
   role_rank: number;
   matched_alias: string | null;
@@ -57,6 +63,15 @@ function mapMusicianSearchRow(
     appleMusicArtistId:
       row.apple_music_artist_id ??
       undefined,
+    imageUrlOverride:
+      row.image_url_override ??
+      undefined,
+    previewArtistIdOverride:
+      row.preview_artist_id_override ??
+      undefined,
+    bylineOverride:
+      row.byline_override ??
+      undefined,
     role: row.role,
     roleRank: row.role_rank,
     matchedAlias:
@@ -86,7 +101,7 @@ export async function searchMusiciansByRole(
 
   const { data, error } =
     await supabase.rpc(
-      'search_musicians_by_role',
+      'search_musicians_by_role_with_overrides',
       {
         p_role: role,
         p_query: normalizedQuery,

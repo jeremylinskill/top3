@@ -159,6 +159,19 @@ export default function AudioPreviewSheet() {
       };
     }
 
+    const manualByline =
+      isMusician
+        ? activePreviewItem.bylineOverride?.trim()
+        : undefined;
+
+    if (manualByline) {
+      setMusicPreviewByline(manualByline);
+
+      return () => {
+        cancelled = true;
+      };
+    }
+
     const prefix =
       isAppleMusicArtist
         ? 'apple-music-artist-'
@@ -520,7 +533,8 @@ export default function AudioPreviewSheet() {
                 ]}
                 numberOfLines={3}
                 ellipsizeMode="tail">
-                {isMusician
+                {isMusician &&
+                !previewItem.bylineOverride?.trim()
                   ? `${previewItem.title} — ${musicPreviewByline}`
                   : musicPreviewByline}
               </Text>

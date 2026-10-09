@@ -16,6 +16,12 @@ function mapMusicianToTop3Item(
   return {
     id: musician.id,
     title: musician.name,
+    imageUrl:
+      musician.imageUrlOverride?.trim() ||
+      undefined,
+    bylineOverride:
+      musician.bylineOverride?.trim() ||
+      undefined,
   };
 }
 
@@ -43,6 +49,7 @@ async function mapMusiciansToTop3Items(
       musicians
         .flatMap((musician) => [
           musician.appleMusicArtistId,
+          musician.previewArtistIdOverride,
           VERIFIED_MUSICIAN_BANDS[musician.id]
             ?.appleMusicArtistId,
         ])
@@ -117,42 +124,46 @@ async function mapMusiciansToTop3Items(
             )
           : undefined;
 
-        if (!soloArtist && !bandArtist) {
+        const overrideArtist =
+          musician.previewArtistIdOverride?.trim()
+            ? enrichmentByArtistId.get(
+                musician.previewArtistIdOverride.trim()
+              )
+            : undefined;
+
+        if (!soloArtist && !bandArtist && !overrideArtist) {
           return baseItem;
         }
 
-        const usesBandPreview =
-          Boolean(bandArtist?.previewUrl);
+        const previewArtist =
+          overrideArtist?.previewUrl
+            ? overrideArtist
+            : bandArtist?.previewUrl
+              ? bandArtist
+              : soloArtist;
 
         return {
           ...baseItem,
           subtitle:
             soloArtist?.subtitle ??
-            (usesBandPreview
-              ? `Preview: ${band?.bandName}`
-              : undefined),
-          imageUrl: soloArtist?.imageUrl,
+            overrideArtist?.subtitle ??
+            bandArtist?.subtitle,
+          imageUrl:
+            musician.imageUrlOverride?.trim() ||
+            soloArtist?.imageUrl,
           appleMusicUrl:
             soloArtist?.appleMusicUrl ??
+            previewArtist?.appleMusicUrl ??
             bandArtist?.appleMusicUrl,
           appleMusicArtistId: soloArtist
             ? artistId
             : undefined,
-          previewUrl: usesBandPreview
-            ? bandArtist?.previewUrl
-            : soloArtist?.previewUrl,
-          previewSongId: usesBandPreview
-            ? bandArtist?.previewSongId
-            : soloArtist?.previewSongId,
-          previewSongTitle: usesBandPreview
-            ? bandArtist?.previewSongTitle
-            : soloArtist?.previewSongTitle,
-          previewRecordingArtist: usesBandPreview
-            ? bandArtist?.previewRecordingArtist
-            : soloArtist?.previewRecordingArtist,
-          previewRecordingGenre: usesBandPreview
-            ? bandArtist?.subtitle
-            : soloArtist?.subtitle,
+          previewUrl: previewArtist?.previewUrl,
+          previewSongId: previewArtist?.previewSongId,
+          previewSongTitle: previewArtist?.previewSongTitle,
+          previewRecordingArtist:
+            previewArtist?.previewRecordingArtist,
+          previewRecordingGenre: previewArtist?.subtitle,
         };
       }
     );

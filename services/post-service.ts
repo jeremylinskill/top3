@@ -1,3 +1,4 @@
+import { getMusicianEditorialByIds } from '@/lib/supabase/musician-editorial';
 import { repairCollectionArtwork } from '@/lib/supabase/artwork-repair';
 import {
   getPublishedPostsByUser as getPublishedPostsByUserFromSupabase,
@@ -328,6 +329,66 @@ async function hydratePost(
   };
 }
 
+export async function refreshMusicianEditorialInPosts(
+  posts: Post[]
+): Promise<Post[]> {
+  const musicianIds = Array.from(
+    new Set(
+      posts.flatMap((post) =>
+        post.collection.items
+          .filter(
+            (item): item is Top3Item =>
+              Boolean(item?.id.startsWith('musician-'))
+          )
+          .map((item) => item.id)
+      )
+    )
+  );
+
+  if (musicianIds.length === 0) {
+    return posts;
+  }
+
+  try {
+    const editorialById =
+      await getMusicianEditorialByIds(musicianIds);
+
+    return posts.map((post) => ({
+      ...post,
+      collection: {
+        ...post.collection,
+        items: post.collection.items.map((item) => {
+          if (!item) {
+            return null;
+          }
+
+          const editorial = editorialById.get(item.id);
+
+          if (!editorial) {
+            return item;
+          }
+
+          return {
+            ...item,
+            imageUrl:
+              editorial.imageUrlOverride ?? item.imageUrl,
+            bylineOverride: editorial.bylineOverride,
+          };
+        }) as Top3List['items'],
+      },
+    }));
+  } catch (error) {
+    if (__DEV__) {
+      console.log(
+        'Failed to refresh musician editorial data:',
+        error
+      );
+    }
+
+    return posts;
+  }
+}
+
 function sortPostsByPublishedDate(
   posts: Post[]
 ): Post[] {
@@ -341,12 +402,14 @@ function sortPostsByPublishedDate(
 export async function hydrateMissingArtworkInPosts(
   posts: Post[]
 ): Promise<Post[]> {
-  return Promise.all(
+  const hydratedPosts = await Promise.all(
     posts.map((post) =>
-      hydrateFeedPostArtwork(
-        post
-      )
+      hydrateFeedPostArtwork(post)
     )
+  );
+
+  return refreshMusicianEditorialInPosts(
+    hydratedPosts
   );
 }
 

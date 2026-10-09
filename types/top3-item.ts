@@ -11,6 +11,7 @@ export type Top3Item = {
   previewSongTitle?: string;
   previewRecordingArtist?: string;
   previewRecordingGenre?: string;
+  bylineOverride?: string;
   appleMusicUrl?: string;
   appleMusicArtistId?: string;
   albumName?: string;
