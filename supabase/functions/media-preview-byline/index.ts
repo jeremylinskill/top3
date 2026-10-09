@@ -116,7 +116,7 @@ const MAX_ARTIST_NAME_LENGTH = 200;
 const MAX_MEDIA_TITLE_LENGTH = 300;
 const MAX_ALBUM_NAME_LENGTH = 300;
 const MAX_BYLINE_LENGTH = 120;
-const GENERATOR_VERSION = '3';
+const GENERATOR_VERSION = '4';
 
 const PERSON_ENTITY_ID = 'Q5';
 
@@ -1289,7 +1289,8 @@ function buildPersonByline(
   description: string,
   birthPlace: string | null,
   traits: string[],
-  songs: string[]
+  songs: string[],
+  bandName: string | null
 ): string | null {
   const base =
     stripTrailingPeriod(
@@ -1299,6 +1300,12 @@ function buildPersonByline(
   if (!base) {
     return null;
   }
+
+  const bandPhrase =
+    bandName &&
+    !normalizeName(base).includes(normalizeName(bandName))
+      ? `known for work with ${bandName}`
+      : '';
 
   const locationPhrase =
     birthPlace
@@ -1324,6 +1331,9 @@ function buildPersonByline(
       : '';
 
   return chooseByline([
+    ...(bandPhrase
+      ? [`${base}, ${bandPhrase}`]
+      : []),
     [
       locationPhrase,
       traitPhrase,
@@ -2015,13 +2025,34 @@ async function generateArtistByline(
         'P19'
       );
 
+    const bandIds =
+      getClaimItemIds(
+        entity,
+        'P463'
+      ).slice(0, 10);
+
     const labels =
-      await resolveEntityLabels(
-        birthPlaceIds.slice(
-          0,
-          1
+      await resolveEntityLabels([
+        ...birthPlaceIds.slice(0, 1),
+        ...bandIds,
+      ]);
+
+    const introduction =
+      wikipediaExtract.slice(0, 900).toLowerCase();
+
+    const bandName =
+      bandIds
+        .map((id) => labels[id])
+        .filter(
+          (name): name is string =>
+            Boolean(name) &&
+            introduction.includes(name.toLowerCase())
         )
-      );
+        .sort(
+          (a, b) =>
+            introduction.indexOf(a.toLowerCase()) -
+            introduction.indexOf(b.toLowerCase())
+        )[0] ?? null;
 
     const birthPlaceId =
       birthPlaceIds[0];
@@ -2039,7 +2070,8 @@ async function generateArtistByline(
           description,
         birthPlace,
         traits,
-        songs
+        songs,
+        bandName
       );
 
     if (!byline) {

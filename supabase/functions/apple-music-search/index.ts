@@ -13,6 +13,7 @@ type SearchRequestBody = {
   topic?: unknown;
   limit?: unknown;
   ids?: unknown;
+  includePreview?: unknown;
 };
 
 type AppleMusicArtwork = {
@@ -249,6 +250,9 @@ type ArtistSearchResult = {
   subtitle?: string;
   imageUrl?: string;
   previewUrl?: string;
+  previewSongId?: string;
+  previewSongTitle?: string;
+  previewRecordingArtist?: string;
   appleMusicUrl?: string;
 };
 
@@ -6271,8 +6275,65 @@ async function getFallbackArtistPreviewUrl(
   return undefined;
 }
 
+type ArtistRelationshipPreview = {
+  previewUrl: string;
+  songId: string;
+  songTitle: string;
+  recordingArtist?: string;
+};
+
+async function getArtistRelationshipPreview(
+  artistId: string
+): Promise<ArtistRelationshipPreview | undefined> {
+  const developerToken =
+    await getDeveloperToken();
+
+  const url = new URL(
+    `${APPLE_MUSIC_API_BASE_URL}/catalog/${DEFAULT_STOREFRONT}/artists/${encodeURIComponent(artistId)}/view/top-songs`
+  );
+
+  url.searchParams.set("limit", "25");
+
+  const response = await fetch(url.toString(), {
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${developerToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    return undefined;
+  }
+
+  const data = await response.json() as {
+    data?: AppleMusicSong[];
+  };
+
+  for (const song of data.data ?? []) {
+    const previewUrl =
+      song.attributes?.previews?.[0]?.url;
+    const songId = song.id?.trim();
+    const songTitle =
+      song.attributes?.name?.trim();
+    const recordingArtist =
+      song.attributes?.artistName?.trim();
+
+    if (previewUrl && songId && songTitle) {
+      return {
+        previewUrl,
+        songId,
+        songTitle,
+        recordingArtist,
+      };
+    }
+  }
+
+  return undefined;
+}
+
 async function enrichAppleMusicArtistsByIds(
-  artistIds: string[]
+  artistIds: string[],
+  includePreview = false
 ): Promise<ArtistSearchResult[]> {
   const developerToken =
     await getDeveloperToken();
@@ -6350,35 +6411,63 @@ async function enrichAppleMusicArtistsByIds(
     );
   }
 
-  return (
+  const artists = (
     data?.data ?? []
   )
-    .map(
-      (
-        artist,
-        originalIndex
-      ) =>
-        mapArtist(
-          artist,
-          originalIndex
-        )
+    .map((artist, originalIndex) =>
+      mapArtist(artist, originalIndex)
     )
     .filter(
-      (
-        artist
-      ): artist is RankedArtist =>
+      (artist): artist is RankedArtist =>
         artist !== null
-    )
-    .map((artist) => ({
+    );
+
+  if (!includePreview) {
+    return artists.map((artist) => ({
       id: artist.id,
       title: artist.title,
-      subtitle:
-        artist.subtitle,
-      imageUrl:
-        artist.imageUrl,
-      appleMusicUrl:
-        artist.appleMusicUrl,
+      subtitle: artist.subtitle,
+      imageUrl: artist.imageUrl,
+      appleMusicUrl: artist.appleMusicUrl,
     }));
+  }
+
+  return Promise.all(
+    artists.map(async (artist) => {
+      const artistId = artist.id.replace(
+        /^apple-music-artist-/,
+        ""
+      );
+
+      let preview:
+        ArtistRelationshipPreview | undefined;
+
+      try {
+        preview =
+          await getArtistRelationshipPreview(
+            artistId
+          );
+      } catch (error) {
+        console.warn(
+          "Artist audio preview lookup failed:",
+          artistId,
+          error
+        );
+      }
+
+      return {
+        id: artist.id,
+        title: artist.title,
+        subtitle: artist.subtitle,
+        imageUrl: artist.imageUrl,
+        appleMusicUrl: artist.appleMusicUrl,
+        previewUrl: preview?.previewUrl,
+        previewSongId: preview?.songId,
+        previewSongTitle: preview?.songTitle,
+        previewRecordingArtist: preview?.recordingArtist,
+      };
+    })
+  );
 }
 
 async function resolveAppleMusicArtists(
@@ -7046,7 +7135,8 @@ export default {
         try {
           const results =
             await enrichAppleMusicArtistsByIds(
-              artistIds
+              artistIds,
+              body.includePreview === true
             );
 
           return jsonResponse({

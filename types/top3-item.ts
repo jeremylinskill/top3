@@ -7,6 +7,10 @@ export type Top3Item = {
   imageUrl?: string;
   rating?: number;
   previewUrl?: string;
+  previewSongId?: string;
+  previewSongTitle?: string;
+  previewRecordingArtist?: string;
+  previewRecordingGenre?: string;
   appleMusicUrl?: string;
   appleMusicArtistId?: string;
   albumName?: string;

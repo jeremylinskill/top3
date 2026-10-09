@@ -112,7 +112,8 @@ async function getPopularAppleMusic(
 }
 
 export async function enrichAppleMusicArtistsByIds(
-  artistIds: string[]
+  artistIds: string[],
+  includePreview = false
 ): Promise<Top3Item[]> {
   const normalizedIds = [
     ...new Set(
@@ -138,6 +139,7 @@ export async function enrichAppleMusicArtistsByIds(
     mode: 'enrich',
     resource: 'artists',
     ids: normalizedIds,
+    includePreview,
   });
 }
 

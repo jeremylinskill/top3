@@ -1,3 +1,4 @@
+import { VERIFIED_MUSICIAN_BANDS } from '@/constants/musician-band-associations';
 import {
   getPopularMusiciansByRole,
   MusicianRole,
@@ -40,10 +41,11 @@ async function mapMusiciansToTop3Items(
   const appleMusicArtistIds = [
     ...new Set(
       musicians
-        .map(
-          (musician) =>
-            musician.appleMusicArtistId
-        )
+        .flatMap((musician) => [
+          musician.appleMusicArtistId,
+          VERIFIED_MUSICIAN_BANDS[musician.id]
+            ?.appleMusicArtistId,
+        ])
         .filter(
           (
             artistId
@@ -64,7 +66,8 @@ async function mapMusiciansToTop3Items(
   try {
     const enrichments =
       await enrichAppleMusicArtistsByIds(
-        appleMusicArtistIds
+        appleMusicArtistIds,
+        true
       );
 
     const enrichmentByArtistId =
@@ -99,31 +102,57 @@ async function mapMusiciansToTop3Items(
           );
 
         const artistId =
-          musician
-            .appleMusicArtistId
-            ?.trim();
+          musician.appleMusicArtistId?.trim();
 
-        if (!artistId) {
+        const band =
+          VERIFIED_MUSICIAN_BANDS[musician.id];
+
+        const soloArtist = artistId
+          ? enrichmentByArtistId.get(artistId)
+          : undefined;
+
+        const bandArtist = band
+          ? enrichmentByArtistId.get(
+              band.appleMusicArtistId
+            )
+          : undefined;
+
+        if (!soloArtist && !bandArtist) {
           return baseItem;
         }
 
-        const enrichment =
-          enrichmentByArtistId.get(
-            artistId
-          );
-
-        if (!enrichment) {
-          return baseItem;
-        }
+        const usesBandPreview =
+          Boolean(bandArtist?.previewUrl);
 
         return {
           ...baseItem,
           subtitle:
-            enrichment.subtitle,
-          imageUrl:
-            enrichment.imageUrl,
+            soloArtist?.subtitle ??
+            (usesBandPreview
+              ? `Preview: ${band?.bandName}`
+              : undefined),
+          imageUrl: soloArtist?.imageUrl,
           appleMusicUrl:
-            enrichment.appleMusicUrl,
+            soloArtist?.appleMusicUrl ??
+            bandArtist?.appleMusicUrl,
+          appleMusicArtistId: soloArtist
+            ? artistId
+            : undefined,
+          previewUrl: usesBandPreview
+            ? bandArtist?.previewUrl
+            : soloArtist?.previewUrl,
+          previewSongId: usesBandPreview
+            ? bandArtist?.previewSongId
+            : soloArtist?.previewSongId,
+          previewSongTitle: usesBandPreview
+            ? bandArtist?.previewSongTitle
+            : soloArtist?.previewSongTitle,
+          previewRecordingArtist: usesBandPreview
+            ? bandArtist?.previewRecordingArtist
+            : soloArtist?.previewRecordingArtist,
+          previewRecordingGenre: usesBandPreview
+            ? bandArtist?.subtitle
+            : soloArtist?.subtitle,
         };
       }
     );

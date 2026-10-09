@@ -124,10 +124,16 @@ export default function AudioPreviewSheet() {
       itemId
     );
 
+  const isMusician =
+    itemId.startsWith(
+      'musician-'
+    );
+
   const usesMusicBylineLayout =
     isAppleMusicArtist ||
     isAppleMusicAlbum ||
-    isAppleMusicSong;
+    isAppleMusicSong ||
+    isMusician;
 
   const [
     musicPreviewByline,
@@ -161,9 +167,11 @@ export default function AudioPreviewSheet() {
           : 'apple-music-song-';
 
     const appleMusicItemId =
-      activePreviewItem.id
-        .slice(prefix.length)
-        .trim();
+      isMusician
+        ? activePreviewItem.appleMusicArtistId?.trim() ?? ''
+        : activePreviewItem.id
+            .slice(prefix.length)
+            .trim();
 
     if (!appleMusicItemId) {
       return () => {
@@ -172,7 +180,8 @@ export default function AudioPreviewSheet() {
     }
 
     const request =
-      isAppleMusicArtist
+      isAppleMusicArtist ||
+      isMusician
         ? {
             entityKind:
               'artist' as const,
@@ -232,6 +241,7 @@ export default function AudioPreviewSheet() {
     isAppleMusicAlbum,
     isAppleMusicArtist,
     isAppleMusicSong,
+    isMusician,
     isPreviewVisible,
     usesMusicBylineLayout,
   ]);
@@ -242,7 +252,13 @@ export default function AudioPreviewSheet() {
         isPreviewVisible &&
         (
           isAppleMusic ||
-          isApplePodcast
+          isApplePodcast ||
+          (
+            isMusician &&
+            Boolean(
+              activePreviewItem.previewUrl
+            )
+          )
         )
     );
 
@@ -263,6 +279,19 @@ export default function AudioPreviewSheet() {
           activePreviewCategory
         )
       : previewItem.subtitle ?? '';
+
+  const recordingMetadata = [
+    previewItem.previewRecordingArtist,
+    previewItem.previewRecordingGenre,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
+  const headerMetadata =
+    isMusician &&
+    previewItem.previewSongTitle
+      ? recordingMetadata
+      : previewMetadata;
 
   const externalUrl =
     isApplePodcast
@@ -363,13 +392,13 @@ export default function AudioPreviewSheet() {
                     previewColors.primaryText,
                 },
               ]}
-              numberOfLines={1}>
-              {
-                activePreviewItem.title
-              }
+              numberOfLines={isMusician ? 2 : 1}>
+              {isMusician && activePreviewItem.previewSongTitle
+                ? activePreviewItem.previewSongTitle
+                : activePreviewItem.title}
             </Text>
 
-            {previewMetadata ? (
+            {headerMetadata ? (
               <Text
                 style={[
                   styles.subtitle,
@@ -378,8 +407,8 @@ export default function AudioPreviewSheet() {
                       previewColors.secondaryText,
                   },
                 ]}
-                numberOfLines={1}>
-                {previewMetadata}
+                numberOfLines={isMusician ? 2 : 1}>
+                {headerMetadata}
               </Text>
             ) : null}
           </View>
@@ -491,7 +520,9 @@ export default function AudioPreviewSheet() {
                 ]}
                 numberOfLines={3}
                 ellipsizeMode="tail">
-                {musicPreviewByline}
+                {isMusician
+                  ? `${previewItem.title} — ${musicPreviewByline}`
+                  : musicPreviewByline}
               </Text>
             ) : null}
 
