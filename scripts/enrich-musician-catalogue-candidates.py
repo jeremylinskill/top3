@@ -33,11 +33,37 @@ def claim_values(entity, property_id):
     return values
 
 
-def fetch_entities(qids, attempts=8):
+
+def claim_entity_ids(entity, property_id):
+    ids = []
+
+    for claim in entity.get("claims", {}).get(property_id, []):
+        value = (
+            claim
+            .get("mainsnak", {})
+            .get("datavalue", {})
+            .get("value")
+        )
+
+        if isinstance(value, dict):
+            entity_id = value.get("id")
+
+            if (
+                isinstance(entity_id, str)
+                and entity_id.startswith("Q")
+                and entity_id[1:].isdigit()
+            ):
+                ids.append(entity_id)
+
+    return list(dict.fromkeys(ids))
+
+
+def fetch_entities(qids, attempts=8, props="claims"):
     params = {
         "action": "wbgetentities",
         "ids": "|".join(qids),
-        "props": "claims",
+        "props": props,
+        "languages": "en",
         "format": "json",
     }
 

@@ -6476,11 +6476,49 @@ async function resolveAppleMusicArtists(
   const developerToken =
     await getDeveloperToken();
 
-  const artists =
-    await getArtistTopResults(
-      developerToken,
-      query
+  const [topResults, catalogueSearch] =
+    await Promise.allSettled([
+      getArtistTopResults(
+        developerToken,
+        query
+      ),
+      fetchAppleMusicSearch(
+        query,
+        "artists"
+      ),
+    ]);
+
+  if (
+    topResults.status === "rejected" &&
+    catalogueSearch.status === "rejected"
+  ) {
+    throw new Error(
+      "Both Apple Music artist discovery requests failed."
     );
+  }
+
+  if (topResults.status === "rejected") {
+    console.warn(
+      "Artist top-results lookup failed:",
+      topResults.reason
+    );
+  }
+
+  if (catalogueSearch.status === "rejected") {
+    console.warn(
+      "Artist catalogue search failed:",
+      catalogueSearch.reason
+    );
+  }
+
+  const artists: AppleMusicArtist[] = [
+    ...(topResults.status === "fulfilled"
+      ? topResults.value
+      : []),
+    ...(catalogueSearch.status === "fulfilled"
+      ? catalogueSearch.value.results?.artists?.data ?? []
+      : []),
+  ];
 
   const seenArtistIds =
     new Set<string>();
