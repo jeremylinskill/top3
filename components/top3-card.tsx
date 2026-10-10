@@ -1,3 +1,4 @@
+import { formatCollectionDisplayTitle } from '@/utils/build-collection-title';
 import IconButton from '@/components/icon-button';
 import AppText from '@/components/app-text';
 import FollowButton from '@/components/follow-button';
@@ -175,10 +176,7 @@ export default function Top3Card({
     );
 
   const displayTitle =
-    post.collection.title.replace(
-      /^Top 3\s+/i,
-      ''
-    );
+    formatCollectionDisplayTitle(post.collection.title);
 
   const publishedText = formatRelativeTime(
     post.publishedAt

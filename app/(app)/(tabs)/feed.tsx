@@ -421,11 +421,15 @@ export default function FeedScreen() {
     router.push({
       pathname: '/category-feed',
       params: {
+        collectionScope: 'specific',
         category:
           post.collection.category,
         topic: normalizeTopic(
           post.collection.topic
         ),
+        ...(post.collection.type
+          ? { type: post.collection.type }
+          : {}),
       },
     });
   }

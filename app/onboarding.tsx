@@ -437,7 +437,7 @@ export default function OnboardingScreen() {
     });
 
 
-    router.push('/collection');
+    router.push('/onboarding-collection');
   }
 
 

@@ -1,3 +1,4 @@
+import { formatCollectionDisplayTitle } from '@/utils/build-collection-title';
 import ActionSheet from '@/components/action-sheet';
 import AppText from '@/components/app-text';
 import PageHeader from '@/components/page-header';
@@ -347,10 +348,7 @@ export default function CollectionScreen() {
 
 
   const displayTitle =
-    activeCollection.title.replace(
-      /^Top 3\s+/i,
-      ''
-    );
+    formatCollectionDisplayTitle(activeCollection.title);
 
 
   const draggableRows: DraggableRow[] =
@@ -428,7 +426,7 @@ export default function CollectionScreen() {
 function openSearch(rank: number) {
   if (isOnboardingCollection) {
     router.push({
-  pathname: '/search',
+  pathname: '/onboarding-search',
   params: {
     rank: String(rank),
     source: 'onboarding',

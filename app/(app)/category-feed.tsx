@@ -1,3 +1,4 @@
+import { refreshMusicianEditorialInPosts } from '@/services/post-service';
 import ActionSheet, {
   ActionSheetAction,
 } from '@/components/action-sheet';
@@ -143,6 +144,8 @@ export default function CategoryFeedScreen() {
   const params = useLocalSearchParams<{
     category?: string | string[];
     topic?: string | string[];
+    type?: string | string[];
+    collectionScope?: string | string[];
     itemQuery?: string | string[];
     itemId?: string | string[];
     view?: string | string[];
@@ -159,6 +162,12 @@ export default function CategoryFeedScreen() {
   )
     ? params.topic[0]
     : params.topic;
+
+  const typeParam = Array.isArray(
+    params.type
+  )
+    ? params.type[0]
+    : params.type;
 
   const itemQueryParam = Array.isArray(
     params.itemQuery
@@ -180,6 +189,18 @@ export default function CategoryFeedScreen() {
 
   const normalizedTopic =
     normalizeValue(topicParam) || 'general';
+
+  const normalizedType =
+    normalizeValue(typeParam);
+
+  const collectionScopeParam = Array.isArray(
+    params.collectionScope
+  )
+    ? params.collectionScope[0]
+    : params.collectionScope;
+
+  const isSpecificCollection =
+    collectionScopeParam === 'specific';
 
   const normalizedItemQuery =
     normalizeValue(itemQueryParam);
@@ -306,6 +327,61 @@ const nextProfilesByUserId =
 
 if (isMounted) {
   setAllPosts(publishedPosts);
+
+  const relevantMusicianPosts =
+    publishedPosts.filter(
+      (candidate) =>
+        normalizeValue(
+          candidate.collection.category
+        ) === normalizeValue(categoryId) &&
+        (normalizeValue(
+          candidate.collection.topic
+        ) || 'general') === normalizedTopic &&
+        (!(normalizedType || isSpecificCollection) ||
+          normalizeValue(
+            candidate.collection.type
+          ) === normalizedType) &&
+        candidate.collection.items.some(
+          (item) =>
+            String(item?.id ?? '').startsWith(
+              'musician-'
+            )
+        )
+    );
+
+  if (relevantMusicianPosts.length > 0) {
+    void refreshMusicianEditorialInPosts(
+      relevantMusicianPosts
+    )
+      .then((refreshedPosts) => {
+        if (!isMounted) {
+          return;
+        }
+
+        const refreshedById = new Map(
+          refreshedPosts.map((item) => [
+            item.id,
+            item,
+          ])
+        );
+
+        setAllPosts((currentPosts) =>
+          currentPosts.map(
+            (item) =>
+              refreshedById.get(item.id) ??
+              item
+          )
+        );
+      })
+      .catch((error) => {
+        if (__DEV__) {
+          console.log(
+            'Failed to refresh Category Feed musician editorial:',
+            error
+          );
+        }
+      });
+  }
   setProfilesByUserId(nextProfilesByUserId);
 }
       } catch (error) {
@@ -332,7 +408,14 @@ if (isMounted) {
     return () => {
       isMounted = false;
     };
-  }, [posts, loadAttempt]);
+  }, [
+    posts,
+    loadAttempt,
+    categoryId,
+    normalizedTopic,
+    normalizedType,
+    isSpecificCollection,
+  ]);
 
   const filteredPosts = useMemo(() => {
     if (!categoryId) {
@@ -358,6 +441,14 @@ if (isMounted) {
 
         if (
           postCategory !== normalizedCategory
+        ) {
+          return false;
+        }
+
+        if (
+          (normalizedType || isSpecificCollection) &&
+          normalizeValue(post.collection.type) !==
+            normalizedType
         ) {
           return false;
         }
@@ -423,6 +514,8 @@ if (isMounted) {
     blockedUserIds,
     categoryId,
     normalizedTopic,
+    normalizedType,
+    isSpecificCollection,
     normalizedItemId,
     normalizedItemQuery,
     profile.id,
@@ -591,6 +684,10 @@ if (isMounted) {
       pathname: '/category-feed',
       params: {
         category: categoryId,
+        ...(typeParam ? { type: typeParam } : {}),
+        ...(isSpecificCollection
+          ? { collectionScope: 'specific' }
+          : {}),
         ...(normalizedTopic !== 'general'
           ? { topic: normalizedTopic }
           : {}),

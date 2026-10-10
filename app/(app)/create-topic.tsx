@@ -18,7 +18,10 @@ import {
 } from '@/services/trending-service';
 import { Post } from '@/types/post';
 import { Top3List } from '@/types/top3-list';
-import { buildCollectionTitle } from '@/utils/build-collection-title';
+import {
+  buildCollectionTitle,
+  buildEntityCollectionTitle,
+} from '@/utils/build-collection-title';
 import { Ionicons } from '@expo/vector-icons';
 import {
   router,
@@ -417,7 +420,7 @@ export default function CreateTopicScreen() {
         category: selectedCategory.id,
         type: option.name,
         collectionOptionId: option.id,
-        title: `Top 3 ${option.name}`,
+        title: buildEntityCollectionTitle(option.name),
       });
       router.push({
         pathname: '/collection',

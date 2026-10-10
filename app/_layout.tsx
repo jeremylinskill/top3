@@ -207,6 +207,8 @@ export default function RootLayout() {
                                           animation: 'none',
                                         }}
                                       />
+                                      <Stack.Screen name="onboarding-collection" />
+                                      <Stack.Screen name="onboarding-search" />
                                       <Stack.Screen name="onboarding-published" />
                                       <Stack.Screen name="onboarding-overall-top3" />
                                       <Stack.Screen name="onboarding-taste-match" />

@@ -21,7 +21,10 @@ import {
   createUserReport,
   ReportReason,
 } from '@/lib/supabase/reports';
-import { getPublishedPostsByUser } from '@/services/post-service';
+import {
+  getPublishedPostsByUser,
+  refreshMusicianEditorialInPosts,
+} from '@/services/post-service';
 import { getTasteRecommendationForUser } from '@/services/taste-recommendation-service';
 import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
@@ -143,6 +146,8 @@ export default function ProfileScreen({
   const [allPosts, setAllPosts] = useState<
     Post[]
   >([]);
+
+  const profilePostsRefreshRunRef = useRef(0);
 
   const [isLoadingPosts, setIsLoadingPosts] =
     useState(true);
@@ -323,6 +328,38 @@ export default function ProfileScreen({
     }: {
       showLoading?: boolean;
     } = {}) => {
+      const loadRun =
+        ++profilePostsRefreshRunRef.current;
+
+      function displayPosts(posts: Post[]) {
+        if (
+          loadRun !==
+          profilePostsRefreshRunRef.current
+        ) {
+          return;
+        }
+
+        setAllPosts(posts);
+
+        void refreshMusicianEditorialInPosts(posts)
+          .then((refreshedPosts) => {
+            if (
+              loadRun ===
+              profilePostsRefreshRunRef.current
+            ) {
+              setAllPosts(refreshedPosts);
+            }
+          })
+          .catch((error) => {
+            if (__DEV__) {
+              console.log(
+                'Profile musician editorial refresh failed:',
+                error
+              );
+            }
+          });
+      }
+
       if (
         !isAuthenticated ||
         !profile.id ||
@@ -345,15 +382,22 @@ export default function ProfileScreen({
             profile.id
           );
 
+        if (
+          loadRun !==
+          profilePostsRefreshRunRef.current
+        ) {
+          return;
+        }
+
         setHasPostsLoadError(false);
 
         if (viewedUserId === profile.id) {
-          setAllPosts(currentUserPosts);
+          displayPosts(currentUserPosts);
           return;
         }
 
         if (!canViewPosts) {
-          setAllPosts(currentUserPosts);
+          displayPosts(currentUserPosts);
           return;
         }
 
@@ -362,13 +406,20 @@ export default function ProfileScreen({
             viewedUserId
           );
 
-        setAllPosts(
+        displayPosts(
           mergePosts(
             currentUserPosts,
             viewedUserPosts
           )
         );
       } catch (error) {
+        if (
+          loadRun !==
+          profilePostsRefreshRunRef.current
+        ) {
+          return;
+        }
+
         if (!isNetworkError(error)) {
           console.error(
             'Failed to load profile posts:',
@@ -380,7 +431,11 @@ export default function ProfileScreen({
           setHasPostsLoadError(true);
         }
       } finally {
-        if (showLoading) {
+        if (
+          showLoading &&
+          loadRun ===
+            profilePostsRefreshRunRef.current
+        ) {
           setIsLoadingPosts(false);
         }
       }
@@ -397,6 +452,10 @@ export default function ProfileScreen({
     void loadProfilePosts({
       showLoading: true,
     });
+
+    return () => {
+      ++profilePostsRefreshRunRef.current;
+    };
   }, [loadProfilePosts]);
 
   const retryProfilePosts = useCallback(() => {
@@ -539,10 +598,14 @@ export default function ProfileScreen({
     router.push({
       pathname: '/category-feed',
       params: {
+        collectionScope: 'specific',
         category: post.collection.category,
         topic: normalizeTopic(
           post.collection.topic
         ),
+        ...(post.collection.type
+          ? { type: post.collection.type }
+          : {}),
       },
     });
   }

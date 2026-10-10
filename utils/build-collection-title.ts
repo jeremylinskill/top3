@@ -66,3 +66,33 @@ export function buildCollectionTitle(
 
   return `${baseTitle} • ${topic.name}`;
 }
+
+export function formatCollectionDisplayTitle(
+  title: string
+): string {
+  const displayTitle = title.replace(
+    /^Top 3\s+/i,
+    ''
+  );
+
+  if (/^Actors$/i.test(displayTitle)) {
+    return 'All Actors';
+  }
+
+  if (/^Directors$/i.test(displayTitle)) {
+    return 'All Directors';
+  }
+
+  return displayTitle;
+}
+
+export function buildEntityCollectionTitle(
+  name: string
+): string {
+  const prefix =
+    /^(Actors|Directors)$/i.test(name.trim())
+      ? 'All '
+      : '';
+
+  return `Top 3 ${prefix}${name}`;
+}

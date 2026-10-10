@@ -11,7 +11,10 @@ import { useComments } from '@/context/comment-context';
 import { useLike } from '@/context/like-context';
 import { useTop3 } from '@/context/top3-context';
 import { useAppColors } from '@/hooks/use-app-colors';
-import { getPublishedPosts } from '@/services/post-service';
+import {
+  getPublishedPosts,
+  refreshMusicianEditorialInPosts,
+} from '@/services/post-service';
 import { Post } from '@/types/post';
 import {
   calculateCommunityTop3,
@@ -102,11 +105,70 @@ export default function CommunityTop3Screen() {
 
       try {
 const publishedPosts =
-  await getPublishedPosts();
+          await getPublishedPosts();
 
-if (isMounted) {
-  setAllPosts(publishedPosts);
-}
+        if (isMounted) {
+          setAllPosts(publishedPosts);
+
+          const normalizedCategory =
+            (category ?? '').trim().toLowerCase();
+          const normalizedTopic =
+            (topic ?? 'general').trim().toLowerCase() ||
+            'general';
+
+          const relevantMusicianPosts =
+            publishedPosts.filter(
+              (candidate) =>
+                candidate.collection.category
+                  .trim()
+                  .toLowerCase() === normalizedCategory &&
+                (
+                  candidate.collection.topic
+                    ?.trim()
+                    .toLowerCase() || 'general'
+                ) === normalizedTopic &&
+                candidate.collection.items.some(
+                  (item) =>
+                    String(item?.id ?? '').startsWith(
+                      'musician-'
+                    )
+                )
+            );
+
+          if (relevantMusicianPosts.length > 0) {
+            void refreshMusicianEditorialInPosts(
+              relevantMusicianPosts
+            )
+              .then((refreshedPosts) => {
+                if (!isMounted) {
+                  return;
+                }
+
+                const refreshedById = new Map(
+                  refreshedPosts.map((item) => [
+                    item.id,
+                    item,
+                  ])
+                );
+
+                setAllPosts((currentPosts) =>
+                  currentPosts.map(
+                    (item) =>
+                      refreshedById.get(item.id) ??
+                      item
+                  )
+                );
+              })
+              .catch((error) => {
+                if (__DEV__) {
+                  console.log(
+                    'Failed to refresh Community Top 3 musician editorial:',
+                    error
+                  );
+                }
+              });
+          }
+        }
       } catch (error) {
         if (__DEV__) {
           console.log(
@@ -131,7 +193,7 @@ if (isMounted) {
     return () => {
       isMounted = false;
     };
-  }, [posts, loadAttempt]);
+  }, [posts, loadAttempt, category, topic]);
 
   const result = useMemo<
     CommunityTop3Result | null

@@ -1,4 +1,7 @@
+import { formatCollectionDisplayTitle } from '@/utils/build-collection-title';
 import AppText from '@/components/app-text';
+import IconButton from '@/components/icon-button';
+import { useSavedItems } from '@/context/saved-items-context';
 import { MediaPreviewItemButton } from '@/components/media-preview-button';
 import PrimaryButton from '@/components/primary-button';
 import Top3Card from '@/components/top3-card';
@@ -11,6 +14,7 @@ import { useAppColors } from '@/hooks/use-app-colors';
 import { useAuth } from '@/hooks/use-auth';
 import { getPublishedPostsByUser } from '@/lib/supabase/collections';
 import { getPopularSuggestionsByCategory } from '@/providers/search';
+import { refreshMusicianEditorialInPosts } from '@/services/post-service';
 import { Post } from '@/types/post';
 import { Top3Item } from '@/types/top3-item';
 import {
@@ -67,10 +71,24 @@ export default function OnboardingPublishedScreen() {
   const { profile } = useProfile();
   const { user } = useAuth();
 
+  const {
+    isSaved,
+    toggleSavedItem,
+    isLoading: isLoadingSavedItems,
+  } = useSavedItems();
+
   const [
     fetchedPublishedPost,
     setFetchedPublishedPost,
   ] = useState<Post | null>(null);
+
+  const [
+    refreshedPublishedPost,
+    setRefreshedPublishedPost,
+  ] = useState<{
+    source: Post;
+    post: Post;
+  } | null>(null);
 
   const [
     isLoadingPublishedPost,
@@ -174,9 +192,85 @@ export default function OnboardingPublishedScreen() {
   );
 
 
-  const publishedPost =
+  const sourcePublishedPost =
     localPublishedPost ??
     fetchedPublishedPost;
+
+  const publishedPost =
+    refreshedPublishedPost?.source === sourcePublishedPost
+      ? refreshedPublishedPost.post
+      : sourcePublishedPost;
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    if (
+      !sourcePublishedPost?.collection.items.some(
+        (item) =>
+          String(item?.id ?? '').startsWith(
+            'musician-'
+          )
+      )
+    ) {
+      return;
+    }
+
+    void refreshMusicianEditorialInPosts([
+      sourcePublishedPost,
+    ])
+      .then(([refreshedPost]) => {
+        if (!isCancelled && refreshedPost) {
+          setRefreshedPublishedPost({
+            source: sourcePublishedPost,
+            post: refreshedPost,
+          });
+        }
+      })
+      .catch((error) => {
+        if (__DEV__) {
+          console.log(
+            'Failed to refresh onboarding musician editorial:',
+            error
+          );
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [sourcePublishedPost]);
+
+  const displayedOverallItems = useMemo(() => {
+    const publishedItemsById =
+      new Map<string, Top3Item>();
+
+    for (
+      const item of
+      publishedPost?.collection.items ?? []
+    ) {
+      if (item !== null) {
+        publishedItemsById.set(
+          item.id,
+          item
+        );
+      }
+    }
+
+    return overallItems.map((item) => {
+      const updatedItem =
+        publishedItemsById.get(item.id);
+
+      if (!updatedItem) {
+        return item;
+      }
+
+      return {
+        ...item,
+        imageUrl: updatedItem.imageUrl,
+        bylineOverride: updatedItem.bylineOverride,
+      };
+    });
+  }, [overallItems, publishedPost]);
 
   const saveCategory =
     TOP3_CATEGORIES.find(
@@ -320,20 +414,20 @@ export default function OnboardingPublishedScreen() {
     cardScale,
     listsCardOpacity,
     overallCardOpacity,
-    publishedPost,
+    publishedPost?.id,
     subtitleOpacity,
     titleOpacity,
   ]);
 
 
   useEffect(() => {
-    if (!publishedPost) {
+    if (!sourcePublishedPost) {
       return;
     }
 
 
     const activePublishedPost =
-      publishedPost;
+      sourcePublishedPost;
 
 
     const userItems =
@@ -465,7 +559,7 @@ export default function OnboardingPublishedScreen() {
       isCancelled = true;
       controller.abort();
     };
-  }, [publishedPost]);
+  }, [sourcePublishedPost]);
 
 
   function changeView(
@@ -647,10 +741,7 @@ export default function OnboardingPublishedScreen() {
 
 
   const overallTitle =
-    publishedPost.collection.title.replace(
-      /^Top 3\s+/i,
-      ''
-    );
+    formatCollectionDisplayTitle(publishedPost.collection.title);
 
 
   return (
@@ -915,7 +1006,7 @@ export default function OnboardingPublishedScreen() {
 
 
               <View style={styles.ranking}>
-                {overallItems.map(
+                {displayedOverallItems.map(
                   (item, index) => (
                     <View
                       key={item.id}
@@ -927,7 +1018,7 @@ export default function OnboardingPublishedScreen() {
                             colors.secondarySurface,
                         },
                         index ===
-                          overallItems.length - 1 &&
+                          displayedOverallItems.length - 1 &&
                           styles.lastRankRow,
                       ]}>
                       <AppText
@@ -1041,34 +1132,71 @@ export default function OnboardingPublishedScreen() {
                       </View>
 
 
-                      <MediaPreviewItemButton
-                        item={item}
-                        category={publishedPost.collection.category}
-                        saveContext={
-                          saveCategory
-                            ? {
-                                category:
-                                  saveCategory,
-                                source: {
-                                  collectionId:
-                                    publishedPost.collection.id,
-                                  userId:
-                                    publishedPost.authorId,
+                      <View style={styles.overallItemActions}>
+                        <MediaPreviewItemButton
+                          item={item}
+                          category={publishedPost.collection.category}
+                          saveContext={
+                            saveCategory
+                              ? {
+                                  category:
+                                    saveCategory,
+                                  source: {
+                                    collectionId:
+                                      publishedPost.collection.id,
+                                    userId:
+                                      publishedPost.authorId,
+                                    topic:
+                                      publishedPost.collection.topic ??
+                                      'general',
+                                  },
+                                }
+                              : undefined
+                          }
+                          style={[
+                            styles.previewButton,
+                            {
+                              backgroundColor:
+                                colors.surface,
+                            },
+                          ]}
+                        />
+                        {saveCategory ? (
+                          <IconButton
+                            backgroundColor={colors.surface}
+                            onPress={() => {
+                              void toggleSavedItem(
+                                saveCategory,
+                                item,
+                                {
                                   topic:
                                     publishedPost.collection.topic ??
                                     'general',
-                                },
+                                }
+                              );
+                            }}
+                            disabled={isLoadingSavedItems}
+                            selected={isSaved(
+                              saveCategory,
+                              item.id
+                            )}
+                            accessibilityLabel={
+                              isSaved(saveCategory, item.id)
+                                ? `Remove ${item.title} from Saved`
+                                : `Save ${item.title}`
+                            }>
+                            <Ionicons
+                              name={
+                                isSaved(saveCategory, item.id)
+                                  ? 'bookmark'
+                                  : 'bookmark-outline'
                               }
-                            : undefined
-                        }
-                        style={[
-                          styles.previewButton,
-                          {
-                            backgroundColor:
-                              colors.surface,
-                          },
-                        ]}
-                      />
+                              size={19}
+                              color={colors.text}
+                            />
+                          </IconButton>
+                        ) : null}
+                      </View>
                     </View>
                   )
                 )}
@@ -1120,6 +1248,12 @@ export default function OnboardingPublishedScreen() {
 
 
 const styles = StyleSheet.create({
+  overallItemActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+
   container: {
     flex: 1,
   },

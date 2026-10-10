@@ -1,3 +1,4 @@
+import { refreshMusicianEditorialInPosts } from '@/services/post-service';
 import ActionSheet, {
   ActionSheetAction,
 } from '@/components/action-sheet';
@@ -160,6 +161,28 @@ export default function PublishedTop3Screen() {
         if (isMounted) {
           setPost(matchingPost);
           setAuthor(matchingAuthor);
+
+          if (matchingPost) {
+            void refreshMusicianEditorialInPosts([
+              matchingPost,
+            ])
+              .then((refreshedPosts) => {
+                if (
+                  isMounted &&
+                  refreshedPosts[0]
+                ) {
+                  setPost(refreshedPosts[0]);
+                }
+              })
+              .catch((error) => {
+                if (__DEV__) {
+                  console.log(
+                    'Failed to refresh published Top 3 musician editorial:',
+                    error
+                  );
+                }
+              });
+          }
 
           if (
             matchingPost &&
@@ -325,10 +348,14 @@ export default function PublishedTop3Screen() {
     router.push({
       pathname: '/category-feed',
       params: {
+        collectionScope: 'specific',
         category: currentPost.collection.category,
         topic: normalizeTopic(
           currentPost.collection.topic
         ),
+        ...(currentPost.collection.type
+          ? { type: currentPost.collection.type }
+          : {}),
       },
     });
   }
