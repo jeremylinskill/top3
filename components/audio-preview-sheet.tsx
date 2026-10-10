@@ -4,6 +4,10 @@ import { useAudioPreview } from '@/context/audio-preview-context';
 import { usePreviewSheetColors } from '@/hooks/use-preview-sheet-colors';
 import { getMediaPreviewByline } from '@/lib/supabase/media-preview-byline';
 import {
+  getMusicianEditorialByIds,
+  type MusicianEditorial,
+} from '@/lib/supabase/musician-editorial';
+import {
   getTop3ItemMetadata,
 } from '@/utils/top3-item-metadata';
 import { Ionicons } from '@expo/vector-icons';
@@ -134,6 +138,64 @@ export default function AudioPreviewSheet() {
     isAppleMusicAlbum ||
     isAppleMusicSong ||
     isMusician;
+
+  const [
+    photoAttribution,
+    setPhotoAttribution,
+  ] = useState<MusicianEditorial | null>(null);
+
+  const [
+    isPhotoCreditExpanded,
+    setIsPhotoCreditExpanded,
+  ] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    setPhotoAttribution(null);
+    setIsPhotoCreditExpanded(false);
+
+    const imageUrl = activePreviewItem?.imageUrl;
+
+    if (
+      !isPreviewVisible ||
+      !isMusician ||
+      !imageUrl
+    ) {
+      return;
+    }
+
+    void getMusicianEditorialByIds([itemId])
+      .then((editorials) => {
+        if (cancelled) return;
+
+        const editorial = editorials.get(itemId);
+
+        if (
+          editorial?.imageCredit &&
+          editorial.imageUrlOverride === imageUrl
+        ) {
+          setPhotoAttribution(editorial);
+        }
+      })
+      .catch((error) => {
+        if (__DEV__) {
+          console.log(
+            'Failed to load musician photo credit:',
+            error
+          );
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    itemId,
+    isMusician,
+    isPreviewVisible,
+    activePreviewItem?.imageUrl,
+  ]);
 
   const [
     musicPreviewByline,
@@ -320,6 +382,25 @@ export default function AudioPreviewSheet() {
     isApplePodcast
       ? 'mic' as const
       : 'musical-note' as const;
+
+  async function openPhotoCreditUrl(
+    url?: string
+  ) {
+    if (!url || !/^https:\/\//i.test(url)) {
+      return;
+    }
+
+    try {
+      await Linking.openURL(url);
+    } catch (error) {
+      if (__DEV__) {
+        console.log(
+          'Failed to open photo attribution link:',
+          error
+        );
+      }
+    }
+  }
 
   async function openExternalItem() {
     if (!externalUrl) {
@@ -570,6 +651,119 @@ export default function AudioPreviewSheet() {
           </View>
         </View>
 
+        {photoAttribution ? (
+          <View style={styles.photoCreditSection}>
+            <Pressable
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel="Photo credit details"
+              accessibilityState={{
+                expanded: isPhotoCreditExpanded,
+              }}
+              onPress={() =>
+                setIsPhotoCreditExpanded(
+                  (current) => !current
+                )
+              }>
+              <Text
+                style={[
+                  styles.photoCreditToggle,
+                  {
+                    color:
+                      previewColors.tertiaryText,
+                  },
+                ]}>
+                Photo credit
+              </Text>
+            </Pressable>
+
+            {isPhotoCreditExpanded ? (
+              <View style={styles.photoCreditDetails}>
+                <Text
+                  style={[
+                    styles.photoCreditText,
+                    {
+                      color:
+                        previewColors.bodyText,
+                    },
+                  ]}>
+                  {photoAttribution.imageCredit}
+                </Text>
+
+                {photoAttribution.imageModifications ? (
+                  <Text
+                    style={[
+                      styles.photoCreditText,
+                      {
+                        color:
+                          previewColors.bodyText,
+                      },
+                    ]}>
+                    Modifications: {photoAttribution.imageModifications}
+                  </Text>
+                ) : null}
+
+                <View style={styles.photoCreditLinks}>
+                  {photoAttribution.imageSourceUrl ? (
+                    <Pressable
+                      accessibilityRole="link"
+                      onPress={() => {
+                        void openPhotoCreditUrl(
+                          photoAttribution.imageSourceUrl
+                        );
+                      }}>
+                      <Text
+                        style={[
+                          styles.photoCreditLink,
+                          {
+                            color:
+                              previewColors.primaryText,
+                          },
+                        ]}>
+                        Image source ↗
+                      </Text>
+                    </Pressable>
+                  ) : null}
+
+                  {photoAttribution.imageLicense ? (
+                    photoAttribution.imageLicenseUrl ? (
+                      <Pressable
+                        accessibilityRole="link"
+                        onPress={() => {
+                          void openPhotoCreditUrl(
+                            photoAttribution.imageLicenseUrl
+                          );
+                        }}>
+                        <Text
+                          style={[
+                            styles.photoCreditLink,
+                            {
+                              color:
+                                previewColors.primaryText,
+                            },
+                          ]}>
+                          {photoAttribution.imageLicense} ↗
+                        </Text>
+                      </Pressable>
+                    ) : (
+                      <Text
+                        style={[
+                          styles.photoCreditText,
+                          {
+                            color:
+                              previewColors.bodyText,
+                          },
+                        ]}>
+                        {photoAttribution.imageLicense}
+                      </Text>
+                    )
+                  ) : null}
+                </View>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+
         <View
           style={
             styles.progressSection
@@ -801,6 +995,37 @@ const styles = StyleSheet.create({
 
   linkPressed: {
     opacity: 0.65,
+  },
+
+  photoCreditSection: {
+    marginTop: 8,
+  },
+
+  photoCreditToggle: {
+    fontSize: 9,
+    fontWeight: '600',
+  },
+
+  photoCreditDetails: {
+    marginTop: 6,
+    gap: 4,
+  },
+
+  photoCreditText: {
+    fontSize: 11,
+    lineHeight: 16,
+  },
+
+  photoCreditLinks: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 14,
+    marginTop: 2,
+  },
+
+  photoCreditLink: {
+    fontSize: 11,
+    fontWeight: '600',
   },
 
   progressSection: {

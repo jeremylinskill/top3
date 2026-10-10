@@ -3,12 +3,22 @@ import { supabase } from '@/lib/supabase';
 export type MusicianEditorial = {
   imageUrlOverride?: string;
   bylineOverride?: string;
+  imageCredit?: string;
+  imageSourceUrl?: string;
+  imageLicense?: string;
+  imageLicenseUrl?: string;
+  imageModifications?: string;
 };
 
 type MusicianEditorialRow = {
   id: string;
   image_url_override: string | null;
   byline_override: string | null;
+  image_credit: string | null;
+  image_source_url: string | null;
+  image_license: string | null;
+  image_license_url: string | null;
+  image_modifications: string | null;
 };
 
 const CACHE_DURATION_MS = 5 * 60 * 1000;
@@ -55,7 +65,9 @@ export async function getMusicianEditorialByIds(
 
     const { data, error } = await supabase
       .from('musicians')
-      .select('id,image_url_override,byline_override')
+      .select(
+        'id,image_url_override,byline_override,image_credit,image_source_url,image_license,image_license_url,image_modifications'
+      )
       .in('id', batch);
 
     if (error) {
@@ -76,6 +88,16 @@ export async function getMusicianEditorialByIds(
               row.image_url_override?.trim() || undefined,
             bylineOverride:
               row.byline_override?.trim() || undefined,
+            imageCredit:
+              row.image_credit?.trim() || undefined,
+            imageSourceUrl:
+              row.image_source_url?.trim() || undefined,
+            imageLicense:
+              row.image_license?.trim() || undefined,
+            imageLicenseUrl:
+              row.image_license_url?.trim() || undefined,
+            imageModifications:
+              row.image_modifications?.trim() || undefined,
           }
         : null;
 
