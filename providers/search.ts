@@ -91,7 +91,7 @@ const POPULAR_SUGGESTIONS_PROVIDERS: Partial<
   tv: getPopularTvShows,
 };
 
-function getMusicianRole(
+export function getMusicianRole(
   option?: CollectionOption
 ): MusicianRole | undefined {
   if (

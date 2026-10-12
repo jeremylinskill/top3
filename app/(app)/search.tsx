@@ -1,4 +1,5 @@
 import ActionSheet from '@/components/action-sheet';
+import AuthProviderButton from '@/components/auth-provider-button';
 import AppText from '@/components/app-text';
 import Chip from '@/components/chip';
 import { MediaPreviewItemButton } from '@/components/media-preview-button';
@@ -6,6 +7,7 @@ import PageHeader from '@/components/page-header';
 import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
 import SearchInput from '@/components/search-input';
+import SuggestMusicianSheet from '@/components/suggest-musician-sheet';
 import SearchResultSkeleton from '@/components/search-result-skeleton';
 import SegmentedControl from '@/components/segmented-control';
 import { getCategoryArtworkRule } from '@/constants/category-artwork-rules';
@@ -18,6 +20,7 @@ import { useTop3 } from '@/context/top3-context';
 import { useAppColors } from '@/hooks/use-app-colors';
 import { trackAnalyticsEvent } from '@/lib/analytics';
 import { stopAllMediaPreviewsFromCoordinator } from '@/lib/media-preview-coordinator';
+import { submitMusicianSuggestion } from '@/lib/supabase/musician-suggestions';
 import {
   getPopularMoviePeople,
   searchMoviePeople,
@@ -25,6 +28,7 @@ import {
 import {
   getPopularSuggestionsByCategory,
   getSearchProvider,
+  getMusicianRole,
 } from '@/providers/search';
 import {
   fetchCollectionOptionSuggestions,
@@ -51,6 +55,15 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 type SearchSource = 'search' | 'saved';
+const MUSICIAN_SUGGESTION_LABELS = {
+  vocalist: 'Suggest a Vocalist',
+  guitarist: 'Suggest a Guitarist',
+  drummer: 'Suggest a Drummer',
+  bassist: 'Suggest a Bassist',
+  mc: 'Suggest an MC',
+  dj: 'Suggest a DJ',
+} as const;
+
 const MINIMUM_SEARCH_LENGTH = 2;
 const MINIMUM_COLLECTIONS_FOR_POPULARITY = 50;
 const SEARCH_CACHE = new Map<string, Top3Item[]>();
@@ -187,6 +200,11 @@ export default function SearchScreen() {
           currentList.collectionOptionId
         )
       : undefined;
+  const musicianRole = getMusicianRole(activeCollectionOption);
+  const suggestMusicianLabel = musicianRole
+    ? MUSICIAN_SUGGESTION_LABELS[musicianRole]
+    : 'Suggest a Musician';
+  const [isSuggestMusicianVisible, setIsSuggestMusicianVisible] = useState(false);
   const [activeSource, setActiveSource] =
     useState<SearchSource>('search');
   const [searchQuery, setSearchQuery] = useState('');
@@ -1407,7 +1425,11 @@ const normalizedRank = Array.isArray(rank)
                 </AppText>
               </View>
             ) : searchResults.length === 0 ? (
-              <View style={styles.messageContainer}>
+              <View
+                style={[
+                  styles.messageContainer,
+                  musicianRole && styles.musicianMessageContainer,
+                ]}>
                 <Text style={styles.messageIcon}>
                   {searchIcon}
                 </Text>
@@ -1421,8 +1443,21 @@ const normalizedRank = Array.isArray(rank)
                   variant="bodyLarge"
                   tone="tertiary"
                   style={styles.messageText}>
-                  Try another title or a broader search.
+                  {musicianRole
+                    ? "Can't find the musician you're looking for?"
+                    : 'Try another title or a broader search.'}
                 </AppText>
+                {musicianRole ? (
+                  <AuthProviderButton
+                    title={suggestMusicianLabel}
+                    variant="secondary"
+                    style={{ marginTop: 20, width: 'auto', alignSelf: 'center', borderWidth: 0 }}
+                    onPress={() => {
+                      Keyboard.dismiss();
+                      setIsSuggestMusicianVisible(true);
+                    }}
+                  />
+                ) : null}
               </View>
             ) : (
               <>
@@ -1461,6 +1496,17 @@ const normalizedRank = Array.isArray(rank)
                         'search'
                       )
                     )}
+                    {musicianRole ? (
+                      <AuthProviderButton
+                        title={suggestMusicianLabel}
+                        variant="secondary"
+                        style={{ marginTop: 20, width: 'auto', alignSelf: 'center', borderWidth: 0 }}
+                        onPress={() => {
+                          Keyboard.dismiss();
+                          setIsSuggestMusicianVisible(true);
+                        }}
+                      />
+                    ) : null}
                   </ScrollView>
                 </Animated.View>
               </>
@@ -1554,6 +1600,21 @@ const normalizedRank = Array.isArray(rank)
           </>
         )}
       </View>
+      {musicianRole ? (
+        <SuggestMusicianSheet
+          visible={isSuggestMusicianVisible}
+          role={musicianRole}
+          initialName={searchQuery}
+          onClose={() => setIsSuggestMusicianVisible(false)}
+          onSubmit={async (name, knownFor) => {
+            await submitMusicianSuggestion({
+              name,
+              role: musicianRole,
+              knownFor,
+            });
+          }}
+        />
+      ) : null}
       <ActionSheet
         visible={isDuplicateSelectionVisible}
         title="Already in your Top 3"
@@ -1617,6 +1678,9 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     paddingTop: 48,
     paddingHorizontal: 24,
+  },
+  musicianMessageContainer: {
+    paddingHorizontal: 0,
   },
   messageIcon: {
     fontSize: 42,
