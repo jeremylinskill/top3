@@ -27,6 +27,7 @@ import * as Notifications from 'expo-notifications';
 import {
   router,
   Stack,
+  usePathname,
   useRootNavigationState,
 } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -140,6 +141,7 @@ function NotificationResponseController() {
 
   const { isAuthenticated } = useAuth();
   const navigationState = useRootNavigationState();
+  const pathname = usePathname();
   const { options } = useCollectionOptions();
   const {
     lists,
@@ -220,6 +222,7 @@ function NotificationResponseController() {
       !pendingCampaign ||
       processingCampaignRef.current ||
       !navigationState?.key ||
+      pathname === '/' ||
       !isAuthenticated
     ) {
       return;
@@ -328,6 +331,7 @@ function NotificationResponseController() {
   }, [
     pendingCampaign,
     navigationState?.key,
+    pathname,
     isAuthenticated,
     isCollectionsLoaded,
     hasCollectionsLoadError,
