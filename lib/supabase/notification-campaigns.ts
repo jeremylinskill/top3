@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import type { NotificationDestination } from '@/types/notification-destination';
 import { FunctionsHttpError } from '@supabase/supabase-js';
 
 export type NotificationCampaignStatus =
@@ -11,10 +12,10 @@ export type NotificationCampaignStatus =
 
 export type NotificationCampaign = {
   id: string;
-  title: string;
-  message: string;
-  categoryId: string;
-  destinationKind: 'overall' | 'type' | 'theme';
+  title: string | null;
+  message: string | null;
+  categoryId: string | null;
+  destinationKind: 'overall' | 'type' | 'theme' | null;
   optionId: string | null;
   audience: 'test' | 'all';
   status: NotificationCampaignStatus;
@@ -31,9 +32,9 @@ export type NotificationCampaign = {
 
 type NotificationCampaignRow = {
   id: string;
-  title: string;
-  message: string;
-  category_id: string;
+  title: string | null;
+  message: string | null;
+  category_id: string | null;
   destination_kind: NotificationCampaign['destinationKind'];
   option_id: string | null;
   audience: NotificationCampaign['audience'];
@@ -126,4 +127,73 @@ export async function getNotificationCampaignHistory():
   }
 
   return data.campaigns.map(mapCampaign);
+}
+
+
+export type SaveNotificationDraftInput = {
+  id?: string | null;
+  title: string;
+  message: string;
+  destination: NotificationDestination | null;
+};
+
+type SaveNotificationDraftResponse = {
+  success?: boolean;
+  campaignId?: string;
+  error?: string;
+};
+
+export async function saveNotificationCampaignDraft(
+  input: SaveNotificationDraftInput
+): Promise<string> {
+  const { data, error } =
+    await supabase.functions.invoke<SaveNotificationDraftResponse>(
+      'manage-notification-campaigns',
+      {
+        body: {
+          action: 'save-draft',
+          id: input.id ?? null,
+          title: input.title,
+          message: input.message,
+          destination: input.destination,
+        },
+      }
+    );
+
+  if (error) {
+    let reason: string | null = null;
+
+    if (error instanceof FunctionsHttpError) {
+      try {
+        const response: unknown =
+          await error.context.clone().json();
+
+        if (
+          response !== null &&
+          typeof response === 'object' &&
+          'error' in response &&
+          typeof response.error === 'string'
+        ) {
+          reason = response.error;
+        }
+      } catch {
+        // Fall back to a general error message.
+      }
+    }
+
+    throw new Error(
+      reason ?? 'Unable to save notification draft.'
+    );
+  }
+
+  if (
+    data?.success !== true ||
+    typeof data.campaignId !== 'string'
+  ) {
+    throw new Error(
+      data?.error ?? 'Unable to save notification draft.'
+    );
+  }
+
+  return data.campaignId;
 }

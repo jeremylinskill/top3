@@ -22,10 +22,10 @@ type CampaignHistoryDatabase = {
         Row: {
           id: string;
           created_by: string | null;
-          title: string;
-          message: string;
-          category_id: string;
-          destination_kind: DestinationKind;
+          title: string | null;
+          message: string | null;
+          category_id: string | null;
+          destination_kind: DestinationKind | null;
           option_id: string | null;
           audience: CampaignAudience;
           status: CampaignStatus;
@@ -39,8 +39,25 @@ type CampaignHistoryDatabase = {
           created_at: string;
           updated_at: string;
         };
-        Insert: Record<string, never>;
-        Update: Record<string, never>;
+        Insert: {
+          created_by?: string | null;
+          title?: string | null;
+          message?: string | null;
+          category_id?: string | null;
+          destination_kind?: DestinationKind | null;
+          option_id?: string | null;
+          audience?: CampaignAudience;
+          status?: CampaignStatus;
+          updated_at?: string;
+        };
+        Update: {
+          title?: string | null;
+          message?: string | null;
+          category_id?: string | null;
+          destination_kind?: DestinationKind | null;
+          option_id?: string | null;
+          updated_at?: string;
+        };
         Relationships: [];
       };
     };
@@ -119,7 +136,8 @@ export default {
         typeof body !== "object" ||
         Array.isArray(body) ||
         !("action" in body) ||
-        body.action !== "list"
+        body.action !== "list" &&
+        body.action !== "save-draft"
       ) {
         return Response.json(
           { error: "Unsupported campaign action." },
@@ -130,6 +148,180 @@ export default {
       const campaignAdmin =
         ctx.supabaseAdmin as unknown as
           SupabaseClient<CampaignHistoryDatabase>;
+
+      if (body.action === "save-draft") {
+        const payload = body as Record<string, unknown>;
+        const invalid = (message: string) =>
+          Response.json({ error: message }, { status: 400 });
+
+        if (
+          typeof payload.title !== "string" ||
+          typeof payload.message !== "string"
+        ) {
+          return invalid("Draft title and message must be text.");
+        }
+
+        const title = payload.title.trim();
+        const message = payload.message.trim();
+
+        if (title.length > 100 || message.length > 220) {
+          return invalid("Draft title or message is too long.");
+        }
+
+        const rawId = payload.id;
+        let draftId: string | null = null;
+
+        if (rawId !== undefined && rawId !== null) {
+          if (
+            typeof rawId !== "string" ||
+            !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+              rawId
+            )
+          ) {
+            return invalid("Invalid draft identifier.");
+          }
+
+          draftId = rawId;
+        }
+
+        let categoryId: string | null = null;
+        let destinationKind: DestinationKind | null = null;
+        let optionId: string | null = null;
+
+        if (payload.destination !== null) {
+          const rawDestination = payload.destination;
+
+          if (
+            !rawDestination ||
+            typeof rawDestination !== "object" ||
+            Array.isArray(rawDestination)
+          ) {
+            return invalid("Invalid draft destination.");
+          }
+
+          const destination =
+            rawDestination as Record<string, unknown>;
+
+          const category = destination.categoryId;
+          const kind = destination.kind;
+          const option = destination.optionId;
+
+          if (
+            typeof category !== "string" ||
+            ![
+              "albums",
+              "artists",
+              "books",
+              "games",
+              "movies",
+              "songs",
+              "tv",
+            ].includes(category) ||
+            (
+              kind !== "overall" &&
+              kind !== "type" &&
+              kind !== "theme"
+            )
+          ) {
+            return invalid("Invalid draft destination.");
+          }
+
+          if (kind === "overall") {
+            if (option !== null && option !== undefined) {
+              return invalid("Overall destinations cannot have options.");
+            }
+          } else {
+            if (
+              typeof option !== "string" ||
+              option.trim().length < 1 ||
+              option.trim().length > 128
+            ) {
+              return invalid("Invalid draft destination option.");
+            }
+
+            optionId = option.trim();
+          }
+
+          categoryId = category;
+          destinationKind = kind;
+        }
+
+        const draftFields = {
+          title,
+          message,
+          category_id: categoryId,
+          destination_kind: destinationKind,
+          option_id: optionId,
+          updated_at: new Date().toISOString(),
+        };
+
+        if (draftId) {
+          // The status guard prevents editing sent, scheduled,
+          // cancelled, or currently sending campaigns.
+          const { data: updated, error: updateError } =
+            await campaignAdmin
+              .from("notification_campaigns")
+              .update(draftFields)
+              .eq("id", draftId)
+              .eq("status", "draft")
+              .eq("created_by", userId)
+              .select("id")
+              .maybeSingle();
+
+          if (updateError) {
+            console.error(
+              "Unable to update notification draft:",
+              updateError.message
+            );
+
+            return Response.json(
+              { error: "Unable to save notification draft." },
+              { status: 500 }
+            );
+          }
+
+          if (!updated) {
+            return Response.json(
+              { error: "Draft not found or no longer editable." },
+              { status: 404 }
+            );
+          }
+
+          return Response.json({
+            success: true,
+            campaignId: updated.id,
+          });
+        }
+
+        const { data: created, error: createError } =
+          await campaignAdmin
+            .from("notification_campaigns")
+            .insert({
+              ...draftFields,
+              created_by: userId,
+              audience: "test",
+              status: "draft",
+            })
+            .select("id")
+            .single();
+
+        if (createError || !created) {
+          console.error(
+            "Unable to create notification draft:",
+            createError?.message ?? "No campaign returned."
+          );
+
+          return Response.json(
+            { error: "Unable to save notification draft." },
+            { status: 500 }
+          );
+        }
+
+        return Response.json({
+          success: true,
+          campaignId: created.id,
+        });
+      }
 
       const { data: campaigns, error } =
         await campaignAdmin

@@ -14,6 +14,10 @@ import { useAppColors } from '@/hooks/use-app-colors';
 import { getExistingPushToken } from '@/lib/notifications';
 import { isPushTokenRegistered } from '@/lib/supabase/push-tokens';
 import { sendCampaignTestNotification } from '@/lib/supabase/campaign-notifications';
+import {
+  saveNotificationCampaignDraft,
+  type NotificationCampaign,
+} from '@/lib/supabase/notification-campaigns';
 import { Ionicons } from '@expo/vector-icons';
 import {
   NotificationDestination,
@@ -59,8 +63,10 @@ export default function NotificationComposerScreen() {
   const [isPickingDestination, setIsPickingDestination] =
     useState(false);
   const [isSendingTest, setIsSendingTest] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [draftId, setDraftId] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<
-    'compose' | 'history'
+    'compose' | 'manage' | 'history'
   >('compose');
 
   const selectedOption = selectedDestination
@@ -116,8 +122,118 @@ export default function NotificationComposerScreen() {
     setIsMessageManuallyEdited(false);
   }
 
+  function handleEditDraft(campaign: NotificationCampaign) {
+    if (
+      campaign.status !== 'draft' ||
+      isSavingDraft ||
+      isSendingTest
+    ) {
+      return;
+    }
+
+    const category = TOP3_CATEGORIES.find(
+      (item) => item.id === campaign.categoryId
+    );
+
+    let restoredDestination: NotificationDestination | null =
+      null;
+
+    if (category && campaign.destinationKind === 'overall') {
+      restoredDestination = {
+        categoryId: category.id,
+        kind: 'overall',
+      };
+    } else if (
+      category &&
+      (campaign.destinationKind === 'type' ||
+        campaign.destinationKind === 'theme') &&
+      campaign.optionId
+    ) {
+      restoredDestination = {
+        categoryId: category.id,
+        kind: campaign.destinationKind,
+        optionId: campaign.optionId,
+      };
+    }
+
+    setDraftId(campaign.id);
+    setTitle(campaign.title ?? '');
+    setMessage(campaign.message ?? '');
+    setSelectedDestination(restoredDestination);
+
+    // Preserve saved copy when changing destinations.
+    setIsTitleManuallyEdited(true);
+    setIsMessageManuallyEdited(true);
+
+    setIsPickingDestination(false);
+    Keyboard.dismiss();
+    setActiveView('compose');
+  }
+
+  function handleNewNotification() {
+    if (isSavingDraft || isSendingTest) {
+      return;
+    }
+
+    Alert.alert(
+      'New Notification',
+      'Start a new notification? Unsaved changes in this form will be lost. Your previously saved drafts will remain in Manage.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Start New',
+          onPress: () => {
+            setDraftId(null);
+            setTitle('');
+            setMessage('');
+            setSelectedDestination(null);
+            setIsTitleManuallyEdited(false);
+            setIsMessageManuallyEdited(false);
+            setIsPickingDestination(false);
+            Keyboard.dismiss();
+            setActiveView('compose');
+          },
+        },
+      ]
+    );
+  }
+
+  async function handleSaveDraft() {
+    if (isSavingDraft || isSendingTest || !profile.isAdmin) {
+      return;
+    }
+
+    Keyboard.dismiss();
+    setIsSavingDraft(true);
+
+    try {
+      const savedId = await saveNotificationCampaignDraft({
+        id: draftId,
+        title,
+        message,
+        destination: selectedDestination,
+      });
+
+      setDraftId(savedId);
+
+      Alert.alert(
+        'Draft Saved',
+        'Your notification draft has been saved. You can continue editing it here.'
+      );
+    } catch (error) {
+      Alert.alert(
+        'Unable to Save Draft',
+        error instanceof Error
+          ? error.message
+          : 'Please try again.'
+      );
+    } finally {
+      setIsSavingDraft(false);
+    }
+  }
+
   async function handleSendTest() {
-    if (isSendingTest || !profile.isAdmin) {
+    if (isSendingTest || isSavingDraft || !profile.isAdmin) {
       return;
     }
 
@@ -222,7 +338,7 @@ export default function NotificationComposerScreen() {
       <ScreenHeader showBackButton />
 
       <View style={styles.viewSwitcher}>
-        <SegmentedControl<'compose' | 'history'>
+        <SegmentedControl<'compose' | 'manage' | 'history'>
           value={activeView}
           options={[
             {
@@ -231,9 +347,14 @@ export default function NotificationComposerScreen() {
               accessibilityLabel: 'Compose notification',
             },
             {
+              value: 'manage',
+              label: 'Manage',
+              accessibilityLabel: 'Manage notification drafts',
+            },
+            {
               value: 'history',
-              label: 'History',
-              accessibilityLabel: 'View notification history',
+              label: 'Sent',
+              accessibilityLabel: 'View sent notifications',
             },
           ]}
           onChange={(view) => {
@@ -244,12 +365,37 @@ export default function NotificationComposerScreen() {
       </View>
 
       {activeView === 'history' ? (
-        <NotificationHistory />
+        <NotificationHistory mode="history" />
+      ) : activeView === 'manage' ? (
+        <NotificationHistory
+          mode="manage"
+          onEditDraft={handleEditDraft}
+        />
       ) : (
       <ScrollView
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}>
+        {draftId || title || message || selectedDestination ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Start new notification"
+            disabled={isSavingDraft || isSendingTest}
+            onPress={handleNewNotification}
+            style={styles.newNotificationButton}>
+            <Ionicons
+              name="add"
+              size={18}
+              color={colors.primary}
+            />
+            <AppText
+              variant="label"
+              style={{ color: colors.primary }}>
+              New Notification
+            </AppText>
+          </Pressable>
+        ) : null}
+
         <View style={styles.field}>
           <AppText variant="formLabel">
             Destination Top 3
@@ -385,9 +531,23 @@ export default function NotificationComposerScreen() {
 
         <View style={styles.actions}>
           <AuthProviderButton
+            title={
+              isSavingDraft
+                ? 'Saving Draft…'
+                : draftId
+                  ? 'Save Changes'
+                  : 'Save Draft'
+            }
+            variant="secondary"
+            disabled={isSavingDraft || isSendingTest}
+            onPress={() => {
+              void handleSaveDraft();
+            }}
+          />
+          <AuthProviderButton
             title={isSendingTest ? 'Sending Test…' : 'Send Test'}
             variant="secondary"
-            disabled={isSendingTest}
+            disabled={isSendingTest || isSavingDraft}
             onPress={() => {
               void handleSendTest();
             }}
@@ -433,6 +593,14 @@ const styles = StyleSheet.create({
   field: {
     marginTop: 24,
     gap: 10,
+  },
+  newNotificationButton: {
+    alignSelf: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 16,
+    paddingVertical: 8,
   },
   resetCopyButton: {
     alignSelf: 'flex-start',

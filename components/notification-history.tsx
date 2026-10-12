@@ -78,6 +78,10 @@ function getDestinationLabel(
   campaign: NotificationCampaign,
   options: readonly CollectionOption[]
 ): string {
+  if (!campaign.categoryId || !campaign.destinationKind) {
+    return 'Destination not selected';
+  }
+
   const category =
     TOP3_CATEGORIES.find(
       (item) => item.id === campaign.categoryId
@@ -104,7 +108,15 @@ function getDestinationLabel(
   }`;
 }
 
-export default function NotificationHistory() {
+type NotificationHistoryProps = {
+  mode?: 'manage' | 'history';
+  onEditDraft?: (campaign: NotificationCampaign) => void;
+};
+
+export default function NotificationHistory({
+  mode = 'history',
+  onEditDraft,
+}: NotificationHistoryProps) {
   const colors = useAppColors();
   const { options } = useCollectionOptions();
 
@@ -191,6 +203,14 @@ export default function NotificationHistory() {
     }
   }
 
+  const visibleCampaigns = campaigns.filter((campaign) =>
+    mode === 'manage'
+      ? campaign.status === 'draft' ||
+        campaign.status === 'scheduled'
+      : campaign.status !== 'draft' &&
+        campaign.status !== 'scheduled'
+  );
+
   return (
     <ScrollView
       style={styles.scroll}
@@ -238,7 +258,7 @@ export default function NotificationHistory() {
       ) : null}
 
       {!isLoading &&
-      campaigns.length === 0 &&
+      visibleCampaigns.length === 0 &&
       !error ? (
         <View style={styles.state}>
           <Ionicons
@@ -247,16 +267,19 @@ export default function NotificationHistory() {
             color={colors.tertiaryText}
           />
           <AppText variant="sectionTitle">
-            No notifications yet
+            {mode === 'manage'
+              ? 'Nothing to manage yet'
+              : 'No notifications yet'}
           </AppText>
           <AppText variant="body" style={styles.center}>
-            Notifications you send or schedule will
-            appear here.
+            {mode === 'manage'
+              ? 'Saved drafts and scheduled notifications will appear here.'
+              : 'Notifications you send will appear here.'}
           </AppText>
         </View>
       ) : null}
 
-      {campaigns.map((campaign) => {
+      {visibleCampaigns.map((campaign) => {
         const isExpanded =
           expandedId === campaign.id;
 
@@ -283,7 +306,9 @@ export default function NotificationHistory() {
               accessibilityState={{
                 expanded: isExpanded,
               }}
-              accessibilityLabel={`View notification: ${campaign.title}`}
+              accessibilityLabel={`View notification: ${
+                campaign.title?.trim() || 'Untitled draft'
+              }`}
               onPress={() => {
                 setExpandedId(
                   isExpanded ? null : campaign.id
@@ -330,7 +355,7 @@ export default function NotificationHistory() {
                 <AppText
                   variant="cardTitle"
                   tone="primary">
-                  {campaign.title}
+                  {campaign.title?.trim() || 'Untitled draft'}
                 </AppText>
               </View>
             </Pressable>
@@ -342,7 +367,7 @@ export default function NotificationHistory() {
                   { borderTopColor: colors.border },
                 ]}>
                 <AppText variant="body">
-                  {campaign.message}
+                  {campaign.message?.trim() || 'No message yet.'}
                 </AppText>
 
                 {showCreatedDate ? (
@@ -358,6 +383,8 @@ export default function NotificationHistory() {
                   </AppText>
                 ) : null}
 
+                {campaign.status !== 'draft' &&
+                campaign.status !== 'scheduled' ? (
                 <AppText variant="metadata">
                   Expo accepted: {campaign.acceptedCount}
                   {' of '}
@@ -366,8 +393,22 @@ export default function NotificationHistory() {
                     ? ` · ${campaign.failedCount} failed`
                     : ''}
                 </AppText>
+                ) : null}
 
 
+
+                {campaign.status === 'draft' &&
+                onEditDraft ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Edit draft"
+                    onPress={() => onEditDraft(campaign)}
+                    style={styles.editAction}>
+                    <AppText variant="action">
+                      Edit Draft
+                    </AppText>
+                  </Pressable>
+                ) : null}
 
                 {campaign.lastError ? (
                   <AppText
@@ -383,7 +424,7 @@ export default function NotificationHistory() {
       })}
 
 
-      {campaigns.some(
+      {mode === 'history' && visibleCampaigns.some(
         (campaign) => campaign.acceptedCount > 0
       ) ? (
         <AppText
@@ -449,5 +490,10 @@ const styles = StyleSheet.create({
   footnote: {
     textAlign: 'center',
     marginTop: 12,
+  },
+  editAction: {
+    alignSelf: 'flex-start',
+    paddingVertical: 8,
+    marginTop: 4,
   },
 });
