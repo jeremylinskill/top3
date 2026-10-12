@@ -4,7 +4,7 @@ import TrailerPreviewSheet from '@/components/trailer-preview-sheet';
 import { AudioPreviewProvider } from '@/context/audio-preview-context';
 import { BlockProvider } from '@/context/block-context';
 import { BookPreviewProvider } from '@/context/book-preview-context';
-import { CollectionOptionsProvider } from '@/context/collection-options-context';
+import { CollectionOptionsProvider, useCollectionOptions } from '@/context/collection-options-context';
 import { CommentProvider } from '@/context/comment-context';
 import { FollowProvider } from '@/context/follow-context';
 import { LikeProvider } from '@/context/like-context';
@@ -12,9 +12,10 @@ import { NotificationProvider } from '@/context/notification-context';
 import { OnboardingCollectionProvider } from '@/context/onboarding-collection-context';
 import { ProfileProvider } from '@/context/profile-context';
 import { SavedItemsProvider } from '@/context/saved-items-context';
-import { Top3Provider } from '@/context/top3-context';
+import { Top3Provider, useTop3 } from '@/context/top3-context';
 import { TrailerPreviewProvider } from '@/context/trailer-preview-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useAuth } from '@/hooks/use-auth';
 import { initializeAnalytics } from '@/lib/analytics';
 import { AuthProvider } from '@/providers/auth-provider';
 import {
@@ -26,20 +27,36 @@ import * as Notifications from 'expo-notifications';
 import {
   router,
   Stack,
+  useRootNavigationState,
 } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import {
   useEffect,
   useRef,
+  useState,
 } from 'react';
+import { Alert } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import 'react-native-reanimated';
+
+// Display push notifications while Top 3 is open.
+// Device notification permissions still apply.
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 type NotificationRouteData = {
   type?: unknown;
   actorUserId?: unknown;
   collectionId?: unknown;
+  categoryId?: unknown;
+  themeSlug?: unknown;
 };
 
 function getStringValue(
@@ -62,6 +79,9 @@ function routeFromNotificationData(
 
   const actorUserId =
     getStringValue(data.actorUserId);
+
+
+
 
   if (
     type === 'like' &&
@@ -111,6 +131,23 @@ function routeFromNotificationData(
 function NotificationResponseController() {
   const handledResponseIdRef =
     useRef<string | null>(null);
+  const processingCampaignRef = useRef(false);
+  const [pendingCampaign, setPendingCampaign] = useState<{
+    responseId: string;
+    categoryId: string;
+    themeSlug: string;
+  } | null>(null);
+
+  const { isAuthenticated } = useAuth();
+  const navigationState = useRootNavigationState();
+  const { options } = useCollectionOptions();
+  const {
+    lists,
+    isCollectionsLoaded,
+    hasCollectionsLoadError,
+    createList,
+    selectList,
+  } = useTop3();
 
   useEffect(() => {
     function handleResponse(
@@ -130,10 +167,27 @@ function NotificationResponseController() {
       handledResponseIdRef.current =
         responseId;
 
-      routeFromNotificationData(
+      const data =
         response.notification.request.content
-          .data as NotificationRouteData
-      );
+          .data as NotificationRouteData;
+
+      if (getStringValue(data.type) === 'top3_campaign') {
+        const categoryId =
+          getStringValue(data.categoryId);
+        const themeSlug =
+          getStringValue(data.themeSlug);
+
+        if (categoryId && themeSlug) {
+          setPendingCampaign({
+            responseId,
+            categoryId,
+            themeSlug,
+          });
+        }
+        return;
+      }
+
+      routeFromNotificationData(data);
     }
 
     const subscription =
@@ -160,6 +214,128 @@ function NotificationResponseController() {
       subscription.remove();
     };
   }, []);
+
+  useEffect(() => {
+    if (
+      !pendingCampaign ||
+      processingCampaignRef.current ||
+      !navigationState?.key ||
+      !isAuthenticated
+    ) {
+      return;
+    }
+
+    if (hasCollectionsLoadError) {
+      Alert.alert(
+        'Unable to Open Top 3',
+        'Your collections could not be loaded. Please try again.'
+      );
+      setPendingCampaign(null);
+      return;
+    }
+
+    if (!isCollectionsLoaded) {
+      return;
+    }
+
+    const theme = options.find(
+      (option) =>
+        option.active &&
+        option.kind === 'theme' &&
+        option.categoryId === pendingCampaign.categoryId &&
+        (
+          option.slug === pendingCampaign.themeSlug ||
+          option.id === pendingCampaign.themeSlug
+        )
+    );
+
+    if (!theme) {
+      if (options.length > 0) {
+        Alert.alert(
+          'Theme Unavailable',
+          'This Top 3 theme is no longer available.'
+        );
+        setPendingCampaign(null);
+      }
+      return;
+    }
+
+    processingCampaignRef.current = true;
+
+    async function openCampaignCollection() {
+      try {
+        const existingCollection = lists.find(
+          (list) => {
+            if (list.category !== pendingCampaign!.categoryId) {
+              return false;
+            }
+
+            if (list.collectionOptionId) {
+              return list.collectionOptionId === theme!.id;
+            }
+
+            return (
+              (list.topic ?? '').trim().toLowerCase() ===
+              theme!.name.trim().toLowerCase()
+            );
+          }
+        );
+
+        let listId: string;
+
+        if (existingCollection) {
+          listId = existingCollection.id;
+          selectList(listId);
+        } else {
+          listId = await createList({
+            category: theme!.categoryId,
+            topic: theme!.name,
+            themeId: theme!.slug,
+            collectionOptionId: theme!.id,
+            title: `Top 3 ${theme!.name}`,
+          });
+        }
+
+        setPendingCampaign((current) =>
+          current?.responseId === pendingCampaign!.responseId
+            ? null
+            : current
+        );
+
+        router.push({
+          pathname: '/collection',
+          params: { listId },
+        });
+      } catch (error) {
+        if (__DEV__) {
+          console.log(
+            'Unable to open campaign collection:',
+            error
+          );
+        }
+
+        setPendingCampaign(null);
+        Alert.alert(
+          'Unable to Open Top 3',
+          'Please check your connection and try again.'
+        );
+      } finally {
+        processingCampaignRef.current = false;
+      }
+    }
+
+    void openCampaignCollection();
+  }, [
+    pendingCampaign,
+    navigationState?.key,
+    isAuthenticated,
+    isCollectionsLoaded,
+    hasCollectionsLoadError,
+    options,
+    lists,
+    createList,
+    selectList,
+  ]);
 
   return null;
 }

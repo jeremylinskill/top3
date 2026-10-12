@@ -192,6 +192,7 @@ export default function CreateTopicScreen() {
   const params = useLocalSearchParams<{
     categoryId?: string | string[];
     topicId?: string | string[];
+    themeSlug?: string | string[];
     mode?: string | string[];
   }>();
   const categoryId = Array.isArray(params.categoryId)
@@ -200,6 +201,9 @@ export default function CreateTopicScreen() {
   const requestedTopicId = Array.isArray(params.topicId)
     ? params.topicId[0]
     : params.topicId;
+  const requestedThemeSlug = Array.isArray(params.themeSlug)
+    ? params.themeSlug[0]
+    : params.themeSlug;
   const requestedMode = Array.isArray(params.mode)
     ? params.mode[0]
     : params.mode;
@@ -211,6 +215,7 @@ export default function CreateTopicScreen() {
   const { getOptionsForCategory } =
     useCollectionOptions();
   const hasHandledRequestedTopic = useRef(false);
+  const hasHandledRequestedTheme = useRef(false);
   const isCreatingRef = useRef(false);
   const [creatingCollectionKey, setCreatingCollectionKey] = useState<
     string | null
@@ -464,6 +469,34 @@ export default function CreateTopicScreen() {
     hasHandledRequestedTopic.current = true;
     chooseRequestedTopic();
   }, [requestedTopicId]);
+  useEffect(() => {
+    if (
+      !requestedThemeSlug ||
+      mode !== 'theme' ||
+      hasHandledRequestedTheme.current
+    ) {
+      return;
+    }
+
+    const requestedTheme = themes.find(
+      (theme) =>
+        theme.slug === requestedThemeSlug ||
+        theme.id === requestedThemeSlug
+    );
+
+    if (!requestedTheme) {
+      return;
+    }
+
+    hasHandledRequestedTheme.current = true;
+
+    void chooseCollection(
+      undefined,
+      `Top 3 ${requestedTheme.name}`,
+      requestedTheme
+    );
+  }, [requestedThemeSlug, mode, themes]);
+
   if (hasConfigurableOptions && !mode) {
     return (
       <SafeAreaView

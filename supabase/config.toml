@@ -449,3 +449,9 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/submit-musician-suggestion/deno.json"
 entrypoint = "./functions/submit-musician-suggestion/index.ts"
+
+[functions.send-campaign-notification]
+enabled = true
+verify_jwt = false
+import_map = "./functions/send-campaign-notification/deno.json"
+entrypoint = "./functions/send-campaign-notification/index.ts"

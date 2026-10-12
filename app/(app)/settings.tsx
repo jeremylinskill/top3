@@ -278,6 +278,10 @@ export default function SettingsScreen() {
     router.push('/moderation');
   }
 
+  function openNotificationComposer() {
+    router.push('/notification-composer');
+  }
+
   function confirmSignOut() {
     if (isSigningOut) {
       return;
@@ -907,6 +911,57 @@ export default function SettingsScreen() {
                   emphasis="regular"
                   style={styles.rowSubtitle}>
                   Review pending reports
+                </AppText>
+                  </View>
+
+                  <Ionicons
+                    name="chevron-forward"
+                    size={21}
+                    color={colors.tertiaryText}
+                  />
+                </Pressable>
+
+                <View
+                  style={[
+                    styles.divider,
+                    { backgroundColor: colors.border },
+                  ]}
+                />
+
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.row,
+                    pressed && styles.pressed,
+                  ]}
+                  onPress={openNotificationComposer}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open Send Notification">
+                  <View
+                  style={[
+                    styles.iconContainer,
+                    {
+                      backgroundColor:
+                        colors.background,
+                    },
+                  ]}>
+                    <Ionicons
+                      name="notifications-outline"
+                      size={23}
+                      color={colors.text}
+                    />
+                  </View>
+
+                  <View style={styles.rowDetails}>
+                    <AppText variant="headline">
+                  Send Notification
+                </AppText>
+
+                    <AppText
+                  variant="label"
+                  tone="tertiary"
+                  emphasis="regular"
+                  style={styles.rowSubtitle}>
+                  Create and send push notifications
                 </AppText>
                   </View>
 
