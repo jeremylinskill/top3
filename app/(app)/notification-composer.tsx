@@ -1,4 +1,5 @@
 import AppText from '@/components/app-text';
+import NotificationDestinationPicker from '@/components/notification-destination-picker';
 import AuthProviderButton from '@/components/auth-provider-button';
 import PageHeader from '@/components/page-header';
 import PrimaryButton from '@/components/primary-button';
@@ -11,9 +12,16 @@ import { useAppColors } from '@/hooks/use-app-colors';
 import { getExistingPushToken } from '@/lib/notifications';
 import { isPushTokenRegistered } from '@/lib/supabase/push-tokens';
 import { sendCampaignTestNotification } from '@/lib/supabase/campaign-notifications';
-import { useMemo, useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import {
+  NotificationDestination,
+  resolveDestinationOption,
+} from '@/types/notification-destination';
+import { useState } from 'react';
+import { buildNotificationCopy } from '@/utils/build-notification-copy';
 import {
   Alert,
+  Keyboard,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -25,6 +33,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 const MAX_TITLE_LENGTH = 100;
 const MAX_MESSAGE_LENGTH = 220;
 
+function getCategoryName(categoryId: string): string {
+  return (
+    TOP3_CATEGORIES.find(
+      (category) => category.id === categoryId
+    )?.name ?? categoryId
+  );
+}
+
 export default function NotificationComposerScreen() {
   const colors = useAppColors();
   const { profile } = useProfile();
@@ -32,50 +48,67 @@ export default function NotificationComposerScreen() {
 
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
-  const [themeQuery, setThemeQuery] = useState('');
-  const [selectedThemeId, setSelectedThemeId] =
-    useState<string | null>(null);
-  const [isChoosingTheme, setIsChoosingTheme] =
+  const [isTitleManuallyEdited, setIsTitleManuallyEdited] =
     useState(false);
-
+  const [isMessageManuallyEdited, setIsMessageManuallyEdited] =
+    useState(false);
+  const [selectedDestination, setSelectedDestination] =
+    useState<NotificationDestination | null>(null);
+  const [isPickingDestination, setIsPickingDestination] =
+    useState(false);
   const [isSendingTest, setIsSendingTest] = useState(false);
 
-  const themes = useMemo(
-    () =>
+  const selectedOption = selectedDestination
+    ? resolveDestinationOption(selectedDestination, options)
+    : null;
+
+  const destinationLabel = !selectedDestination
+    ? 'Choose a Top 3'
+    : selectedDestination.kind === 'overall'
+      ? `${getCategoryName(selectedDestination.categoryId)} · Overall`
+      : selectedOption
+        ? `${getCategoryName(selectedDestination.categoryId)} · ${
+            selectedDestination.kind === 'type'
+              ? 'Types'
+              : 'Themes'
+          } · ${selectedOption.name}`
+        : 'Destination unavailable';
+
+  const suggestedCopy = selectedDestination
+    ? buildNotificationCopy(selectedDestination, options)
+    : null;
+
+  function handleSelectDestination(
+    destination: NotificationDestination
+  ) {
+    const suggestion = buildNotificationCopy(
+      destination,
       options
-        .filter((option) =>
-          option.active && option.kind === 'theme'
-        )
-        .sort((a, b) => a.name.localeCompare(b.name)),
-    [options]
-  );
-
-  const selectedTheme = themes.find(
-    (theme) => theme.id === selectedThemeId
-  );
-
-  const matchingThemes = themes
-    .filter((theme) => {
-      const category = TOP3_CATEGORIES.find(
-        (item) => item.id === theme.categoryId
-      );
-
-      const query = themeQuery.trim().toLowerCase();
-
-      return (
-        !query ||
-        theme.name.toLowerCase().includes(query) ||
-        category?.name.toLowerCase().includes(query)
-      );
-    })
-    .slice(0, 25);
-
-  function getThemeLabel(categoryId: string, name: string) {
-    const category = TOP3_CATEGORIES.find(
-      (item) => item.id === categoryId
     );
 
-    return `${category?.name ?? categoryId} · ${name}`;
+    if (suggestion) {
+      if (!isTitleManuallyEdited) {
+        setTitle(suggestion.title);
+      }
+
+      if (!isMessageManuallyEdited) {
+        setMessage(suggestion.message);
+      }
+    }
+
+    setSelectedDestination(destination);
+    setIsPickingDestination(false);
+  }
+
+  function resetSuggestedCopy() {
+    if (!suggestedCopy) {
+      return;
+    }
+
+    setTitle(suggestedCopy.title);
+    setMessage(suggestedCopy.message);
+    setIsTitleManuallyEdited(false);
+    setIsMessageManuallyEdited(false);
   }
 
   async function handleSendTest() {
@@ -86,10 +119,21 @@ export default function NotificationComposerScreen() {
     const cleanTitle = title.trim();
     const cleanMessage = message.trim();
 
-    if (!cleanTitle || !cleanMessage || !selectedTheme) {
+    if (!cleanTitle || !cleanMessage || !selectedDestination) {
       Alert.alert(
         'Incomplete Notification',
         'Enter a title and message, then choose a destination Top 3.'
+      );
+      return;
+    }
+
+    if (
+      selectedDestination.kind !== 'overall' &&
+      !selectedOption
+    ) {
+      Alert.alert(
+        'Destination Unavailable',
+        'This destination is no longer available. Please choose another Top 3.'
       );
       return;
     }
@@ -121,8 +165,7 @@ export default function NotificationComposerScreen() {
       await sendCampaignTestNotification({
         title: cleanTitle,
         message: cleanMessage,
-        categoryId: selectedTheme.categoryId,
-        themeSlug: selectedTheme.slug,
+        destination: selectedDestination,
         expoPushToken,
       });
 
@@ -179,12 +222,49 @@ export default function NotificationComposerScreen() {
 
         <View style={styles.field}>
           <AppText variant="formLabel">
+            Destination Top 3
+          </AppText>
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Choose destination Top 3"
+            onPress={() => {
+              Keyboard.dismiss();
+              setIsPickingDestination(true);
+            }}
+            style={[
+              styles.destinationSelector,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}>
+            <AppText
+              variant="body"
+              style={styles.destinationSelectedText}>
+              {destinationLabel}
+            </AppText>
+
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={colors.secondaryText}
+            />
+          </Pressable>
+
+        </View>
+
+        <View style={styles.field}>
+          <AppText variant="formLabel">
             Notification title
           </AppText>
           <TextInput
             accessibilityLabel="Notification title"
             value={title}
-            onChangeText={setTitle}
+            onChangeText={(value) => {
+              setTitle(value);
+              setIsTitleManuallyEdited(true);
+            }}
             maxLength={MAX_TITLE_LENGTH}
             placeholder="What are your Top 3 Tom Cruise movies?"
             placeholderTextColor={colors.tertiaryText}
@@ -209,7 +289,10 @@ export default function NotificationComposerScreen() {
           <TextInput
             accessibilityLabel="Notification message"
             value={message}
-            onChangeText={setMessage}
+            onChangeText={(value) => {
+              setMessage(value);
+              setIsMessageManuallyEdited(true);
+            }}
             maxLength={MAX_MESSAGE_LENGTH}
             multiline
             textAlignVertical="top"
@@ -230,89 +313,24 @@ export default function NotificationComposerScreen() {
           </AppText>
         </View>
 
-        <View style={styles.field}>
-          <AppText variant="formLabel">
-            Destination Top 3
-          </AppText>
+        {suggestedCopy ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Choose destination Top 3"
-            onPress={() => setIsChoosingTheme(!isChoosingTheme)}
-            style={[
-              styles.input,
-              styles.themeSelector,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-              },
-            ]}>
-            <AppText variant="body">
-              {selectedTheme
-                ? getThemeLabel(
-                    selectedTheme.categoryId,
-                    selectedTheme.name
-                  )
-                : 'Choose a theme'}
+            accessibilityLabel="Reset to suggested notification copy"
+            onPress={resetSuggestedCopy}
+            style={styles.resetCopyButton}>
+            <Ionicons
+              name="refresh"
+              size={17}
+              color={colors.primary}
+            />
+            <AppText
+              variant="label"
+              style={{ color: colors.primary }}>
+              Reset to Suggested Copy
             </AppText>
           </Pressable>
-
-          {isChoosingTheme ? (
-            <View
-              style={[
-                styles.themeResults,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                },
-              ]}>
-              <TextInput
-                accessibilityLabel="Search Top 3 themes"
-                value={themeQuery}
-                onChangeText={setThemeQuery}
-                placeholder="Search themes"
-                placeholderTextColor={colors.tertiaryText}
-                style={[
-                  styles.input,
-                  {
-                    borderColor: colors.border,
-                    color: colors.text,
-                  },
-                ]}
-              />
-
-              {matchingThemes.map((theme) => (
-                <Pressable
-                  key={theme.id}
-                  accessibilityRole="button"
-                  onPress={() => {
-                    setSelectedThemeId(theme.id);
-                    setIsChoosingTheme(false);
-                    setThemeQuery('');
-                  }}
-                  style={[
-                    styles.themeRow,
-                    { borderBottomColor: colors.border },
-                  ]}>
-                  <AppText variant="body">
-                    {getThemeLabel(
-                      theme.categoryId,
-                      theme.name
-                    )}
-                  </AppText>
-                </Pressable>
-              ))}
-
-              {matchingThemes.length === 0 ? (
-                <AppText
-                  variant="body"
-                  tone="tertiary"
-                  style={styles.noThemes}>
-                  No matching themes.
-                </AppText>
-              ) : null}
-            </View>
-          ) : null}
-        </View>
+        ) : null}
 
         <View style={styles.field}>
           <AppText variant="sectionTitle">
@@ -358,6 +376,13 @@ export default function NotificationComposerScreen() {
           </AppText>
         </View>
       </ScrollView>
+
+      <NotificationDestinationPicker
+        visible={isPickingDestination}
+        selected={selectedDestination}
+        onSelect={handleSelectDestination}
+        onClose={() => setIsPickingDestination(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -377,6 +402,14 @@ const styles = StyleSheet.create({
     marginTop: 24,
     gap: 10,
   },
+  resetCopyButton: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 12,
+    paddingVertical: 8,
+  },
   input: {
     borderWidth: 1,
     borderRadius: RADIUS.lg,
@@ -388,21 +421,19 @@ const styles = StyleSheet.create({
   messageInput: {
     minHeight: 105,
   },
-  themeSelector: {
-    justifyContent: 'center',
-  },
-  themeResults: {
+  destinationSelector: {
+    minHeight: 52,
     borderWidth: 1,
     borderRadius: RADIUS.lg,
-    padding: 12,
-    gap: 4,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  themeRow: {
-    paddingVertical: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  noThemes: {
-    padding: 12,
+  destinationSelectedText: {
+    flex: 1,
+    marginRight: 12,
   },
   preview: {
     borderRadius: RADIUS.lg,

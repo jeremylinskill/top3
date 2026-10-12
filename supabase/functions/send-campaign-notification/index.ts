@@ -11,8 +11,7 @@ type CampaignRequest = {
   action?: unknown;
   title?: unknown;
   message?: unknown;
-  categoryId?: unknown;
-  themeSlug?: unknown;
+  destination?: unknown;
   expoPushToken?: unknown;
 };
 
@@ -103,17 +102,17 @@ export default {
       const {
         title,
         message,
-        categoryId,
-        themeSlug,
+        destination,
         expoPushToken,
       } = body;
 
       if (
         typeof title !== "string" ||
         typeof message !== "string" ||
-        typeof categoryId !== "string" ||
-        typeof themeSlug !== "string" ||
-        typeof expoPushToken !== "string"
+        typeof expoPushToken !== "string" ||
+        !destination ||
+        typeof destination !== "object" ||
+        Array.isArray(destination)
       ) {
         return Response.json(
           { error: "Invalid notification details." },
@@ -121,19 +120,46 @@ export default {
         );
       }
 
+      const details = destination as Record<string, unknown>;
+      const categoryId = details.categoryId;
+      const kind = details.kind;
+      const optionId = details.optionId;
+
       const cleanTitle = title.trim();
       const cleanMessage = message.trim();
-      const cleanCategoryId = categoryId.trim();
-      const cleanThemeSlug = themeSlug.trim();
       const cleanToken = expoPushToken.trim();
+
+      const supportedCategories = [
+        "albums",
+        "artists",
+        "books",
+        "games",
+        "movies",
+        "songs",
+        "tv",
+      ];
+
+      const validCategory =
+        typeof categoryId === "string" &&
+        supportedCategories.includes(categoryId);
+
+      const validOptionId =
+        typeof optionId === "string" &&
+        /^[a-zA-Z0-9_-]{1,128}$/.test(optionId);
+
+      const validDestination =
+        kind === "overall"
+          ? optionId === undefined
+          : (kind === "type" || kind === "theme") &&
+            validOptionId;
 
       if (
         !cleanTitle ||
         cleanTitle.length > MAX_TITLE_LENGTH ||
         !cleanMessage ||
         cleanMessage.length > MAX_MESSAGE_LENGTH ||
-        !/^[a-z][a-z0-9-]{0,39}$/.test(cleanCategoryId) ||
-        !/^[a-z0-9][a-z0-9-]{0,100}$/.test(cleanThemeSlug) ||
+        !validCategory ||
+        !validDestination ||
         cleanToken.length > 300 ||
         !/^(ExpoPushToken|ExponentPushToken)\[[^\]]+\]$/.test(
           cleanToken
@@ -143,6 +169,61 @@ export default {
           { error: "Invalid notification details." },
           { status: 400 }
         );
+      }
+
+      let cleanDestination:
+        | { categoryId: string; kind: "overall" }
+        | {
+            categoryId: string;
+            kind: "type" | "theme";
+            optionId: string;
+          };
+
+      if (kind === "overall") {
+        cleanDestination = {
+          categoryId: categoryId as string,
+          kind: "overall",
+        };
+      } else {
+        const cleanOptionId = optionId as string;
+        const cleanKind = kind as "type" | "theme";
+
+        const {
+          data: matchedOption,
+          error: optionError,
+        } = await ctx.supabaseAdmin
+          .from("collection_options")
+          .select("id")
+          .eq("id", cleanOptionId)
+          .eq("category_id", categoryId as string)
+          .eq("kind", cleanKind)
+          .eq("active", true)
+          .maybeSingle();
+
+        if (optionError) {
+          console.error(
+            "Campaign destination verification failed:",
+            optionError.message
+          );
+
+          return Response.json(
+            { error: "Unable to verify destination." },
+            { status: 500 }
+          );
+        }
+
+        if (!matchedOption) {
+          return Response.json(
+            { error: "Destination is not available." },
+            { status: 400 }
+          );
+        }
+
+        cleanDestination = {
+          categoryId: categoryId as string,
+          kind: cleanKind,
+          optionId: cleanOptionId,
+        };
       }
 
       // A test can only target a device registered
@@ -192,8 +273,7 @@ export default {
             body: cleanMessage,
             data: {
               type: "top3_campaign",
-              categoryId: cleanCategoryId,
-              themeSlug: cleanThemeSlug,
+              destination: cleanDestination,
             },
           }),
         });

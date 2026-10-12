@@ -1,11 +1,11 @@
 import { supabase } from '@/lib/supabase';
+import type { NotificationDestination } from '@/types/notification-destination';
 import { FunctionsHttpError } from '@supabase/supabase-js';
 
 type CampaignTestInput = {
   title: string;
   message: string;
-  categoryId: string;
-  themeSlug: string;
+  destination: NotificationDestination;
   expoPushToken: string;
 };
 
@@ -19,8 +19,7 @@ type CampaignTestResponse = {
 export async function sendCampaignTestNotification({
   title,
   message,
-  categoryId,
-  themeSlug,
+  destination,
   expoPushToken,
 }: CampaignTestInput): Promise<void> {
   const { data, error } =
@@ -31,8 +30,7 @@ export async function sendCampaignTestNotification({
           action: 'test',
           title,
           message,
-          categoryId,
-          themeSlug,
+          destination,
           expoPushToken,
         },
       }

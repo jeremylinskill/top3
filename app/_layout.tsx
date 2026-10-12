@@ -17,6 +17,12 @@ import { TrailerPreviewProvider } from '@/context/trailer-preview-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAuth } from '@/hooks/use-auth';
 import { initializeAnalytics } from '@/lib/analytics';
+import {
+  TOP3_CATEGORIES,
+  type CategoryId,
+} from '@/constants/top3-categories';
+import type { NotificationDestination } from '@/types/notification-destination';
+import { resolveNotificationCollection } from '@/utils/resolve-notification-collection';
 import { AuthProvider } from '@/providers/auth-provider';
 import {
   DarkTheme,
@@ -56,8 +62,7 @@ type NotificationRouteData = {
   type?: unknown;
   actorUserId?: unknown;
   collectionId?: unknown;
-  categoryId?: unknown;
-  themeSlug?: unknown;
+  destination?: unknown;
 };
 
 function getStringValue(
@@ -67,6 +72,53 @@ function getStringValue(
     value.trim()
     ? value.trim()
     : null;
+}
+
+function parseCampaignDestination(
+  value: unknown
+): NotificationDestination | null {
+  if (
+    !value ||
+    typeof value !== 'object' ||
+    Array.isArray(value)
+  ) {
+    return null;
+  }
+
+  const data = value as Record<string, unknown>;
+  const { categoryId, kind, optionId } = data;
+
+  if (
+    typeof categoryId !== 'string' ||
+    !TOP3_CATEGORIES.some(
+      (category) =>
+        category.id === categoryId &&
+        category.id !== 'podcasts'
+    )
+  ) {
+    return null;
+  }
+
+  if (kind === 'overall' && optionId === undefined) {
+    return {
+      categoryId: categoryId as CategoryId,
+      kind: 'overall',
+    };
+  }
+
+  if (
+    (kind === 'type' || kind === 'theme') &&
+    typeof optionId === 'string' &&
+    optionId.trim().length > 0
+  ) {
+    return {
+      categoryId: categoryId as CategoryId,
+      kind,
+      optionId,
+    };
+  }
+
+  return null;
 }
 
 function routeFromNotificationData(
@@ -135,8 +187,7 @@ function NotificationResponseController() {
   const processingCampaignRef = useRef(false);
   const [pendingCampaign, setPendingCampaign] = useState<{
     responseId: string;
-    categoryId: string;
-    themeSlug: string;
+    destination: NotificationDestination;
   } | null>(null);
 
   const { isAuthenticated } = useAuth();
@@ -174,16 +225,13 @@ function NotificationResponseController() {
           .data as NotificationRouteData;
 
       if (getStringValue(data.type) === 'top3_campaign') {
-        const categoryId =
-          getStringValue(data.categoryId);
-        const themeSlug =
-          getStringValue(data.themeSlug);
+        const destination =
+          parseCampaignDestination(data.destination);
 
-        if (categoryId && themeSlug) {
+        if (destination) {
           setPendingCampaign({
             responseId,
-            categoryId,
-            themeSlug,
+            destination,
           });
         }
         return;
@@ -241,25 +289,24 @@ function NotificationResponseController() {
       return;
     }
 
-    const theme = options.find(
-      (option) =>
-        option.active &&
-        option.kind === 'theme' &&
-        option.categoryId === pendingCampaign.categoryId &&
-        (
-          option.slug === pendingCampaign.themeSlug ||
-          option.id === pendingCampaign.themeSlug
-        )
+    const destinationInput = resolveNotificationCollection(
+      pendingCampaign.destination,
+      options
     );
 
-    if (!theme) {
-      if (options.length > 0) {
-        Alert.alert(
-          'Theme Unavailable',
-          'This Top 3 theme is no longer available.'
-        );
-        setPendingCampaign(null);
+    if (!destinationInput) {
+      if (
+        pendingCampaign.destination.kind !== 'overall' &&
+        options.length === 0
+      ) {
+        return;
       }
+
+      Alert.alert(
+        'Destination Unavailable',
+        'This Top 3 destination is no longer available.'
+      );
+      setPendingCampaign(null);
       return;
     }
 
@@ -267,22 +314,52 @@ function NotificationResponseController() {
 
     async function openCampaignCollection() {
       try {
-        const existingCollection = lists.find(
-          (list) => {
-            if (list.category !== pendingCampaign!.categoryId) {
-              return false;
-            }
+        const resolvedDestinationInput = destinationInput;
 
-            if (list.collectionOptionId) {
-              return list.collectionOptionId === theme!.id;
-            }
+        if (!resolvedDestinationInput) {
+          throw new Error('Campaign destination is unavailable.');
+        }
 
+        function normalize(value?: string): string {
+          const normalized = value?.trim().toLowerCase() ?? '';
+          return normalized === 'general' ? '' : normalized;
+        }
+
+        const matchingCollections = lists.filter((list) => {
+          if (
+            normalize(list.category) !==
+            normalize(resolvedDestinationInput.category)
+          ) {
+            return false;
+          }
+
+          if (
+            resolvedDestinationInput.collectionOptionId &&
+            list.collectionOptionId
+          ) {
             return (
-              (list.topic ?? '').trim().toLowerCase() ===
-              theme!.name.trim().toLowerCase()
+              normalize(list.collectionOptionId) ===
+              normalize(resolvedDestinationInput.collectionOptionId)
             );
           }
-        );
+
+          return (
+            normalize(list.type) ===
+              normalize(resolvedDestinationInput.type) &&
+            normalize(list.topic) ===
+              normalize(resolvedDestinationInput.topic)
+          );
+        });
+
+        // Prefer an existing published or populated list.
+        const existingCollection =
+          matchingCollections.find(
+            (list) => Boolean(list.publishedAt)
+          ) ??
+          matchingCollections.find(
+            (list) => list.items.some((item) => item !== null)
+          ) ??
+          matchingCollections[0];
 
         let listId: string;
 
@@ -290,13 +367,7 @@ function NotificationResponseController() {
           listId = existingCollection.id;
           selectList(listId);
         } else {
-          listId = await createList({
-            category: theme!.categoryId,
-            topic: theme!.name,
-            themeId: theme!.slug,
-            collectionOptionId: theme!.id,
-            title: `Top 3 ${theme!.name}`,
-          });
+          listId = await createList(resolvedDestinationInput);
         }
 
         setPendingCampaign((current) =>
