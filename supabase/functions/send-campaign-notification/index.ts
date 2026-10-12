@@ -1,5 +1,6 @@
 import "@supabase/functions-js/edge-runtime.d.ts";
 import { withSupabase } from "@supabase/server";
+import type { SupabaseClient } from "npm:@supabase/supabase-js@^2";
 
 const EXPO_PUSH_URL =
   "https://exp.host/--/api/v2/push/send";
@@ -13,6 +14,45 @@ type CampaignRequest = {
   message?: unknown;
   destination?: unknown;
   expoPushToken?: unknown;
+};
+
+// Narrow database typing for campaign history operations.
+// Runtime access still uses the existing privileged client.
+type CampaignHistoryDatabase = {
+  public: {
+    Tables: {
+      notification_campaigns: {
+        Row: {
+          id: string;
+        };
+        Insert: {
+          created_by: string;
+          title: string;
+          message: string;
+          category_id: string;
+          destination_kind: "overall" | "type" | "theme";
+          option_id?: string | null;
+          audience: "test";
+          status: "sending";
+          started_at: string;
+          target_count: number;
+        };
+        Update: {
+          status?: "sent" | "failed";
+          accepted_count?: number;
+          failed_count?: number;
+          last_error?: string;
+          sent_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+    };
+    Views: {};
+    Functions: {};
+    Enums: {};
+    CompositeTypes: {};
+  };
 };
 
 type ExpoPushTicket = {
@@ -258,6 +298,48 @@ export default {
         );
       }
 
+      const campaignAdmin =
+        ctx.supabaseAdmin as unknown as
+          SupabaseClient<CampaignHistoryDatabase>;
+
+      // Record the test before contacting Expo. If history
+      // cannot be created, do not send an untracked push.
+      const { data: campaign, error: campaignError } =
+        await campaignAdmin
+          .from("notification_campaigns")
+          .insert({
+            created_by: userId,
+            title: cleanTitle,
+            message: cleanMessage,
+            category_id: cleanDestination.categoryId,
+            destination_kind: cleanDestination.kind,
+            option_id:
+              cleanDestination.kind === "overall"
+                ? null
+                : cleanDestination.optionId,
+            audience: "test",
+            status: "sending",
+            started_at: new Date().toISOString(),
+            target_count: 1,
+          })
+          .select("id")
+          .single();
+
+      if (campaignError || !campaign) {
+        console.error(
+          "Unable to record campaign test:",
+          campaignError?.message ?? "No campaign returned"
+        );
+
+        return Response.json(
+          {
+            error:
+              "Unable to save notification history. Test was not sent.",
+          },
+          { status: 500 }
+        );
+      }
+
       let ticket: ExpoPushTicket;
 
       try {
@@ -294,16 +376,61 @@ export default {
           );
         }
       } catch (error) {
-        console.error(
-          "Campaign test push failed:",
+        const failureReason =
           error instanceof Error
             ? error.message
-            : "Unknown error"
+            : "Unknown Expo error";
+
+        console.error(
+          "Campaign test push failed:",
+          failureReason
         );
+
+        const failedAt = new Date().toISOString();
+
+        const { error: historyError } =
+          await campaignAdmin
+            .from("notification_campaigns")
+            .update({
+              status: "failed",
+              failed_count: 1,
+              last_error: failureReason.slice(0, 1000),
+              updated_at: failedAt,
+            })
+            .eq("id", campaign.id);
+
+        if (historyError) {
+          console.error(
+            "Unable to record campaign failure:",
+            historyError.message
+          );
+        }
 
         return Response.json(
           { error: "Unable to send test notification." },
           { status: 502 }
+        );
+      }
+
+      // Expo accepted the push request. This is not proof
+      // that the notification reached the device.
+      const sentAt = new Date().toISOString();
+
+      const { error: historyError } =
+        await campaignAdmin
+          .from("notification_campaigns")
+          .update({
+            status: "sent",
+            accepted_count: 1,
+            sent_at: sentAt,
+            updated_at: sentAt,
+          })
+          .eq("id", campaign.id);
+
+      if (historyError) {
+        console.error(
+          "Expo accepted the push, but history update failed:",
+          historyError.message
         );
       }
 
@@ -312,6 +439,7 @@ export default {
         action: "test",
         accepted: 1,
         ticketId: ticket.id ?? null,
+        historyRecorded: !historyError,
       });
     }
   ),

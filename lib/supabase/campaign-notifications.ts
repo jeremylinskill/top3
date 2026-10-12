@@ -13,6 +13,7 @@ type CampaignTestResponse = {
   success?: boolean;
   action?: string;
   accepted?: number;
+  historyRecorded?: boolean;
   error?: string;
 };
 
@@ -21,7 +22,7 @@ export async function sendCampaignTestNotification({
   message,
   destination,
   expoPushToken,
-}: CampaignTestInput): Promise<void> {
+}: CampaignTestInput): Promise<{ historyRecorded: boolean }> {
   const { data, error } =
     await supabase.functions.invoke<CampaignTestResponse>(
       'send-campaign-notification',
@@ -72,4 +73,8 @@ export async function sendCampaignTestNotification({
         'Expo did not accept the test notification.'
     );
   }
+
+  return {
+    historyRecorded: data.historyRecorded === true,
+  };
 }

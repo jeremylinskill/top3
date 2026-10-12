@@ -455,3 +455,9 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/send-campaign-notification/deno.json"
 entrypoint = "./functions/send-campaign-notification/index.ts"
+
+[functions.manage-notification-campaigns]
+enabled = true
+verify_jwt = false
+import_map = "./functions/manage-notification-campaigns/deno.json"
+entrypoint = "./functions/manage-notification-campaigns/index.ts"

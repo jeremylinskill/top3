@@ -1,9 +1,11 @@
 import AppText from '@/components/app-text';
 import NotificationDestinationPicker from '@/components/notification-destination-picker';
+import NotificationHistory from '@/components/notification-history';
 import AuthProviderButton from '@/components/auth-provider-button';
 import PageHeader from '@/components/page-header';
 import PrimaryButton from '@/components/primary-button';
 import ScreenHeader from '@/components/screen-header';
+import SegmentedControl from '@/components/segmented-control';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { RADIUS } from '@/constants/radius';
 import { useCollectionOptions } from '@/context/collection-options-context';
@@ -57,6 +59,9 @@ export default function NotificationComposerScreen() {
   const [isPickingDestination, setIsPickingDestination] =
     useState(false);
   const [isSendingTest, setIsSendingTest] = useState(false);
+  const [activeView, setActiveView] = useState<
+    'compose' | 'history'
+  >('compose');
 
   const selectedOption = selectedDestination
     ? resolveDestinationOption(selectedDestination, options)
@@ -162,17 +167,24 @@ export default function NotificationComposerScreen() {
         return;
       }
 
-      await sendCampaignTestNotification({
+      const result = await sendCampaignTestNotification({
         title: cleanTitle,
         message: cleanMessage,
         destination: selectedDestination,
         expoPushToken,
       });
 
-      Alert.alert(
-        'Test Accepted',
-        'Expo accepted the test notification. Check your iPhone to confirm delivery.'
-      );
+      if (!result.historyRecorded) {
+        Alert.alert(
+          'Test Accepted — History Not Confirmed',
+          'Expo accepted the notification, but its history could not be confirmed. Check your iPhone before considering another send.'
+        );
+      } else {
+        Alert.alert(
+          'Test Accepted',
+          'Expo accepted the test notification and its history was saved. Check your iPhone to confirm delivery.'
+        );
+      }
     } catch (error) {
       Alert.alert(
         'Unable to Send Test',
@@ -209,17 +221,35 @@ export default function NotificationComposerScreen() {
       ]}>
       <ScreenHeader showBackButton />
 
+      <View style={styles.viewSwitcher}>
+        <SegmentedControl<'compose' | 'history'>
+          value={activeView}
+          options={[
+            {
+              value: 'compose',
+              label: 'Compose',
+              accessibilityLabel: 'Compose notification',
+            },
+            {
+              value: 'history',
+              label: 'History',
+              accessibilityLabel: 'View notification history',
+            },
+          ]}
+          onChange={(view) => {
+            Keyboard.dismiss();
+            setActiveView(view);
+          }}
+        />
+      </View>
+
+      {activeView === 'history' ? (
+        <NotificationHistory />
+      ) : (
       <ScrollView
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}>
-        <View style={styles.composerHeader}>
-          <PageHeader
-            title="Send Notification"
-            subtitle="Invite users to share their Top 3."
-          />
-        </View>
-
         <View style={styles.field}>
           <AppText variant="formLabel">
             Destination Top 3
@@ -266,7 +296,7 @@ export default function NotificationComposerScreen() {
               setIsTitleManuallyEdited(true);
             }}
             maxLength={MAX_TITLE_LENGTH}
-            placeholder="What are your Top 3 Tom Cruise movies?"
+            placeholder="Enter notification title"
             placeholderTextColor={colors.tertiaryText}
             style={[
               styles.input,
@@ -296,7 +326,7 @@ export default function NotificationComposerScreen() {
             maxLength={MAX_MESSAGE_LENGTH}
             multiline
             textAlignVertical="top"
-            placeholder="With Digger hitting theatres, rank your three favourites!"
+            placeholder="Write a short message…"
             placeholderTextColor={colors.tertiaryText}
             style={[
               styles.input,
@@ -376,6 +406,7 @@ export default function NotificationComposerScreen() {
           </AppText>
         </View>
       </ScrollView>
+      )}
 
       <NotificationDestinationPicker
         visible={isPickingDestination}
@@ -391,12 +422,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  viewSwitcher: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+  },
   content: {
     paddingHorizontal: 20,
     paddingBottom: 48,
-  },
-  composerHeader: {
-    marginHorizontal: -20,
   },
   field: {
     marginTop: 24,
