@@ -21,6 +21,7 @@ import { useAppColors } from '@/hooks/use-app-colors';
 import { trackAnalyticsEvent } from '@/lib/analytics';
 import { stopAllMediaPreviewsFromCoordinator } from '@/lib/media-preview-coordinator';
 import { submitMusicianSuggestion } from '@/lib/supabase/musician-suggestions';
+import { getApprovedMusicianIdsForRole } from '@/lib/supabase/musicians';
 import {
   getPopularMoviePeople,
   searchMoviePeople,
@@ -252,7 +253,7 @@ export default function SearchScreen() {
   const selectedCategory = TOP3_CATEGORIES.find(
     (category) => category.id === activeCollection?.category
   );
-  const savedCategoryItems = useMemo(() => {
+  const savedCategoryCandidates = useMemo(() => {
     if (!selectedCategory) {
       return [];
     }
@@ -291,6 +292,117 @@ export default function SearchScreen() {
     savedItems,
     selectedCategory,
   ]);
+  const savedMusicianIds = useMemo(
+    () =>
+      [
+        ...new Set(
+          savedCategoryCandidates
+            .map((savedItem) => savedItem.item.id)
+            .filter((id) => id.startsWith('musician-'))
+        ),
+      ].sort(),
+    [savedCategoryCandidates]
+  );
+
+  const [savedRoleRetry, setSavedRoleRetry] = useState(0);
+  const savedRoleLookupKey =
+    musicianRole && savedMusicianIds.length > 0
+      ? JSON.stringify([
+          musicianRole,
+          savedMusicianIds,
+          savedRoleRetry,
+        ])
+      : null;
+
+  const [savedRoleLookup, setSavedRoleLookup] = useState<{
+    key: string;
+    ids: Set<string>;
+    hasError: boolean;
+  } | null>(null);
+
+  useEffect(() => {
+    if (
+      !musicianRole ||
+      !savedRoleLookupKey ||
+      isLoadingSavedItems
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void getApprovedMusicianIdsForRole(
+      musicianRole,
+      savedMusicianIds
+    )
+      .then((ids) => {
+        if (!cancelled) {
+          setSavedRoleLookup({
+            key: savedRoleLookupKey,
+            ids,
+            hasError: false,
+          });
+        }
+      })
+      .catch((error) => {
+        console.error(
+          'Failed to load saved musician roles:',
+          error
+        );
+
+        if (!cancelled) {
+          setSavedRoleLookup({
+            key: savedRoleLookupKey,
+            ids: new Set(),
+            hasError: true,
+          });
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    musicianRole,
+    savedMusicianIds,
+    savedRoleLookupKey,
+    isLoadingSavedItems,
+  ]);
+
+  const isSavedRoleLoading = Boolean(
+    savedRoleLookupKey &&
+      savedRoleLookup?.key !== savedRoleLookupKey
+  );
+
+  const hasSavedRoleError = Boolean(
+    savedRoleLookupKey &&
+      savedRoleLookup?.key === savedRoleLookupKey &&
+      savedRoleLookup.hasError
+  );
+
+  const savedCategoryItems = useMemo(() => {
+    if (!musicianRole) {
+      return savedCategoryCandidates;
+    }
+
+    if (
+      !savedRoleLookupKey ||
+      savedRoleLookup?.key !== savedRoleLookupKey ||
+      savedRoleLookup.hasError
+    ) {
+      return [];
+    }
+
+    return savedCategoryCandidates.filter((savedItem) =>
+      savedRoleLookup.ids.has(savedItem.item.id)
+    );
+  }, [
+    musicianRole,
+    savedCategoryCandidates,
+    savedRoleLookupKey,
+    savedRoleLookup,
+  ]);
+
   const configuredType =
     selectedCategory?.types?.find(
       (type) =>
@@ -1251,7 +1363,10 @@ const normalizedRank = Array.isArray(rank)
             {
               value: 'saved',
               label: 'Saved',
-              count: savedCategoryItems.length,
+              count:
+                isSavedRoleLoading || hasSavedRoleError
+                  ? undefined
+                  : savedCategoryItems.length,
               accessibilityLabel:
                 `Choose from saved ${savedSelectionName}`,
             },
@@ -1512,7 +1627,7 @@ const normalizedRank = Array.isArray(rank)
               </>
             )}
           </>
-        ) : isLoadingSavedItems ? (
+        ) : isLoadingSavedItems || isSavedRoleLoading ? (
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.resultsContent}>
@@ -1551,6 +1666,32 @@ const normalizedRank = Array.isArray(rank)
             <PrimaryButton
               title="Try Again"
               onPress={retrySavedItemsLoad}
+              style={styles.retryButton}
+            />
+          </View>
+        ) : hasSavedRoleError ? (
+          <View style={styles.messageContainer}>
+            <Ionicons
+              name="cloud-offline-outline"
+              size={42}
+              color={colors.tertiaryText}
+              style={styles.messageErrorIcon}
+            />
+            <AppText
+              variant="sectionTitle"
+              emphasis="semibold"
+              style={styles.messageTitle}>
+              Couldn’t load saved musicians
+            </AppText>
+            <AppText
+              variant="bodyLarge"
+              tone="tertiary"
+              style={styles.messageText}>
+              Check your connection and try again.
+            </AppText>
+            <PrimaryButton
+              title="Try Again"
+              onPress={() => setSavedRoleRetry((value) => value + 1)}
               style={styles.retryButton}
             />
           </View>

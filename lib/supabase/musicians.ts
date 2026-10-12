@@ -152,3 +152,47 @@ export async function getPopularMusiciansByRole(
     limit
   );
 }
+
+
+/**
+ * Returns saved catalogue musician IDs that are approved
+ * for the requested role. Database RLS also requires the
+ * musician to be active.
+ */
+export async function getApprovedMusicianIdsForRole(
+  role: MusicianRole,
+  musicianIds: string[]
+): Promise<Set<string>> {
+  const uniqueIds = [...new Set(musicianIds)];
+
+  if (uniqueIds.length === 0) {
+    return new Set();
+  }
+
+  const matchingIds = new Set<string>();
+  const batchSize = 50;
+
+  for (let index = 0; index < uniqueIds.length; index += batchSize) {
+    const batch = uniqueIds.slice(index, index + batchSize);
+
+    const { data, error } = await supabase
+      .from('musician_roles')
+      .select('musician_id')
+      .eq('role', role)
+      .eq('approved', true)
+      .in('musician_id', batch)
+      .returns<{ musician_id: string }[]>();
+
+    if (error) {
+      throw new Error(
+        `Failed to load saved musician roles: ${error.message}`
+      );
+    }
+
+    for (const row of data ?? []) {
+      matchingIds.add(row.musician_id);
+    }
+  }
+
+  return matchingIds;
+}
