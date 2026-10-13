@@ -2,6 +2,8 @@ import AppText from '@/components/app-text';
 import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePreviewSheetColors } from '@/hooks/use-preview-sheet-colors';
 import {
   Modal,
   Pressable,
@@ -37,6 +39,11 @@ export default function ActionSheet({
   onClose,
 }: ActionSheetProps) {
   const colors = useAppColors();
+  const previewColors = usePreviewSheetColors();
+  const invertedTextTone =
+    useColorScheme() === 'dark'
+      ? 'onHighlight'
+      : 'onDark';
 
   const showHeader =
     Boolean(title) || Boolean(message);
@@ -48,7 +55,11 @@ export default function ActionSheet({
       animationType="fade"
       presentationStyle="overFullScreen"
       onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      <View
+        style={[
+          styles.overlay,
+          { backgroundColor: previewColors.backdrop },
+        ]}>
         <Pressable
           style={StyleSheet.absoluteFill}
           onPress={onClose}
@@ -60,7 +71,7 @@ export default function ActionSheet({
           style={[
             styles.sheet,
             {
-              backgroundColor: colors.surface,
+              backgroundColor: previewColors.surface,
             },
           ]}>
           {showHeader ? (
@@ -68,6 +79,7 @@ export default function ActionSheet({
               {title ? (
                 <AppText
                   variant="pageTitle"
+                  tone={invertedTextTone}
                   style={styles.title}>
                   {title}
                 </AppText>
@@ -76,6 +88,7 @@ export default function ActionSheet({
               {message ? (
                 <AppText
                   variant="body"
+                  tone={invertedTextTone}
                   style={[
                     styles.message,
                     !title &&
@@ -109,22 +122,20 @@ export default function ActionSheet({
 
                 const actionBackgroundColor =
                   isDestructive || isCancel
-                    ? colors.surface
-                    : colors.background;
+                    ? previewColors.surface
+                    : previewColors.control;
 
                 const actionBorderColor =
                   isDestructive
                     ? colors.destructive
                     : isCancel
-                      ? colors.border
+                      ? previewColors.border
                       : 'transparent';
 
                 const actionTextTone =
-                  action.disabled
-                    ? 'disabled'
-                    : isDestructive
-                      ? 'destructive'
-                      : 'primary';
+                  isDestructive
+                    ? 'destructive'
+                    : invertedTextTone;
 
                 return (
                   <Pressable
@@ -180,7 +191,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     paddingHorizontal: SPACING.xl,
     paddingBottom: SPACING.xxl,
-    backgroundColor: 'rgba(0, 0, 0, 0.35)',
   },
 
   sheet: {

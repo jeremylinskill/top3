@@ -18,6 +18,7 @@ export type AppTextTone =
   | 'tasteMatch'
   | 'onPrimary'
   | 'onHighlight'
+  | 'onDark'
   | 'disabled';
 
 export type AppTextEmphasis =
@@ -132,7 +133,9 @@ export default function AppText({
                   ? colors.onPrimary
                   : resolvedTone === 'onHighlight'
                     ? colors.onHighlight
-                    : colors.disabledText;
+                    : resolvedTone === 'onDark'
+                      ? colors.white
+                      : colors.disabledText;
 
   return (
     <Text

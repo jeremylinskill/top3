@@ -19,7 +19,7 @@ interface AuthProviderButtonProps {
   title: string;
   icon?: IoniconName;
   onPress: () => void;
-  variant?: 'primary' | 'secondary';
+  variant?: 'primary' | 'secondary' | 'destructive';
   disabled?: boolean;
   loading?: boolean;
   style?: StyleProp<ViewStyle>;
@@ -40,18 +40,23 @@ export default function AuthProviderButton({
 
   const isDisabled = disabled || loading;
   const isPrimary = variant === 'primary';
+  const isDestructive = variant === 'destructive';
 
   const foregroundColor = isPrimary
     ? isDisabled
       ? colors.disabledText
       : colors.onPrimary
-    : colors.text;
+    : isDestructive
+      ? colors.destructive
+      : colors.text;
 
   const titleTone = isPrimary
     ? isDisabled
       ? 'disabled'
       : 'onPrimary'
-    : 'primary';
+    : isDestructive
+      ? 'destructive'
+      : 'primary';
 
   return (
     <Pressable

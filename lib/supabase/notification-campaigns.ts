@@ -197,3 +197,134 @@ export async function saveNotificationCampaignDraft(
 
   return data.campaignId;
 }
+
+export type ScheduleNotificationCampaignInput = {
+  id: string;
+  title: string;
+  message: string;
+  destination: NotificationDestination;
+  scheduledAt: string;
+  expoPushToken: string;
+};
+
+export type EditScheduledNotificationCampaignInput = {
+  id: string;
+  title: string;
+  message: string;
+  destination: NotificationDestination;
+  scheduledAt?: string;
+};
+
+export type RescheduleNotificationCampaignInput = {
+  id: string;
+  scheduledAt: string;
+};
+
+type CampaignMutationResponse = {
+  success?: boolean;
+  campaignId?: string;
+  scheduledAt?: string;
+  error?: string;
+};
+
+async function invokeCampaignMutation(
+  body: Record<string, unknown>,
+  fallbackMessage: string
+): Promise<string> {
+  const { data, error } =
+    await supabase.functions.invoke<CampaignMutationResponse>(
+      'manage-notification-campaigns',
+      { body }
+    );
+
+  if (error) {
+    let reason: string | null = null;
+
+    if (error instanceof FunctionsHttpError) {
+      try {
+        const response: unknown =
+          await error.context.clone().json();
+
+        if (
+          response !== null &&
+          typeof response === 'object' &&
+          'error' in response &&
+          typeof response.error === 'string'
+        ) {
+          reason = response.error;
+        }
+      } catch {
+        // Fall back to the general error message.
+      }
+    }
+
+    throw new Error(reason ?? fallbackMessage);
+  }
+
+  if (
+    data?.success !== true ||
+    typeof data.campaignId !== 'string'
+  ) {
+    throw new Error(data?.error ?? fallbackMessage);
+  }
+
+  return data.campaignId;
+}
+
+export async function scheduleNotificationCampaign(
+  input: ScheduleNotificationCampaignInput
+): Promise<string> {
+  return invokeCampaignMutation(
+    {
+      action: 'schedule',
+      id: input.id,
+      title: input.title,
+      message: input.message,
+      destination: input.destination,
+      scheduledAt: input.scheduledAt,
+      expoPushToken: input.expoPushToken,
+    },
+    'Unable to schedule notification.'
+  );
+}
+
+export async function editScheduledNotificationCampaign(
+  input: EditScheduledNotificationCampaignInput
+): Promise<string> {
+  return invokeCampaignMutation(
+    {
+      action: 'edit-scheduled',
+      id: input.id,
+      title: input.title,
+      message: input.message,
+      destination: input.destination,
+      scheduledAt: input.scheduledAt,
+    },
+    'Unable to save scheduled notification changes.'
+  );
+}
+
+export async function rescheduleNotificationCampaign(
+  input: RescheduleNotificationCampaignInput
+): Promise<string> {
+  return invokeCampaignMutation(
+    {
+      action: 'reschedule',
+      id: input.id,
+      scheduledAt: input.scheduledAt,
+    },
+    'Unable to reschedule notification.'
+  );
+}
+
+export async function cancelNotificationCampaign(
+  campaignId: string
+): Promise<string> {
+  return invokeCampaignMutation(
+    {
+      action: 'cancel',
+      id: campaignId,
+    },
+    'Unable to cancel notification.'
+  );
+}

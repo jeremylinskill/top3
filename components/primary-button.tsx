@@ -11,6 +11,7 @@ type PrimaryButtonProps = {
   title: string;
   onPress: () => void;
   disabled?: boolean;
+  keepAppearanceWhenDisabled?: boolean;
   style?: ViewStyle;
 };
 
@@ -18,16 +19,19 @@ export default function PrimaryButton({
   title,
   onPress,
   disabled = false,
+  keepAppearanceWhenDisabled = false,
   style,
 }: PrimaryButtonProps) {
   const colors = useAppColors();
+  const showDisabledAppearance =
+    disabled && !keepAppearanceWhenDisabled;
 
   return (
     <Pressable
       style={[
         styles.button,
         {
-          backgroundColor: disabled
+          backgroundColor: showDisabledAppearance
             ? colors.disabledBackground
             : colors.primary,
         },
@@ -38,7 +42,7 @@ export default function PrimaryButton({
       <AppText
         variant="headline"
         tone={
-          disabled
+          showDisabledAppearance
             ? 'disabled'
             : 'onPrimary'
         }

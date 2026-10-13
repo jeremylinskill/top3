@@ -6,6 +6,7 @@ import { BlockProvider } from '@/context/block-context';
 import { BookPreviewProvider } from '@/context/book-preview-context';
 import { CollectionOptionsProvider, useCollectionOptions } from '@/context/collection-options-context';
 import { CommentProvider } from '@/context/comment-context';
+import { FeedbackProvider } from '@/context/feedback-context';
 import { FollowProvider } from '@/context/follow-context';
 import { LikeProvider } from '@/context/like-context';
 import { NotificationProvider } from '@/context/notification-context';
@@ -445,32 +446,34 @@ export default function RootLayout() {
                                         ? DarkTheme
                                         : DefaultTheme
                                     }>
-                                    <NotificationResponseController />
+                                    <FeedbackProvider>
+                                      <NotificationResponseController />
 
-                                    <Stack
-                                      screenOptions={{
-                                        headerShown: false,
-                                      }}>
-                                      <Stack.Screen name="index" />
-                                      <Stack.Screen
-                                        name="onboarding"
-                                        options={{
-                                          animation: 'none',
-                                        }}
-                                      />
-                                      <Stack.Screen name="onboarding-collection" />
-                                      <Stack.Screen name="onboarding-search" />
-                                      <Stack.Screen name="onboarding-published" />
-                                      <Stack.Screen name="onboarding-overall-top3" />
-                                      <Stack.Screen name="onboarding-taste-match" />
-                                      <Stack.Screen name="onboarding-notifications" />
-                                      <Stack.Screen name="(app)" />
-                                    </Stack>
+                                      <Stack
+                                        screenOptions={{
+                                          headerShown: false,
+                                        }}>
+                                        <Stack.Screen name="index" />
+                                        <Stack.Screen
+                                          name="onboarding"
+                                          options={{
+                                            animation: 'none',
+                                          }}
+                                        />
+                                        <Stack.Screen name="onboarding-collection" />
+                                        <Stack.Screen name="onboarding-search" />
+                                        <Stack.Screen name="onboarding-published" />
+                                        <Stack.Screen name="onboarding-overall-top3" />
+                                        <Stack.Screen name="onboarding-taste-match" />
+                                        <Stack.Screen name="onboarding-notifications" />
+                                        <Stack.Screen name="(app)" />
+                                      </Stack>
 
-                                    <AudioPreviewSheet />
-                                    <TrailerPreviewSheet />
-                                    <BookPreviewSheet />
-                                    <StatusBar style="auto" />
+                                      <AudioPreviewSheet />
+                                      <TrailerPreviewSheet />
+                                      <BookPreviewSheet />
+                                      <StatusBar style="auto" />
+                                    </FeedbackProvider>
                                   </ThemeProvider>
                                 </BookPreviewProvider>
                               </TrailerPreviewProvider>

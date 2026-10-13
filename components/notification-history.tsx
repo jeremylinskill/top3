@@ -1,9 +1,13 @@
 import AppText from '@/components/app-text';
+import ActionSheet from '@/components/action-sheet';
+import AuthProviderButton from '@/components/auth-provider-button';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { RADIUS } from '@/constants/radius';
 import { useCollectionOptions } from '@/context/collection-options-context';
+import { useFeedback } from '@/context/feedback-context';
 import { useAppColors } from '@/hooks/use-app-colors';
 import {
+  cancelNotificationCampaign,
   getNotificationCampaignHistory,
   type NotificationCampaign,
   type NotificationCampaignStatus,
@@ -111,14 +115,17 @@ function getDestinationLabel(
 type NotificationHistoryProps = {
   mode?: 'manage' | 'history';
   onEditDraft?: (campaign: NotificationCampaign) => void;
+  onEditScheduled?: (campaign: NotificationCampaign) => void;
 };
 
 export default function NotificationHistory({
   mode = 'history',
   onEditDraft,
+  onEditScheduled,
 }: NotificationHistoryProps) {
   const colors = useAppColors();
   const { options } = useCollectionOptions();
+  const { showFeedback } = useFeedback();
 
   const mountedRef = useRef(false);
 
@@ -134,6 +141,13 @@ export default function NotificationHistory({
   const [expandedId, setExpandedId] = useState<
     string | null
   >(null);
+  const cancellingCampaignIdRef = useRef<string | null>(null);
+  const [cancellingCampaignId, setCancellingCampaignId] =
+    useState<string | null>(null);
+  const [
+    cancelConfirmationCampaign,
+    setCancelConfirmationCampaign,
+  ] = useState<NotificationCampaign | null>(null);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -201,6 +215,77 @@ export default function NotificationHistory({
         setIsRefreshing(false);
       }
     }
+  }
+
+  async function cancelScheduledCampaign(
+    campaign: NotificationCampaign
+  ) {
+    if (
+      campaign.status !== 'scheduled' ||
+      cancellingCampaignIdRef.current !== null
+    ) {
+      return;
+    }
+
+    cancellingCampaignIdRef.current = campaign.id;
+    setCancellingCampaignId(campaign.id);
+
+    try {
+      await cancelNotificationCampaign(campaign.id);
+
+      if (!mountedRef.current) {
+        return;
+      }
+
+      const cancelledAt = new Date().toISOString();
+
+      setCampaigns((current) =>
+        current.map((item) =>
+          item.id === campaign.id
+            ? {
+                ...item,
+                status: 'cancelled',
+                updatedAt: cancelledAt,
+              }
+            : item
+        )
+      );
+
+      setExpandedId(null);
+      showFeedback({
+        kind: 'success',
+        title: 'Notification Cancelled',
+        message: 'This scheduled test has been cancelled.',
+      });
+    } catch (reason) {
+      if (mountedRef.current) {
+        showFeedback({
+          kind: 'error',
+          title: 'Unable to Cancel',
+          message: reason instanceof Error
+            ? reason.message
+            : 'Please try again.',
+        });
+      }
+    } finally {
+      cancellingCampaignIdRef.current = null;
+      if (mountedRef.current) {
+        setCancellingCampaignId(null);
+      }
+    }
+  }
+
+  function confirmCancelScheduledCampaign(
+    campaign: NotificationCampaign
+  ) {
+    if (
+      campaign.status !== 'scheduled' ||
+      cancellingCampaignIdRef.current !== null
+    ) {
+      return;
+    }
+
+    setCancelConfirmationCampaign(campaign);
   }
 
   const visibleCampaigns = campaigns.filter((campaign) =>
@@ -274,7 +359,7 @@ export default function NotificationHistory({
           <AppText variant="body" style={styles.center}>
             {mode === 'manage'
               ? 'Saved drafts and scheduled notifications will appear here.'
-              : 'Notifications you send will appear here.'}
+              : 'Sent, failed and cancelled notifications will appear here.'}
           </AppText>
         </View>
       ) : null}
@@ -284,9 +369,11 @@ export default function NotificationHistory({
           expandedId === campaign.id;
 
         const primaryTimestamp =
-          campaign.sentAt ??
-          campaign.scheduledAt ??
-          campaign.createdAt;
+          campaign.status === 'cancelled'
+            ? campaign.updatedAt
+            : campaign.sentAt ??
+              campaign.scheduledAt ??
+              campaign.createdAt;
 
         const showCreatedDate =
           Math.abs(
@@ -314,7 +401,10 @@ export default function NotificationHistory({
                   isExpanded ? null : campaign.id
                 );
               }}
-              style={styles.cardHeader}>
+              style={[
+                styles.cardHeader,
+                isExpanded && styles.expandedCardHeader,
+              ]}>
               <View style={styles.cardText}>
                 <View style={styles.headerMetaRow}>
                   <AppText
@@ -379,12 +469,15 @@ export default function NotificationHistory({
                 {campaign.scheduledAt &&
                 campaign.status !== 'scheduled' ? (
                   <AppText variant="metadata">
-                    Scheduled for: {formatDate(campaign.scheduledAt)}
+                    {campaign.status === 'cancelled'
+                      ? 'Originally scheduled for'
+                      : 'Scheduled for'}: {formatDate(campaign.scheduledAt)}
                   </AppText>
                 ) : null}
 
-                {campaign.status !== 'draft' &&
-                campaign.status !== 'scheduled' ? (
+                {(campaign.status === 'sending' ||
+                  campaign.status === 'sent' ||
+                  campaign.status === 'failed') ? (
                 <AppText variant="metadata">
                   Expo accepted: {campaign.acceptedCount}
                   {' of '}
@@ -399,15 +492,38 @@ export default function NotificationHistory({
 
                 {campaign.status === 'draft' &&
                 onEditDraft ? (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Edit draft"
+                  <AuthProviderButton
+                    title="Edit Draft"
+                    variant="secondary"
                     onPress={() => onEditDraft(campaign)}
-                    style={styles.editAction}>
-                    <AppText variant="action">
-                      Edit Draft
-                    </AppText>
-                  </Pressable>
+                  />
+                ) : null}
+
+                {mode === 'manage' &&
+                campaign.status === 'scheduled' ? (
+                  <>
+                    {onEditScheduled ? (
+                      <AuthProviderButton
+                        title="Edit Scheduled"
+                        variant="secondary"
+                        disabled={cancellingCampaignId !== null}
+                        onPress={() => onEditScheduled(campaign)}
+                      />
+                    ) : null}
+
+                    <AuthProviderButton
+                      title={
+                        cancellingCampaignId === campaign.id
+                          ? 'Cancelling…'
+                          : 'Cancel Scheduled Test'
+                      }
+                      variant="destructive"
+                      disabled={cancellingCampaignId !== null}
+                      onPress={() =>
+                        confirmCancelScheduledCampaign(campaign)
+                      }
+                    />
+                  </>
                 ) : null}
 
                 {campaign.lastError ? (
@@ -434,6 +550,30 @@ export default function NotificationHistory({
         </AppText>
       ) : null}
 
+      <ActionSheet
+        visible={cancelConfirmationCampaign !== null}
+        title="Cancel Scheduled Test?"
+        message="This notification will no longer be scheduled for delivery. This action cannot be undone."
+        actions={[
+          {
+            label: 'Cancel Notification',
+            variant: 'destructive',
+            onPress: () => {
+              const campaign = cancelConfirmationCampaign;
+              setCancelConfirmationCampaign(null);
+              if (campaign) {
+                void cancelScheduledCampaign(campaign);
+              }
+            },
+          },
+          {
+            label: 'Keep Scheduled',
+            variant: 'cancel',
+            onPress: () => setCancelConfirmationCampaign(null),
+          },
+        ]}
+        onClose={() => setCancelConfirmationCampaign(null)}
+      />
     </ScrollView>
   );
 }
@@ -469,6 +609,9 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 12,
   },
+  expandedCardHeader: {
+    paddingBottom: 8,
+  },
   cardText: {
     flex: 1,
     gap: 7,
@@ -490,10 +633,5 @@ const styles = StyleSheet.create({
   footnote: {
     textAlign: 'center',
     marginTop: 12,
-  },
-  editAction: {
-    alignSelf: 'flex-start',
-    paddingVertical: 8,
-    marginTop: 4,
   },
 });
