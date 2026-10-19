@@ -1,5 +1,6 @@
 import { formatCollectionDisplayTitle } from '@/utils/build-collection-title';
 import AppText from '@/components/app-text';
+import ArtworkThumbnail from '@/components/artwork-thumbnail';
 import IconButton from '@/components/icon-button';
 import { useSavedItems } from '@/context/saved-items-context';
 import { MediaPreviewItemButton } from '@/components/media-preview-button';
@@ -13,6 +14,7 @@ import { useTop3 } from '@/context/top3-context';
 import { useAppColors } from '@/hooks/use-app-colors';
 import { useAuth } from '@/hooks/use-auth';
 import { getPublishedPostsByUser } from '@/lib/supabase/collections';
+import { addCuratedBookCovers } from '@/providers/books';
 import { getPopularSuggestionsByCategory } from '@/providers/search';
 import { refreshMusicianEditorialInPosts } from '@/services/post-service';
 import { Post } from '@/types/post';
@@ -33,7 +35,6 @@ import {
   ActivityIndicator,
   Animated,
   Easing,
-  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -266,7 +267,7 @@ export default function OnboardingPublishedScreen() {
 
       return {
         ...item,
-        imageUrl: updatedItem.imageUrl,
+        imageUrl: updatedItem.imageUrl || item.imageUrl,
         bylineOverride: updatedItem.bylineOverride,
       };
     });
@@ -461,7 +462,9 @@ export default function OnboardingPublishedScreen() {
             activePublishedPost.collection.category,
             activePublishedPost.collection.topic,
             12,
-            controller.signal
+            controller.signal,
+            undefined,
+            true
           );
 
 
@@ -488,6 +491,20 @@ export default function OnboardingPublishedScreen() {
             eligibleSuggestions
           ).slice(0, 2);
 
+        // Only the two suggested books that appear as artwork
+        // cards need cover lookups. Other categories are unchanged.
+        const displaySuggestions =
+          activePublishedPost.collection.category === 'books'
+            ? await addCuratedBookCovers(
+                randomSuggestions,
+                controller.signal
+              )
+            : randomSuggestions;
+
+        if (isCancelled) {
+          return;
+        }
+
         const fallbackItems =
           userItems.filter(
             (item) =>
@@ -497,7 +514,7 @@ export default function OnboardingPublishedScreen() {
 
         const nextItems = [
           userSecondItem,
-          ...randomSuggestions,
+          ...displaySuggestions,
           ...fallbackItems,
         ];
 
@@ -1038,44 +1055,13 @@ export default function OnboardingPublishedScreen() {
                               artworkRule.height,
                           },
                         ]}>
-                        {item.imageUrl ? (
-                          <Image
-                            source={{
-                              uri: item.imageUrl,
-                            }}
-                            style={[
-                              styles.itemImage,
-                              {
-                                width:
-                                  artworkRule.width,
-                                height:
-                                  artworkRule.height,
-                                backgroundColor:
-                                  colors.skeletonSubtle,
-                              },
-                            ]}
-                            resizeMode="cover"
-                          />
-                        ) : (
-                          <View
-                            style={[
-                              styles.imagePlaceholder,
-                              {
-                                width:
-                                  artworkRule.width,
-                                height:
-                                  artworkRule.height,
-                                backgroundColor:
-                                  colors.skeletonSubtle,
-                              },
-                            ]}>
-                            <Ionicons
-                              name="image-outline"
-                              size={24}
-                              color={colors.tertiaryText}
-                            />
-                          </View>
-                        )}
+                        <ArtworkThumbnail
+                          imageUrl={item.imageUrl}
+                          category={publishedPost.collection.category}
+                          width={artworkRule.width}
+                          height={artworkRule.height}
+                          placeholderBackgroundColor={colors.skeletonSubtle}
+                        />
                       </View>
 
 
@@ -1460,18 +1446,6 @@ const styles = StyleSheet.create({
   artworkContainer: {
     position: 'relative',
     marginRight: 13,
-  },
-
-
-  itemImage: {
-    borderRadius: 9,
-  },
-
-
-  imagePlaceholder: {
-    borderRadius: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 
 
