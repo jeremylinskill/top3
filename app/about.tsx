@@ -1,10 +1,11 @@
 import AppText from '@/components/app-text';
-import ScreenHeader from '@/components/screen-header';
+import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
 import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
 import { useAppColors } from '@/hooks/use-app-colors';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import * as Application from 'expo-application';
+import { useRef, useState } from 'react';
 import {
   Image,
   Linking,
@@ -14,7 +15,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type DataSource = {
   label: string;
@@ -58,6 +59,27 @@ const DATA_SOURCES: DataSource[] = [
 export default function AboutScreen() {
   const colors = useAppColors();
   const colorScheme = useColorScheme();
+  const insets = useSafeAreaInsets();
+  const bottomScrollClearance = Math.max(40, insets.bottom + 24);
+  const [headerHidden, setHeaderHidden] = useState(false);
+  const lastScrollOffset = useRef(0);
+
+  function handleScroll(offsetY: number) {
+    const y = Math.max(0, offsetY);
+    const delta = y - lastScrollOffset.current;
+
+    if (y < 20) {
+      setHeaderHidden(false);
+    } else if (delta >= 7 && y > 36) {
+      setHeaderHidden(true);
+    } else if (delta <= -7) {
+      setHeaderHidden(false);
+    }
+
+    if (Math.abs(delta) >= 7 || y < 20) {
+      lastScrollOffset.current = y;
+    }
+  }
 
   const version =
     Application.nativeApplicationVersion ??
@@ -169,10 +191,22 @@ export default function AboutScreen() {
         },
       ]}
       edges={['top', 'left', 'right']}>
-      <ScreenHeader showBackButton />
+      <ScreenHeader
+        showBackButton
+        overlay
+        compact={headerHidden}
+        collapseWithBackButton
+      />
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: bottomScrollClearance },
+        ]}
+        onScroll={(event) =>
+          handleScroll(event.nativeEvent.contentOffset.y)
+        }
+        scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}>
         <View style={styles.hero}>
           <Image
@@ -369,7 +403,7 @@ const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
     paddingHorizontal: SPACING.xl,
-    paddingTop: SPACING.xxl,
+    paddingTop: SCREEN_HEADER_HEIGHT + SPACING.xxl,
     paddingBottom: 40,
   },
 

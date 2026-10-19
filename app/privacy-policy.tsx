@@ -1,10 +1,11 @@
 import AppText from '@/components/app-text';
 import PageHeader from '@/components/page-header';
-import ScreenHeader from '@/components/screen-header';
+import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
 import { SPACING } from '@/constants/spacing';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type PolicySectionProps = {
   title: string;
@@ -89,6 +90,27 @@ function BulletList({ items }: BulletListProps) {
 
 export default function PrivacyPolicyScreen() {
   const colors = useAppColors();
+  const insets = useSafeAreaInsets();
+  const bottomScrollClearance = Math.max(48, insets.bottom + 24);
+  const [headerHidden, setHeaderHidden] = useState(false);
+  const lastScrollOffset = useRef(0);
+
+  function handleScroll(offsetY: number) {
+    const y = Math.max(0, offsetY);
+    const delta = y - lastScrollOffset.current;
+
+    if (y < 20) {
+      setHeaderHidden(false);
+    } else if (delta >= 7 && y > 36) {
+      setHeaderHidden(true);
+    } else if (delta <= -7) {
+      setHeaderHidden(false);
+    }
+
+    if (Math.abs(delta) >= 7 || y < 20) {
+      lastScrollOffset.current = y;
+    }
+  }
 
   return (
     <SafeAreaView
@@ -99,17 +121,31 @@ export default function PrivacyPolicyScreen() {
         },
       ]}
       edges={['top', 'left', 'right']}>
-      <ScreenHeader showBackButton />
-
-      <PageHeader
-        title="Privacy Policy"
-        subtitle="How Top 3 handles your information."
+      <ScreenHeader
+        showBackButton
+        overlay
+        compact={headerHidden}
+        collapseWithBackButton
       />
 
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: bottomScrollClearance },
+        ]}
+        onScroll={(event) =>
+          handleScroll(event.nativeEvent.contentOffset.y)
+        }
+        scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}>
+        <View style={styles.pageHeaderContainer}>
+          <PageHeader
+            title="Privacy Policy"
+            subtitle="How Top 3 handles your information."
+          />
+        </View>
+
         <View style={styles.meta}>
           <AppText variant="legalMeta">
             Effective Date: August 25, 2026
@@ -1227,7 +1263,12 @@ const styles = StyleSheet.create({
 
   content: {
     paddingHorizontal: SPACING.xl,
+    paddingTop: SCREEN_HEADER_HEIGHT,
     paddingBottom: 48,
+  },
+
+  pageHeaderContainer: {
+    marginHorizontal: -SPACING.xl,
   },
 
   meta: {

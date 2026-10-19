@@ -1,21 +1,44 @@
 import AppText from '@/components/app-text';
 import PageHeader from '@/components/page-header';
 import PrimaryButton from '@/components/primary-button';
-import ScreenHeader from '@/components/screen-header';
+import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
 import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
 import { SUPPORT_EMAIL } from '@/constants/support';
 import { useAppColors } from '@/hooks/use-app-colors';
 import { Ionicons } from '@expo/vector-icons';
+import { useRef, useState } from 'react';
 import {
   Linking,
+  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function SupportScreen() {
   const colors = useAppColors();
+  const insets = useSafeAreaInsets();
+  const bottomScrollClearance = Math.max(40, insets.bottom + 24);
+  const [headerHidden, setHeaderHidden] = useState(false);
+  const lastScrollOffset = useRef(0);
+
+  function handleScroll(offsetY: number) {
+    const y = Math.max(0, offsetY);
+    const delta = y - lastScrollOffset.current;
+
+    if (y < 20) {
+      setHeaderHidden(false);
+    } else if (delta >= 7 && y > 36) {
+      setHeaderHidden(true);
+    } else if (delta <= -7) {
+      setHeaderHidden(false);
+    }
+
+    if (Math.abs(delta) >= 7 || y < 20) {
+      lastScrollOffset.current = y;
+    }
+  }
 
   async function contactSupport() {
     const subject = encodeURIComponent(
@@ -37,14 +60,31 @@ export default function SupportScreen() {
         },
       ]}
       edges={['top', 'left', 'right']}>
-      <ScreenHeader showBackButton />
-
-      <PageHeader
-        title="Support"
-        subtitle="Get help with Top3."
+      <ScreenHeader
+        showBackButton
+        overlay
+        compact={headerHidden}
+        collapseWithBackButton
       />
 
-      <View style={styles.content}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: bottomScrollClearance },
+        ]}
+        onScroll={(event) =>
+          handleScroll(event.nativeEvent.contentOffset.y)
+        }
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}>
+        <View style={styles.pageHeaderContainer}>
+          <PageHeader
+            title="Support"
+            subtitle="Get help with Top3."
+          />
+        </View>
+
         <View
           style={[
             styles.card,
@@ -97,7 +137,7 @@ export default function SupportScreen() {
             {SUPPORT_EMAIL}
           </AppText>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -107,8 +147,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
+  scrollView: {
+    flex: 1,
+  },
+
   content: {
     paddingHorizontal: SPACING.xl,
+    paddingTop: SCREEN_HEADER_HEIGHT,
+    paddingBottom: 40,
+  },
+
+  pageHeaderContainer: {
+    marginHorizontal: -SPACING.xl,
   },
 
   card: {
