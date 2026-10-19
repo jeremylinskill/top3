@@ -1,6 +1,7 @@
 import { formatCollectionDisplayTitle } from '@/utils/build-collection-title';
 import IconButton from '@/components/icon-button';
 import AppText from '@/components/app-text';
+import ArtworkThumbnail from '@/components/artwork-thumbnail';
 import FollowButton from '@/components/follow-button';
 import {
   MediaPreviewItemButton,
@@ -35,12 +36,13 @@ import {
   useState,
 } from 'react';
 import {
-  Image,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+
 
 function getRenderableArtworkUrl(
   imageUrl?: string
@@ -48,9 +50,11 @@ function getRenderableArtworkUrl(
   const trimmedImageUrl =
     imageUrl?.trim() ?? '';
 
+
   if (!trimmedImageUrl) {
     return null;
   }
+
 
   if (
     !/^https:\/\/covers\.openlibrary\.org\//i.test(
@@ -59,6 +63,7 @@ function getRenderableArtworkUrl(
   ) {
     return trimmedImageUrl;
   }
+
 
   if (
     /[?&]default=/i.test(
@@ -71,6 +76,7 @@ function getRenderableArtworkUrl(
     );
   }
 
+
   return (
     trimmedImageUrl +
     (trimmedImageUrl.includes('?')
@@ -79,6 +85,7 @@ function getRenderableArtworkUrl(
     'default=false'
   );
 }
+
 
 type Top3CardProps = {
   post: Post;
@@ -104,6 +111,7 @@ type Top3CardProps = {
   onTasteMatchPress?: () => void;
 };
 
+
 export default function Top3Card({
   post,
   author,
@@ -126,6 +134,7 @@ export default function Top3Card({
 }: Top3CardProps) {
   const colors = useAppColors();
 
+
   const {
     isLiked,
     toggleLike,
@@ -133,16 +142,19 @@ export default function Top3Card({
     isLoading: isLoadingLikes,
   } = useLike();
 
+
   const {
     getCommentCount,
     isLoading: isLoadingComments,
   } = useComments();
+
 
   const {
     isSaved,
     toggleSavedItem,
     isLoading: isLoadingSavedItems,
   } = useSavedItems();
+
 
   const [
     artworkOverrides,
@@ -151,6 +163,7 @@ export default function Top3Card({
     {}
   );
 
+
   const [
     failedArtworkKeys,
     setFailedArtworkKeys,
@@ -158,38 +171,48 @@ export default function Top3Card({
     () => new Set()
   );
 
+
   const attemptedArtworkRepairKeysRef =
     useRef<Set<string>>(
       new Set()
     );
+
 
   const category = TOP3_CATEGORIES.find(
     (item) =>
       item.id === post.collection.category
   );
 
+
   const savedCategory = category?.id;
+
 
   const artworkRule =
     getCategoryArtworkRule(
       post.collection.category
     );
 
+
   const displayTitle =
     formatCollectionDisplayTitle(post.collection.title);
+
 
   const publishedText = formatRelativeTime(
     post.publishedAt
   )?.replace(/^Updated\s+/i, '');
 
+
   const likeCollectionId = post.collection.id;
 
+
   const postIsLiked = isLiked(likeCollectionId);
+
 
   const displayedLikeCount = getLikeCount(
     likeCollectionId,
     post.reactions
   );
+
 
   const displayedCommentCount =
     getCommentCount(
@@ -198,11 +221,15 @@ export default function Top3Card({
     );
 
 
+
+
   const hasComments =
     displayedCommentCount > 0;
 
+
   const normalizedHighlightQuery =
     highlightQuery?.trim().toLowerCase() ?? '';
+
 
   const normalizedTasteMatchItems = new Set(
     tasteMatchItemTitles
@@ -212,6 +239,7 @@ export default function Top3Card({
       .filter(Boolean)
   );
 
+
   function itemMatchesHighlight(
     title: string,
     subtitle?: string
@@ -220,23 +248,28 @@ export default function Top3Card({
       return false;
     }
 
+
     const searchableText =
       `${title} ${subtitle ?? ''}`
         .trim()
         .toLowerCase();
+
 
     return searchableText.includes(
       normalizedHighlightQuery
     );
   }
 
+
   function handleLikePress() {
     if (isLoadingLikes) {
       return;
     }
 
+
     toggleLike(likeCollectionId);
   }
+
 
   function openRecommendationTasteMatch() {
     router.push({
@@ -247,12 +280,14 @@ export default function Top3Card({
     });
   }
 
+
   function handleArtworkLoadError(
     itemId: string,
     failedImageUrl: string
   ) {
     const failureKey =
       `${itemId}:${failedImageUrl}`;
+
 
     setFailedArtworkKeys(
       (currentKeys) => {
@@ -264,16 +299,20 @@ export default function Top3Card({
           return currentKeys;
         }
 
+
         const nextKeys =
           new Set(currentKeys);
+
 
         nextKeys.add(
           failureKey
         );
 
+
         return nextKeys;
       }
     );
+
 
     if (
       post.collection.category !==
@@ -282,8 +321,10 @@ export default function Top3Card({
       return;
     }
 
+
     const repairKey =
       `${post.collection.id}:${itemId}`;
+
 
     if (
       attemptedArtworkRepairKeysRef.current.has(
@@ -293,9 +334,11 @@ export default function Top3Card({
       return;
     }
 
+
     attemptedArtworkRepairKeysRef.current.add(
       repairKey
     );
+
 
     void repairCollectionArtwork(
       post.collection.id,
@@ -311,6 +354,7 @@ export default function Top3Card({
         ) {
           return;
         }
+
 
         setArtworkOverrides(
           (currentOverrides) => ({
@@ -329,6 +373,7 @@ export default function Top3Card({
         }
       });
   }
+
 
   return (
     <View
@@ -356,6 +401,7 @@ export default function Top3Card({
             </AppText>
           </View>
 
+
           {recommendationReason ? (
             <AppText
               variant="metadata"
@@ -367,6 +413,7 @@ export default function Top3Card({
           ) : null}
         </Pressable>
       ) : null}
+
 
       {showAuthor && author ? (
         <View style={styles.authorRow}>
@@ -397,12 +444,14 @@ export default function Top3Card({
                 fontSize={19}
               />
 
+
               <View style={styles.authorDetails}>
                 <AppText
                   variant="headline"
                   tone="primary">
                   {author.displayName}
                 </AppText>
+
 
                 <AppText
                   variant="subtitle"
@@ -412,6 +461,7 @@ export default function Top3Card({
                 </AppText>
               </View>
             </Pressable>
+
 
             {typeof tasteMatchScore ===
             'number' ? (
@@ -427,12 +477,14 @@ export default function Top3Card({
             ) : null}
           </View>
 
+
           {showFollowButton ? (
             <FollowButton
               userId={author.id}
               size="small"
             />
           ) : null}
+
 
           {onMorePress ? (
             <IconButton
@@ -450,6 +502,7 @@ export default function Top3Card({
           ) : null}
         </View>
       ) : null}
+
 
       <View style={styles.titleRow}>
         <Pressable
@@ -475,6 +528,7 @@ export default function Top3Card({
             {category?.icon ?? '⭐'}
           </Text>
 
+
           <AppText
             variant="collectionTitle"
             tone="primary"
@@ -482,6 +536,7 @@ export default function Top3Card({
             {displayTitle}
           </AppText>
         </Pressable>
+
 
         {onEditPress ? (
           <IconButton
@@ -498,6 +553,7 @@ export default function Top3Card({
           </IconButton>
         ) : null}
 
+
         {!showAuthor && onMorePress ? (
           <IconButton
             style={styles.headerIconButton}
@@ -513,6 +569,7 @@ export default function Top3Card({
           </IconButton>
         ) : null}
       </View>
+
 
       <Pressable
         onPress={onPress}
@@ -541,12 +598,14 @@ export default function Top3Card({
                     )
                   : '';
 
+
               const isSearchHighlighted =
                 item !== null &&
                 itemMatchesHighlight(
                   item.title,
                   item.subtitle
                 );
+
 
               const isTasteMatch =
                 item !== null &&
@@ -556,9 +615,11 @@ export default function Top3Card({
                     .toLowerCase()
                 );
 
+
               const isHighlighted =
                 isSearchHighlighted ||
                 isTasteMatch;
+
 
               const artworkUrl =
                 item
@@ -568,16 +629,19 @@ export default function Top3Card({
                     item.imageUrl
                   : undefined;
 
+
               const renderableArtworkUrl =
                 getRenderableArtworkUrl(
                   artworkUrl
                 );
+
 
               const artworkFailureKey =
                 item &&
                 renderableArtworkUrl
                   ? `${item.id}:${renderableArtworkUrl}`
                   : null;
+
 
               const artworkHasFailed =
                 artworkFailureKey
@@ -586,6 +650,7 @@ export default function Top3Card({
                     )
                   : false;
 
+
               const itemIsSaved =
                 item !== null &&
                 savedCategory !== undefined &&
@@ -593,6 +658,7 @@ export default function Top3Card({
                   savedCategory,
                   item.id
                 );
+
 
               return (
                 <View
@@ -633,6 +699,7 @@ export default function Top3Card({
                     {index + 1}
                   </AppText>
 
+
                   <View
                     style={[
                       styles.artworkContainer,
@@ -641,55 +708,26 @@ export default function Top3Card({
                         height: artworkRule.height,
                       },
                     ]}>
-                    {item &&
-                    renderableArtworkUrl &&
-                    !artworkHasFailed ? (
-                      <Image
-                        source={{
-                          uri:
-                            renderableArtworkUrl,
-                        }}
-                        style={[
-                          styles.itemImage,
-                          {
-                            width: artworkRule.width,
-                            height: artworkRule.height,
-                          },
-                        ]}
-                        resizeMode="cover"
-                        onError={() => {
-                          handleArtworkLoadError(
-                            item.id,
-                            renderableArtworkUrl
-                          );
-                        }}
-                      />
-                    ) : (
-                      <View
-                        style={[
-                          styles.imagePlaceholder,
-                          {
-                            width: artworkRule.width,
-                            height: artworkRule.height,
-                            backgroundColor:
-                              isTasteMatch
-                                ? colors.highlightPlaceholder
-                                : colors.border,
-                          },
-                        ]}>
-                        <Ionicons
-                          name="image-outline"
-                          size={24}
-                          color={
-                            isTasteMatch
-                              ? colors.highlightMuted
-                              : colors.tertiaryText
-                          }
-                        />
-                      </View>
-                    )}
+                    <ArtworkThumbnail
+                      imageUrl={artworkHasFailed ? undefined : renderableArtworkUrl}
+                      category={post.collection.category}
+                      width={artworkRule.width}
+                      height={artworkRule.height}
+                      placeholderBackgroundColor={
+                        isTasteMatch ? colors.highlightPlaceholder : colors.border
+                      }
+                      placeholderColor={
+                        isTasteMatch ? colors.highlightMuted : colors.tertiaryText
+                      }
+                      onImageError={() => {
+                        if (item && renderableArtworkUrl) {
+                          handleArtworkLoadError(item.id, renderableArtworkUrl);
+                        }
+                      }}
+                    />
 
                   </View>
+
 
                   <View
                     style={styles.itemDetails}>
@@ -711,6 +749,7 @@ export default function Top3Card({
                         'Not selected'}
                     </AppText>
 
+
                     {itemMetadata ? (
                       <AppText
                         variant="subtitle"
@@ -725,6 +764,7 @@ export default function Top3Card({
                         {itemMetadata}
                       </AppText>
                     ) : null}
+
 
                     {!usesGenreMetadataPresentation(
                       post.collection.category
@@ -746,6 +786,7 @@ export default function Top3Card({
                           )}
                         </AppText>
 
+
                         <Ionicons
                           name="star"
                           size={13}
@@ -758,6 +799,7 @@ export default function Top3Card({
                       </View>
                     ) : null}
                   </View>
+
 
                   {item ? (
                     <View style={styles.itemActions}>
@@ -794,6 +836,7 @@ export default function Top3Card({
                         }
                       />
 
+
                       <IconButton
                         backgroundColor={
                           isTasteMatch
@@ -803,9 +846,11 @@ export default function Top3Card({
                         onPress={(event) => {
                           event.stopPropagation();
 
+
                           if (!savedCategory) {
                             return;
                           }
+
 
                           toggleSavedItem(
                             savedCategory,
@@ -847,12 +892,14 @@ export default function Top3Card({
                     </View>
                   ) : null}
 
+
                 </View>
               );
             }
           )}
         </View>
       </Pressable>
+
 
       <View style={styles.footer}>
         <View style={styles.footerItem}>
@@ -862,6 +909,7 @@ export default function Top3Card({
             color={colors.tertiaryText}
           />
 
+
           <AppText
             variant="metadata"
             tone="secondary"
@@ -869,6 +917,7 @@ export default function Top3Card({
             {publishedText ?? 'Published'}
           </AppText>
         </View>
+
 
         <View style={styles.engagement}>
           <Pressable
@@ -906,6 +955,7 @@ export default function Top3Card({
               }
             />
 
+
             <AppText
               variant="metadata"
               tone={
@@ -922,6 +972,7 @@ export default function Top3Card({
               {displayedLikeCount}
             </AppText>
           </Pressable>
+
 
           <Pressable
             style={({ pressed }) => [
@@ -968,6 +1019,7 @@ export default function Top3Card({
               }
             />
 
+
             <AppText
               variant="metadata"
               tone={
@@ -984,6 +1036,7 @@ export default function Top3Card({
               {displayedCommentCount}
             </AppText>
           </Pressable>
+
 
           {onSharePress ? (
             <Pressable
@@ -1009,11 +1062,13 @@ export default function Top3Card({
   );
 }
 
+
 const styles = StyleSheet.create({
   card: {
     borderRadius: 18,
     padding: 18,
   },
+
 
   recommendationBlock: {
     marginTop: -18,
@@ -1024,15 +1079,19 @@ const styles = StyleSheet.create({
     paddingBottom: 14,
   },
 
+
   recommendationTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
 
+
   recommendationReason: {
     marginTop: 1,
     marginLeft: 0,
   },
+
+
 
 
   authorRow: {
@@ -1041,10 +1100,12 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
 
+
   authorContent: {
     flex: 1,
     minWidth: 0,
   },
+
 
   authorAction: {
     flex: 1,
@@ -1053,9 +1114,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
+
   tasteMatchRow: {
     marginLeft: 58,
   },
+
+
+
+
+
 
 
 
@@ -1066,15 +1133,18 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
 
+
   username: {
     marginTop: 2,
   },
+
 
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
   },
+
 
   titleAction: {
     flex: 1,
@@ -1083,22 +1153,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
+
   categoryIcon: {
     flexShrink: 0,
     marginRight: 9,
     fontSize: 22,
   },
 
+
   title: {
     flex: 1,
   },
+
 
   headerIconButton: {
     marginLeft: 8,
     marginRight: -7,
   },
 
+
   ranking: {},
+
 
   rankRow: {
     flexDirection: 'row',
@@ -1107,15 +1182,18 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
   },
 
+
   lastRankRow: {
     marginBottom: 0,
   },
+
 
   standardRankRow: {
     marginHorizontal: -10,
     paddingHorizontal: 10,
     borderRadius: 12,
   },
+
 
   highlightedRankRow: {
     marginHorizontal: -10,
@@ -1124,26 +1202,24 @@ const styles = StyleSheet.create({
   },
 
 
+
+
   rankNumber: {
-    width: 28,
+    // The row has 10px horizontal padding. Extend the number column
+    // into that padding so it spans the entire area before the artwork.
+    width: 38,
+    marginLeft: -10,
     textAlign: 'center',
-    transform: [{ translateX: -5 }],
+    fontVariant: ['tabular-nums'],
+    transform: [{ translateX: Platform.OS === 'ios' ? -3 : 0 }],
   },
+
 
   artworkContainer: {
     position: 'relative',
     marginRight: 13,
   },
 
-  itemImage: {
-    borderRadius: 9,
-  },
-
-  imagePlaceholder: {
-    borderRadius: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
 
   itemActions: {
     flexShrink: 0,
@@ -1154,14 +1230,18 @@ const styles = StyleSheet.create({
   },
 
 
+
+
   itemDetails: {
     flex: 1,
     minWidth: 0,
   },
 
+
   itemSubtitle: {
     marginTop: 4,
   },
+
 
   ratingRow: {
     flexDirection: 'row',
@@ -1169,9 +1249,11 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
+
   ratingText: {
     marginRight: 4,
   },
+
 
   footer: {
     flexDirection: 'row',
@@ -1180,11 +1262,13 @@ const styles = StyleSheet.create({
     paddingTop: 14,
   },
 
+
   engagement: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
   },
+
 
   engagementButton: {
     minHeight: 30,
@@ -1192,25 +1276,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
+
   shareButton: {
     minHeight: 30,
     minWidth: 30,
     justifyContent: 'center',
   },
 
+
   footerItem: {
     flexDirection: 'row',
     alignItems: 'center',
   },
+
 
   footerText: {
     marginLeft: 5,
   },
 
 
+
+
   pressed: {
     opacity: 0.65,
   },
+
 
   disabled: {
     opacity: 0.5,

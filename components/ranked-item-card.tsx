@@ -1,4 +1,5 @@
 import AppText from '@/components/app-text';
+import ArtworkThumbnail from '@/components/artwork-thumbnail';
 import MediaPreviewButton, {
   useMediaPreview,
 } from '@/components/media-preview-button';
@@ -7,7 +8,6 @@ import {
 } from '@/constants/category-artwork-rules';
 import {
   CategoryId,
-  TOP3_CATEGORIES,
 } from '@/constants/top3-categories';
 import { useAppColors } from '@/hooks/use-app-colors';
 import { Top3Item } from '@/types/top3-item';
@@ -15,9 +15,7 @@ import {
   getTop3ItemMetadata,
   usesGenreMetadataPresentation,
 } from '@/utils/top3-item-metadata';
-import { Ionicons } from '@expo/vector-icons';
 import {
-  Image,
   Pressable,
   StyleSheet,
   View,
@@ -32,6 +30,8 @@ type RankedItemCardProps = {
 };
 
 const DRAG_HANDLE_WIDTH = 64;
+const CARD_HORIZONTAL_PADDING = 16;
+const RANK_COLUMN_WIDTH = 28;
 
 export default function RankedItemCard({
   rank,
@@ -41,12 +41,6 @@ export default function RankedItemCard({
   onPress,
 }: RankedItemCardProps) {
   const colors = useAppColors();
-
-  const placeholderIcon =
-    TOP3_CATEGORIES.find(
-      (categoryItem) =>
-        categoryItem.id === category
-    )?.placeholderIcon ?? 'image-outline';
 
   const artworkRule =
     getCategoryArtworkRule(category);
@@ -85,44 +79,14 @@ export default function RankedItemCard({
             height: artworkRule.height,
           },
         ]}>
-        {item?.imageUrl ? (
-          <Image
-            source={{ uri: item.imageUrl }}
-            style={[
-              styles.poster,
-              {
-                width: artworkRule.width,
-                height: artworkRule.height,
-                backgroundColor: colors.border,
-              },
-            ]}
-            resizeMode="cover"
-          />
-        ) : (
-          <View
-            style={[
-              styles.posterPlaceholder,
-              {
-                width: artworkRule.width,
-                height: artworkRule.height,
-                backgroundColor: colors.border,
-              },
-            ]}>
-            {item ? (
-              <Ionicons
-                name={placeholderIcon}
-                size={28}
-                color={colors.tertiaryText}
-              />
-            ) : (
-              <Ionicons
-                name="add"
-                size={28}
-                color={colors.tertiaryText}
-              />
-            )}
-          </View>
-        )}
+        <ArtworkThumbnail
+          imageUrl={item?.imageUrl}
+          category={category}
+          placeholderIcon={item ? undefined : 'add'}
+          width={artworkRule.width}
+          height={artworkRule.height}
+          placeholderBackgroundColor={colors.border}
+        />
       </View>
 
       <View
@@ -191,28 +155,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 16,
-    padding: 16,
+    padding: CARD_HORIZONTAL_PADDING,
   },
 
   rankContainer: {
-    width: 28,
+    // Covers the entire gap from the card edge to the artwork edge.
+    // The negative margin preserves the artwork's existing position.
+    width: CARD_HORIZONTAL_PADDING + RANK_COLUMN_WIDTH,
+    marginLeft: -CARD_HORIZONTAL_PADDING,
     alignItems: 'center',
-    transform: [{ translateX: -5 }],
   },
 
   artworkContainer: {
     position: 'relative',
     marginRight: 13,
-  },
-
-  poster: {
-    borderRadius: 9,
-  },
-
-  posterPlaceholder: {
-    borderRadius: 9,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 
   previewButton: {
