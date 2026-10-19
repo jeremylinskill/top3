@@ -8,10 +8,12 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import {
   Pressable,
+  Platform,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { FLOATING_TAB_BAR_BOTTOM_SPACING } from '@/context/tab-bar-scroll-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 
@@ -103,13 +105,10 @@ export default function TrailerPreviewSheet() {
         pointerEvents="box-none"
         style={[
           styles.positioner,
-        {
-          bottom: Math.max(
-            insets.bottom - 2,
-            4
-          ),
-        },
-      ]}>
+          {
+            bottom: insets.bottom + FLOATING_TAB_BAR_BOTTOM_SPACING,
+          },
+        ]}>
       <View
         style={[
           styles.sheet,
@@ -189,7 +188,13 @@ export default function TrailerPreviewSheet() {
         </View>
 
         <View style={styles.playerInset}>
-          <View style={styles.player}>
+          <View
+            style={[
+              styles.player,
+              Platform.OS === 'android'
+                ? styles.androidPlayer
+                : styles.iosPlayer,
+            ]}>
             <WebView
               source={{
                 html: getYouTubeEmbedHtml(
@@ -285,12 +290,20 @@ const styles = StyleSheet.create({
   },
 
   player: {
-    width: '100%',
-    minHeight: 200,
     aspectRatio: 16 / 9,
     overflow: 'hidden',
     borderRadius: 10,
     backgroundColor: '#000000',
+  },
+
+  iosPlayer: {
+    width: '100%',
+    minHeight: 200,
+  },
+
+  androidPlayer: {
+    alignSelf: 'stretch',
+    maxWidth: '100%',
   },
 
   webView: {

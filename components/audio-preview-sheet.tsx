@@ -21,6 +21,7 @@ import {
     Text,
     View,
 } from 'react-native';
+import { FLOATING_TAB_BAR_BOTTOM_SPACING } from '@/context/tab-bar-scroll-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 function isAppleMusicItemId(
@@ -445,10 +446,7 @@ export default function AudioPreviewSheet() {
         style={[
           styles.positioner,
         {
-          bottom: Math.max(
-            insets.bottom - 2,
-            4
-          ),
+          bottom: insets.bottom + FLOATING_TAB_BAR_BOTTOM_SPACING,
         },
       ]}>
       <View
