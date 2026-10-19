@@ -1,7 +1,7 @@
 import AppText from '@/components/app-text';
 import FollowButton from '@/components/follow-button';
 import PrimaryButton from '@/components/primary-button';
-import ScreenHeader from '@/components/screen-header';
+import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
 import UserAvatar from '@/components/user-avatar';
 import {
   TASTE_MATCH_RANK_COLORS,
@@ -38,7 +38,7 @@ import {
   Text,
   View
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 function formatLabel(value: string) {
   return value
@@ -223,6 +223,27 @@ function getSharedPickCount(
 
 export default function TasteMatchScreen() {
   const colors = useAppColors();
+  const insets = useSafeAreaInsets();
+  const bottomScrollClearance = Math.max(40, insets.bottom + 24);
+  const [headerHidden, setHeaderHidden] = useState(false);
+  const lastScrollOffset = useRef(0);
+
+  function handleScroll(offsetY: number) {
+    const y = Math.max(0, offsetY);
+    const delta = y - lastScrollOffset.current;
+
+    if (y < 20) {
+      setHeaderHidden(false);
+    } else if (delta >= 7 && y > 36) {
+      setHeaderHidden(true);
+    } else if (delta <= -7) {
+      setHeaderHidden(false);
+    }
+
+    if (Math.abs(delta) >= 7 || y < 20) {
+      lastScrollOffset.current = y;
+    }
+  }
   const params = useLocalSearchParams<{
     userId?: string | string[];
   }>();
@@ -709,10 +730,22 @@ return getTasteRecommendationForUser({
         },
       ]}
       edges={['top', 'left', 'right']}>
-      <ScreenHeader showBackButton />
+      <ScreenHeader
+        showBackButton
+        overlay
+        compact={headerHidden}
+        collapseWithBackButton
+      />
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: bottomScrollClearance },
+        ]}
+        onScroll={(event) =>
+          handleScroll(event.nativeEvent.contentOffset.y)
+        }
+        scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}>
         {isLoading ? (
           <View style={styles.stateContainer}>
@@ -1001,7 +1034,7 @@ const styles = StyleSheet.create({
 
   content: {
     paddingHorizontal: SPACING.xl,
-    paddingTop: 20,
+    paddingTop: SCREEN_HEADER_HEIGHT + 20,
     paddingBottom: 40,
   },
 
