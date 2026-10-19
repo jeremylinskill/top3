@@ -24,6 +24,7 @@ type OpenLibrarySearchDocument = {
   key?: string;
   title?: string;
   author_name?: string[];
+  cover_i?: number;
 };
 
 type OpenLibrarySearchResponse = {
@@ -72,6 +73,14 @@ const bookDescriptionSourceCache =
     string,
     BookDescriptionSource
   >();
+
+// Covers are looked up only for the curated books selected for display.
+// Cache both found and missing covers for the lifetime of the app session.
+const curatedBookCoverCache =
+  new Map<string, string | null>();
+const CURATED_COVER_BATCH_SIZE = 3;
+let isGoogleBooksCoverQuotaExhausted = false;
+let googleBooksCoverRetryAfter = 0;
 
 let isGoogleBookDescriptionQuotaExhausted =
   false;
@@ -653,7 +662,7 @@ function normalizeBookDescription(
 
   const plainText = trimmedValue
     .replace(/<\s*br\s*\/?>/gi, '\n')
-    .replace(/<\/\s*p\s*>/gi, '\n\n')
+    .replace(/<\/?\s*p\s*>/gi, '\n\n')
     .replace(/<[^>]+>/g, '')
     .replace(/&nbsp;/gi, ' ')
     .replace(/&amp;/gi, '&')
@@ -1411,10 +1420,277 @@ function shuffleItems(
   return shuffled;
 }
 
+function isMatchingCuratedBook(
+  candidateTitle: string,
+  candidateAuthors: string | undefined,
+  curatedTitle: string
+): boolean {
+  if (
+    normalizeEditionFamilyTitle(candidateTitle) !==
+    normalizeEditionFamilyTitle(curatedTitle)
+  ) {
+    return false;
+  }
+
+  // A curated search hint commonly includes the author's name.
+  // When it does, don't use a cover from a different book
+  // that happens to share the same title.
+  const searchHint =
+    getCuratedSearchHint(curatedTitle);
+
+  if (
+    !searchHint ||
+    normalizeText(searchHint) ===
+      normalizeText(curatedTitle)
+  ) {
+    return true;
+  }
+
+  return (
+    getAuthorMatchScore(
+      {
+        id: 'curated-cover-match',
+        title: candidateTitle,
+        subtitle: candidateAuthors,
+      },
+      curatedTitle
+    ) > 0
+  );
+}
+
+async function findGoogleBooksCuratedCover(
+  title: string,
+  signal?: AbortSignal
+): Promise<string | null> {
+  if (
+    !API_KEY ||
+    isGoogleBooksCoverQuotaExhausted ||
+    Date.now() < googleBooksCoverRetryAfter
+  ) {
+    return null;
+  }
+
+  try {
+    // Avoid retrying quota errors for decorative artwork.
+    const response = await fetch(
+      buildRequestUrl(
+        `intitle:"${title}"`,
+        15
+      ),
+      { signal }
+    );
+
+    if (response.status === 429) {
+      isGoogleBooksCoverQuotaExhausted = true;
+      return null;
+    }
+
+    if (response.status === 503) {
+      // Briefly fall back to Open Library instead of repeatedly
+      // requesting artwork while Google Books is unavailable.
+      googleBooksCoverRetryAfter = Date.now() + 60_000;
+      return null;
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        `Google Books curated cover lookup failed: ${response.status}`
+      );
+    }
+
+    const data =
+      (await response.json()) as GoogleBooksResponse;
+    const results =
+      (data.items ?? []).map(mapGoogleBook);
+
+    const matched = results
+      .filter(
+        (item) =>
+          Boolean(item.imageUrl) &&
+          isMatchingCuratedBook(
+            item.title,
+            item.subtitle,
+            title
+          )
+      )
+      .sort(
+        (first, second) =>
+          getEditionQualityScore(second, title) -
+          getEditionQualityScore(first, title)
+      );
+
+    return matched[0]?.imageUrl ?? null;
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.name === 'AbortError'
+    ) {
+      throw error;
+    }
+
+    if (__DEV__) {
+      console.log(
+        'Google Books curated cover lookup unavailable:',
+        error
+      );
+    }
+
+    return null;
+  }
+}
+
+async function findOpenLibraryCuratedCover(
+  title: string,
+  signal?: AbortSignal
+): Promise<string | null> {
+  const url =
+    `${OPEN_LIBRARY_SEARCH_URL}` +
+    `?title=${encodeURIComponent(title)}` +
+    `&fields=${encodeURIComponent('title,author_name,cover_i')}` +
+    '&limit=15';
+
+  const response = await fetch(url, {
+    signal,
+    headers: OPEN_LIBRARY_REQUEST_HEADERS,
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Open Library curated cover search failed: ${response.status}`
+    );
+  }
+
+  const data =
+    (await response.json()) as
+      OpenLibrarySearchResponse;
+
+  const match = (data.docs ?? []).find(
+    (document) =>
+      typeof document.cover_i === 'number' &&
+      document.cover_i > 0 &&
+      isMatchingCuratedBook(
+        document.title ?? '',
+        document.author_name?.join(', '),
+        title
+      )
+  );
+
+  return match?.cover_i
+    ? `https://covers.openlibrary.org/b/id/${match.cover_i}-M.jpg`
+    : null;
+}
+
+async function findCuratedBookCover(
+  item: Top3Item,
+  signal?: AbortSignal
+): Promise<string | null> {
+  if (item.imageUrl) {
+    return item.imageUrl;
+  }
+
+  const key =
+    `${normalizeText(item.title)}|` +
+    normalizeText(
+      getCuratedSearchHint(item.title) ?? ''
+    );
+
+  if (curatedBookCoverCache.has(key)) {
+    return curatedBookCoverCache.get(key) ?? null;
+  }
+
+  if (signal?.aborted) {
+    throw createAbortError();
+  }
+
+  const googleCover =
+    await findGoogleBooksCuratedCover(
+      item.title,
+      signal
+    );
+
+  if (googleCover) {
+    curatedBookCoverCache.set(key, googleCover);
+    return googleCover;
+  }
+
+  try {
+    const openLibraryCover =
+      await findOpenLibraryCuratedCover(
+        item.title,
+        signal
+      );
+
+    curatedBookCoverCache.set(
+      key,
+      openLibraryCover
+    );
+
+    return openLibraryCover;
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.name === 'AbortError'
+    ) {
+      throw error;
+    }
+
+    if (__DEV__) {
+      console.log(
+        'Open Library curated cover lookup unavailable:',
+        error
+      );
+    }
+
+    // Don't cache network failures: a later attempt may succeed.
+    return null;
+  }
+}
+
+export async function addCuratedBookCovers(
+  items: Top3Item[],
+  signal?: AbortSignal
+): Promise<Top3Item[]> {
+  const enriched: Top3Item[] = [];
+
+  for (
+    let index = 0;
+    index < items.length;
+    index += CURATED_COVER_BATCH_SIZE
+  ) {
+    if (signal?.aborted) {
+      throw createAbortError();
+    }
+
+    const batch = items.slice(
+      index,
+      index + CURATED_COVER_BATCH_SIZE
+    );
+
+    const updated = await Promise.all(
+      batch.map(async (item) => {
+        const cover = await findCuratedBookCover(
+          item,
+          signal
+        );
+
+        // Preserve the curated ID, title, order and all other fields.
+        return cover
+          ? { ...item, imageUrl: cover }
+          : item;
+      })
+    );
+
+    enriched.push(...updated);
+  }
+
+  return enriched;
+}
+
 export async function getPopularBooks(
   topic?: string,
   limit = 5,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  includeArtwork = true
 ): Promise<Top3Item[]> {
   const normalizedTopic =
     topic?.trim().toLowerCase() ?? '';
@@ -1427,9 +1703,13 @@ export async function getPopularBooks(
     const generalCuratedItems =
       createGeneralCuratedSuggestionItems();
 
-    return shuffleItems(
+    const selected = shuffleItems(
       generalCuratedItems
     ).slice(0, limit);
+
+    return includeArtwork
+      ? addCuratedBookCovers(selected, signal)
+      : selected;
   }
 
   const curatedSuggestions =
@@ -1444,9 +1724,13 @@ export async function getPopularBooks(
         curatedSuggestions
       );
 
-    return shuffleItems(
+    const selected = shuffleItems(
       curatedItems
     ).slice(0, limit);
+
+    return includeArtwork
+      ? addCuratedBookCovers(selected, signal)
+      : selected;
   }
 
   if (!API_KEY) {

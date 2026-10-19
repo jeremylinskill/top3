@@ -223,7 +223,8 @@ export async function getPopularSuggestionsByCategory(
   topic?: string,
   limit = 5,
   signal?: AbortSignal,
-  collectionOption?: CollectionOption
+  collectionOption?: CollectionOption,
+  skipBookArtwork = false
 ): Promise<Top3Item[]> {
   const musicianRole =
     getMusicianRole(
@@ -269,6 +270,11 @@ export async function getPopularSuggestionsByCategory(
 
   if (!provider) {
     return [];
+  }
+
+  if (skipBookArtwork && provider === getPopularBooks) {
+    // The Search screen shows text-only suggestion chips.
+    return getPopularBooks(topic, limit, signal, false);
   }
 
   return provider(

@@ -1,11 +1,12 @@
 import ActionSheet from '@/components/action-sheet';
 import AuthProviderButton from '@/components/auth-provider-button';
 import AppText from '@/components/app-text';
+import ArtworkThumbnail from '@/components/artwork-thumbnail';
 import Chip from '@/components/chip';
 import { MediaPreviewItemButton } from '@/components/media-preview-button';
 import PageHeader from '@/components/page-header';
 import PrimaryButton from '@/components/primary-button';
-import ScreenHeader from '@/components/screen-header';
+import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
 import SearchInput from '@/components/search-input';
 import SuggestMusicianSheet from '@/components/suggest-musician-sheet';
 import SearchResultSkeleton from '@/components/search-result-skeleton';
@@ -45,7 +46,6 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
-  Image,
   Keyboard,
   Pressable,
   ScrollView,
@@ -166,6 +166,27 @@ function normalizeValue(value?: string) {
 }
 export default function SearchScreen() {
   const colors = useAppColors();
+  const [headerHidden, setHeaderHidden] = useState(false);
+  const lastScrollOffset = useRef(0);
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  function handleScroll(offsetY: number) {
+    const y = Math.max(0, offsetY);
+    const delta = y - lastScrollOffset.current;
+
+    if (y < 20) {
+      setHeaderHidden(false);
+    } else if (delta >= 7 && y > 36) {
+      setHeaderHidden(true);
+    } else if (delta <= -7) {
+      setHeaderHidden(false);
+    }
+
+    if (Math.abs(delta) >= 7 || y < 20) {
+      lastScrollOffset.current = y;
+    }
+  }
+
   const params = useLocalSearchParams();
   const rank = params.rank;
   const sourceParam = Array.isArray(params.source)
@@ -670,7 +691,8 @@ export default function SearchScreen() {
                   topic,
                   20,
                   undefined,
-                  activeCollectionOption
+                  activeCollectionOption,
+                  true
                 );
           if (!isMounted) {
             return;
@@ -1261,38 +1283,15 @@ const normalizedRank = Array.isArray(rank)
               height: artworkRule.height,
             },
           ]}>
-          {item.imageUrl ? (
-            <Image
-              source={{ uri: item.imageUrl }}
-              style={[
-                styles.image,
-                {
-                  width: artworkRule.width,
-                  height: artworkRule.height,
-                  backgroundColor:
-                    colors.skeletonSubtle,
-                },
-              ]}
-              resizeMode="cover"
-            />
-          ) : (
-            <View
-              style={[
-                styles.imagePlaceholder,
-                {
-                  width: artworkRule.width,
-                  height: artworkRule.height,
-                  backgroundColor:
-                    colors.skeletonSubtle,
-                },
-              ]}>
-              <Ionicons
-                name={placeholderIcon}
-                size={28}
-                color={colors.tertiaryText}
-              />
-            </View>
-          )}
+          <ArtworkThumbnail
+            imageUrl={item.imageUrl}
+            category={activeCollection?.category}
+            placeholderIcon={placeholderIcon}
+            width={artworkRule.width}
+            height={artworkRule.height}
+            borderRadius={8}
+            placeholderBackgroundColor={colors.skeletonSubtle}
+          />
         </View>
         <View style={styles.resultDetails}>
           <AppText
@@ -1339,7 +1338,23 @@ const normalizedRank = Array.isArray(rank)
             backgroundColor: colors.background,
           },
         ]}>
-      <ScreenHeader showBackButton />
+      <ScreenHeader
+        showBackButton
+        overlay
+        compact={headerHidden}
+        collapseWithBackButton
+      />
+      <ScrollView
+        ref={scrollViewRef}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        onScroll={(event) =>
+          handleScroll(event.nativeEvent.contentOffset.y)
+        }
+        scrollEventThrottle={16}>
       <PageHeader
         title={`${selectedCategory?.icon ?? '⭐'} ${pageTitle}`}
         subtitle={pageSubtitle}
@@ -1376,6 +1391,9 @@ const normalizedRank = Array.isArray(rank)
               Keyboard.dismiss();
             }
             setActiveSource(nextSource);
+            scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+            lastScrollOffset.current = 0;
+            setHeaderHidden(false);
           }}
         />
       </View>
@@ -1496,14 +1514,7 @@ const normalizedRank = Array.isArray(rank)
                   style={styles.sectionTitle}>
                   {resultsTitle}
                 </AppText>
-                <ScrollView
-                  showsVerticalScrollIndicator={false}
-                  keyboardShouldPersistTaps="handled"
-                  keyboardDismissMode="interactive"
-                  alwaysBounceVertical
-                  contentContainerStyle={
-                    styles.resultsContent
-                  }>
+                <View style={styles.resultsContent}>
                   {Array.from(
                     { length: 5 },
                     (_, index) => (
@@ -1514,7 +1525,7 @@ const normalizedRank = Array.isArray(rank)
                       />
                     )
                   )}
-                </ScrollView>
+                </View>
               </>
             ) : !hasSearched ? (
               <View style={styles.emptySpace} />
@@ -1597,14 +1608,7 @@ const normalizedRank = Array.isArray(rank)
                       ],
                     },
                   ]}>
-                  <ScrollView
-                    showsVerticalScrollIndicator={false}
-                    keyboardShouldPersistTaps="handled"
-                    keyboardDismissMode="interactive"
-                    alwaysBounceVertical
-                    contentContainerStyle={
-                      styles.resultsContent
-                    }>
+                  <View style={styles.resultsContent}>
                     {searchResults.map((item) =>
                       renderSelectionRow(
                         item,
@@ -1622,15 +1626,13 @@ const normalizedRank = Array.isArray(rank)
                         }}
                       />
                     ) : null}
-                  </ScrollView>
+                  </View>
                 </Animated.View>
               </>
             )}
           </>
         ) : isLoadingSavedItems || isSavedRoleLoading ? (
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.resultsContent}>
+          <View style={styles.resultsContent}>
             {Array.from(
               { length: 5 },
               (_, index) => (
@@ -1641,7 +1643,7 @@ const normalizedRank = Array.isArray(rank)
                 />
               )
             )}
-          </ScrollView>
+          </View>
         ) : hasSavedItemsLoadError &&
           savedItems.length === 0 ? (
           <View style={styles.messageContainer}>
@@ -1727,20 +1729,18 @@ const normalizedRank = Array.isArray(rank)
               style={styles.sectionTitle}>
               Saved {savedSelectionName}
             </AppText>
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={styles.resultsContent}>
+            <View style={styles.resultsContent}>
               {savedCategoryItems.map((savedItem) =>
                 renderSelectionRow(
                   savedItem.item,
                   'saved'
                 )
               )}
-            </ScrollView>
+            </View>
           </>
         )}
       </View>
+      </ScrollView>
       {musicianRole ? (
         <SuggestMusicianSheet
           visible={isSuggestMusicianVisible}
@@ -1780,13 +1780,21 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingTop: SCREEN_HEADER_HEIGHT,
+    paddingBottom: 36,
+  },
   segmentedContainer: {
     paddingHorizontal: 20,
     paddingTop: 0,
     paddingBottom: 20,
   },
   content: {
-    flex: 1,
+    flexGrow: 1,
     paddingHorizontal: 20,
   },
   searchInputWrapper: {
@@ -1808,13 +1816,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   resultsContainer: {
-    flex: 1,
+    width: '100%',
   },
   emptySpace: {
-    flex: 1,
+    flexGrow: 1,
   },
   messageContainer: {
-    flex: 1,
+    minHeight: 220,
     alignItems: 'center',
     justifyContent: 'flex-start',
     paddingTop: 48,
@@ -1856,24 +1864,12 @@ const styles = StyleSheet.create({
     width: 64,
     height: 96,
   },
-  image: {
-    width: 64,
-    height: 96,
-    borderRadius: 8,
-  },
   previewButton: {
     flexShrink: 0,
     width: 36,
     height: 36,
     marginLeft: 12,
     borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  imagePlaceholder: {
-    width: 64,
-    height: 96,
-    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
