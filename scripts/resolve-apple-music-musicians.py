@@ -390,6 +390,12 @@ def main() -> None:
     )
 
     parser.add_argument(
+        "--unconnected",
+        action="store_true",
+        help="Audit unconnected musicians in the local DEV catalogue.",
+    )
+
+    parser.add_argument(
         "--wikidata",
         action="store_true",
         help="Include unverified Wikidata identity candidates in a separate audit.",
@@ -485,6 +491,24 @@ def main() -> None:
 
     candidates = musicians
 
+    if args.unconnected:
+        if args.role or args.wikidata or args.band_profiles:
+            parser.error(
+                "--unconnected cannot be combined with role, "
+                "Wikidata or band-profile options."
+            )
+
+        candidates = sorted(
+            (
+                row for row in musicians
+                if row.get("active", "").strip().lower() == "true"
+                and not row.get("apple_music_artist_id", "").strip()
+                # Keith Moon already has a DEV preview override.
+                and row["id"] != "musician-keith-moon"
+            ),
+            key=lambda row: row["id"],
+        )
+
     if args.role:
         musicians_by_id = {row["id"]: row for row in musicians}
 
@@ -513,9 +537,19 @@ def main() -> None:
         else OUTPUT_PATH
     )
 
+    if args.unconnected:
+        output_path = ROOT / (
+            f"apple-music-unconnected-{args.start}-{args.limit}.csv"
+        )
+
     if args.wikidata:
         output_path = output_path.with_name(
             "wikidata-" + output_path.name
+        )
+
+    if args.unconnected and output_path.exists():
+        raise SystemExit(
+            f"Existing audit preserved: {output_path}"
         )
 
     print(f"Selected {len(selected)} of {len(candidates)} eligible musicians.")
