@@ -63,9 +63,9 @@ export function initializeAnalytics() {
       idfv: false,
       ipAddress: false,
       language: false,
-      osName: false,
-      osVersion: false,
-      platform: false,
+      osName: true,
+      osVersion: true,
+      platform: true,
     },
   });
 
