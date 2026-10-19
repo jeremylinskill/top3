@@ -7,7 +7,7 @@ import CommentsSheet from '@/components/comments-sheet';
 import IconButton from '@/components/icon-button';
 import { MediaPreviewItemButton } from '@/components/media-preview-button';
 import PrimaryButton from '@/components/primary-button';
-import ScreenHeader from '@/components/screen-header';
+import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
 import SegmentedControl from '@/components/segmented-control';
 import Top3Card from '@/components/top3-card';
 import {
@@ -52,18 +52,25 @@ import {
 import {
   useEffect,
   useMemo,
+  useRef,
   useState
 } from 'react';
 import {
   ActivityIndicator,
   Image,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
+
+const CATEGORY_FEED_SAFE_AREA_EDGES: Edge[] =
+  Platform.OS === 'android'
+    ? ['top', 'left', 'right', 'bottom']
+    : ['top', 'left', 'right'];
 
 type CategoryView = 'lists' | 'overall';
 
@@ -141,6 +148,25 @@ function formatTopicLabel(topic: string) {
 
 export default function CategoryFeedScreen() {
   const colors = useAppColors();
+  const [headerHidden, setHeaderHidden] = useState(false);
+  const lastScrollOffset = useRef(0);
+
+  function handleScroll(offsetY: number) {
+    const y = Math.max(0, offsetY);
+    const delta = y - lastScrollOffset.current;
+
+    if (y < 20) {
+      setHeaderHidden(false);
+    } else if (delta >= 7 && y > 36) {
+      setHeaderHidden(true);
+    } else if (delta <= -7) {
+      setHeaderHidden(false);
+    }
+
+    if (Math.abs(delta) >= 7 || y < 20) {
+      lastScrollOffset.current = y;
+    }
+  }
   const params = useLocalSearchParams<{
     category?: string | string[];
     topic?: string | string[];
@@ -1508,60 +1534,64 @@ if (isMounted) {
           backgroundColor: colors.background,
         },
       ]}
-      edges={['top', 'left', 'right']}>
-      <ScreenHeader showBackButton />
-
-      {isItemFiltered ? (
-        <View style={styles.filteredHeader}>
-          <AppText
-            variant="label"
-            tone="tertiary"
-            style={styles.filteredEyebrow}>
-            Lists containing
-          </AppText>
-
-          <AppText
-            variant="pageTitle"
-            style={styles.filteredTitle}>
-            {itemFilterLabel || 'This item'}
-          </AppText>
-        </View>
-      ) : (
-        <View
-          style={[
-            styles.segmentedContainer,
-            {
-              backgroundColor: colors.background,
-            },
-          ]}>
-          <SegmentedControl<CategoryView>
-            value={activeView}
-            options={[
-              {
-                value: 'lists',
-                label: 'Individual',
-                accessibilityLabel:
-                  'Show published lists',
-              },
-              {
-                value: 'overall',
-                label: 'Overall',
-                accessibilityLabel:
-                  'Show overall ranking',
-              },
-            ]}
-            onChange={setActiveView}
-          />
-        </View>
-      )}
+      edges={CATEGORY_FEED_SAFE_AREA_EDGES}>
+      <ScreenHeader
+        showBackButton
+        overlay
+        compact={headerHidden}
+        collapseWithBackButton
+      />
 
       <ScrollView
-        contentContainerStyle={[
-          styles.content,
-          isItemFiltered &&
-            styles.filteredContent,
-        ]}
-        showsVerticalScrollIndicator={false}>
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        onScroll={(event) =>
+          handleScroll(event.nativeEvent.contentOffset.y)
+        }
+        scrollEventThrottle={16}>
+        {isItemFiltered ? (
+          <View style={styles.filteredHeader}>
+            <AppText
+              variant="label"
+              tone="tertiary"
+              style={styles.filteredEyebrow}>
+              Lists containing
+            </AppText>
+
+            <AppText
+              variant="pageTitle"
+              style={styles.filteredTitle}>
+              {itemFilterLabel || 'This item'}
+            </AppText>
+          </View>
+        ) : (
+          <View
+            style={[
+              styles.segmentedContainer,
+              {
+                backgroundColor: colors.background,
+              },
+            ]}>
+            <SegmentedControl<CategoryView>
+              value={activeView}
+              options={[
+                {
+                  value: 'lists',
+                  label: 'Individual',
+                  accessibilityLabel:
+                    'Show published lists',
+                },
+                {
+                  value: 'overall',
+                  label: 'Overall',
+                  accessibilityLabel:
+                    'Show overall ranking',
+                },
+              ]}
+              onChange={setActiveView}
+            />
+          </View>
+        )}
         {activeView === 'lists' ? (
           filteredPosts.length === 0 ? (
             <View
@@ -2079,13 +2109,12 @@ const styles = StyleSheet.create({
   },
 
   segmentedContainer: {
-    paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 4,
+    marginBottom: 18,
   },
 
   filteredHeader: {
-    paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 20,
   },
@@ -2100,12 +2129,8 @@ const styles = StyleSheet.create({
 
   content: {
     paddingHorizontal: 20,
-    paddingTop: 18,
+    paddingTop: SCREEN_HEADER_HEIGHT,
     paddingBottom: 40,
-  },
-
-  filteredContent: {
-    paddingTop: 0,
   },
 
   postList: {

@@ -1,7 +1,7 @@
 import AppText from '@/components/app-text';
 import DiscoverListCard from '@/components/discover-list-card';
 import PrimaryButton from '@/components/primary-button';
-import ScreenHeader from '@/components/screen-header';
+import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
 import SearchInput from '@/components/search-input';
 import SegmentedControl from '@/components/segmented-control';
 import TasteMatchBadge from '@/components/taste-match-badge';
@@ -13,6 +13,10 @@ import {
   MIN_TRENDING_TOPICS,
 } from '@/constants/discover-featured';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
+import {
+  FLOATING_TAB_BAR_BOTTOM_SPACING,
+  FLOATING_TAB_BAR_HEIGHT,
+} from '@/context/tab-bar-scroll-context';
 import { useBlock } from '@/context/block-context';
 import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
@@ -47,6 +51,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import {
@@ -60,7 +65,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type DiscoverCategory = {
   id: string;
@@ -144,6 +149,33 @@ function formatResultCaption(
 
 export default function DiscoverScreen() {
   const colors = useAppColors();
+  const insets = useSafeAreaInsets();
+  const [headerHidden, setHeaderHidden] = useState(false);
+  const lastScrollOffset = useRef(0);
+
+  function handleScroll(offsetY: number) {
+    const y = Math.max(0, offsetY);
+    const delta = y - lastScrollOffset.current;
+
+    if (y < 20) {
+      setHeaderHidden(false);
+    } else if (delta >= 7 && y > 36) {
+      setHeaderHidden(true);
+    } else if (delta <= -7) {
+      setHeaderHidden(false);
+    }
+
+    if (Math.abs(delta) >= 7 || y < 20) {
+      lastScrollOffset.current = y;
+    }
+  }
+  const bottomScrollClearance = Math.max(
+    40,
+    insets.bottom +
+      FLOATING_TAB_BAR_BOTTOM_SPACING +
+      FLOATING_TAB_BAR_HEIGHT +
+      24
+  );
   const { profile } = useProfile();
   const { createList } = useTop3();
 
@@ -1450,11 +1482,18 @@ export default function DiscoverScreen() {
         },
       ]}
       edges={['top', 'left', 'right']}>
-      <ScreenHeader />
+      <ScreenHeader overlay compact={headerHidden} />
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: bottomScrollClearance },
+        ]}
         showsVerticalScrollIndicator={false}
+        onScroll={(event) =>
+          handleScroll(event.nativeEvent.contentOffset.y)
+        }
+        scrollEventThrottle={16}
         keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl
@@ -2350,7 +2389,7 @@ const styles = StyleSheet.create({
 
   content: {
     paddingHorizontal: 20,
-    paddingTop: 24,
+    paddingTop: SCREEN_HEADER_HEIGHT + 24,
     paddingBottom: 40,
   },
 
