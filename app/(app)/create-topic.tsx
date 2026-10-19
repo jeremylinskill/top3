@@ -1,6 +1,6 @@
 import AppText from '@/components/app-text';
 import PageHeader from '@/components/page-header';
-import ScreenHeader from '@/components/screen-header';
+import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
 import SearchInput from '@/components/search-input';
 import SegmentedControl from '@/components/segmented-control';
 import {
@@ -38,13 +38,14 @@ import {
   Animated,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   useWindowDimensions,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 function normalizeValue(value?: string) {
   const normalizedValue = value?.trim().toLowerCase() ?? '';
   return normalizedValue === 'general' ? '' : normalizedValue;
@@ -61,13 +62,11 @@ function findExistingCollection(
   const normalizedType = normalizeValue(typeName);
   const normalizedCollectionOptionId =
     collectionOptionId?.trim().toLowerCase();
-
   const matchingCollections = lists.filter((list) => {
     const existingCollectionOptionId =
       list.collectionOptionId
         ?.trim()
         .toLowerCase();
-
     if (
       normalizedCollectionOptionId &&
       existingCollectionOptionId
@@ -77,7 +76,6 @@ function findExistingCollection(
         normalizedCollectionOptionId
       );
     }
-
     return (
       normalizeValue(list.category) === normalizedCategoryId &&
       normalizeValue(list.topic) === normalizedTopic &&
@@ -103,6 +101,42 @@ function getSortedTopics(topics: Top3Topic[]) {
     .filter((topic) => topic.id !== 'general')
     .sort((first, second) => first.name.localeCompare(second.name));
 }
+// Editorial descriptions for the category selection cards.
+// Card visibility is driven separately by the available collection options.
+const CATEGORY_BROWSE_DESCRIPTIONS: Record<
+  string,
+  { type: string; theme: string }
+> = {
+  movies: {
+    type: 'Genres and people.',
+    theme: 'Moods, eras, platforms and more.',
+  },
+  tv: {
+    type: 'Genres and people.',
+    theme: 'Moods, eras, networks and more.',
+  },
+  books: {
+    type: 'Genres and people.',
+    theme: 'Themes, settings, eras and more.',
+  },
+  games: {
+    type: 'Genres and studios.',
+    theme: 'Eras, platforms, play styles and more.',
+  },
+  albums: {
+    type: 'Genres and artists.',
+    theme: 'Decades, moods, sounds and more.',
+  },
+  artists: {
+    type: 'Genres and people.',
+    theme: 'Eras, scenes, influences and more.',
+  },
+  songs: {
+    type: 'Genres and artists.',
+    theme: 'Moods, decades, occasions and more.',
+  },
+};
+
 const SCREEN_HORIZONTAL_PADDING = 20;
 const GENRE_CONTAINER_HORIZONTAL_PADDING = 18;
 const TOPIC_GAP = 12;
@@ -110,8 +144,34 @@ const MIN_THREE_COLUMN_CARD_WIDTH = 112;
 const MIN_TRENDING_THEME_CREATORS = 3;
 const MIN_TRENDING_THEMES = 3;
 const MAX_TRENDING_THEMES = 5;
+
+// The root layout draws a solid Android system-navigation backdrop.
+// Keep these screens above that backdrop without altering iOS spacing.
+const SCREEN_SAFE_AREA_EDGES: Edge[] =
+  Platform.OS === 'android'
+    ? ['top', 'left', 'right', 'bottom']
+    : ['top', 'left', 'right'];
 export default function CreateTopicScreen() {
   const colors = useAppColors();
+  const [headerHidden, setHeaderHidden] = useState(false);
+  const lastScrollOffset = useRef(0);
+
+  function handleScroll(offsetY: number) {
+    const y = Math.max(0, offsetY);
+    const delta = y - lastScrollOffset.current;
+
+    if (y < 20) {
+      setHeaderHidden(false);
+    } else if (delta >= 7 && y > 36) {
+      setHeaderHidden(true);
+    } else if (delta <= -7) {
+      setHeaderHidden(false);
+    }
+
+    if (Math.abs(delta) >= 7 || y < 20) {
+      lastScrollOffset.current = y;
+    }
+  }
   const { width: windowWidth } = useWindowDimensions();
   const [
     themeSearchQuery,
@@ -211,6 +271,11 @@ export default function CreateTopicScreen() {
     requestedMode === 'type' || requestedMode === 'theme'
       ? requestedMode
       : undefined;
+
+  useEffect(() => {
+    lastScrollOffset.current = 0;
+    setHeaderHidden(false);
+  }, [categoryId, mode]);
   const { createList, lists, selectList } = useTop3();
   const { getOptionsForCategory } =
     useCollectionOptions();
@@ -225,7 +290,7 @@ export default function CreateTopicScreen() {
     return (
       <SafeAreaView
         style={[styles.container, { backgroundColor: colors.background }]}
-        edges={['top', 'left', 'right']}>
+        edges={SCREEN_SAFE_AREA_EDGES}>
         <ScreenHeader showBackButton />
         <PageHeader
           title="Choose a category"
@@ -264,24 +329,46 @@ export default function CreateTopicScreen() {
       selectedCategory.id,
       'theme'
     );
+  const hasGenreOptions = topics.length > 0;
   const hasTypeOptions =
     typeOptions.length > 0;
+  const hasTypeChoices = hasGenreOptions || hasTypeOptions;
   const typeOptionsArePeople =
     hasTypeOptions &&
-    typeOptions.every(
-      (option) =>
-        option.groupName === 'people' ||
-        option.entityKind === 'person'
-    );
+    (selectedCategory.id === 'artists' ||
+      typeOptions.every(
+        (option) =>
+          option.groupName === 'people' ||
+          option.entityKind === 'person'
+      ));
   const typeOptionsLabel =
     typeOptionsArePeople
       ? 'People'
       : 'Types';
   const hasThemeOptions =
     themes.length > 0;
-  const hasConfigurableOptions =
-    hasTypeOptions ||
-    hasThemeOptions;
+  const categoryBrowseDescriptions =
+    CATEGORY_BROWSE_DESCRIPTIONS[selectedCategory.id];
+  const typeCardSubtitle = hasGenreOptions
+    ? hasTypeOptions
+      ? categoryBrowseDescriptions?.type ??
+        `Genres and ${typeOptionsLabel.toLowerCase()}.`
+      : 'Genres.'
+    : typeOptionsArePeople
+      ? 'People.'
+      : 'Types.';
+  const themeCardSubtitle =
+    categoryBrowseDescriptions?.theme ??
+    'Explore themes and more.';
+  const typeScreenSubtitle = hasGenreOptions
+    ? hasTypeOptions
+      ? selectedCategory.id === 'artists'
+        ? 'Choose a genre or type of artist.'
+        : `Choose a genre or ${typeOptionsArePeople ? 'person' : 'type'}.`
+      : 'Choose a genre.'
+    : typeOptionsArePeople
+      ? 'Choose a person.'
+      : 'Choose a type.';
   const overallCollection = findExistingCollection(
     lists,
     selectedCategory.id,
@@ -477,40 +564,45 @@ export default function CreateTopicScreen() {
     ) {
       return;
     }
-
     const requestedTheme = themes.find(
       (theme) =>
         theme.slug === requestedThemeSlug ||
         theme.id === requestedThemeSlug
     );
-
     if (!requestedTheme) {
       return;
     }
-
     hasHandledRequestedTheme.current = true;
-
     void chooseCollection(
       undefined,
       `Top 3 ${requestedTheme.name}`,
       requestedTheme
     );
   }, [requestedThemeSlug, mode, themes]);
-
-  if (hasConfigurableOptions && !mode) {
+  if (!mode) {
     return (
       <SafeAreaView
         style={[styles.container, { backgroundColor: colors.background }]}
-        edges={['top', 'left', 'right']}>
-        <ScreenHeader showBackButton />
+        edges={SCREEN_SAFE_AREA_EDGES}>
+        <ScreenHeader
+          showBackButton
+          overlay
+          compact={headerHidden}
+          collapseWithBackButton
+        />
+        <ScrollView
+          style={[styles.scrollView, { backgroundColor: colors.background }]}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          onScroll={(event) =>
+            handleScroll(event.nativeEvent.contentOffset.y)
+          }
+          scrollEventThrottle={16}>
         <PageHeader
           title={`${selectedCategory.icon} ${selectedCategory.name}`}
           subtitle="How would you like to rank them?"
         />
-        <ScrollView
-          style={[styles.scrollView, { backgroundColor: colors.background }]}
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}>
+        <View style={styles.content}>
           <Pressable
             style={({ pressed }) => [
               styles.choiceCard,
@@ -544,96 +636,110 @@ export default function CreateTopicScreen() {
               />
             )}
           </Pressable>
-          <Pressable
-            style={({ pressed }) => [
-              styles.choiceCard,
-              styles.choiceCardSpacing,
-              { backgroundColor: colors.surface },
-              pressed && styles.pressed,
-            ]}
-            onPress={() => openMode('type')}
-            accessibilityRole="button"
-            accessibilityLabel={`Create a ${selectedCategory.name} Top 3 by type`}>
-            <View style={styles.choiceText}>
-              <AppText variant="selectionTitle">By type</AppText>
-              <AppText variant="subtitle" style={styles.choiceSubtitle}>
-                Genres, {typeOptionsLabel.toLowerCase()} and more.
-              </AppText>
-            </View>
-            <Ionicons
-              name="chevron-forward"
-              size={20}
-              color={colors.tertiaryText}
-            />
-          </Pressable>
-          <Pressable
-            style={({ pressed }) => [
-              styles.choiceCard,
-              styles.choiceCardSpacing,
-              { backgroundColor: colors.surface },
-              pressed && styles.pressed,
-            ]}
-            onPress={() => openMode('theme')}
-            accessibilityRole="button"
-            accessibilityLabel={`Create a ${selectedCategory.name} Top 3 by theme`}>
-            <View style={styles.choiceText}>
-              <AppText variant="selectionTitle">By theme</AppText>
-              <AppText variant="subtitle" style={styles.choiceSubtitle}>
-                Moods, people, eras, platforms and more.
-              </AppText>
-            </View>
-            <Ionicons
-              name="chevron-forward"
-              size={20}
-              color={colors.tertiaryText}
-            />
-          </Pressable>
+          {hasTypeChoices ? (
+            <Pressable
+              style={({ pressed }) => [
+                styles.choiceCard,
+                styles.choiceCardSpacing,
+                { backgroundColor: colors.surface },
+                pressed && styles.pressed,
+              ]}
+              onPress={() => openMode('type')}
+              accessibilityRole="button"
+              accessibilityLabel={`Create a ${selectedCategory.name} Top 3 by type`}>
+              <View style={styles.choiceText}>
+                <AppText variant="selectionTitle">By type</AppText>
+                <AppText variant="subtitle" style={styles.choiceSubtitle}>
+                  {typeCardSubtitle}
+                </AppText>
+              </View>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={colors.tertiaryText}
+              />
+            </Pressable>
+          ) : null}
+          {hasThemeOptions ? (
+            <Pressable
+              style={({ pressed }) => [
+                styles.choiceCard,
+                styles.choiceCardSpacing,
+                { backgroundColor: colors.surface },
+                pressed && styles.pressed,
+              ]}
+              onPress={() => openMode('theme')}
+              accessibilityRole="button"
+              accessibilityLabel={`Create a ${selectedCategory.name} Top 3 by theme`}>
+              <View style={styles.choiceText}>
+                <AppText variant="selectionTitle">By theme</AppText>
+                <AppText variant="subtitle" style={styles.choiceSubtitle}>
+                  {themeCardSubtitle}
+                </AppText>
+              </View>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={colors.tertiaryText}
+              />
+            </Pressable>
+          ) : null}
+        </View>
         </ScrollView>
       </SafeAreaView>
     );
   }
-  if (
-    hasConfigurableOptions &&
-    mode === 'type'
-  ) {
+  if (hasTypeChoices && mode === 'type') {
     return (
       <SafeAreaView
         style={[styles.container, { backgroundColor: colors.background }]}
-        edges={['top', 'left', 'right']}>
-        <ScreenHeader showBackButton />
-        <PageHeader
-          title="By type"
-          subtitle={`Choose a genre or ${typeOptionsLabel.toLowerCase().replace(/s$/, '')}.`}
+        edges={SCREEN_SAFE_AREA_EDGES}>
+        <ScreenHeader
+          showBackButton
+          overlay
+          compact={headerHidden}
+          collapseWithBackButton
         />
         <ScrollView
           style={[
             styles.scrollView,
             { backgroundColor: colors.background },
           ]}
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}>
-          <View style={styles.typeSegmentedSection}>
-            <SegmentedControl<'genres' | 'types'>
-              value={typeBrowseMode}
-              options={[
-                {
-                  value: 'genres',
-                  label: 'Genres',
-                  accessibilityLabel: 'Show genres',
-                },
-                {
-                  value: 'types',
-                  label: typeOptionsLabel,
-                  accessibilityLabel: `Show ${typeOptionsLabel.toLowerCase()}`,
-                },
-              ]}
-              onChange={(value) => {
-                setTypeBrowseMode(value);
-              }}
-            />
-          </View>
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          onScroll={(event) =>
+            handleScroll(event.nativeEvent.contentOffset.y)
+          }
+          scrollEventThrottle={16}>
+        <PageHeader
+          title="By type"
+          subtitle={typeScreenSubtitle}
+        />
+        <View style={styles.content}>
+          {hasGenreOptions && hasTypeOptions ? (
+            <View style={styles.typeSegmentedSection}>
+              <SegmentedControl<'genres' | 'types'>
+                value={typeBrowseMode}
+                options={[
+                  {
+                    value: 'genres',
+                    label: 'Genres',
+                    accessibilityLabel: 'Show genres',
+                  },
+                  {
+                    value: 'types',
+                    label: typeOptionsLabel,
+                    accessibilityLabel: `Show ${typeOptionsLabel.toLowerCase()}`,
+                  },
+                ]}
+                onChange={(value) => {
+                  setTypeBrowseMode(value);
+                }}
+              />
+            </View>
+          ) : null}
           <View style={styles.typeList}>
-            {typeBrowseMode === 'genres'
+            {hasGenreOptions && (!hasTypeOptions || typeBrowseMode === 'genres')
               ? topics.map((topic) => {
                   const existingCollection =
                     findExistingCollection(
@@ -714,15 +820,12 @@ export default function CreateTopicScreen() {
                   </Pressable>
                 ))}
           </View>
+        </View>
         </ScrollView>
       </SafeAreaView>
     );
   }
-  if (
-    hasConfigurableOptions &&
-    hasThemeOptions &&
-    mode === 'theme'
-  ) {
+  if (hasThemeOptions && mode === 'theme') {
     const recentThemePosts =
       getTrendingWindowPosts(
         publishedPosts,
@@ -913,11 +1016,12 @@ export default function CreateTopicScreen() {
               colors.background,
           },
         ]}
-        edges={['top', 'left', 'right']}>
-        <ScreenHeader showBackButton />
-        <PageHeader
-          title="By theme"
-          subtitle={`Choose a theme for your ${selectedCategory.name} Top 3.`}
+        edges={SCREEN_SAFE_AREA_EDGES}>
+        <ScreenHeader
+          showBackButton
+          overlay
+          compact={headerHidden}
+          collapseWithBackButton
         />
         <ScrollView
           style={[
@@ -927,11 +1031,18 @@ export default function CreateTopicScreen() {
                 colors.background,
             },
           ]}
-          contentContainerStyle={
-            styles.content
-          }
+          contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}>
+          showsVerticalScrollIndicator={false}
+          onScroll={(event) =>
+            handleScroll(event.nativeEvent.contentOffset.y)
+          }
+          scrollEventThrottle={16}>
+        <PageHeader
+          title="By theme"
+          subtitle={`Choose a theme for your ${selectedCategory.name} Top 3.`}
+        />
+        <View style={styles.content}>
           <SearchInput
             borderless
             value={themeSearchQuery}
@@ -1126,6 +1237,7 @@ export default function CreateTopicScreen() {
               </View>
             )}
           </View>
+        </View>
         </ScrollView>
       </SafeAreaView>
     );
@@ -1133,16 +1245,26 @@ export default function CreateTopicScreen() {
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
-      edges={['top', 'left', 'right']}>
-      <ScreenHeader showBackButton />
+      edges={SCREEN_SAFE_AREA_EDGES}>
+      <ScreenHeader
+        showBackButton
+        overlay
+        compact={headerHidden}
+        collapseWithBackButton
+      />
+      <ScrollView
+        style={[styles.scrollView, { backgroundColor: colors.background }]}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        onScroll={(event) =>
+          handleScroll(event.nativeEvent.contentOffset.y)
+        }
+        scrollEventThrottle={16}>
       <PageHeader
         title={`${selectedCategory.icon} ${selectedCategory.name}`}
         subtitle="Rank them all, or choose a genre."
       />
-      <ScrollView
-        style={[styles.scrollView, { backgroundColor: colors.background }]}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}>
+      <View style={styles.content}>
         <Pressable
           style={({ pressed }) => [
             styles.overallCard,
@@ -1236,6 +1358,7 @@ export default function CreateTopicScreen() {
             </View>
           </View>
         ) : null}
+      </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -1246,6 +1369,9 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  scrollContent: {
+    paddingTop: SCREEN_HEADER_HEIGHT,
   },
   content: {
     paddingHorizontal: 20,
