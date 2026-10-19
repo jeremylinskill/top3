@@ -9,6 +9,7 @@ import {
   getAwaitingEmailVerificationEmail,
 } from '@/services/onboarding-service';
 import { Ionicons } from '@expo/vector-icons';
+import * as IntentLauncher from 'expo-intent-launcher';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import {
@@ -16,7 +17,9 @@ import {
   useState,
 } from 'react';
 import {
+  Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
@@ -107,7 +110,16 @@ export default function CheckEmailScreen() {
 
   async function handleOpenEmail() {
     try {
-      await Linking.openURL('message://');
+      if (Platform.OS === 'android') {
+        await IntentLauncher.startActivityAsync(
+          'android.intent.action.MAIN',
+          {
+            category: 'android.intent.category.APP_EMAIL',
+          }
+        );
+      } else {
+        await Linking.openURL('message://');
+      }
     } catch (error) {
       console.error(
         'Unable to open email app:',
@@ -180,7 +192,10 @@ export default function CheckEmailScreen() {
           },
         ]}
         edges={['top', 'bottom']}>
-        <View style={styles.content}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}>
           <View style={styles.mainContent}>
             <View
               style={[
@@ -326,7 +341,7 @@ export default function CheckEmailScreen() {
               </AppText>
             </Pressable>
           </View>
-        </View>
+        </ScrollView>
       </SafeAreaView>
 
       <ActionSheet
@@ -422,8 +437,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  content: {
+  scrollView: {
     flex: 1,
+  },
+
+  content: {
+    flexGrow: 1,
     paddingHorizontal: 24,
     paddingTop: 48,
     paddingBottom: 24,

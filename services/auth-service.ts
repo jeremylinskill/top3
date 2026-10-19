@@ -10,6 +10,7 @@ import {
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as QueryParams from 'expo-auth-session/build/QueryParams';
 import * as Linking from 'expo-linking';
+import { Platform } from 'react-native';
 
 export interface SignUpWithEmailParams {
   email: string;
@@ -32,10 +33,12 @@ const googleIosClientId =
 const googleWebClientId =
   process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
 
-if (googleIosClientId && googleWebClientId) {
+if (googleWebClientId) {
   GoogleSignin.configure({
-    iosClientId: googleIosClientId,
     webClientId: googleWebClientId,
+    ...(googleIosClientId
+      ? { iosClientId: googleIosClientId }
+      : {}),
   });
 }
 
@@ -367,7 +370,7 @@ export async function signInWithApple() {
 }
 
 export async function signInWithGoogle() {
-  if (!googleIosClientId) {
+  if (Platform.OS === 'ios' && !googleIosClientId) {
     throw new Error(
       'The Google iOS client ID is not configured.'
     );

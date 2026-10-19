@@ -6,10 +6,12 @@ import ScreenHeader from '@/components/screen-header';
 import { TEXT_STYLES } from '@/constants/typography';
 import { useAppColors } from '@/hooks/use-app-colors';
 import { requestPasswordReset } from '@/services/auth-service';
+import * as IntentLauncher from 'expo-intent-launcher';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
+  Platform,
   Pressable,
   StyleSheet,
   TextInput,
@@ -124,7 +126,16 @@ export default function ForgotPasswordScreen() {
 
   async function handleOpenEmail() {
     try {
-      await Linking.openURL('message://');
+      if (Platform.OS === 'android') {
+        await IntentLauncher.startActivityAsync(
+          'android.intent.action.MAIN',
+          {
+            category: 'android.intent.category.APP_EMAIL',
+          }
+        );
+      } else {
+        await Linking.openURL('message://');
+      }
     } catch (error) {
       console.error(
         'Unable to open email app:',
