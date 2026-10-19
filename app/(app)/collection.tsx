@@ -4,7 +4,7 @@ import AppText from '@/components/app-text';
 import PageHeader from '@/components/page-header';
 import PrimaryButton from '@/components/primary-button';
 import RankedItemCard from '@/components/ranked-item-card';
-import ScreenHeader from '@/components/screen-header';
+import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
 import {
   CategoryId,
   TOP3_CATEGORIES,
@@ -24,10 +24,11 @@ import {
   useLocalSearchParams,
   useNavigation,
 } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
+  ScrollView,
   StyleSheet,
   View
 } from 'react-native';
@@ -149,6 +150,32 @@ export default function CollectionScreen() {
 
   const [activeIndex, setActiveIndex] =
     useState<number | null>(null);
+
+  const [headerHidden, setHeaderHidden] = useState(false);
+  const lastScrollOffset = useRef(0);
+
+  function handleScroll(offsetY: number) {
+    const y = Math.max(0, offsetY);
+
+    if (activeIndex !== null) {
+      lastScrollOffset.current = y;
+      return;
+    }
+
+    const delta = y - lastScrollOffset.current;
+
+    if (y < 20) {
+      setHeaderHidden(false);
+    } else if (delta >= 7 && y > 36) {
+      setHeaderHidden(true);
+    } else if (delta <= -7) {
+      setHeaderHidden(false);
+    }
+
+    if (Math.abs(delta) >= 7 || y < 20) {
+      lastScrollOffset.current = y;
+    }
+  }
 
   const [isDeleting, setIsDeleting] =
     useState(false);
@@ -831,14 +858,12 @@ function openSearch(rank: number) {
             backgroundColor: colors.background,
           },
         ]}>
-        <ScreenHeader showBackButton />
-
-
-      <PageHeader
-        title={`${categoryIcon} ${displayTitle}`}
-        subtitle={subtitle ?? undefined}
-      />
-
+        <ScreenHeader
+          showBackButton
+          overlay
+          compact={headerHidden}
+          collapseWithBackButton
+        />
 
       <View style={styles.listArea}>
         {selectedItemCount > 0 ? (
@@ -846,10 +871,19 @@ function openSearch(rank: number) {
             data={draggableRows}
             keyExtractor={(row) => row.key}
             renderItem={renderItem}
+            ListHeaderComponent={
+              <View style={styles.listHeader}>
+                <PageHeader
+                  title={`${categoryIcon} ${displayTitle}`}
+                  subtitle={subtitle ?? undefined}
+                />
+              </View>
+            }
             ListFooterComponent={
               renderEmptySlots
             }
-            scrollEnabled={false}
+            scrollEnabled={true}
+            onScrollOffsetChange={handleScroll}
             onDragBegin={setActiveIndex}
             onRelease={() =>
               setActiveIndex(null)
@@ -866,9 +900,21 @@ function openSearch(rank: number) {
             extraData={activeIndex}
           />
         ) : (
-          <View style={styles.listContent}>
+          <ScrollView
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            onScroll={(event) =>
+              handleScroll(event.nativeEvent.contentOffset.y)
+            }
+            scrollEventThrottle={16}>
+            <View style={styles.listHeader}>
+              <PageHeader
+                title={`${categoryIcon} ${displayTitle}`}
+                subtitle={subtitle ?? undefined}
+              />
+            </View>
             {renderEmptySlots()}
-          </View>
+          </ScrollView>
         )}
       </View>
 
@@ -982,9 +1028,13 @@ const styles = StyleSheet.create({
   },
 
 
+  listHeader: {
+    marginHorizontal: -20,
+  },
+
   listContent: {
     paddingHorizontal: 8,
-    paddingTop: 0,
+    paddingTop: SCREEN_HEADER_HEIGHT,
     paddingBottom: 24,
   },
 
