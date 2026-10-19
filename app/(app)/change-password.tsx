@@ -2,7 +2,7 @@ import ActionSheet from '@/components/action-sheet';
 import AppText from '@/components/app-text';
 import AuthProviderButton from '@/components/auth-provider-button';
 import PageHeader from '@/components/page-header';
-import ScreenHeader from '@/components/screen-header';
+import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
 import { TEXT_STYLES } from '@/constants/typography';
 import { useAppColors } from '@/hooks/use-app-colors';
 import { useAuth } from '@/hooks/use-auth';
@@ -31,6 +31,25 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function ChangePasswordScreen() {
   const colors = useAppColors();
   const { user } = useAuth();
+  const [headerHidden, setHeaderHidden] = useState(false);
+  const lastScrollOffset = useRef(0);
+
+  function handleScroll(offsetY: number) {
+    const y = Math.max(0, offsetY);
+    const delta = y - lastScrollOffset.current;
+
+    if (y < 20) {
+      setHeaderHidden(false);
+    } else if (delta >= 7 && y > 36) {
+      setHeaderHidden(true);
+    } else if (delta <= -7) {
+      setHeaderHidden(false);
+    }
+
+    if (Math.abs(delta) >= 7 || y < 20) {
+      lastScrollOffset.current = y;
+    }
+  }
 
   const newPasswordInputRef =
     useRef<TextInput>(null);
@@ -286,12 +305,11 @@ export default function ChangePasswordScreen() {
           },
         ]}
         edges={['top', 'bottom']}>
-        <ScreenHeader showBackButton />
-
-        <PageHeader
-          title="Change password"
-          subtitle={"Enter your current password,\nthen choose a new one."}
-          align="center"
+        <ScreenHeader
+          showBackButton
+          overlay
+          compact={headerHidden}
+          collapseWithBackButton
         />
 
         <KeyboardAvoidingView
@@ -310,6 +328,10 @@ export default function ChangePasswordScreen() {
               },
             ]}
             contentContainerStyle={styles.content}
+            onScroll={(event) =>
+              handleScroll(event.nativeEvent.contentOffset.y)
+            }
+            scrollEventThrottle={16}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode={
               Platform.OS === 'ios'
@@ -317,6 +339,12 @@ export default function ChangePasswordScreen() {
                 : 'on-drag'
             }
             showsVerticalScrollIndicator={false}>
+            <PageHeader
+              title="Change password"
+              subtitle={"Enter your current password,\nthen choose a new one."}
+              align="center"
+            />
+
             <Pressable
               onPress={Keyboard.dismiss}
               accessible={false}>
@@ -636,11 +664,12 @@ const styles = StyleSheet.create({
   },
 
   content: {
-    paddingHorizontal: 24,
+    paddingTop: SCREEN_HEADER_HEIGHT,
     paddingBottom: 48,
   },
 
   form: {
+    paddingHorizontal: 24,
     marginTop: 28,
   },
 

@@ -4,6 +4,9 @@ import ScreenHeader from '@/components/screen-header';
 import { useAppColors } from '@/hooks/use-app-colors';
 import { router } from 'expo-router';
 import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
@@ -27,21 +30,32 @@ export default function SignUpEmailScreen() {
       edges={['top', 'bottom']}>
       <ScreenHeader showBackButton />
 
-      <PageHeader
-        title="Create your account"
-        subtitle={
-          'Start discovering people who share\nyour favorite things.'
-        }
-        align="center"
-      />
-
-      <View style={styles.content}>
-        <View style={styles.form}>
-          <EmailSignUpForm
-            onSuccess={handleSuccess}
+      <KeyboardAvoidingView
+        style={styles.keyboardArea}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          showsVerticalScrollIndicator={false}>
+          <PageHeader
+            title="Create your account"
+            subtitle={
+              'Start discovering people who share\nyour favorite things.'
+            }
+            align="center"
           />
-        </View>
-      </View>
+
+          <View style={styles.content}>
+            <View style={styles.form}>
+              <EmailSignUpForm
+                onSuccess={handleSuccess}
+              />
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -51,14 +65,24 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  content: {
+  keyboardArea: {
     flex: 1,
+  },
+
+  scrollView: {
+    flex: 1,
+  },
+
+  scrollContent: {
+    flexGrow: 1,
+  },
+
+  content: {
     paddingHorizontal: 24,
-    paddingBottom: 24,
+    paddingBottom: 40,
   },
 
   form: {
-    flex: 1,
     marginTop: 28,
   },
 });
