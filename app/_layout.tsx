@@ -43,9 +43,10 @@ import {
   useRef,
   useState,
 } from 'react';
-import { Alert } from 'react-native';
+import { Alert, Keyboard, Platform, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import 'react-native-reanimated';
 
 // Display push notifications while Top 3 is open.
@@ -446,6 +447,60 @@ function NotificationResponseController() {
   return null;
 }
 
+/**
+ * Covers the transparent Android system-navigation area in edge-to-edge mode.
+ * Keep this separate from the floating Top 3 tab bar and its scroll effects.
+ * On iOS we render nothing; native Modal windows have their own system bars.
+ */
+function AndroidSystemNavigationBackdrop({
+  dark,
+}: {
+  dark: boolean;
+}) {
+  const insets = useSafeAreaInsets();
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const didShow = Keyboard.addListener('keyboardDidShow', () => {
+      setKeyboardVisible(true);
+    });
+    const didHide = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardVisible(false);
+    });
+
+    return () => {
+      didShow.remove();
+      didHide.remove();
+    };
+  }, []);
+
+  if (
+    Platform.OS !== 'android' ||
+    keyboardVisible ||
+    insets.bottom <= 0
+  ) {
+    return null;
+  }
+
+  return (
+    <View
+      pointerEvents="none"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: insets.bottom,
+        backgroundColor: dark ? '#000000' : '#FFFFFF',
+        zIndex: 1000,
+        elevation: 1000,
+      }}
+    />
+  );
+}
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
@@ -520,6 +575,9 @@ export default function RootLayout() {
           </OnboardingCollectionProvider>
         </AuthProvider>
       </KeyboardProvider>
+      {Platform.OS === 'android' ? (
+        <AndroidSystemNavigationBackdrop dark={colorScheme === 'dark'} />
+      ) : null}
     </GestureHandlerRootView>
   );
 }
