@@ -5,7 +5,7 @@ import ActionSheet, {
 import AppText from '@/components/app-text';
 import CommentsSheet from '@/components/comments-sheet';
 import PrimaryButton from '@/components/primary-button';
-import ScreenHeader from '@/components/screen-header';
+import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
 import Top3Card from '@/components/top3-card';
 import UserAvatar from '@/components/user-avatar';
 import { useProfile } from '@/context/profile-context';
@@ -32,12 +32,18 @@ import {
 } from 'react';
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
+
+const PUBLISHED_TOP3_SAFE_AREA_EDGES: Edge[] =
+  Platform.OS === 'android'
+    ? ['top', 'left', 'right', 'bottom']
+    : ['top', 'left', 'right'];
 
 function normalizeTopic(topic?: string) {
   return topic?.trim().toLowerCase() || 'general';
@@ -79,6 +85,27 @@ export default function PublishedTop3Screen() {
 
   const trackedCollectionViewPostIdRef =
     useRef<string | null>(null);
+
+  const [headerHidden, setHeaderHidden] =
+    useState(false);
+  const lastScrollOffset = useRef(0);
+
+  function handleScroll(offsetY: number) {
+    const y = Math.max(0, offsetY);
+    const delta = y - lastScrollOffset.current;
+
+    if (y < 20) {
+      setHeaderHidden(false);
+    } else if (delta >= 7 && y > 36) {
+      setHeaderHidden(true);
+    } else if (delta <= -7) {
+      setHeaderHidden(false);
+    }
+
+    if (Math.abs(delta) >= 7 || y < 20) {
+      lastScrollOffset.current = y;
+    }
+  }
 
 
   const [post, setPost] = useState<Post | null>(
@@ -616,10 +643,13 @@ export default function PublishedTop3Screen() {
           backgroundColor: colors.background,
         },
       ]}
-      edges={['top', 'left', 'right']}>
+      edges={PUBLISHED_TOP3_SAFE_AREA_EDGES}>
       <View style={styles.keyboardView}>
         <ScreenHeader
           showBackButton
+          overlay
+          compact={headerHidden}
+          collapseWithBackButton
           rightIconName={
             isCurrentUserPost
               ? 'share-outline'
@@ -658,7 +688,13 @@ export default function PublishedTop3Screen() {
             styles.content
           }
           showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled">
+          keyboardShouldPersistTaps="handled"
+          onScroll={(event) =>
+            handleScroll(
+              event.nativeEvent.contentOffset.y
+            )
+          }
+          scrollEventThrottle={16}>
           {author ? (
             <Pressable
               style={({ pressed }) => [
@@ -755,7 +791,7 @@ const styles = StyleSheet.create({
 
   content: {
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: SCREEN_HEADER_HEIGHT + 20,
     paddingBottom: 28,
   },
 
