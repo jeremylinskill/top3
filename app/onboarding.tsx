@@ -28,12 +28,10 @@ import {
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 
-
 type OnboardingStep =
   | 'intro'
   | 'transitioning'
   | 'category';
-
 
 const SPLASH_ICON_SIZE = 200;
 const BRAND_HEIGHT = 40;
@@ -43,13 +41,11 @@ const BRAND_HEIGHT = 40;
 // a matching perceived gap between Top 3 and the first headline.
 const CATEGORY_BRAND_GAP = 16;
 
-
 const ONBOARDING_CATEGORIES =
   [...TOP3_CATEGORIES].sort(
     (first, second) =>
       first.name.localeCompare(second.name)
   );
-
 
 export default function OnboardingScreen() {
   const colors = useAppColors();
@@ -72,7 +68,6 @@ export default function OnboardingScreen() {
   const [step, setStep] =
     useState<OnboardingStep>('intro');
 
-
   const [stageHeight, setStageHeight] =
     useState(0);
 
@@ -82,7 +77,6 @@ export default function OnboardingScreen() {
   const [categoryHeight, setCategoryHeight] =
     useState(0);
 
-
   const brandY =
     useRef(new Animated.Value(0)).current;
 
@@ -91,7 +85,6 @@ export default function OnboardingScreen() {
 
   const categoryY =
     useRef(new Animated.Value(0)).current;
-
 
   const introOpacity =
     useRef(new Animated.Value(1)).current;
@@ -124,10 +117,8 @@ export default function OnboardingScreen() {
   const introFooterOpacity =
     useRef(new Animated.Value(0)).current;
 
-
   const hasPositionedInitialLayout =
     useRef(false);
-
 
   const categoryCards = useMemo(
     () =>
@@ -142,7 +133,6 @@ export default function OnboardingScreen() {
       ),
     []
   );
-
 
   const categoryBrandY =
     stageHeight > 0 &&
@@ -160,13 +150,10 @@ export default function OnboardingScreen() {
         )
       : 0;
 
-
   const categoryContentY =
     categoryBrandY +
     BRAND_HEIGHT +
     CATEGORY_BRAND_GAP;
-
-
 
   /*
    * Keep the welcome-screen type locked to the same vertical positions
@@ -198,7 +185,6 @@ export default function OnboardingScreen() {
         92
     );
 
-
   useEffect(() => {
     if (
       hasPositionedInitialLayout.current ||
@@ -209,10 +195,8 @@ export default function OnboardingScreen() {
       return;
     }
 
-
     hasPositionedInitialLayout.current =
       true;
-
 
     brandY.setValue(introBrandY);
     introY.setValue(introContentY);
@@ -296,7 +280,6 @@ export default function OnboardingScreen() {
     stageHeight,
   ]);
 
-
   function handleStageLayout(
     event: LayoutChangeEvent
   ) {
@@ -304,7 +287,6 @@ export default function OnboardingScreen() {
       event.nativeEvent.layout.height
     );
   }
-
 
   function handleIntroLayout(
     event: LayoutChangeEvent
@@ -314,7 +296,6 @@ export default function OnboardingScreen() {
     );
   }
 
-
   function handleCategoryLayout(
     event: LayoutChangeEvent
   ) {
@@ -322,7 +303,6 @@ export default function OnboardingScreen() {
       event.nativeEvent.layout.height
     );
   }
-
 
   function showCategoryStep() {
     if (
@@ -332,9 +312,7 @@ export default function OnboardingScreen() {
       return;
     }
 
-
     setStep('transitioning');
-
 
     Animated.sequence([
       Animated.parallel([
@@ -419,7 +397,6 @@ export default function OnboardingScreen() {
     });
   }
 
-
   function chooseCategory(
     categoryId: string
   ) {
@@ -436,15 +413,12 @@ export default function OnboardingScreen() {
       ),
     });
 
-
     router.push('/onboarding-collection');
   }
-
 
   function handleSignIn() {
     router.replace('/sign-in');
   }
-
 
   return (
     <View
@@ -491,7 +465,6 @@ export default function OnboardingScreen() {
           Top 3
         </Animated.Text>
 
-
         {step !== 'category' ? (
           <Animated.View
             pointerEvents={
@@ -529,7 +502,6 @@ export default function OnboardingScreen() {
               Your taste says a lot about you.
             </Animated.Text>
 
-
             <Animated.Text
               style={[
                 styles.supportingLine,
@@ -545,7 +517,6 @@ export default function OnboardingScreen() {
               minimumFontScale={0.9}>
               Share your favourites.
             </Animated.Text>
-
 
             <Animated.Text
               style={[
@@ -564,7 +535,6 @@ export default function OnboardingScreen() {
             </Animated.Text>
           </Animated.View>
         ) : null}
-
 
         {step !== 'category' ? (
           <Animated.Image
@@ -585,7 +555,6 @@ export default function OnboardingScreen() {
             accessibilityIgnoresInvertColors
           />
         ) : null}
-
 
         <Animated.View
           pointerEvents={
@@ -623,7 +592,6 @@ export default function OnboardingScreen() {
             What are your favourites?
           </Animated.Text>
 
-
           <Animated.Text
             style={[
               styles.supportingLine,
@@ -639,7 +607,6 @@ export default function OnboardingScreen() {
             minimumFontScale={0.9}>
             Choose a category to get started.
           </Animated.Text>
-
 
           <View style={styles.categoryGrid}>
             {categoryCards.map(
@@ -669,8 +636,6 @@ export default function OnboardingScreen() {
                       {
                         backgroundColor:
                           colors.surface,
-                        borderColor:
-                          colors.border,
                       },
                       pressed &&
                         styles.categoryCardPressed,
@@ -694,7 +659,6 @@ export default function OnboardingScreen() {
                       {category.icon}
                     </Text>
 
-
                     <AppText
                       variant="bodyLarge"
                       tone="primary"
@@ -709,7 +673,6 @@ export default function OnboardingScreen() {
           </View>
         </Animated.View>
       </View>
-
 
       <View
         style={[
@@ -754,7 +717,6 @@ export default function OnboardingScreen() {
           </Animated.View>
         ) : null}
 
-
         <Animated.View
           style={[
             styles.signInContainer,
@@ -770,7 +732,6 @@ export default function OnboardingScreen() {
             tone="tertiary">
             Already have an account?
           </AppText>
-
 
           <Pressable
             style={({ pressed }) => [
@@ -796,24 +757,20 @@ export default function OnboardingScreen() {
   );
 }
 
-
 const styles = StyleSheet.create({
   root: {
     flex: 1,
   },
 
-
   container: {
     flex: 1,
   },
-
 
   stage: {
     flex: 1,
     position: 'relative',
     overflow: 'hidden',
   },
-
 
   splashIcon: {
     position: 'absolute',
@@ -825,7 +782,6 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
 
-
   brand: {
     position: 'absolute',
     top: 0,
@@ -836,7 +792,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-
   contentGroup: {
     position: 'absolute',
     top: 0,
@@ -845,19 +800,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-
   headline: {
     width: '100%',
     textAlign: 'center',
   },
-
 
   supportingLine: {
     width: '100%',
     marginTop: 10,
     textAlign: 'center',
   },
-
 
   categoryGrid: {
     width: '100%',
@@ -868,11 +820,9 @@ const styles = StyleSheet.create({
     rowGap: 12,
   },
 
-
   categoryCardWrapper: {
     width: '48.5%',
   },
-
 
   categoryCard: {
     width: '100%',
@@ -881,15 +831,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 12,
     paddingVertical: 18,
-    borderWidth: 1,
     borderRadius: 18,
   },
-
 
   lastCategoryCard: {
     marginLeft: '25.75%',
   },
-
 
   categoryCardPressed: {
     opacity: 0.78,
@@ -898,25 +845,21 @@ const styles = StyleSheet.create({
     ],
   },
 
-
   categoryIcon: {
     fontSize: 30,
     lineHeight: 38,
   },
-
 
   categoryLabel: {
     marginTop: 8,
     textAlign: 'center',
   },
 
-
   bottomArea: {
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 24,
   },
-
 
   bottomRule: {
     position: 'absolute',
@@ -926,7 +869,6 @@ const styles = StyleSheet.create({
     height: StyleSheet.hairlineWidth,
   },
 
-
   signInContainer: {
     marginTop: 14,
     flexDirection: 'row',
@@ -934,11 +876,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-
   signInButton: {
     marginLeft: 5,
   },
-
 
   pressed: {
     opacity: 0.6,
