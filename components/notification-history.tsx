@@ -36,6 +36,18 @@ const STATUS_LABELS: Record<
   cancelled: 'Cancelled',
 };
 
+function isDeliveryUnconfirmed(campaign: {
+  status: NotificationCampaignStatus;
+  lastError: string | null;
+}): boolean {
+  return (
+    campaign.status === 'failed' &&
+    campaign.lastError?.startsWith(
+      'Delivery outcome unconfirmed.'
+    ) === true
+  );
+}
+
 function formatDate(value: string | null): string {
   if (!value) {
     return '—';
@@ -421,7 +433,9 @@ export default function NotificationHistory({
                       ? 'Test'
                       : 'All users'}
                     {' · '}
-                    {STATUS_LABELS[campaign.status]}
+                    {isDeliveryUnconfirmed(campaign)
+                      ? 'Delivery Unconfirmed'
+                      : STATUS_LABELS[campaign.status]}
                   </AppText>
 
                   <Ionicons
@@ -475,17 +489,27 @@ export default function NotificationHistory({
                   </AppText>
                 ) : null}
 
-                {(campaign.status === 'sending' ||
-                  campaign.status === 'sent' ||
-                  campaign.status === 'failed') ? (
-                <AppText variant="metadata">
-                  Expo accepted: {campaign.acceptedCount}
-                  {' of '}
-                  {campaign.targetCount}
-                  {campaign.failedCount > 0
-                    ? ` · ${campaign.failedCount} failed`
-                    : ''}
-                </AppText>
+                {isDeliveryUnconfirmed(campaign) ? (
+                  <AppText variant="metadata">
+                    Expo acceptance unconfirmed
+                  </AppText>
+                ) : campaign.status === 'failed' &&
+                  campaign.targetCount === 0 ? (
+                  <AppText variant="metadata">
+                    Not sent
+                  </AppText>
+                ) : campaign.targetCount > 0 &&
+                  (campaign.status === 'sending' ||
+                    campaign.status === 'sent' ||
+                    campaign.status === 'failed') ? (
+                  <AppText variant="metadata">
+                    Expo accepted: {campaign.acceptedCount}
+                    {' of '}
+                    {campaign.targetCount}
+                    {campaign.failedCount > 0
+                      ? ` · ${campaign.failedCount} failed`
+                      : ''}
+                  </AppText>
                 ) : null}
 
 

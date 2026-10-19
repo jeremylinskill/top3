@@ -808,7 +808,7 @@ export default function NotificationComposerScreen() {
         showFeedback({
           kind: 'warning',
           title: 'Test Accepted',
-          message: 'Expo accepted the test notification and its history was saved. Check your iPhone to confirm delivery.',
+          message: 'Expo accepted the test notification and its history was saved. Check your device to confirm delivery.',
         });
       }
     } catch (error) {
