@@ -43,6 +43,7 @@ import {
 import {
   Gesture,
   GestureDetector,
+  GestureHandlerRootView,
 } from 'react-native-gesture-handler';
 import {
   KeyboardAvoidingView,
@@ -890,7 +891,7 @@ export default function CommentsSheet({
       animationType="fade"
       statusBarTranslucent
       onRequestClose={handleClose}>
-      <View
+      <GestureHandlerRootView
         style={styles.modal}
         onLayout={(event) => {
           if (Platform.OS === 'android') {
@@ -1288,7 +1289,7 @@ export default function CommentsSheet({
           actions={commentActionSheetActions}
           onClose={closeCommentActionSheet}
         />
-      </View>
+      </GestureHandlerRootView>
     </Modal>
   );
 }
