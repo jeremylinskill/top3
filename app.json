@@ -17,6 +17,7 @@
       }
     },
     "android": {
+      "package": "com.top3taste.top3",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -24,7 +25,8 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "output": "static",
@@ -59,7 +61,14 @@
       ],
       "expo-audio",
       "expo-asset",
-      "expo-notifications",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#5928ED",
+          "defaultChannel": "default"
+        }
+      ],
       "@react-native-community/datetimepicker"
     ],
     "experiments": {

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1072256449829",
+    "project_id": "top-3-555e1",
+    "storage_bucket": "top-3-555e1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1072256449829:android:b74f358f93213e389f2ecc",
+        "android_client_info": {
+          "package_name": "com.top3taste.top3"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBmdjgna1M4n3erykzLw1LkV5oUu19okW0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
