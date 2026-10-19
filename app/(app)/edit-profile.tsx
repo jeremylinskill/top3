@@ -2,7 +2,7 @@ import ActionSheet from '@/components/action-sheet';
 import AppText from '@/components/app-text';
 import PageHeader from '@/components/page-header';
 import PrimaryButton from '@/components/primary-button';
-import ScreenHeader from '@/components/screen-header';
+import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
 import UserAvatar from '@/components/user-avatar';
 import { TEXT_STYLES } from '@/constants/typography';
 import { useProfile } from '@/context/profile-context';
@@ -38,6 +38,26 @@ type ProfileActionSheet =
 export default function EditProfileScreen() {
   const colors = useAppColors();
   const { profile, updateProfile } = useProfile();
+  const [headerHidden, setHeaderHidden] = useState(false);
+  const lastScrollOffset = useRef(0);
+
+  function handleScroll(offsetY: number) {
+    const y = Math.max(0, offsetY);
+    const delta = y - lastScrollOffset.current;
+
+    if (y < 20) {
+      setHeaderHidden(false);
+    } else if (delta >= 7 && y > 36) {
+      setHeaderHidden(true);
+    } else if (delta <= -7) {
+      setHeaderHidden(false);
+    }
+
+    // Match the Feed's direction sensitivity without affecting its tab state.
+    if (Math.abs(delta) >= 7 || y < 20) {
+      lastScrollOffset.current = y;
+    }
+  }
 
   const scrollViewRef = useRef<ScrollView>(null);
   const usernameInputRef =
@@ -269,11 +289,11 @@ export default function EditProfileScreen() {
           backgroundColor: colors.background,
         },
       ]}>
-      <ScreenHeader showBackButton />
-
-      <PageHeader
-        title="Edit Profile"
-        align="center"
+      <ScreenHeader
+        showBackButton
+        overlay
+        compact={headerHidden}
+        collapseWithBackButton
       />
 
       <KeyboardAvoidingView
@@ -291,7 +311,14 @@ export default function EditProfileScreen() {
               backgroundColor: colors.background,
             },
           ]}
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[
+            styles.content,
+            { paddingTop: SCREEN_HEADER_HEIGHT },
+          ]}
+          onScroll={(event) =>
+            handleScroll(event.nativeEvent.contentOffset.y)
+          }
+          scrollEventThrottle={16}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode={
             Platform.OS === 'ios'
@@ -299,7 +326,13 @@ export default function EditProfileScreen() {
               : 'on-drag'
           }
           showsVerticalScrollIndicator={false}>
+          <PageHeader
+            title="Edit Profile"
+            align="center"
+          />
+
           <Pressable
+            style={styles.formFields}
             onPress={Keyboard.dismiss}
             accessible={false}>
             <View style={styles.avatarSection}>
@@ -548,8 +581,11 @@ const styles = StyleSheet.create({
   },
 
   content: {
-    paddingHorizontal: 20,
     paddingBottom: 48,
+  },
+
+  formFields: {
+    paddingHorizontal: 20,
   },
 
   avatarSection: {

@@ -1,7 +1,7 @@
 import ActionSheet from '@/components/action-sheet';
 import AppText from '@/components/app-text';
 import PageHeader from '@/components/page-header';
-import ScreenHeader from '@/components/screen-header';
+import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
 import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
 import { useProfile } from '@/context/profile-context';
@@ -28,6 +28,7 @@ import { router } from 'expo-router';
 import {
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from 'react';
 import {
@@ -40,12 +41,33 @@ import {
   Switch,
   View
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function SettingsScreen() {
   const colors = useAppColors();
+  const insets = useSafeAreaInsets();
+  const bottomScrollClearance = Math.max(40, insets.bottom + 24);
   const { signOut, user } = useAuth();
   const { profile } = useProfile();
+  const [headerHidden, setHeaderHidden] = useState(false);
+  const lastScrollOffset = useRef(0);
+
+  function handleScroll(offsetY: number) {
+    const y = Math.max(0, offsetY);
+    const delta = y - lastScrollOffset.current;
+
+    if (y < 20) {
+      setHeaderHidden(false);
+    } else if (delta >= 7 && y > 36) {
+      setHeaderHidden(true);
+    } else if (delta <= -7) {
+      setHeaderHidden(false);
+    }
+
+    if (Math.abs(delta) >= 7 || y < 20) {
+      lastScrollOffset.current = y;
+    }
+  }
 
   const [isSigningOut, setIsSigningOut] =
     useState(false);
@@ -385,11 +407,11 @@ export default function SettingsScreen() {
         },
       ]}
       edges={['top', 'left', 'right']}>
-      <ScreenHeader showBackButton />
-
-      <PageHeader
-        title="Settings"
-        subtitle="Manage your account and app preferences."
+      <ScreenHeader
+        showBackButton
+        overlay
+        compact={headerHidden}
+        collapseWithBackButton
       />
 
       <ActionSheet
@@ -463,8 +485,22 @@ export default function SettingsScreen() {
 
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: bottomScrollClearance },
+        ]}
+        onScroll={(event) =>
+          handleScroll(event.nativeEvent.contentOffset.y)
+        }
+        scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}>
+        <View style={styles.pageHeaderContainer}>
+          <PageHeader
+            title="Settings"
+            subtitle="Manage your account and app preferences."
+          />
+        </View>
+
         <View style={styles.section}>
           <AppText
             variant="sectionTitle"
@@ -750,6 +786,7 @@ export default function SettingsScreen() {
                       false: colors.disabledBackground,
                       true: colors.accent,
                     }}
+                    thumbColor="#FFFFFF"
                     ios_backgroundColor={
                       colors.disabledBackground
                     }
@@ -1257,7 +1294,12 @@ const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
     paddingHorizontal: SPACING.xl,
+    paddingTop: SCREEN_HEADER_HEIGHT,
     paddingBottom: 40,
+  },
+
+  pageHeaderContainer: {
+    marginHorizontal: -SPACING.xl,
   },
 
   section: {

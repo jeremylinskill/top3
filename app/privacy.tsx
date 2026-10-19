@@ -1,12 +1,12 @@
 import ActionSheet from '@/components/action-sheet';
 import AppText from '@/components/app-text';
 import PageHeader from '@/components/page-header';
-import ScreenHeader from '@/components/screen-header';
+import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
 import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
 import { useProfile } from '@/context/profile-context';
 import { useAppColors } from '@/hooks/use-app-colors';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -14,7 +14,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type VisibilityOption = 'public' | 'private';
 
@@ -46,11 +46,7 @@ function VisibilityCard({
         styles.optionCard,
         {
           backgroundColor: colors.surface,
-          borderColor: isSelected
-            ? colors.text
-            : colors.border,
         },
-        isSelected && styles.optionCardSelected,
         pressed &&
           !disabled &&
           styles.pressed,
@@ -142,8 +138,30 @@ function VisibilityCard({
 
 export default function PrivacyScreen() {
   const colors = useAppColors();
+  const insets = useSafeAreaInsets();
+  const bottomScrollClearance = Math.max(40, insets.bottom + 24);
   const { profile, updateProfile } =
     useProfile();
+
+  const [headerHidden, setHeaderHidden] = useState(false);
+  const lastScrollOffset = useRef(0);
+
+  function handleScroll(offsetY: number) {
+    const y = Math.max(0, offsetY);
+    const delta = y - lastScrollOffset.current;
+
+    if (y < 20) {
+      setHeaderHidden(false);
+    } else if (delta >= 7 && y > 36) {
+      setHeaderHidden(true);
+    } else if (delta <= -7) {
+      setHeaderHidden(false);
+    }
+
+    if (Math.abs(delta) >= 7 || y < 20) {
+      lastScrollOffset.current = y;
+    }
+  }
 
   const [selectedVisibility, setSelectedVisibility] =
     useState<VisibilityOption>(
@@ -204,17 +222,31 @@ export default function PrivacyScreen() {
           },
         ]}
         edges={['top', 'left', 'right']}>
-        <ScreenHeader showBackButton />
-
-        <PageHeader
-          title="Privacy"
-          subtitle="Choose who can see your lists."
+        <ScreenHeader
+          showBackButton
+          overlay
+          compact={headerHidden}
+          collapseWithBackButton
         />
 
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[
+            styles.content,
+            { paddingBottom: bottomScrollClearance },
+          ]}
+          onScroll={(event) =>
+            handleScroll(event.nativeEvent.contentOffset.y)
+          }
+          scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}>
+          <View style={styles.pageHeaderContainer}>
+            <PageHeader
+              title="Privacy"
+              subtitle="Choose who can see your lists."
+            />
+          </View>
+
           <View style={styles.section}>
             <AppText
               variant="sectionTitle"
@@ -306,7 +338,12 @@ const styles = StyleSheet.create({
 
   content: {
     paddingHorizontal: SPACING.xl,
+    paddingTop: SCREEN_HEADER_HEIGHT,
     paddingBottom: 40,
+  },
+
+  pageHeaderContainer: {
+    marginHorizontal: -SPACING.xl,
   },
 
   section: {
@@ -321,12 +358,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.lg,
-    borderWidth: 1,
     borderRadius: RADIUS.xl,
-  },
-
-  optionCardSelected: {
-    borderWidth: 2,
   },
 
   optionHeader: {

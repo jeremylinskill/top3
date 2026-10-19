@@ -2,7 +2,7 @@ import ActionSheet from '@/components/action-sheet';
 import AppText from '@/components/app-text';
 import PageHeader from '@/components/page-header';
 import PrimaryButton from '@/components/primary-button';
-import ScreenHeader from '@/components/screen-header';
+import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
 import UserAvatar from '@/components/user-avatar';
 import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
@@ -15,6 +15,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import {
@@ -24,10 +25,32 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function BlockedUsersScreen() {
   const colors = useAppColors();
+  const insets = useSafeAreaInsets();
+  const bottomScrollClearance = Math.max(40, insets.bottom + 24);
+  const [headerHidden, setHeaderHidden] = useState(false);
+  const lastScrollOffset = useRef(0);
+
+  function handleScroll(offsetY: number) {
+    const y = Math.max(0, offsetY);
+    const delta = y - lastScrollOffset.current;
+
+    if (y < 20) {
+      setHeaderHidden(false);
+    } else if (delta >= 7 && y > 36) {
+      setHeaderHidden(true);
+    } else if (delta <= -7) {
+      setHeaderHidden(false);
+    }
+
+    if (Math.abs(delta) >= 7 || y < 20) {
+      lastScrollOffset.current = y;
+    }
+  }
+
   const {
     blockedUserIds,
     isLoading: isLoadingBlocks,
@@ -177,17 +200,30 @@ export default function BlockedUsersScreen() {
           },
         ]}
         edges={['top', 'left', 'right']}>
-      <ScreenHeader showBackButton />
+        <ScreenHeader
+          showBackButton
+          overlay
+          compact={headerHidden}
+          collapseWithBackButton
+        />
 
-      <PageHeader
-        title="Blocked Users"
-        subtitle="Manage people you've blocked."
-      />
-
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={[
+            styles.content,
+            { paddingBottom: bottomScrollClearance },
+          ]}
+          onScroll={(event) =>
+            handleScroll(event.nativeEvent.contentOffset.y)
+          }
+          scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}>
+          <View style={styles.pageHeaderContainer}>
+            <PageHeader
+              title="Blocked Users"
+              subtitle="Manage people you've blocked."
+            />
+          </View>
         {isLoading ? (
           <View style={styles.loadingState}>
             <ActivityIndicator
@@ -467,7 +503,12 @@ const styles = StyleSheet.create({
 
   content: {
     paddingHorizontal: SPACING.xl,
+    paddingTop: SCREEN_HEADER_HEIGHT,
     paddingBottom: 40,
+  },
+
+  pageHeaderContainer: {
+    marginHorizontal: -SPACING.xl,
   },
 
   loadingState: {
