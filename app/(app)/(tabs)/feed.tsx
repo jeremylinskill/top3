@@ -4,7 +4,7 @@ import ActionSheet, {
 import AppText from '@/components/app-text';
 import CommentsSheet from '@/components/comments-sheet';
 import PrimaryButton from '@/components/primary-button';
-import ScreenHeader from '@/components/screen-header';
+import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
 import Top3Card from '@/components/top3-card';
 import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
@@ -13,6 +13,10 @@ import { useComments } from '@/context/comment-context';
 import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
+import {
+  FLOATING_TAB_BAR_CONTENT_PADDING,
+  useTabBarScroll,
+} from '@/context/tab-bar-scroll-context';
 import { useAppColors } from '@/hooks/use-app-colors';
 import { useAuth } from '@/hooks/use-auth';
 import { sharePublishedCollection } from '@/lib/share';
@@ -42,7 +46,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 function normalizeTopic(topic?: string) {
   return topic?.trim().toLowerCase() || 'general';
@@ -131,6 +135,8 @@ type FeedReportSheet =
 
 export default function FeedScreen() {
   const colors = useAppColors();
+  const insets = useSafeAreaInsets();
+  const { headerHidden, onFeedScroll } = useTabBarScroll();
   const {
     isAuthenticated,
     isLoading: isAuthLoading,
@@ -1276,7 +1282,7 @@ export default function FeedScreen() {
         'left',
         'right',
       ]}>
-      <ScreenHeader />
+      <ScreenHeader compact={headerHidden && personalizedFeed.length > 0} overlay={personalizedFeed.length > 0} />
 
       {isLoadingFeed ? (
         <View style={styles.loadingState}>
@@ -1323,9 +1329,18 @@ export default function FeedScreen() {
             post.id
           }
           renderItem={renderFeedItem}
-          contentContainerStyle={
-            styles.content
+          onScroll={(event) =>
+            onFeedScroll(event.nativeEvent.contentOffset.y)
           }
+          scrollEventThrottle={16}
+          contentContainerStyle={[
+            styles.content,
+            {
+              paddingTop: SCREEN_HEADER_HEIGHT + 20,
+              paddingBottom:
+                insets.bottom + FLOATING_TAB_BAR_CONTENT_PADDING,
+            },
+          ]}
           showsVerticalScrollIndicator={
             false
           }
