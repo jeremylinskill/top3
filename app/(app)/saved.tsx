@@ -1,10 +1,11 @@
 import ActionSheet from '@/components/action-sheet';
 import AppText from '@/components/app-text';
+import ArtworkThumbnail from '@/components/artwork-thumbnail';
 import IconButton from '@/components/icon-button';
 import { MediaPreviewItemButton } from '@/components/media-preview-button';
 import PageHeader from '@/components/page-header';
 import PrimaryButton from '@/components/primary-button';
-import ScreenHeader from '@/components/screen-header';
+import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
 import {
     getCategoryArtworkRule,
 } from '@/constants/category-artwork-rules';
@@ -20,16 +21,15 @@ import {
   getTop3ItemMetadata,
 } from '@/utils/top3-item-metadata';
 import { Ionicons } from '@expo/vector-icons';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
-    Image,
     Pressable,
     ScrollView,
     StyleSheet,
     View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type SavedFilter =
   | 'all'
@@ -74,6 +74,27 @@ function matchesFilter(
 
 export default function SavedScreen() {
   const colors = useAppColors();
+  const insets = useSafeAreaInsets();
+  const bottomScrollClearance = Math.max(40, insets.bottom + 24);
+  const [headerHidden, setHeaderHidden] = useState(false);
+  const lastScrollOffset = useRef(0);
+
+  function handleScroll(offsetY: number) {
+    const y = Math.max(0, offsetY);
+    const delta = y - lastScrollOffset.current;
+
+    if (y < 20) {
+      setHeaderHidden(false);
+    } else if (delta >= 7 && y > 36) {
+      setHeaderHidden(true);
+    } else if (delta <= -7) {
+      setHeaderHidden(false);
+    }
+
+    if (Math.abs(delta) >= 7 || y < 20) {
+      lastScrollOffset.current = y;
+    }
+  }
 
   const {
     savedItems,
@@ -135,11 +156,11 @@ export default function SavedScreen() {
         },
       ]}
       edges={['top', 'left', 'right']}>
-      <ScreenHeader showBackButton />
-
-      <PageHeader
-        title="Saved"
-        subtitle="Things you want to come back to."
+      <ScreenHeader
+        showBackButton
+        overlay
+        compact={headerHidden}
+        collapseWithBackButton
       />
 
       <ActionSheet
@@ -149,8 +170,8 @@ export default function SavedScreen() {
           {
             label:
               sort === 'recent'
-                ? '✓ Recent'
-                : 'Recent',
+                ? '✓ Recently Saved'
+                : 'Recently Saved',
             onPress: () => {
               setSort('recent');
               setIsSortSheetVisible(false);
@@ -179,101 +200,113 @@ export default function SavedScreen() {
         }}
       />
 
-      <View style={styles.controlsRow}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.filterScroller}
-          contentContainerStyle={
-            styles.filterContent
-          }>
-          {FILTERS.map((filter) => {
-            const isActive =
-              filter.id === activeFilter;
-
-            return (
-              <Pressable
-                key={filter.id}
-                style={({ pressed }) => [
-                  styles.filterButton,
-                  {
-                    backgroundColor: isActive
-                      ? colors.primary
-                      : colors.surface,
-                  },
-                  pressed && styles.pressed,
-                ]}
-                onPress={() =>
-                  setActiveFilter(filter.id)
-                }
-                accessibilityRole="button"
-                accessibilityState={{
-                  selected: isActive,
-                }}
-                accessibilityLabel={`Show ${filter.label} saved items`}>
-                <AppText
-                  variant="label"
-                  tone={
-                    isActive
-                      ? 'onPrimary'
-                      : 'primary'
-                  }
-                  emphasis="semibold">
-                  {filter.label}
-                </AppText>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-
-        <Pressable
-          style={({ pressed }) => [
-            styles.sortButton,
-            {
-              backgroundColor: colors.border,
-            },
-            pressed && styles.pressed,
-          ]}
-          onPress={() =>
-            setIsSortSheetVisible(true)
-          }
-          accessibilityRole="button"
-          accessibilityLabel={`Sort saved items. Current sort: ${
-            sort === 'recent'
-              ? 'Recent'
-              : 'A to Z'
-          }`}>
-          <Ionicons
-            name="swap-vertical-outline"
-            size={17}
-            color={colors.secondaryText}
-          />
-
-          <AppText
-            variant="label"
-            tone="secondary"
-            emphasis="semibold">
-            {sort === 'recent'
-              ? 'Recent'
-              : 'A–Z'}
-          </AppText>
-
-          <Ionicons
-            name="chevron-down"
-            size={15}
-            color={colors.secondaryText}
-          />
-        </Pressable>
-      </View>
-
       <ScrollView
         style={styles.listScroller}
         contentContainerStyle={[
           styles.content,
+          { paddingBottom: bottomScrollClearance },
           visibleItems.length === 0 &&
             styles.emptyContent,
         ]}
+        onScroll={(event) =>
+          handleScroll(event.nativeEvent.contentOffset.y)
+        }
+        scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}>
+        <View style={styles.pageHeaderContainer}>
+          <PageHeader
+            title="Saved"
+            subtitle="Things you want to come back to."
+          />
+        </View>
+
+        <View style={[styles.controlsRow, styles.fullBleed]}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.filterScroller}
+            contentContainerStyle={
+              styles.filterContent
+            }>
+            {FILTERS.map((filter) => {
+              const isActive =
+                filter.id === activeFilter;
+
+              return (
+                <Pressable
+                  key={filter.id}
+                  style={({ pressed }) => [
+                    styles.filterButton,
+                    {
+                      backgroundColor: isActive
+                        ? colors.primary
+                        : colors.surface,
+                    },
+                    pressed && styles.pressed,
+                  ]}
+                  onPress={() =>
+                    setActiveFilter(filter.id)
+                  }
+                  accessibilityRole="button"
+                  accessibilityState={{
+                    selected: isActive,
+                  }}
+                  accessibilityLabel={`Show ${filter.label} saved items`}>
+                  <AppText
+                    variant="label"
+                    tone={
+                      isActive
+                        ? 'onPrimary'
+                        : 'primary'
+                    }
+                    emphasis="semibold">
+                    {filter.label}
+                  </AppText>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.sortButton,
+              {
+                backgroundColor: colors.border,
+              },
+              pressed && styles.pressed,
+            ]}
+            onPress={() =>
+              setIsSortSheetVisible(true)
+            }
+            accessibilityRole="button"
+            accessibilityLabel={`Sort saved items. Current sort: ${
+              sort === 'recent'
+                ? 'Recent'
+                : 'A to Z'
+            }`}>
+            <Ionicons
+              name="swap-vertical-outline"
+              size={17}
+              color={colors.secondaryText}
+            />
+
+            <AppText
+              variant="label"
+              tone="secondary"
+              emphasis="semibold">
+              {sort === 'recent'
+                ? 'Recent'
+                : 'A–Z'}
+            </AppText>
+
+            <Ionicons
+              name="chevron-down"
+              size={15}
+              color={colors.secondaryText}
+            />
+          </Pressable>
+        </View>
+
         {isLoading ? (
           <View style={styles.loadingState}>
             <ActivityIndicator
@@ -406,36 +439,13 @@ export default function SavedScreen() {
                           colors.border,
                       },
                     ]}>
-                    {savedItem.item.imageUrl ? (
-                      <Image
-                        source={{
-                          uri:
-                            savedItem.item
-                              .imageUrl,
-                        }}
-                        style={[
-                          styles.artwork,
-                          {
-                            width:
-                              artworkWidth,
-                            height:
-                              artworkHeight,
-                          },
-                        ]}
-                        resizeMode="cover"
-                      />
-                    ) : (
-                      <Ionicons
-                        name={
-                          category?.placeholderIcon ??
-                          'image-outline'
-                        }
-                        size={25}
-                        color={
-                          colors.tertiaryText
-                        }
-                      />
-                    )}
+                    <ArtworkThumbnail
+                      imageUrl={savedItem.item.imageUrl}
+                      category={savedItem.category}
+                      width={artworkWidth}
+                      height={artworkHeight}
+                      placeholderBackgroundColor={colors.border}
+                    />
                   </View>
 
                   <View style={styles.itemDetails}>
@@ -567,7 +577,15 @@ const styles = StyleSheet.create({
 
   content: {
     paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingTop: SCREEN_HEADER_HEIGHT,
+  },
+
+  pageHeaderContainer: {
+    marginHorizontal: -20,
+  },
+
+  fullBleed: {
+    marginHorizontal: -20,
   },
 
   emptyContent: {
@@ -592,10 +610,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
-  },
-
-  artwork: {
-    borderRadius: 9,
   },
 
   itemDetails: {
