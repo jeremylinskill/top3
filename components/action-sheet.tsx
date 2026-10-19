@@ -6,10 +6,12 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { usePreviewSheetColors } from '@/hooks/use-preview-sheet-colors';
 import {
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export type ActionSheetActionVariant =
   | 'default'
@@ -40,6 +42,7 @@ export default function ActionSheet({
 }: ActionSheetProps) {
   const colors = useAppColors();
   const previewColors = usePreviewSheetColors();
+  const insets = useSafeAreaInsets();
   const invertedTextTone =
     useColorScheme() === 'dark'
       ? 'onHighlight'
@@ -47,6 +50,14 @@ export default function ActionSheet({
 
   const showHeader =
     Boolean(title) || Boolean(message);
+
+  // Keep Android sheets clear of both three-button and gesture
+  // navigation areas, including edge-to-edge modal layouts.
+  // Preserve the existing iOS spacing.
+  const overlayBottomPadding =
+    Platform.OS === 'android'
+      ? SPACING.xxl + Math.max(insets.bottom, 24)
+      : SPACING.xxl;
 
   return (
     <Modal
@@ -58,7 +69,10 @@ export default function ActionSheet({
       <View
         style={[
           styles.overlay,
-          { backgroundColor: previewColors.backdrop },
+          {
+            backgroundColor: previewColors.backdrop,
+            paddingBottom: overlayBottomPadding,
+          },
         ]}>
         <Pressable
           style={StyleSheet.absoluteFill}

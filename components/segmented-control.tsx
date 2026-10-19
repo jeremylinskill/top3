@@ -47,11 +47,8 @@ export default function SegmentedControl<
             style={({ pressed }) => [
               styles.segment,
               isActive && {
-                ...styles.activeSegment,
                 backgroundColor:
                   colors.surface,
-                borderColor:
-                  colors.border,
               },
               pressed && styles.pressed,
             ]}
@@ -118,10 +115,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 9,
-  },
-
-  activeSegment: {
-    borderWidth: 1,
   },
 
   pressed: {

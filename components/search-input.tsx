@@ -48,7 +48,7 @@ export default function SearchInput({
       style={[
         styles.container,
         {
-          borderColor: colors.border,
+          borderColor: 'transparent',
           backgroundColor: colors.surface,
         },
         borderless && styles.borderless,
@@ -78,6 +78,7 @@ export default function SearchInput({
         autoCorrect={autoCorrect}
         returnKeyType={returnKeyType}
         clearButtonMode="never"
+        underlineColorAndroid="transparent"
         accessibilityLabel={
           accessibilityLabel ?? placeholder
         }
