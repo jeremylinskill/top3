@@ -191,6 +191,12 @@ function NotificationResponseController() {
     destination: NotificationDestination;
   } | null>(null);
 
+  const [pendingSocialNotification, setPendingSocialNotification] =
+    useState<{
+      responseId: string;
+      data: NotificationRouteData;
+    } | null>(null);
+
   const { isAuthenticated } = useAuth();
   const navigationState = useRootNavigationState();
   const pathname = usePathname();
@@ -238,7 +244,10 @@ function NotificationResponseController() {
         return;
       }
 
-      routeFromNotificationData(data);
+      setPendingSocialNotification({
+        responseId,
+        data,
+      });
     }
 
     const subscription =
@@ -265,6 +274,27 @@ function NotificationResponseController() {
       subscription.remove();
     };
   }, []);
+
+  useEffect(() => {
+    if (
+      !pendingSocialNotification ||
+      !navigationState?.key ||
+      pathname === '/' ||
+      !isAuthenticated
+    ) {
+      return;
+    }
+
+    const { data } = pendingSocialNotification;
+
+    setPendingSocialNotification(null);
+    routeFromNotificationData(data);
+  }, [
+    pendingSocialNotification,
+    navigationState?.key,
+    pathname,
+    isAuthenticated,
+  ]);
 
   useEffect(() => {
     if (
