@@ -80,6 +80,9 @@ type CommentActionSheet =
   | {
       type: 'post-error';
     }
+  | {
+      type: 'edit-error';
+    }
   | null;
 
 type CommentsSheetProps = {
@@ -103,6 +106,7 @@ export default function CommentsSheet({
 
   const {
     addComment,
+    updateComment,
     deleteComment,
     getCommentsForPost,
     isCommentLiked,
@@ -119,10 +123,24 @@ export default function CommentsSheet({
   const [replyTarget, setReplyTarget] =
     useState<Comment | null>(null);
 
+  const [editTarget, setEditTarget] =
+    useState<Comment | null>(null);
+
+  const [isSavingEdit, setIsSavingEdit] =
+    useState(false);
+
+  const composerBeforeEditRef = useRef<{
+    text: string;
+    replyTarget: Comment | null;
+  } | null>(null);
+
   const inputRef = useRef<TextInput>(null);
 
   const [keyboardHeight, setKeyboardHeight] =
     useState(0);
+  const [modalHeight, setModalHeight] = useState(0);
+  const [keyboardScreenY, setKeyboardScreenY] =
+    useState<number | null>(null);
 
   const [isRendered, setIsRendered] =
     useState(visible);
@@ -212,6 +230,11 @@ export default function CommentsSheet({
       Keyboard.addListener(
         showEvent,
         (event) => {
+          if (Platform.OS === 'android') {
+            setKeyboardScreenY(
+              event.endCoordinates.screenY
+            );
+          }
           setKeyboardHeight(
             event.endCoordinates.height
           );
@@ -223,6 +246,7 @@ export default function CommentsSheet({
         hideEvent,
         () => {
           setKeyboardHeight(0);
+          setKeyboardScreenY(null);
         }
       );
 
@@ -251,12 +275,18 @@ export default function CommentsSheet({
   const canPost =
     Boolean(collectionId) &&
     trimmedComment.length > 0 &&
+    (!editTarget ||
+      trimmedComment !== editTarget.text.trim()) &&
+    !isSavingEdit &&
     !isLoading &&
     !isClosing;
 
   function finishClosing() {
     setCommentText('');
     setReplyTarget(null);
+    setEditTarget(null);
+    setIsSavingEdit(false);
+    composerBeforeEditRef.current = null;
     setKeyboardHeight(0);
     setIsClosing(false);
     setIsRendered(false);
@@ -352,6 +382,12 @@ export default function CommentsSheet({
       return;
     }
 
+    if (editTarget) {
+      setEditTarget(null);
+      setCommentText('');
+      composerBeforeEditRef.current = null;
+    }
+
     setReplyTarget(comment);
 
     requestAnimationFrame(() => {
@@ -363,7 +399,47 @@ export default function CommentsSheet({
     setReplyTarget(null);
   }
 
+  function finishEditingComment() {
+    const previous = composerBeforeEditRef.current;
+    composerBeforeEditRef.current = null;
+    setEditTarget(null);
+    setReplyTarget(previous?.replyTarget ?? null);
+    setCommentText(previous?.text ?? '');
+    Keyboard.dismiss();
+  }
+
   async function handlePostComment() {
+    if (editTarget) {
+      if (
+        !canPost ||
+        editTarget.authorId !== profile.id
+      ) {
+        return;
+      }
+
+      setIsSavingEdit(true);
+
+      try {
+        await updateComment(
+          editTarget.id,
+          trimmedComment
+        );
+        finishEditingComment();
+      } catch (error) {
+        console.error(
+          'Failed to edit comment:',
+          error
+        );
+        setCommentActionSheet({
+          type: 'edit-error',
+        });
+      } finally {
+        setIsSavingEdit(false);
+      }
+
+      return;
+    }
+
     if (
       !collectionId ||
       !canPost
@@ -427,6 +503,35 @@ export default function CommentsSheet({
 
   function closeCommentActionSheet() {
     setCommentActionSheet(null);
+  }
+
+  function beginEditComment(comment: Comment) {
+    if (
+      comment.authorId !== profile.id ||
+      comment.id.startsWith('optimistic-comment-')
+    ) {
+      return;
+    }
+
+    if (!editTarget) {
+      composerBeforeEditRef.current = {
+        text: commentText,
+        replyTarget,
+      };
+    }
+
+    setCommentActionSheet(null);
+    setReplyTarget(null);
+    setEditTarget(comment);
+    setCommentText(comment.text);
+
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
+  }
+
+  function cancelEditComment() {
+    finishEditingComment();
   }
 
   function openCommentActions(
@@ -539,6 +644,13 @@ export default function CommentsSheet({
           commentActionSheet.comment.authorId ===
           profile.id
             ? [
+                {
+                  label: 'Edit Comment',
+                  onPress: () =>
+                    beginEditComment(
+                      commentActionSheet.comment
+                    ),
+                },
                 {
                   label: 'Delete Comment',
                   variant: 'destructive',
@@ -726,6 +838,19 @@ export default function CommentsSheet({
         ];
         break;
 
+      case 'edit-error':
+        commentActionSheetTitle =
+          'Could not save comment';
+        commentActionSheetMessage =
+          'Please try again.';
+        commentActionSheetActions = [
+          {
+            label: 'OK',
+            onPress: closeCommentActionSheet,
+          },
+        ];
+        break;
+
       case 'post-error':
         commentActionSheetTitle =
           'Unable to post comment';
@@ -765,7 +890,13 @@ export default function CommentsSheet({
       animationType="fade"
       statusBarTranslucent
       onRequestClose={handleClose}>
-      <View style={styles.modal}>
+      <View
+        style={styles.modal}
+        onLayout={(event) => {
+          if (Platform.OS === 'android') {
+            setModalHeight(event.nativeEvent.layout.height);
+          }
+        }}>
         <Pressable
           style={styles.backdrop}
           onPress={handleClose}
@@ -790,16 +921,29 @@ export default function CommentsSheet({
         ) : null}
 
         <KeyboardAvoidingView
-          style={styles.keyboardView}
+          style={[
+            styles.keyboardView,
+            Platform.OS === 'android' && {
+              paddingBottom:
+                keyboardScreenY !== null && modalHeight > 0
+                  ? Math.max(0, modalHeight - keyboardScreenY)
+                  : 0,
+            },
+          ]}
           behavior={
             Platform.OS === 'ios'
               ? 'padding'
               : 'height'
           }
-          keyboardVerticalOffset={0}>
+          keyboardVerticalOffset={0}
+          enabled={Platform.OS === 'ios'}>
           <Animated.View
             style={[
               styles.sheet,
+              Platform.OS === 'android' &&
+                keyboardScreenY !== null && {
+                  maxHeight: Math.max(0, keyboardScreenY),
+                },
               {
                 paddingBottom:
                   keyboardHeight > 0
@@ -971,7 +1115,35 @@ export default function CommentsSheet({
                     colors.border,
                 },
               ]}>
-              {replyTarget ? (
+              {editTarget ? (
+                <View style={styles.replyComposerBar}>
+                  <AppText
+                    variant="metadata"
+                    tone="secondary"
+                    style={styles.replyComposerText}
+                    numberOfLines={1}>
+                    Editing comment
+                  </AppText>
+
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.replyComposerCloseButton,
+                      pressed && styles.pressed,
+                    ]}
+                    onPress={cancelEditComment}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel="Cancel editing">
+                    <Ionicons
+                      name="close"
+                      size={17}
+                      color={colors.secondaryText}
+                    />
+                  </Pressable>
+                </View>
+              ) : null}
+
+              {!editTarget && replyTarget ? (
                 <View
                   style={
                     styles.replyComposerBar
@@ -1037,9 +1209,11 @@ export default function CommentsSheet({
                       setCommentText
                     }
                     placeholder={
-                      replyTarget
-                        ? `Reply to @${replyTarget.authorUsername}…`
-                        : 'Add a comment…'
+                      editTarget
+                        ? 'Edit your comment…'
+                        : replyTarget
+                          ? `Reply to @${replyTarget.authorUsername}…`
+                          : 'Add a comment…'
                     }
                     placeholderTextColor={
                       colors.tertiaryText
@@ -1048,16 +1222,18 @@ export default function CommentsSheet({
                     maxLength={500}
                     returnKeyType="send"
                     blurOnSubmit
-                    editable={!isClosing}
+                    editable={!isClosing && !isSavingEdit}
                     onSubmitEditing={
                       canPost
                         ? handlePostComment
                         : undefined
                     }
                     accessibilityLabel={
-                      replyTarget
-                        ? `Reply to ${replyTarget.authorDisplayName}`
-                        : 'Comment text'
+                      editTarget
+                        ? 'Edit comment text'
+                        : replyTarget
+                          ? `Reply to ${replyTarget.authorDisplayName}`
+                          : 'Comment text'
                     }
                   />
 
@@ -1080,9 +1256,11 @@ export default function CommentsSheet({
                       disabled: !canPost,
                     }}
                     accessibilityLabel={
-                      replyTarget
-                        ? 'Post reply'
-                        : 'Post comment'
+                      editTarget
+                        ? 'Save comment'
+                        : replyTarget
+                          ? 'Post reply'
+                          : 'Post comment'
                     }>
                     <AppText
                       variant="action"
@@ -1092,7 +1270,7 @@ export default function CommentsSheet({
                           : 'tertiary'
                       }
                       emphasis="strong">
-                      Post
+                      {editTarget ? 'Save' : 'Post'}
                     </AppText>
                   </Pressable>
                 </View>

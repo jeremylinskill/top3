@@ -12,6 +12,7 @@ import {
   deleteComment as deleteSupabaseComment,
   getCommentCounts as getSupabaseCommentCounts,
   getCommentsForCollection as getSupabaseCommentsForCollection,
+  updateComment as updateSupabaseComment,
 } from '@/lib/supabase/comments';
 import { subscribeToTableChanges } from '@/lib/supabase/realtime';
 import {
@@ -87,6 +88,10 @@ type CommentContextValue = {
   addComment: (
     input: AddCommentInput
   ) => Promise<Comment | null>;
+  updateComment: (
+    commentId: string,
+    text: string
+  ) => Promise<void>;
   deleteComment: (
     commentId: string
   ) => void;
@@ -977,6 +982,57 @@ export function CommentProvider({
   );
 
 
+  const updateComment = useCallback(
+    async (
+      commentId: string,
+      text: string
+    ): Promise<void> => {
+      const existingComment = comments.find(
+        (comment) => comment.id === commentId
+      );
+
+      if (
+        !user?.id ||
+        !existingComment ||
+        existingComment.authorId !== user.id ||
+        !isPersistedCommentId(commentId)
+      ) {
+        throw new Error(
+          'You can only edit your own saved comments.'
+        );
+      }
+
+      const normalizedText = text.trim();
+
+      if (
+        !normalizedText ||
+        normalizedText.length > 500
+      ) {
+        throw new Error(
+          'Comment must be between 1 and 500 characters.'
+        );
+      }
+
+      const savedComment =
+        await updateSupabaseComment(
+          commentId,
+          normalizedText
+        );
+
+      setComments((currentComments) =>
+        currentComments.map((comment) =>
+          comment.id === savedComment.id
+            ? {
+                ...comment,
+                text: savedComment.content,
+              }
+            : comment
+        )
+      );
+    },
+    [comments, user?.id]
+  );
+
   const deleteComment = useCallback(
     (commentId: string) => {
       const commentToDelete =
@@ -1119,6 +1175,7 @@ export function CommentProvider({
       isCommentLiked,
       toggleCommentLike,
       addComment,
+      updateComment,
       deleteComment,
     }),
     [
@@ -1137,6 +1194,7 @@ export function CommentProvider({
       isCommentLiked,
       toggleCommentLike,
       addComment,
+      updateComment,
       deleteComment,
     ]
   );
