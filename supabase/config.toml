@@ -461,3 +461,8 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/manage-notification-campaigns/deno.json"
 entrypoint = "./functions/manage-notification-campaigns/index.ts"
+
+[functions.process-scheduled-test-notifications]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/process-scheduled-test-notifications/index.ts"
