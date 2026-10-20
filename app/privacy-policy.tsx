@@ -151,7 +151,7 @@ export default function PrivacyPolicyScreen() {
             Effective Date: August 25, 2026
           </AppText>
           <AppText variant="legalMeta">
-            Last Updated: September 16, 2026
+            Last Updated: October 19, 2026
           </AppText>
         </View>
 
@@ -518,12 +518,13 @@ export default function PrivacyPolicyScreen() {
             </Paragraph>
 
             <Paragraph>
-              Top 3 configures the Amplitude SDK not to
-              collect advertising ID, IP address, carrier,
-              device manufacturer, device model, language,
-              operating-system name or version, or platform
-              information through Amplitude&apos;s tracking
-              options.
+              Top 3 configures the Amplitude SDK to disable
+              advertising ID, Android App Set ID, ID for
+              Vendors, IP-address-based tracking, carrier,
+              device manufacturer, device model, and
+              language tracking. Operating-system name,
+              operating-system version, and platform
+              tracking remain enabled for product analytics.
             </Paragraph>
 
             <Paragraph>
@@ -557,7 +558,7 @@ export default function PrivacyPolicyScreen() {
 
           <BulletList
             items={[
-              'Precise or approximate device location.',
+              'Precise device location collected through location services such as GPS.',
               'Device contacts or address-book information.',
               'Health or fitness information.',
               'Microphone recordings.',
@@ -567,6 +568,15 @@ export default function PrivacyPolicyScreen() {
               'Information for third-party targeted advertising.',
             ]}
           />
+
+          <Paragraph>
+            Top 3 does not request device location permissions
+            or use device location services to determine your
+            location. However, backend infrastructure providers
+            such as Supabase may process IP addresses and derive
+            approximate geographic information, such as country,
+            for service operations, security, and abuse prevention.
+          </Paragraph>
 
           <Paragraph>
             Top 3 does not currently display third-party
