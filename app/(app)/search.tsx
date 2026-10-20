@@ -1304,9 +1304,6 @@ const normalizedRank = Array.isArray(rank)
             tone="tertiary"
             style={styles.metadata}>
             {itemMetadata}
-            {typeof item.rating === 'number'
-              ? ` · ★ ${item.rating.toFixed(1)}`
-              : ''}
           </AppText>
         </View>
         {activeCollection?.category && !isMoviePeopleType ? (
