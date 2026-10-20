@@ -127,12 +127,12 @@ function FloatingTabBar(props: BottomTabBarProps) {
         bottom: insets.bottom + FLOATING_TAB_BAR_BOTTOM_SPACING,
         height: FLOATING_TAB_BAR_HEIGHT,
         borderRadius: FLOATING_TAB_BAR_HEIGHT / 2,
-        backgroundColor: withOpacity(colors.background, 0.92),
+        backgroundColor: withOpacity(colors.surface, 0.96),
         shadowColor: '#000000',
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
+        shadowOpacity: 0.13,
+        shadowRadius: 16,
         shadowOffset: { width: 0, height: 4 },
-        elevation: 5,
+        elevation: 6,
         transform: [{ scaleX: scale }, { scaleY: scale }],
       }}>
       {barWidth > 0 && tabCount > 0 && (
@@ -187,7 +187,7 @@ function TabNavigator() {
         headerShown: false,
         tabBarShowLabel: false,
         tabBarActiveTintColor: colors.text,
-        tabBarInactiveTintColor: colors.tertiaryText,
+        tabBarInactiveTintColor: withOpacity(colors.text, 0.65),
         tabBarButton: (props) => <CenteredTabButton {...props} />,
         tabBarStyle: {
           backgroundColor: 'transparent',
