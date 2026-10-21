@@ -29,6 +29,7 @@ For the current implementation checkpoint, start with the root-level:
 
 - `ROADMAP.md` — product milestones, current priorities, and future initiatives
 - `V1_LAUNCH_BLOCKERS.md` — App Store V1 release-gate checklist and submission-readiness tracking
+- `RELEASE_CHECKLIST.md` — current iOS and Android release preparation, deployment, testing, and submission tasks
 
 ## Product History & Decisions
 
@@ -54,7 +55,8 @@ Use each document for its intended purpose:
 - **Visual and interaction rules** → `DESIGN_SYSTEM.md`
 - **Durable product rules** → `DECISIONS.md`
 - **Historical milestones** → `CHANGELOG.md`
-- **Launch gate** → `V1_LAUNCH_BLOCKERS.md`
+- **Historical V1 launch gate** → `V1_LAUNCH_BLOCKERS.md`
+- **Current release gate** → `RELEASE_CHECKLIST.md`
 - **User-flow intent** → `USER_JOURNEY.md`
 
 ## Maintenance
