@@ -567,7 +567,8 @@ export default function SearchScreen() {
     selectedTopic?.id === 'general' &&
     !selectedType;
   const fallbackSuggestions =
-    isMoviePeopleType
+    isMoviePeopleType ||
+    activeCollectionOption?.id === 'albums-type-soundtracks'
       ? []
       : isCustomTopic
         ? curatedOptionSuggestions
@@ -732,6 +733,14 @@ export default function SearchScreen() {
             setIsLoadingSuggestions(false);
           }
         }
+      }
+      // Soundtracks use only option-specific curated suggestions.
+      // Avoid unrelated community and general album recommendations.
+      if (
+        activeCollectionOption?.id === 'albums-type-soundtracks'
+      ) {
+        applyThemeSuggestions();
+        return;
       }
       if (isMoviePeopleType) {
         await loadProviderSuggestions(categoryId);

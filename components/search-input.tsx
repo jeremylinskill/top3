@@ -3,6 +3,7 @@ import { TEXT_STYLES } from '@/constants/typography';
 import { useAppColors } from '@/hooks/use-app-colors';
 import { Ionicons } from '@expo/vector-icons';
 import {
+  Platform,
   StyleSheet,
   TextInput,
   TextInputProps,
@@ -60,29 +61,32 @@ export default function SearchInput({
         style={styles.searchIcon}
       />
 
-      <TextInput
-        {...textInputProps}
-        style={[
-          styles.input,
-          {
-            color: colors.text,
-          },
-        ]}
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor={
-          resolvedPlaceholderTextColor
-        }
-        autoCapitalize={autoCapitalize}
-        autoCorrect={autoCorrect}
-        returnKeyType={returnKeyType}
-        clearButtonMode="never"
-        underlineColorAndroid="transparent"
-        accessibilityLabel={
-          accessibilityLabel ?? placeholder
-        }
-      />
+      <View style={styles.inputViewport}>
+        <TextInput
+          {...textInputProps}
+          style={[
+            styles.input,
+            {
+              color: colors.text,
+            },
+          ]}
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor={
+            resolvedPlaceholderTextColor
+          }
+          autoCapitalize={autoCapitalize}
+          autoCorrect={autoCorrect}
+          returnKeyType={returnKeyType}
+          multiline={false}
+          clearButtonMode="never"
+          underlineColorAndroid="transparent"
+          accessibilityLabel={
+            accessibilityLabel ?? placeholder
+          }
+        />
+      </View>
 
       {value.length > 0 ? (
         <IconButton
@@ -119,10 +123,18 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
 
+  inputViewport: {
+    flex: 1,
+    minWidth: 0,
+    height: Platform.OS === 'ios' ? 28 : 54,
+    overflow: 'hidden',
+  },
+
   input: {
     ...TEXT_STYLES.bodyLarge,
     flex: 1,
-    minHeight: 54,
+    minWidth: 0,
+    height: Platform.OS === 'ios' ? 28 : 54,
     paddingVertical: 0,
     paddingHorizontal: 0,
   },

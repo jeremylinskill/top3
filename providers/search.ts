@@ -179,6 +179,38 @@ export function getSearchProvider(
       );
   }
 
+  // Show only albums with evidence that they are soundtracks.
+  // Apple Music may categorize genuine soundtracks under other genres.
+  if (
+    categoryId === 'albums' &&
+    collectionOption?.id === 'albums-type-soundtracks'
+  ) {
+    return async (query, topic, signal) => {
+      const albums = await searchAlbums(
+        query,
+        topic,
+        signal
+      );
+
+      return albums.filter((album) => {
+        const matchesSoundtrackGenre =
+          album.genres?.some((genre) =>
+            /\bsoundtracks?\b/i.test(genre)
+          ) ?? false;
+
+        const matchesSoundtrackTitle =
+          /\bsoundtracks?\b|original motion picture score|film score|music from the motion picture/i.test(
+            album.title
+          );
+
+        return (
+          matchesSoundtrackGenre ||
+          matchesSoundtrackTitle
+        );
+      });
+    };
+  }
+
   return SEARCH_PROVIDERS[
     categoryId
   ];
