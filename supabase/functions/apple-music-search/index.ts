@@ -12,6 +12,7 @@ type SearchRequestBody = {
   query?: unknown;
   topic?: unknown;
   limit?: unknown;
+  compilationsOnly?: unknown;
   ids?: unknown;
   includePreview?: unknown;
 };
@@ -64,6 +65,7 @@ type AppleMusicAlbumAttributes = {
   artistName?: string;
   releaseDate?: string;
   genreNames?: string[];
+  isCompilation?: boolean;
   artwork?: AppleMusicArtwork;
   url?: string;
 };
@@ -230,6 +232,7 @@ type AlbumSearchResult = {
   subtitle?: string;
   releaseYear?: string;
   genres?: string[];
+  isCompilation?: boolean;
   imageUrl?: string;
   previewUrl?: string;
   appleMusicUrl?: string;
@@ -1242,6 +1245,8 @@ function mapAlbum(
     artistName,
     releaseDate,
     genreNames,
+    isCompilation:
+      album.attributes?.isCompilation === true,
     originalIndex,
     score: 0,
   };
@@ -2227,6 +2232,7 @@ function rankAndDeduplicateAlbums(
           .slice(0, 4) ||
         undefined,
       genres: album.genreNames,
+      isCompilation: album.isCompilation,
       imageUrl: album.imageUrl,
       previewUrl:
         album.previewUrl,
@@ -5981,9 +5987,31 @@ async function fetchAppleMusicSearch(
   return data ?? {};
 }
 
+// Keep Compilation and Soundtrack Types distinct.
+// Match the soundtrack evidence used by providers/search.ts.
+function isIdentifiableSoundtrackAlbum(
+  album: RankedAlbum
+): boolean {
+  const matchesSoundtrackGenre =
+    album.genreNames.some((genre) =>
+      /\bsoundtracks?\b/i.test(genre)
+    );
+
+  const matchesSoundtrackTitle =
+    /\bsoundtracks?\b|original motion picture score|film score|music from the motion picture/i.test(
+      album.title
+    );
+
+  return (
+    matchesSoundtrackGenre ||
+    matchesSoundtrackTitle
+  );
+}
+
 async function searchAppleMusicAlbums(
   query: string,
-  topic?: string
+  topic?: string,
+  compilationsOnly = false
 ): Promise<AlbumSearchResult[]> {
   const developerToken =
     await getDeveloperToken();
@@ -6140,6 +6168,9 @@ async function searchAppleMusicAlbums(
   const topicFilteredAlbums =
     mappedAlbums.filter(
       (album) =>
+        (!compilationsOnly ||
+          (album.isCompilation === true &&
+            !isIdentifiableSoundtrackAlbum(album))) &&
         !normalizeText(
           album.title
         ).endsWith(
@@ -7337,7 +7368,8 @@ export default {
           resource === "albums"
             ? await searchAppleMusicAlbums(
                 query,
-                topic
+                topic,
+                body.compilationsOnly === true
               )
             : resource === "artists"
               ? await searchAppleMusicArtists(

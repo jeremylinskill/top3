@@ -67,6 +67,64 @@ in this document.
 These entries do not imply that Production has been updated or
 that the currently published App Store binary includes these changes.
 
+## Compilation Albums — Development and Release Tracking
+
+**Status:** Core feature implemented, deployed, and tested in Development; Production release pending.
+
+### Local implementation
+
+- [x] Add Compilations to Album Type fallbacks.
+- [x] Create `20261021184317_add_album_compilations_type.sql`.
+- [x] Preserve Apple Music `isCompilation` metadata.
+- [x] Add compilation-only album search handling.
+- [x] Pass TypeScript and whitespace checks.
+
+### Development validation
+
+- [x] Confirm the upstream Apple Music search candidate limit (25).
+- [x] Verify compilation metadata survives album enrichment.
+- [x] Test various-artists collections and greatest-hits albums.
+- [x] Confirm useful results after filtering and deduplication.
+- [x] Verify Compilation suggestion display, shuffling, and search selection.
+- [ ] Verify empty-result messaging when no Compilations match.
+- [x] Evaluate curated search terms before seeding suggestions.
+- [x] Create `20261021213702_seed_album_compilations_suggestions.sql` with 20 search suggestions.
+- [x] Apply Compilations suggestion migration to Development.
+- [x] Verify the 20 suggestions appear and initiate correct searches.
+
+Initial Development search findings:
+- `Greatest Hits`: 10 compilation results.
+- `Motown`: 10 compilation results.
+- `NOW`: 4 compilation results.
+- `NOW That's What I Call Music`: 0 compilation results.
+- `Various Artists`: 3 compilation results.
+- Regular `Abbey Road` search: 10 results returned.
+- Some various-artists albums have `isCompilation=false`;
+  retain Apple's classification rather than including them automatically.
+- [x] Confirm the target Supabase project is Development.
+- [x] Apply the Compilations Type migration to Development.
+- [x] Deploy initial `apple-music-search` changes to Development.
+- [x] Re-deploy `apple-music-search` to Development after
+      excluding identifiable Soundtracks from Compilations.
+- [x] Verify Soundtracks are excluded from Compilations while
+      general Album and Soundtracks searches remain unchanged.
+- [x] Test Create, search, ranking, saving, and editing.
+- [x] Pass all nine in-app Compilations regression tests.
+
+### Production release dependencies
+
+- [ ] Review and approve both Compilations migrations for Production.
+- [ ] Apply both approved Compilations migrations to Production.
+- [ ] Deploy the compatible `apple-music-search` Edge Function
+      to Production after verification.
+- [ ] Confirm Compilations search works in release candidates.
+- [ ] Verify regular Album and Soundtracks searches remain unaffected.
+- [ ] Confirm the published iOS update and initial Android release
+      include the tested functionality.
+
+Do not mark Development deployment complete based solely on
+local implementation. Production promotion requires separate approval.
+
 ## Production Database and Backend
 
 - [ ] Inventory every migration added since the last confirmed

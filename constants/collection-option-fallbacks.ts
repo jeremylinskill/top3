@@ -68,6 +68,32 @@ const ALBUM_TYPE_FALLBACKS: CollectionOption[] = [
     providerMode: 'curated',
     providerConfig: {},
   },
+  {
+    id: 'albums-type-compilations',
+    slug: 'compilations',
+    categoryId: 'albums',
+    kind: 'type',
+    name: 'Compilations',
+    groupName: 'format',
+    browseLabel: 'Collections of recordings from one or multiple artists',
+    keywords: [
+      'compilation',
+      'compilations',
+      'various artists',
+      'greatest hits',
+    ],
+    searchHints: [
+      'Compilation albums',
+      'Various artists compilations',
+    ],
+    featured: false,
+    trendingEnabled: false,
+    active: true,
+    displayOrder: 20,
+    entityKind: 'album',
+    providerMode: 'curated',
+    providerConfig: {},
+  },
 ];
 
 const MOVIE_TYPE_FALLBACKS: CollectionOption[] = [

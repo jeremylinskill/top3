@@ -18,6 +18,36 @@ to be deployed to Production or included in a published app binary.
 
 Added
 
+Compilation Albums — Development validated (October 21, 2026)
+
+Added Compilations as an Album Type with 20 curated
+search suggestions.
+
+Preserved Apple Music isCompilation metadata through
+the album search pipeline.
+
+Filtered Compilation results before ranking and limiting.
+
+Excluded identifiable Soundtracks from Compilations while
+preserving general Album and dedicated Soundtracks searches.
+
+Applied both Compilations database migrations to Development.
+
+Deployed and tested apple-music-search in Development.
+
+Verified all 20 suggestions and passed nine in-app tests
+covering Create, suggestions, search, ranking, saving,
+publishing, editing, and existing Album functionality.
+
+Confirmed Greatest Hits and Motown compilation results,
+and verified that Pulp Fiction and Guardians of the Galaxy
+soundtracks were excluded from Compilations.
+
+Dedicated empty-result messaging verification remains open.
+
+Production database promotion, Edge Function deployment,
+and app-store releases remain pending.
+
 Server-Driven Create Flow & Types / Themes
 
 Expanded the Create flow with server-driven collection options and

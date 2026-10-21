@@ -12,11 +12,13 @@ import { Top3Item } from '@/types/top3-item';
 export async function searchAlbums(
   query: string,
   topic?: string,
-  _signal?: AbortSignal
+  _signal?: AbortSignal,
+  compilationsOnly = false
 ): Promise<Top3Item[]> {
   return searchAppleMusicAlbums(
     query,
-    topic
+    topic,
+    compilationsOnly
   );
 }
 

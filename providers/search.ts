@@ -179,6 +179,16 @@ export function getSearchProvider(
       );
   }
 
+  // Compilation filtering happens in the Edge Function,
+  // before its final album result limit.
+  if (
+    categoryId === 'albums' &&
+    collectionOption?.id === 'albums-type-compilations'
+  ) {
+    return (query, topic, signal) =>
+      searchAlbums(query, topic, signal, true);
+  }
+
   // Show only albums with evidence that they are soundtracks.
   // Apple Music may categorize genuine soundtracks under other genres.
   if (

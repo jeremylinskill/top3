@@ -1,6 +1,6 @@
 # Top3 Feature Inventory
 
-Document Version: 1.3
+Document Version: 1.4
 Status: Active Development
 Owner: Jeremy Linskill
 Last Updated: October 21, 2026
@@ -106,6 +106,7 @@ checklist.
 | Server-Driven Types / Themes | ✅ Implemented in Development |
 | Musician Catalogue / Discovery | ✅ Implemented in Development |
 | Soundtracks Album Type | ✅ Implemented in Development |
+| Compilations Album Type | ✅ Tested in Development |
 | Comment Editing | ✅ Implemented in Development |
 | Comment Reply Schema / Notifications | ✅ Implemented in Development |
 | Notification Campaign Administration | ✅ Implemented in Development |
@@ -476,13 +477,41 @@ Capabilities:
 - representative track preview where available;
 - evergreen-oriented suggestions;
 - Soundtracks Album Type with dedicated search filtering;
-- 20 curated Soundtracks search suggestions in Development.
+- 20 curated Soundtracks search suggestions in Development;
+- Compilations Album Type with Apple Music classification filtering;
+- 20 curated Compilations search suggestions in Development.
 
 Soundtracks was moved from Album Genres to Types.
 
 The corresponding database changes have been applied to
 Development, not yet verified in Production. Migration of
 existing Soundtrack lists remains a release requirement.
+
+#### Compilations — Development
+
+Compilations uses Apple Music's `isCompilation` classification
+to filter album searches before final ranking and limiting.
+
+Albums identifiable as Soundtracks are excluded from
+Compilations but remain available in general Album search
+and the dedicated Soundtracks Type.
+
+The Type includes 20 curated search suggestions.
+
+Development testing confirmed category selection, suggestions,
+shuffling, searching, ranking, saving, publishing, and editing.
+All nine in-app tests passed.
+
+Additional search tests confirmed that Greatest Hits and
+Motown return Compilations, while identifiable Pulp Fiction
+and Guardians of the Galaxy soundtracks are excluded.
+
+Classification relies on Apple Music metadata and the
+existing soundtrack identification rules, so some catalogue
+exceptions may remain.
+
+Empty-result messaging verification and Production release
+remain outstanding.
 
 ### Artists
 
@@ -1050,6 +1079,15 @@ Examples include:
 - additional metadata-provider fallbacks.
 
 ## Revision History
+
+### Version 1.4 — October 21, 2026
+
+Added Compilations Album Type, 20 curated suggestions,
+Apple Music compilation filtering, soundtrack exclusion,
+and successful Development testing.
+
+Production release remains pending.
+
 
 ### Version 1.3 — October 21, 2026
 

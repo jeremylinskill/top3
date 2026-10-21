@@ -4,6 +4,7 @@ export type Top3Item = {
   subtitle?: string;
   releaseYear?: string;
   genres?: string[];
+  isCompilation?: boolean;
   imageUrl?: string;
   rating?: number;
   previewUrl?: string;

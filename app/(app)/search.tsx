@@ -568,7 +568,8 @@ export default function SearchScreen() {
     !selectedType;
   const fallbackSuggestions =
     isMoviePeopleType ||
-    activeCollectionOption?.id === 'albums-type-soundtracks'
+    activeCollectionOption?.id === 'albums-type-soundtracks' ||
+    activeCollectionOption?.id === 'albums-type-compilations'
       ? []
       : isCustomTopic
         ? curatedOptionSuggestions
@@ -734,10 +735,11 @@ export default function SearchScreen() {
           }
         }
       }
-      // Soundtracks use only option-specific curated suggestions.
+      // Curated Album Types use option-specific suggestions only.
       // Avoid unrelated community and general album recommendations.
       if (
-        activeCollectionOption?.id === 'albums-type-soundtracks'
+        activeCollectionOption?.id === 'albums-type-soundtracks' ||
+        activeCollectionOption?.id === 'albums-type-compilations'
       ) {
         applyThemeSuggestions();
         return;
