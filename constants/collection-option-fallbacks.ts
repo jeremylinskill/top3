@@ -94,6 +94,24 @@ const ALBUM_TYPE_FALLBACKS: CollectionOption[] = [
     providerMode: 'curated',
     providerConfig: {},
   },
+  {
+    id: 'albums-type-live',
+    slug: 'live',
+    categoryId: 'albums',
+    kind: 'type',
+    name: 'Live Albums',
+    groupName: 'format',
+    browseLabel: 'Albums recorded during live performances',
+    keywords: ['live', 'concert', 'unplugged', 'live album'],
+    searchHints: ['Live albums', 'Concert recordings'],
+    featured: false,
+    trendingEnabled: false,
+    active: true,
+    displayOrder: 30,
+    entityKind: 'album',
+    providerMode: 'curated',
+    providerConfig: {},
+  },
 ];
 
 const MOVIE_TYPE_FALLBACKS: CollectionOption[] = [

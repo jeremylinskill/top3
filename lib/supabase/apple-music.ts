@@ -75,7 +75,8 @@ async function searchAppleMusic(
   resource: AppleMusicResource,
   query: string,
   topic?: string,
-  compilationsOnly = false
+  compilationsOnly = false,
+  liveOnly = false
 ): Promise<Top3Item[]> {
   const trimmedQuery =
     query.trim();
@@ -94,6 +95,9 @@ async function searchAppleMusic(
       trimmedTopic || undefined,
     ...(resource === 'albums' && compilationsOnly
       ? { compilationsOnly: true }
+      : {}),
+    ...(resource === 'albums' && liveOnly
+      ? { liveOnly: true }
       : {}),
   });
 }
@@ -150,13 +154,15 @@ export async function enrichAppleMusicArtistsByIds(
 export async function searchAppleMusicAlbums(
   query: string,
   topic?: string,
-  compilationsOnly = false
+  compilationsOnly = false,
+  liveOnly = false
 ): Promise<Top3Item[]> {
   return searchAppleMusic(
     'albums',
     query,
     topic,
-    compilationsOnly
+    compilationsOnly,
+    liveOnly
   );
 }
 

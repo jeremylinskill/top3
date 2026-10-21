@@ -179,6 +179,16 @@ export function getSearchProvider(
       );
   }
 
+  // Live Album filtering happens before the Edge Function's
+  // final result limit, not after it reaches the app.
+  if (
+    categoryId === 'albums' &&
+    collectionOption?.id === 'albums-type-live'
+  ) {
+    return (query, topic, signal) =>
+      searchAlbums(query, topic, signal, false, true);
+  }
+
   // Compilation filtering happens in the Edge Function,
   // before its final album result limit.
   if (

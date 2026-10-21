@@ -13,6 +13,7 @@ type SearchRequestBody = {
   topic?: unknown;
   limit?: unknown;
   compilationsOnly?: unknown;
+  liveOnly?: unknown;
   ids?: unknown;
   includePreview?: unknown;
 };
@@ -6008,17 +6009,55 @@ function isIdentifiableSoundtrackAlbum(
   );
 }
 
+// Apple Music catalog albums do not expose an isLive Boolean.
+// This is conservative title/genre-based evidence, not a
+// definitive classification of every live recording.
+function hasLiveAlbumEvidence(
+  album: RankedAlbum
+): boolean {
+  const title = album.title.trim();
+
+  const matchesGenre = album.genreNames.some(
+    (genre) =>
+      /\blive (album|recording|performance|concert)\b|\bconcert recording\b/i.test(
+        genre
+      )
+  );
+
+  const matchesTitle =
+    /\blive (at|in|from|on|with|concert|recording|performance|session)\b|\bunplugged\b|\bin concert\b|\bconcert recording\b/i.test(
+      title
+    ) ||
+    /\blive(?=\s*[!?)\]:;,.\-–—]|$)/i.test(title) ||
+    /^live(?:\s+(?:19|20)\d{2}|[!?:,.(\[]|$)/i.test(
+      title
+    );
+
+  return matchesGenre || matchesTitle;
+}
+
 async function searchAppleMusicAlbums(
   query: string,
   topic?: string,
-  compilationsOnly = false
+  compilationsOnly = false,
+  liveOnly = false
 ): Promise<AlbumSearchResult[]> {
   const developerToken =
     await getDeveloperToken();
 
+  // Search explicitly for live recordings when the
+  // user's query has no live-performance qualifier.
+  // This improves discovery within Apple's 25 candidates.
+  const liveSearchQuery =
+    liveOnly &&
+    !/\blive\b|\bunplugged\b|\bconcert\b/i.test(query) &&
+    query.length <= MAX_QUERY_LENGTH - 5
+      ? `${query} live`
+      : query;
+
   const data =
     await fetchAppleMusicSearch(
-      query,
+      liveSearchQuery,
       "albums"
     );
 
@@ -6171,6 +6210,7 @@ async function searchAppleMusicAlbums(
         (!compilationsOnly ||
           (album.isCompilation === true &&
             !isIdentifiableSoundtrackAlbum(album))) &&
+        (!liveOnly || hasLiveAlbumEvidence(album)) &&
         !normalizeText(
           album.title
         ).endsWith(
@@ -7369,7 +7409,8 @@ export default {
             ? await searchAppleMusicAlbums(
                 query,
                 topic,
-                body.compilationsOnly === true
+                body.compilationsOnly === true,
+                body.liveOnly === true
               )
             : resource === "artists"
               ? await searchAppleMusicArtists(

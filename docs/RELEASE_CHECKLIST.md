@@ -67,6 +67,39 @@ in this document.
 These entries do not imply that Production has been updated or
 that the currently published App Store binary includes these changes.
 
+## Live Albums — Development and Release Tracking
+
+**Status:** Implemented, deployed and tested in Development; Production release pending.
+
+### Development
+
+- [x] Add Live Albums Type fallback and search routing.
+- [x] Add conservative live title/genre classification.
+- [x] Add 20 initial curated search prompts.
+- [x] Create `20261021221527_add_album_live_type.sql`.
+- [x] Create `20261021221528_seed_album_live_suggestions.sql`.
+- [x] Apply both Live Albums migrations to Development.
+- [x] Deploy updated `apple-music-search` to Development.
+- [x] Verify sampled Live Albums search results and classification.
+- [x] Verify suggestions, shuffling and suggestion selection.
+- [ ] Verify empty-result messaging for unsuccessful Live Albums searches.
+- [x] Test selecting, ranking, saving, publishing and editing Live Albums.
+- [x] Complete all seven Live Albums in-app checks.
+- [x] Verify regular Albums, Soundtracks and Compilations regressions.
+
+### Production — pending separate approval
+
+- [ ] Review and approve both Live Albums migrations.
+- [ ] Apply the approved migrations to Production.
+- [ ] Deploy the compatible Apple Music Edge Function.
+- [ ] Verify production-connected release candidates.
+- [ ] Include the tested feature in the next store releases.
+
+Apple Music album resources do not provide a direct `isLive`
+Boolean. Title/genre evidence may miss live recordings whose
+names don't identify them. Artist Live Albums views may provide
+a future source for improved classification.
+
 ## Compilation Albums — Development and Release Tracking
 
 **Status:** Core feature implemented, deployed, and tested in Development; Production release pending.

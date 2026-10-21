@@ -13,12 +13,14 @@ export async function searchAlbums(
   query: string,
   topic?: string,
   _signal?: AbortSignal,
-  compilationsOnly = false
+  compilationsOnly = false,
+  liveOnly = false
 ): Promise<Top3Item[]> {
   return searchAppleMusicAlbums(
     query,
     topic,
-    compilationsOnly
+    compilationsOnly,
+    liveOnly
   );
 }
 

@@ -1,6 +1,6 @@
 # Top3 Feature Inventory
 
-Document Version: 1.4
+Document Version: 1.5
 Status: Active Development
 Owner: Jeremy Linskill
 Last Updated: October 21, 2026
@@ -107,6 +107,7 @@ checklist.
 | Musician Catalogue / Discovery | ✅ Implemented in Development |
 | Soundtracks Album Type | ✅ Implemented in Development |
 | Compilations Album Type | ✅ Tested in Development |
+| Live Albums Type | ✅ Tested in Development |
 | Comment Editing | ✅ Implemented in Development |
 | Comment Reply Schema / Notifications | ✅ Implemented in Development |
 | Notification Campaign Administration | ✅ Implemented in Development |
@@ -479,7 +480,9 @@ Capabilities:
 - Soundtracks Album Type with dedicated search filtering;
 - 20 curated Soundtracks search suggestions in Development;
 - Compilations Album Type with Apple Music classification filtering;
-- 20 curated Compilations search suggestions in Development.
+- 20 curated Compilations search suggestions in Development;
+- Live Albums Type with title- and genre-based filtering;
+- 20 curated Live Albums search suggestions in Development.
 
 Soundtracks was moved from Album Genres to Types.
 
@@ -512,6 +515,29 @@ exceptions may remain.
 
 Empty-result messaging verification and Production release
 remain outstanding.
+
+#### Live Albums — Development
+
+Live Albums provides a dedicated Type for recordings from
+live performances.
+
+Search uses conservative title and genre evidence such as
+"Live at", "Live in", "MTV Unplugged", and "In Concert".
+
+Because Apple Music does not expose an `isLive` Boolean on
+catalog album resources, this classification is not exhaustive.
+
+The Type offers 20 curated search prompts.
+
+All seven in-app tests passed, covering Type selection,
+suggestions, shuffling, searching, ranking, saving,
+editing, and existing Album Type regressions.
+
+Development database migrations and the updated Apple Music
+Edge Function have been deployed.
+
+Dedicated empty-result messaging verification and Production
+release remain outstanding.
 
 ### Artists
 
@@ -1079,6 +1105,15 @@ Examples include:
 - additional metadata-provider fallbacks.
 
 ## Revision History
+
+### Version 1.5 — October 21, 2026
+
+Documented Live Albums, 20 curated search prompts,
+conservative live-recording filtering, and successful
+Development testing.
+
+Production release remains pending.
+
 
 ### Version 1.4 — October 21, 2026
 

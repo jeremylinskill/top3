@@ -18,6 +18,33 @@ to be deployed to Production or included in a published app binary.
 
 Added
 
+Live Albums — Development validated (October 21, 2026)
+
+Added Live Albums as the third initial Album Type,
+alongside Soundtracks and Compilations.
+
+Implemented live title/genre search filtering before
+final result ranking and limiting.
+
+Added 20 curated Live Albums search prompts.
+
+Applied the Live Albums Type and suggestion migrations
+to Development.
+
+Deployed the updated apple-music-search Edge Function
+to Development.
+
+Verified Development Type and suggestion records,
+sampled live search behaviour, and Album regressions.
+
+Passed all seven in-app tests, including Create,
+suggestions, searching, ranking, saving and editing.
+
+Empty-result messaging verification remains open.
+
+Production backend promotion and app-store releases
+remain pending.
+
 Compilation Albums — Development validated (October 21, 2026)
 
 Added Compilations as an Album Type with 20 curated
