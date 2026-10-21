@@ -101,42 +101,6 @@ function getSortedTopics(topics: Top3Topic[]) {
     .filter((topic) => topic.id !== 'general')
     .sort((first, second) => first.name.localeCompare(second.name));
 }
-// Editorial descriptions for the category selection cards.
-// Card visibility is driven separately by the available collection options.
-const CATEGORY_BROWSE_DESCRIPTIONS: Record<
-  string,
-  { type: string; theme: string }
-> = {
-  movies: {
-    type: 'Genres and people.',
-    theme: 'Moods, eras, platforms and more.',
-  },
-  tv: {
-    type: 'Genres and people.',
-    theme: 'Moods, eras, networks and more.',
-  },
-  books: {
-    type: 'Genres and people.',
-    theme: 'Themes, settings, eras and more.',
-  },
-  games: {
-    type: 'Genres and studios.',
-    theme: 'Eras, platforms, play styles and more.',
-  },
-  albums: {
-    type: 'Genres and artists.',
-    theme: 'Decades, moods, sounds and more.',
-  },
-  artists: {
-    type: 'Genres and people.',
-    theme: 'Eras, scenes, influences and more.',
-  },
-  songs: {
-    type: 'Genres and artists.',
-    theme: 'Moods, decades, occasions and more.',
-  },
-};
-
 const SCREEN_HORIZONTAL_PADDING = 20;
 const GENRE_CONTAINER_HORIZONTAL_PADDING = 18;
 const TOPIC_GAP = 12;
@@ -347,19 +311,8 @@ export default function CreateTopicScreen() {
       : 'Types';
   const hasThemeOptions =
     themes.length > 0;
-  const categoryBrowseDescriptions =
-    CATEGORY_BROWSE_DESCRIPTIONS[selectedCategory.id];
-  const typeCardSubtitle = hasGenreOptions
-    ? hasTypeOptions
-      ? categoryBrowseDescriptions?.type ??
-        `Genres and ${typeOptionsLabel.toLowerCase()}.`
-      : 'Genres.'
-    : typeOptionsArePeople
-      ? 'People.'
-      : 'Types.';
-  const themeCardSubtitle =
-    categoryBrowseDescriptions?.theme ??
-    'Explore themes and more.';
+  const typeCardSubtitle = 'Choose what or who to rank.';
+  const themeCardSubtitle = 'Rank around an idea or experience.';
   const typeScreenSubtitle = hasGenreOptions
     ? hasTypeOptions
       ? selectedCategory.id === 'artists'
