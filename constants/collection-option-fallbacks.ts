@@ -49,6 +49,27 @@ function getThemeProviderFields(
   };
 }
 
+const ALBUM_TYPE_FALLBACKS: CollectionOption[] = [
+  {
+    id: 'albums-type-soundtracks',
+    slug: 'soundtracks',
+    categoryId: 'albums',
+    kind: 'type',
+    name: 'Soundtracks',
+    groupName: 'format',
+    browseLabel: 'Albums created for films, television, games and other productions',
+    keywords: ['soundtrack', 'soundtracks', 'original soundtrack', 'ost'],
+    searchHints: ['Soundtrack albums', 'Original scores'],
+    featured: false,
+    trendingEnabled: false,
+    active: true,
+    displayOrder: 10,
+    entityKind: 'album',
+    providerMode: 'curated',
+    providerConfig: {},
+  },
+];
+
 const MOVIE_TYPE_FALLBACKS: CollectionOption[] = [
   {
     id: 'movies-type-actors',
@@ -480,6 +501,7 @@ const ARTIST_THEME_FALLBACKS: CollectionOption[] = [
 ];
 
 export const BUNDLED_COLLECTION_OPTIONS: CollectionOption[] = [
+  ...ALBUM_TYPE_FALLBACKS,
   ...MOVIE_TYPE_FALLBACKS,
   ...MOVIE_THEME_FALLBACKS,
   ...ARTIST_THEME_FALLBACKS,

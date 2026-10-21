@@ -443,13 +443,24 @@ export default function CreateTopicScreen() {
     if (isCreatingRef.current) {
       return;
     }
-    const existingCollection = findExistingCollection(
-      lists,
-      selectedCategory.id,
-      undefined,
-      option.name,
-      option.id
-    );
+    // Prefer the new Type identity, but recognize existing
+    // Soundtrack genre lists until production migration.
+    const existingCollection =
+      findExistingCollection(
+        lists,
+        selectedCategory.id,
+        undefined,
+        option.name,
+        option.id
+      ) ??
+      (selectedCategory.id === 'albums' &&
+      option.slug === 'soundtracks'
+        ? findExistingCollection(
+            lists,
+            'albums',
+            'Soundtrack'
+          )
+        : undefined);
     if (existingCollection) {
       selectList(existingCollection.id);
       router.push({

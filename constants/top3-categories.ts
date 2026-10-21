@@ -76,15 +76,7 @@ export const TOP3_CATEGORIES: Top3Category[] = [
     name: 'Albums',
     icon: '💿',
     placeholderIcon: 'albums-outline',
-    topics: [
-      ...createMusicTopics('album'),
-      {
-        id: 'soundtrack',
-        name: 'Soundtrack',
-        icon: '🎞️',
-        searchItemName: 'soundtrack album',
-      },
-    ],
+    topics: createMusicTopics('album'),
   },
   {
     id: 'artists',
