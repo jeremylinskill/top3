@@ -1,13 +1,16 @@
 CURRENT_STATE.md
 
-Project: Top3 Version: 3.2 Status: Post-launch Active Development Last Updated:
-October 5, 2026 Current Branch: feature/create-flow-rework
+Project: Top3
+Version: 3.2
+Status: Post-launch Active Development
+Last Updated: October 21, 2026
+Current Branch: main
 
 Last Verified Commit
 
-d70def4
+eca4cda
 
-Separate dev Supabase infrastructure
+Add release checklist for iOS and Android
 
 Dashboard
 
@@ -17,18 +20,53 @@ Project Status
 
 Current Feature
 
-Movie Themes / Search / Discover refinement, with Development and
-Production backend separation complete.
+Documentation reconciliation and next-release preparation, following
+substantial Create, Types and Themes, Soundtracks, notification, social,
+and Android development.
 
-The production iOS app is live. Active development is continuing on
-feature/create-flow-rework.
+The production iOS app is live. Active development is on main.
+The initial public Android release remains pending.
 
-The Development / Production infrastructure separation is complete and
-verified in commit d70def4 --- Separate dev Supabase infrastructure.
+Development and Production Supabase / Amplitude environments remain
+separate, as established in commit d70def4.
 
-The remaining working-tree changes belong to the active Movie Themes /
-Search / Discover feature work and should not yet be treated as a
-completed product-state change.
+The committed codebase is current through eca4cda. Completion in
+Development does not establish that corresponding changes have been
+deployed to Production or included in a published app-store binary.
+
+The release-specific source of truth is docs/RELEASE_CHECKLIST.md.
+
+October 21, 2026 Development Checkpoint
+
+Significant committed work since the October 5 checkpoint includes:
+
+• Server-driven Create flow and expanded artist Types and Themes.
+• Musician catalogue, role standardization, verified artist connections,
+  editorial controls, curated suggestions, and audit tooling.
+• Notification campaign composition, draft management, scheduling,
+  test delivery infrastructure, history, and delivery feedback.
+• Comment reply schema support, comment editing, and social notification
+  navigation improvements.
+• Android application configuration, shared dependencies, notification
+  artwork, and cross-platform authentication refinements.
+• Floating navigation, scroll-responsive headers, system navigation-area
+  handling, and extensive iOS / Android screen layout improvements.
+• Search, Discover, artwork, onboarding, and shared-control refinements.
+• Platform and operating-system analytics tracking.
+• In-app privacy policy alignment and removal of the unnecessary
+  Android microphone permission.
+• Documented Type / Theme taxonomy rules and standardized card subtitles.
+
+Album Soundtracks have been moved from Genres into Types. The related
+Development migrations, Soundtracks search filter, 20 curated search
+suggestions, and long-query input fix have been implemented and tested.
+
+Soundtracks work is committed through 76d4836. Production promotion
+and preservation / migration of existing Soundtrack lists are still
+outstanding release tasks, not completed production changes.
+
+The historical iOS V1 launch checklist is retained separately from the
+new ongoing iOS / Android release checklist.
 
 The production Top 3 website is live at top3taste.com. The site provides
 the public launch/support surfaces and a branded HTTPS authentication
@@ -166,17 +204,25 @@ without a manually maintained onboarding category order.
 
 Current Priority
 
-Complete the active Movie Themes / Search / Discover refinement on
-feature/create-flow-rework.
+Maintain the October 21 development checkpoint and reconcile the
+remaining documentation with the committed implementation.
+
+Track outstanding production deployments, user-data compatibility,
+native build requirements, and both store releases in
+docs/RELEASE_CHECKLIST.md.
 
 Keep routine development and testing on the dedicated Development
 Supabase and Amplitude environments. Do not make Production database,
 Edge Function, Auth, Storage, secret, or analytics changes unless they
 are part of an intentional Production promotion.
 
-The current Movie Themes / Search / Discover work should be completed,
-typechecked, tested on device where relevant, and committed before its
-final behaviour is added to the product documentation.
+Continue Type and Theme development only after reviewing the existing
+taxonomy and relevant provider metadata. The next Album Type under
+consideration is Compilation Albums; implementation is not yet committed.
+
+Before each release, reconcile the actual Production environment with
+Development and verify the release-specific checklist. A clean Git
+working tree does not mean the production rollout is complete.
 
 The current Feed architecture is acceptable for initial low-volume
 launch and real-user validation, but it is not the intended large-scale
@@ -196,7 +242,9 @@ Typecheck
 
 Known Blocking Bugs
 
-None
+None currently recorded in this document. Production release
+readiness and full regression testing remain unverified; see
+docs/RELEASE_CHECKLIST.md.
 
 Project Summary
 
@@ -2738,10 +2786,14 @@ deferred until post-launch; the production domain is top3taste.com.
 Do not recommend migrating Following again---it has already been
 completed.
 
-Remember that the production iOS app is live. Active development is on
-feature/create-flow-rework, and the current uncommitted Movie Themes /
-Search / Discover changes should not be treated as completed product
-state until they are tested and committed.
+Remember that the production iOS app is live and routine development
+is on main. The October 21 checkpoint is eca4cda. Android's initial
+public release remains pending.
+
+Do not assume that committed development features are deployed to
+Production. Use docs/RELEASE_CHECKLIST.md to track all outstanding
+backend migrations, compatibility checks, native builds, testing,
+and store release requirements.
 
 Remember that normal local and EAS development use the dedicated
 Development Supabase and Amplitude environments. The Supabase CLI is
@@ -2768,6 +2820,11 @@ Document Purpose
 CURRENT_STATE.md provides an accurate snapshot of the application's
 current architecture and implementation.
 
-Strategic direction belongs in ROADMAP.md.
+Strategic direction belongs in docs/ROADMAP.md.
 
-Historical milestones belong in CHANGELOG.md.
+Technical direction belongs in docs/TECHNICAL_ROADMAP.md.
+
+Historical milestones belong in docs/CHANGELOG.md.
+
+Production promotion and app-store release readiness belong in
+docs/RELEASE_CHECKLIST.md.
