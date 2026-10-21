@@ -1,9 +1,9 @@
 # Top3 User Journey
 
-Version: 0.2
+Document Version: 0.3
 Status: Active
 Owner: Jeremy Linskill
-Last Updated: September 16, 2026
+Last Updated: October 21, 2026
 
 ---
 
@@ -20,6 +20,11 @@ Every major feature should help move users naturally from one meaningful stage t
 ---
 
 ## Revision History
+
+October 21, 2026 — Clarified category selection to accommodate
+the expanded Types and Themes experience while preserving
+the signed-out first-list journey.
+
 
 | Version | Date | Author | Summary |
 | --- | --- | --- | --- |
@@ -145,7 +150,13 @@ The user chooses from the current Top3 category set:
 
 Categories are derived from the shared product registry and displayed alphabetically.
 
-Where a category uses topics or genres, the user chooses one before building the List.
+Where a category offers additional choices, the user
+selects an appropriate topic, Genre, Type, or Theme before
+building the List.
+
+These choices should clarify what the user is ranking
+without making the first-list experience unnecessarily
+complicated.
 
 ### User Thought
 

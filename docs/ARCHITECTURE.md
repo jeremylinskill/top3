@@ -1,9 +1,9 @@
 # Top3 Architecture
 
-Version: 1.4
+Document Version: 1.5
 Status: Active
 Owner: Jeremy Linskill
-Last Updated: October 5, 2026
+Last Updated: October 21, 2026
 
 ## Purpose
 
@@ -106,7 +106,12 @@ Moderation-removal events → `moderation_content_removals`
 
 Server-side prohibited-content vocabulary → `content_filter_terms`
 
-Category definitions and topics → `constants/top3-categories.ts`
+Category definitions and static topics → `constants/top3-categories.ts`
+
+Server-driven Types and Themes → Supabase collection-option records,
+with local fallbacks where appropriate
+
+Type / Theme classification rules → `docs/types-and-themes.md`
 
 Category artwork dimensions → `constants/category-artwork-rules.ts`
 
@@ -147,9 +152,22 @@ Examples:
 
 This separation allows Top3 to replace or supplement metadata providers without forcing provider-specific naming throughout the application.
 
-### Category Registry is Authoritative
+### Category Registry and Collection Options
 
-`constants/top3-categories.ts` is the application-level source of truth for supported categories and topics.
+`constants/top3-categories.ts` is the authoritative application
+registry for supported categories and static category options.
+
+The expanded Create experience also supports server-driven
+collection options, including Types and Themes.
+
+The server-managed option data and local fallbacks should complement
+the category registry rather than introduce duplicate category lists.
+
+Types classify what or who is being ranked. Themes organize
+lists around ideas, experiences, or points of view.
+
+The classification rules are documented in
+`docs/types-and-themes.md`.
 
 Screens and flows should derive category availability from that registry rather than maintain independent category lists.
 
@@ -661,6 +679,13 @@ Community Discovery
           ▼
  Recommendations & Discovery
 ```
+
+The Create experience may include a category-specific topic,
+Genre, Type, or Theme selection before the user ranks items.
+
+Option discovery and presentation should reuse shared collection
+option infrastructure instead of creating parallel systems for
+individual categories.
 
 Publishing is the gateway to community participation.
 

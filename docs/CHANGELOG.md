@@ -2,6 +2,199 @@ CHANGELOG.md
 
 This document records significant milestones in the evolution of Top3.
 
+v3.5 --- Post-Launch Features, Android Development & Soundtracks
+
+Development checkpoint: October 21, 2026
+
+Status: Committed development milestone. Not an App Store or Google Play
+publication.
+
+This checkpoint records significant application, backend, design, and
+documentation work completed after the October 5 infrastructure separation.
+
+The production iOS application remains live. The initial public Android
+release is still pending. Completed development work must not be assumed
+to be deployed to Production or included in a published app binary.
+
+Added
+
+Server-Driven Create Flow & Types / Themes
+
+Expanded the Create flow with server-driven collection options and
+more structured Type and Theme selections.
+
+Expanded Artist themes with curated suggestions for eras, moods,
+personal experiences, live performances, and careers.
+
+Added chart-based Artist suggestions and supporting database seeds.
+
+Documented the distinction between Types and Themes in
+docs/types-and-themes.md.
+
+Standardized Type and Theme selection-card subtitles.
+
+Representative commits:
+73a5afe, 691d1c1, 01f2656, c0abe64, 4348020,
+95d895a, 67d93a0, 5840c68, f1e6404.
+
+Musician Catalogue & Discovery
+
+Expanded the musician catalogue and standardized role labels.
+
+Added curated musician suggestions and editorial controls.
+
+Improved musician identity resolution, verified band associations,
+audio previews, attribution, and catalogue auditing.
+
+Added musician suggestion review notifications.
+
+Added further verified Apple Music artist connections and
+supporting audit tools and datasets.
+
+Representative commits:
+58f08fc, 052e210, 192f65a, c1f1c04, 57a1c21,
+1ff5f7d, 0ede72e, f656fe4, 4c6c88f, f09f3f0.
+
+Notification Administration
+
+Added administration tools for push notification composition,
+destination selection, drafts, scheduling, and campaign history.
+
+Added campaign delivery feedback and notification-status reporting.
+
+Improved notification navigation, including cold-start handling.
+
+Added a secured worker for scheduled test notifications.
+
+Representative commits:
+35c9f9f, 4725efa, 571ede2, ea6876a,
+0735739, 2270c21, 6413f9e.
+
+Comments & Social
+
+Added schema and notification migrations supporting comment replies.
+
+Added comment editing support.
+
+Improved social notification navigation and Android comments-sheet
+dismissal behaviour.
+
+Representative commits:
+39397c7, 10409d4, 1346bc2, bc09f08.
+
+Android Platform Development
+
+Configured the Android application and notification artwork.
+
+Added shared dependencies and platform-specific improvements
+needed for iOS and Android support.
+
+Refined Android authentication, email handling, keyboard behaviour,
+system navigation areas, and bottom-sheet presentation.
+
+Removed the unnecessary Android microphone permission.
+
+Android production readiness, final native assets, testing, and
+Google Play publication remain outstanding release tasks.
+
+Representative commits:
+0f06f69, c4364aa, 001b0c3, 37c6c07,
+5882fe0, e4be3e1.
+
+Improved
+
+Navigation, Layout & Shared Interface
+
+Introduced floating navigation and scroll-responsive headers.
+
+Refined bottom-tab contrast, shared controls, artwork sizing,
+rank alignment, and Saved screen presentation.
+
+Improved scrolling, navigation, and safe-area handling across
+Search, Discover, Category Feed, Create, Published Top 3,
+Collection, Profile, Settings, Social, Taste Match, and Notifications.
+
+Refined onboarding artwork, category cards, account-form scrolling,
+and media preview positioning.
+
+Removed ratings from search results and improved curated book artwork.
+
+Representative commits:
+5f36226, bae3c63, b0897ab, 4e7b7d8,
+1e155cb, b4c5be3, 186c570, 4a9448c,
+1343b8a, fab92e4, 800dabf, 91a050b,
+df23439, 73164f4.
+
+Analytics & Privacy
+
+Added platform and operating-system tracking in Amplitude.
+
+Aligned the in-app Privacy Policy with the public website.
+
+Representative commits:
+3ddaab7, 88a3ddf.
+
+Album Soundtracks
+
+Moved Soundtracks from Album Genres to Album Types.
+
+Added the Soundtracks Type through migration
+20261020203848_add_album_soundtracks_type.sql.
+
+Added 20 curated Soundtracks search suggestions through migration
+20261021121008_seed_album_soundtracks_suggestions.sql.
+
+Applied both migrations to Development.
+
+Added Soundtracks-specific filtering of Apple Music album results.
+
+Updated search suggestions to use the Soundtracks-specific
+curated set instead of generic Album suggestions.
+
+Fixed the shared search input to handle long search queries
+within a single-line horizontal viewport.
+
+Verified the new suggestion behaviour and iOS search field.
+
+The production migration of existing Soundtrack lists and any
+other outstanding backend promotion remain release requirements.
+
+Representative commits:
+8d7402c, 76d4836.
+
+Release Documentation
+
+Created docs/RELEASE_CHECKLIST.md to track outstanding
+production promotions, native build requirements, store
+submissions, device regression, and post-release verification.
+
+Preserved docs/V1_LAUNCH_BLOCKERS.md as the historical
+original iOS launch checklist.
+
+Updated the documentation index and October 21 current-state
+checkpoint.
+
+Representative commits:
+eca4cda, af67e7c.
+
+Verification & Release Status
+
+Development and Production continue to use separate Supabase
+and Amplitude environments.
+
+The October 21 development checkpoint is recorded on main.
+Release promotion must verify the actual Production database,
+Edge Functions, configuration, and published binary separately.
+
+The release-specific requirements are maintained in
+docs/RELEASE_CHECKLIST.md.
+
+No additional Production database promotion, iOS App Store
+publication, or Android Google Play publication is implied
+by this changelog entry.
+
+---
+
 v3.4 --- Development & Production Environment Separation
 
 Released: October 5, 2026

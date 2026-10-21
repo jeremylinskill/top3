@@ -1,9 +1,9 @@
 # Top3 Design System
 
-Version: 1.1
+Document Version: 1.2
 Status: Active
 Owner: Jeremy Linskill
-Last Updated: September 16, 2026
+Last Updated: October 21, 2026
 
 ## Document Purpose
 
@@ -18,6 +18,7 @@ Whenever possible, existing components should be reused before new ones are crea
 | Version | Date | Author | Summary |
 | --- | --- | --- | --- |
 | 1.0 | July 31, 2026 | Jeremy Linskill | Introduced reusable PageHeader and Chip components, standardized collection flow, expanded the reusable component library, and documented UI architecture. |
+| 1.2 | October 21, 2026 | Jeremy Linskill | Documented floating navigation, scroll-responsive headers, and shared iOS / Android layout principles. |
 | 1.1 | September 16, 2026 | Jeremy Linskill | Added semantic light/dark theming, AppText, inverted preview-sheet themes, shared authentication-button rules, DiscoverListCard reuse, UserAvatar, and the current reusable presentation architecture. |
 
 ## Design Philosophy
@@ -526,6 +527,45 @@ These rules should be reused across:
 - onboarding presentations that show ranked media.
 
 Do not hard-code separate artwork dimensions on individual surfaces unless the product intentionally calls for a different presentation.
+
+## Navigation & Platform-Aware Layout
+
+October 2026 introduced floating bottom navigation and
+scroll-responsive header behaviour across the shared
+iOS and Android experience.
+
+### Navigation Principles
+
+- Keep the bottom-tab presentation consistent across screens.
+- Respect device safe areas and system navigation regions.
+- Support scrolling content without allowing the navigation
+  interface to obscure important controls or ranked items.
+- Use shared navigation and header behaviour rather than
+  implementing isolated alternatives per screen.
+- Preserve consistent icon alignment, contrast, touch targets,
+  and selected states in light and dark modes.
+
+### Scroll-Responsive Headers
+
+- Use the established header components and shared scroll
+  patterns where applicable.
+- Keep navigation and screen identity understandable as
+  content scrolls.
+- Avoid duplicating header transition logic across screens.
+- Check interaction and content visibility on both platforms.
+
+### Cross-Platform Layout
+
+- Account for differences in iOS and Android system UI.
+- Verify keyboard avoidance and dismissible sheet behaviour.
+- Keep content, actions, and scroll boundaries accessible.
+- Test long search queries without multi-line overflow.
+- Extend shared design-system controls instead of introducing
+  screen-specific button styling.
+
+Native-requiring visual changes should be batched for the
+next planned EAS build. JavaScript-only refinements should
+normally be validated through Metro.
 
 ## Layout Patterns
 

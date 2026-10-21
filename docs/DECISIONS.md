@@ -1,9 +1,9 @@
 # Product Decisions
 
-Version: 1.2
+Document Version: 1.3
 Status: Active
 Owner: Jeremy Linskill
-Last Updated: October 5, 2026
+Last Updated: October 21, 2026
 
 ## Purpose
 
@@ -479,6 +479,46 @@ Keeping analytics isolated by environment makes Production reporting more useful
 ### Date
 
 October 3, 2026
+
+### Status
+
+Active
+
+---
+
+## Decision 019
+
+### Title
+
+Types and Themes represent distinct ways to organize Lists.
+
+### Decision
+
+Use Types when a List classifies what or who is being ranked.
+
+Use Themes when a List is organized around an idea, experience,
+perspective, or subjective concept.
+
+Do not introduce a Type or Theme solely because a category
+could technically support it. The distinction must be
+meaningful and understandable to users.
+
+Use the existing collection-option architecture for
+supported categories.
+
+The detailed taxonomy principles are maintained in
+`docs/types-and-themes.md`.
+
+### Rationale
+
+A consistent distinction helps users understand what
+they are choosing, avoids overlapping options, and
+allows the Create experience to expand without
+introducing inconsistent category-specific rules.
+
+### Date
+
+October 21, 2026
 
 ### Status
 

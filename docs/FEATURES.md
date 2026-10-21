@@ -1,10 +1,12 @@
 # Top3 Feature Inventory
 
-Version: 1.2
-Status: V1 Launch Readiness
+Document Version: 1.3
+Status: Active Development
 Owner: Jeremy Linskill
-Last Updated: September 16, 2026
-Last Verified Commit: `92106eb` — Unify Discover search result cards
+Last Updated: October 21, 2026
+Baseline Commit: `af67e7c`
+
+Document versions do not represent published app versions.
 
 ## Purpose
 
@@ -12,7 +14,14 @@ This document serves as the complete inventory of user-facing functionality with
 
 Unlike `CURRENT_STATE.md`, which documents the application's current implementation and architecture, and `ROADMAP.md`, which describes future direction, `FEATURES.md` documents what users can do today.
 
-This document should reflect the current product experience rather than historical implementation details.
+This document describes the user-facing functionality implemented
+in the current development codebase.
+
+Features added after the published iOS release are not necessarily
+available to App Store users yet. Android's public release is pending.
+
+Production promotion and store-release verification are tracked in
+`docs/RELEASE_CHECKLIST.md`.
 
 ## Product Summary
 
@@ -30,6 +39,9 @@ The application currently supports:
 - public and private profiles;
 - profile avatars;
 - List creation, editing, drafts, and publishing;
+- server-driven Types and Themes for supported categories;
+- curated musician and Artist discovery options;
+- Soundtracks as an Album Type in Development;
 - Movies, TV Shows, Books, Video Games, Songs, Albums, Artists, and Podcasts;
 - media previews for Movies, TV Shows, Apple Music, Apple Podcasts, and Books;
 - Feed;
@@ -50,6 +62,16 @@ The application currently supports:
 - Settings, privacy, account deletion, and profile controls.
 
 ## Feature Status
+
+The existing **Production Ready** ratings below reflect the
+previous V1 implementation-readiness assessment. They should
+not be interpreted as proof that every capability is present
+in the currently published iOS binary.
+
+New October functionality is identified separately as
+implemented in Development. Production deployment, compatibility,
+and store availability must be verified through the release
+checklist.
 
 | Feature | Status |
 | --- | --- |
@@ -81,9 +103,29 @@ The application currently supports:
 | Settings / Privacy | ✅ Production Ready |
 | Account Deletion | ✅ Production Ready |
 | Light / Dark Mode | ✅ Production Ready |
+| Server-Driven Types / Themes | ✅ Implemented in Development |
+| Musician Catalogue / Discovery | ✅ Implemented in Development |
+| Soundtracks Album Type | ✅ Implemented in Development |
+| Comment Editing | ✅ Implemented in Development |
+| Comment Reply Schema / Notifications | ✅ Implemented in Development |
+| Notification Campaign Administration | ✅ Implemented in Development |
+| Android Platform Support | ✅ Implemented in Development — public launch pending |
 | Universal Links / Public Share Web Fallback | ➡️ Post-Launch |
 | Large-Scale Paginated Feed | ➡️ Post-Launch |
 | AI-Assisted Recommendations | 💡 Future |
+
+## Platform Availability
+
+The production iOS application is live.
+
+The current development codebase includes additional functionality
+and interface changes not yet verified in a published store build.
+
+Android support is under active development. Its initial public
+Google Play release is pending.
+
+The release checklist records the required production migrations,
+native builds, testing, and store submissions.
 
 ## Application Navigation
 
@@ -324,7 +366,8 @@ Create, edit, rank, save, and publish Top 3 Lists.
 Users can:
 
 - choose a category;
-- choose a topic;
+- choose a topic or supported Type / Theme;
+- browse server-driven collection options with appropriate fallbacks;
 - search external content providers;
 - view curated / popular suggestions;
 - shuffle suggestions where supported;
@@ -431,7 +474,15 @@ Capabilities:
 - square artwork;
 - artist metadata;
 - representative track preview where available;
-- evergreen-oriented suggestions.
+- evergreen-oriented suggestions;
+- Soundtracks Album Type with dedicated search filtering;
+- 20 curated Soundtracks search suggestions in Development.
+
+Soundtracks was moved from Album Genres to Types.
+
+The corresponding database changes have been applied to
+Development, not yet verified in Production. Migration of
+existing Soundtrack lists remains a release requirement.
 
 ### Artists
 
@@ -446,7 +497,14 @@ Capabilities:
 - canonical exact-match enrichment;
 - deduplication;
 - representative song preview where available;
-- evergreen-oriented suggestions.
+- evergreen-oriented suggestions;
+- expanded Artist Types and Themes;
+- curated suggestions for supported Artist themes;
+- musician catalogue and role-based discovery;
+- verified musician identities and associations where available.
+
+The expanded catalogue and themed discovery functionality
+were added during October development.
 
 ### Podcasts
 
@@ -673,6 +731,26 @@ Push-token state is managed per device and account.
 
 Sign-out removes the current device token.
 
+## Notification Administration
+
+**Status:** Implemented in Development
+
+Authorized administration functionality includes:
+
+- campaign composition;
+- destination selection;
+- draft management;
+- scheduling;
+- test notification workflows;
+- notification history and campaign tracking;
+- delivery feedback and status reporting.
+
+A secured scheduled-test worker has also been added.
+
+These administration features are not ordinary user-facing
+notification controls. Production configuration, deployment,
+and delivery testing remain release-verification concerns.
+
 ## Profile
 
 ### Purpose
@@ -820,9 +898,16 @@ A later unlike → relike can generate a new notification.
 Users can:
 
 - add a comment;
+- edit their own comment using the October development support;
 - delete their own comment;
 - view comment count;
 - receive live updates.
+
+October development also added comment-reply schema and
+notification migrations.
+
+The complete user-facing reply flow should be verified before
+it is listed as an available capability in this inventory.
 
 ### Blocking
 
@@ -965,6 +1050,20 @@ Examples include:
 - additional metadata-provider fallbacks.
 
 ## Revision History
+
+### Version 1.3 — October 21, 2026
+
+Updated the implemented feature inventory through `af67e7c`.
+
+- Clarified Development versus published-store availability.
+- Added server-driven Types and Themes.
+- Documented expanded Artist and musician discovery.
+- Documented the new Soundtracks Album Type.
+- Added comment editing and distinguished reply infrastructure
+  from a verified user-facing reply experience.
+- Documented notification campaign administration.
+- Recognized Android development and its pending public release.
+- Connected release status to `docs/RELEASE_CHECKLIST.md`.
 
 ### Version 1.2 — September 16, 2026
 

@@ -1,8 +1,12 @@
 Top3 Product Roadmap
 
-Version: 2.9 Status: Active Development Owner: Jeremy Linskill Last
-Updated: September 16, 2026 Last Verified Commit: 92106eb --- Unify
-Discover search result cards
+Document Version: 3.0
+Status: Post-launch Active Development
+Owner: Jeremy Linskill
+Last Updated: October 21, 2026
+Baseline Commit: af67e7c
+
+Document versions track roadmap revisions, not published app versions.
 
 Purpose
 
@@ -36,9 +40,9 @@ Conversation --- Encourage discussion rather than passive consumption.
 
 Current Milestone
 
-V1 Launch Readiness
+Post-Launch Experience & Cross-Platform Growth
 
-Status: Current Focus 🚧
+Status: Active
 
 Top3's core community platform is now in place.
 
@@ -61,21 +65,29 @@ Apple-authenticated Top3 account is deleted. The architectural changes
 required for Top3's Feed to scale well beyond the initial launch
 population have also been identified.
 
-Production iOS Build 8 remains the current TestFlight release candidate.
-The current feature/dark-mode branch contains verified post-Build-8 work
-for system-aware dark mode, inverted preview-sheet themes, shared
-authentication-button presentation, Podcasts, improved Discover search
-matching, and shared Discover result cards. Build 9 has not been created.
+The original iOS V1 launch is complete, and the iOS app is live.
+Routine development now takes place on main.
 
-The current milestone is to prepare a stable, safe, polished V1 for App
-Store release and begin gathering real-user behaviour before investing
-in larger post-launch architecture migrations or speculative
-recommendation work.
+Our next stage focuses on improving discovery, expanding meaningful
+list choices through Types and Themes, strengthening conversation,
+and supporting the next iOS update and initial Android release.
 
-Discovery & Personalization remains a core product direction, but
-additional large-scale Feed and recommendation infrastructure is
-deliberately deferred until after V1 launch unless it becomes necessary
-for launch reliability.
+Recent development includes the server-driven Create flow, Artist
+Types and Themes, musician discovery, notification administration,
+comment improvements, Android support, and interface refinements.
+
+Album Soundtracks have moved from Genres to Types, with dedicated
+search filtering and 20 curated suggestions in Development.
+
+These features are committed development work. Their presence in
+Production or published app versions must be verified separately.
+
+The source of truth for upcoming release requirements is
+docs/RELEASE_CHECKLIST.md.
+
+Discovery and personalization remain central to the product.
+Scalability improvements should be prioritized against actual
+growth and reliability needs.
 
 Foundation Completed
 
@@ -128,27 +140,27 @@ for category and genre suggestion / search rows
 
 Current Priorities
 
-• Complete the current documentation sweep against the verified
-feature/dark-mode state• Keep Production Build 8 as the current TestFlight
-release candidate while documentation and regression validation are
-completed• Do not create Build 9 until the current documentation /
-regression checkpoint is complete and a replacement build is actually
-required• Regress onboarding, authentication, Podcasts, Discover,
-light / dark presentation, inverted preview sheets, media previews,
-sharing, notifications, moderation, and account deletion on device•
-Fix App Store launch blockers before adding major new product scope•
-Preserve the current Feed and Taste Match experience for initial real-user
-validation• Defer cursor-paginated Feed migration, server-side
-recommendation candidate generation, and other large-scale Feed
-infrastructure until post-launch• Continue search-quality and
-provider-resiliency improvements when they affect launch reliability•
-Treat the completed push-notification system, system-aware dark mode,
-Podcasts support, and shared Discover presentation as part of the V1
-release-candidate regression surface
+• Refine Types, Themes, search quality, and entertainment discovery.
+• Improve community and conversation experiences using user feedback.
+• Maintain consistent behaviour across iOS and Android.
+• Prepare upcoming store releases using docs/RELEASE_CHECKLIST.md.
+• Preserve user rankings and social activity during data migrations.
+• Verify Production backend dependencies before release.
+• Batch native changes to conserve EAS builds.
+• Monitor Feed and recommendation scalability as usage grows.
 
-V1 Launch Readiness
+Compilation Albums remains a possible next feature to investigate,
+not an approved or committed product milestone.
 
-Status: Current Focus
+Original iOS V1 Launch — Historical Milestone
+
+Status: Completed — iOS application live
+
+The following launch requirements and technical decisions are
+preserved as historical context.
+
+Current release requirements are maintained separately in
+docs/RELEASE_CHECKLIST.md.
 
 Goal
 
@@ -178,11 +190,10 @@ Perform final performance and reliability testing• Complete project
 documentation against the release candidate before creating a
 replacement TestFlight build
 
-Launch Decision --- Feed Scalability
+Feed Scalability Decision
 
-Top3 will intentionally launch V1 with the existing client-side Feed
-architecture so the product can gather real usage data before a larger
-Feed rewrite.
+The initial iOS launch retained the client-side Feed architecture
+to gather real usage data before a larger Feed rewrite.
 
 The current implementation retrieves the complete published-post
 dataset, hydrates posts client-side where required, and constructs
@@ -203,9 +214,9 @@ The partial Postgres index collections_published_feed_idx has already
 been added for published, non-removed collections using published_at
 DESC, user_id, and id to support the future paginated Feed path.
 
-This work is deliberately deferred until after V1 launch. It is a
-conscious product and architecture decision, not forgotten technical
-debt.
+This remains a high-priority post-launch scalability initiative.
+It should be addressed before growing data volume makes the existing
+client-side approach expensive or unreliable.
 
 Success Looks Like
 
@@ -219,6 +230,10 @@ scalability priorities.
 Initiative 1 --- Strengthen Discovery
 
 Status: Active / Post-Launch Continuation
+
+October 2026 development expanded Types and Themes, Artist and
+musician discovery, and Soundtracks-specific Album search and
+suggestions. Production rollout remains separately tracked.
 
 Improve the discovery experiences that already exist so users
 consistently encounter relevant people, lists, and entertainment without
@@ -314,7 +329,11 @@ recommend, and how their taste connects with the wider community.
 
 Initiative 4 --- Conversation & Engagement
 
-Status: Planned
+Status: Active / Post-Launch Continuation
+
+Comment editing, reply support, and notification administration
+have been added in Development. Further conversation and
+re-engagement opportunities remain planned.
 
 Build on Likes, Comments, Following, Notifications, and recommendations
 to encourage meaningful interaction around shared interests.
@@ -656,6 +675,18 @@ The long-term goal is not to maximize content creation or passive
 engagement, but to create meaningful connections through shared taste.
 
 Revision History
+
+Version 3.0 --- October 21, 2026
+
+Updated the roadmap for post-launch development through af67e7c.
+
+• Recognized the live iOS application and Android development.
+• Preserved the original V1 launch as a historical milestone.
+• Recorded Types and Themes, musician, Soundtracks, notification,
+  and conversation development progress.
+• Updated immediate priorities without committing to a new feature.
+• Separated release requirements from long-term product priorities.
+• Preserved the existing long-term initiatives and scalability goals.
 
 Version 2.9 --- September 16, 2026
 

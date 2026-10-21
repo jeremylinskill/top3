@@ -1,7 +1,8 @@
 CURRENT_STATE.md
 
 Project: Top3
-Version: 3.2
+Document Version: 3.2
+Document versions are not published app versions.
 Status: Post-launch Active Development
 Last Updated: October 21, 2026
 Current Branch: main

@@ -1,10 +1,12 @@
 # Top3 Technical Roadmap
 
-Version: 1.2
-Status: Active
+Document Version: 1.3
+Status: Active — Post-Launch Development
 Owner: Jeremy Linskill
-Last Updated: October 5, 2026
-Last Verified Commit: `d70def4` — Separate dev Supabase infrastructure
+Last Updated: October 21, 2026
+Baseline Commit: `af67e7c`
+
+Document versions track documentation revisions, not published app versions.
 
 ## Purpose
 
@@ -20,34 +22,58 @@ Product sequencing belongs in `ROADMAP.md`.
 
 ## Current Technical Milestone
 
-### Post-Launch Active Development
+### Post-Launch Development and Release Preparation
 
-**Status**
+**Status:** Active
 
-Current focus
+The production iOS application is live. Routine development is
+on `main`, and the first public Android release is pending.
 
-Top3 is live in Production.
+Development and Production remain separate Supabase and
+Amplitude environments, established through `d70def4`.
 
-Development and Production backend and analytics environments are now separated.
-Routine local development, EAS development builds, test accounts, backend
-changes, push testing, and analytics validation use Development rather than the
-live Production environment.
+Significant engineering work completed since that checkpoint
+includes:
 
-The Development infrastructure separation is implemented and verified through
-`d70def4` — Separate dev Supabase infrastructure.
+- Server-driven Create options and expanded Types and Themes.
+- Artist and musician catalogue, identity, suggestion, and
+  editorial infrastructure.
+- Notification administration, drafts, scheduling, campaign
+  history, test delivery, and delivery-status reporting.
+- Comment editing and reply-related schema and notifications.
+- Android application configuration and cross-platform UI work.
+- Shared navigation, scrolling, artwork, and search refinements.
+- Platform and operating-system analytics tracking.
+- Album Soundtracks Type, search filtering, and curated suggestions.
 
-The active `feature/create-flow-rework` branch contains ongoing Movie Themes,
-Search, Discover, and creation-flow work that remains uncommitted and should not
-yet be treated as completed product state.
+The Soundtracks Type and its 20 curated suggestions have been
+applied and verified in Development. Relevant commits include
+`8d7402c` and `76d4836`.
 
-Current engineering priorities are:
+Development completion does not imply that the changes are
+already deployed to Production or included in a published app.
 
-- complete and verify the active Movie Themes / Search / Discover work;
-- keep routine backend development isolated to Development;
-- avoid Production mutations unless performing an intentional promotion;
-- verify environment-specific dependencies before any Production promotion;
-- update feature documentation only after the current feature work is tested
-  and committed.
+**Current engineering priorities**
+
+- Keep routine backend work isolated to Development.
+- Preserve compatibility and existing user data during
+  production database migrations.
+- Verify outstanding schema, Edge Function, and environment
+  differences before each production promotion.
+- Maintain iOS and Android compatibility as shared features
+  continue to evolve.
+- Batch native-requiring changes to conserve EAS builds.
+- Continue addressing search, notification, and navigation
+  reliability as real-world usage grows.
+- Plan the server-generated, cursor-paginated Feed before
+  the existing client-side approach becomes a bottleneck.
+
+All upcoming production migrations, store builds, device
+regression requirements, and release tasks are tracked in
+`docs/RELEASE_CHECKLIST.md`.
+
+Detailed current implementation belongs in `CURRENT_STATE.md`.
+Product priorities belong in `docs/ROADMAP.md`.
 
 ## Search Providers
 
@@ -197,6 +223,20 @@ Complete
 - square artwork
 - representative-track previews
 - evergreen-oriented suggestions
+- Soundtracks-specific album filtering through `providers/search.ts`
+- curated Soundtracks Type search suggestions
+- preservation of legacy Soundtrack collection compatibility
+  during the transition from Genre to Type
+
+Soundtracks is implemented and tested in Development.
+
+Relevant database migrations:
+
+- `20261020203848_add_album_soundtracks_type.sql`
+- `20261021121008_seed_album_soundtracks_suggestions.sql`
+
+Production promotion and migration of existing Soundtrack lists
+remain pending release tasks.
 
 ### Artists
 
@@ -272,9 +312,20 @@ Search-quality logic should remain inside providers rather than accumulate in sc
 
 Complete
 
-`constants/top3-categories.ts` is the application-level source of truth for supported categories and topics.
+`constants/top3-categories.ts` remains the application-level
+source of truth for supported categories and static category options.
 
-Onboarding derives its categories from `TOP3_CATEGORIES` and sorts them alphabetically for presentation.
+The expanded Create flow also supports server-driven collection
+Types and Themes, with local fallbacks where appropriate.
+
+Types classify what or who is being ranked. Themes organize lists
+around an idea, experience, or point of view.
+
+The established product rules are documented in
+`docs/types-and-themes.md`.
+
+Onboarding derives its categories from `TOP3_CATEGORIES` and
+sorts them alphabetically for presentation.
 
 Category artwork dimensions are centralized in:
 
@@ -396,6 +447,38 @@ Privileged credentials must never be exposed through `EXPO_PUBLIC_*` variables.
 A successful Development change is not automatically ready for Production.
 Production changes require deliberate promotion after environment-specific
 dependencies have been verified.
+
+The release checklist maintains the outstanding promotion inventory,
+including compatibility for previously published app versions and
+preservation of existing Soundtrack lists, rankings, and social activity.
+
+Never infer Production migration or Edge Function status solely from
+local Git commits or successful Development tests.
+
+## Cross-Platform Engineering
+
+The shared React Native / Expo application now includes Android
+configuration alongside the existing iOS implementation.
+
+October 2026 development introduced and refined:
+
+- Android application and notification artwork configuration.
+- Shared iOS / Android dependencies.
+- Floating navigation and scroll-responsive headers.
+- Android system navigation-area and safe-area handling.
+- Platform-specific keyboard, authentication, and sheet behaviour.
+- Shared artwork, search, and media preview layouts.
+- Removal of the unnecessary Android microphone permission.
+
+The initial Android production release remains outstanding.
+
+Native configuration, final Android assets, permission declarations,
+release builds, store testing, and production connectivity must
+be verified through `docs/RELEASE_CHECKLIST.md`.
+
+A JavaScript-only development change does not necessarily require
+an EAS build. Changes affecting native configuration or bundled
+native assets should be identified and batched before rebuilding.
 
 ## Backend
 
