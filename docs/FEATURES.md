@@ -1,6 +1,6 @@
 # Top3 Feature Inventory
 
-Document Version: 1.5
+Document Version: 1.6
 Status: Active Development
 Owner: Jeremy Linskill
 Last Updated: October 21, 2026
@@ -108,6 +108,7 @@ checklist.
 | Soundtracks Album Type | ✅ Implemented in Development |
 | Compilations Album Type | ✅ Tested in Development |
 | Live Albums Type | ✅ Tested in Development |
+| Album Themes (9) | ✅ Tested in Development |
 | Comment Editing | ✅ Implemented in Development |
 | Comment Reply Schema / Notifications | ✅ Implemented in Development |
 | Notification Campaign Administration | ✅ Implemented in Development |
@@ -538,6 +539,37 @@ Edge Function have been deployed.
 
 Dedicated empty-result messaging verification and Production
 release remain outstanding.
+
+#### Album Themes — Development
+
+Nine subjective Album Themes are available, including
+No-Skip Albums, Most Underrated Albums, Best Album Artwork,
+Albums That Changed My Life, and five others.
+
+Five editorial Featured Themes are configured initially.
+All nine are eligible for the existing Trending calculation.
+
+The Featured screen combines editorial defaults and eligible
+Trending Themes, with Browse retaining access to all nine.
+
+Each Theme has 15 curated searchable Album suggestions,
+with five shown initially and additional suggestions available
+through shuffling.
+
+Album search remains unrestricted. Suggestions are inspiration,
+not definitive rankings.
+
+All eight in-app Album Themes tests passed. Development
+database verification confirmed the nine Themes, five
+editorial defaults, and 135 suggestion records.
+
+The Overall-vs-Theme rule is documented in Decision 020.
+Hybrid Featured discovery is documented in Decision 021.
+
+Qualified Trending promotion and the complete saved-List
+editing regression remain to be verified.
+
+Production release is pending.
 
 ### Artists
 
@@ -1105,6 +1137,15 @@ Examples include:
 - additional metadata-provider fallbacks.
 
 ## Revision History
+
+### Version 1.6 — October 21, 2026
+
+Added nine Album Themes, hybrid Featured discovery,
+and 135 curated search suggestions.
+
+Recorded successful Development QA and pending Trending
+qualification verification.
+
 
 ### Version 1.5 — October 21, 2026
 

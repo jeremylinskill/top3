@@ -1,6 +1,6 @@
 # Product Decisions
 
-Document Version: 1.3
+Document Version: 1.5
 Status: Active
 Owner: Jeremy Linskill
 Last Updated: October 21, 2026
@@ -515,6 +515,101 @@ A consistent distinction helps users understand what
 they are choosing, avoids overlapping options, and
 allows the Create experience to expand without
 introducing inconsistent category-specific rules.
+
+### Date
+
+October 21, 2026
+
+### Status
+
+Active
+
+---
+
+## Decision 020
+
+### Title
+
+Themes must offer a distinct perspective from Overall Top 3 rankings.
+
+### Decision
+
+Every Theme should give someone a meaningful reason to choose
+three different items than they would for their Overall Top 3.
+
+A Theme must establish a distinct criterion based on an idea,
+experience, memory, opinion, situation, or perspective.
+
+This does not prohibit an item appearing in both an Overall
+ranking and a themed ranking. It means the selection process
+must meaningfully differ.
+
+Avoid introducing Themes that simply restate "favourite",
+"best of all time", or "essential" without a new criterion.
+
+Apply this rule consistently across every Top 3 category.
+
+### Rationale
+
+Distinct prompts produce more varied Lists, encourage
+personal expression, support discovery, and make Taste Match
+comparisons and conversations more interesting.
+
+### Date
+
+October 21, 2026
+
+### Status
+
+Active
+
+---
+
+## Decision 021
+
+### Title
+
+Featured Themes use a hybrid editorial and activity-based model.
+
+### Decision
+
+Across categories, Featured Themes should combine editorial
+defaults with eligible Trending Themes.
+
+Retain up to two editorial choices at the beginning of Featured.
+When sufficient publishing activity exists, fill remaining
+positions with eligible Trending Themes.
+
+Use the existing category-specific Trending activity system
+and its unique-creator eligibility threshold.
+
+If Trending activity is insufficient, fill positions with
+editorial choices. Featured should not be empty when active
+Themes exist.
+
+Featured capacity should scale with the number of active
+Themes, up to eight.
+
+All active Themes must remain available through Browse.
+
+For curated Theme discovery, target 15 searchable suggestions
+per Theme, displaying five initially and allowing users to
+explore additional suggestions.
+
+Suggestions are editorial inspiration rather than definitive
+answers to subjective Theme prompts.
+
+### Rationale
+
+The hybrid approach provides useful options for new
+categories while allowing actual community participation
+to influence discovery as Top 3 grows.
+
+Unique-creator eligibility reduces the influence of
+repeated publishing by a single account.
+
+Consistent suggestion counts make Theme discovery more
+predictable across categories.
 
 ### Date
 

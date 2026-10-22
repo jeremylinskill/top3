@@ -18,6 +18,31 @@ to be deployed to Production or included in a published app binary.
 
 Added
 
+Album Themes — Development validated (October 21, 2026)
+
+Added nine subjective Album Themes, with five editorial
+Featured defaults and all nine eligible for Trending.
+
+Extended the existing category-specific Featured/Trending
+selection with editorial fallback.
+
+Added 135 curated Album search suggestions, 15 per Theme.
+
+Used a follow-up migration to replace one song-only
+suggestion with a searchable album.
+
+Preserved unrestricted Apple Music album search.
+
+Passed eight in-app tests covering Featured, Browse,
+suggestions, shuffling, search, ranking, saving and
+regressions.
+
+Documented the Overall-vs-Theme distinction and hybrid
+Featured discovery as permanent product decisions.
+
+Qualified Trending promotion, full editing regression
+and Production deployment remain pending.
+
 Live Albums — Development validated (October 21, 2026)
 
 Added Live Albums as the third initial Album Type,

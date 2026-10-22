@@ -824,19 +824,63 @@ export default function CreateTopicScreen() {
         }
       );
     const showTrendingThemes =
-      trendingThemes.length >=
-      MIN_TRENDING_THEMES;
-    const primaryThemes =
-      showTrendingThemes
-        ? trendingThemes
-        : themes.filter(
+      trendingThemes.length >= MIN_TRENDING_THEMES;
+
+    // Proportional Featured capacity:
+    // Albums (9 Themes): 5
+    // Smaller categories (5 Themes): 3
+    // Larger categories: up to 8
+    const maxFeaturedThemes = Math.min(
+      themes.length,
+      8,
+      Math.max(3, Math.ceil(themes.length / 2))
+    );
+
+    const editorialThemes = themes.filter(
+      (theme) => theme.featured
+    );
+
+    // Keep two editorial choices when possible.
+    const editorialPins = editorialThemes.slice(
+      0,
+      Math.min(2, maxFeaturedThemes)
+    );
+
+    // Fill the remaining spaces with eligible Trending
+    // Themes once the existing activity threshold is met.
+    const trendingPicks = showTrendingThemes
+      ? trendingThemes
+          .filter(
             (theme) =>
-              theme.featured
-          );
-    const primaryThemeLabel =
-      showTrendingThemes
-        ? 'Trending'
-        : 'Featured';
+              theme.trendingEnabled &&
+              !editorialPins.some(
+                (pin) => pin.id === theme.id
+              )
+          )
+          .slice(
+            0,
+            maxFeaturedThemes - editorialPins.length
+          )
+      : [];
+
+    // Editorial selections fill unused spaces.
+    // The full active Theme catalogue is the final
+    // fallback, preventing an empty Featured screen.
+    const primaryThemes = [
+      ...editorialPins,
+      ...trendingPicks,
+      ...editorialThemes,
+      ...themes,
+    ]
+      .filter(
+        (theme, index, all) =>
+          all.findIndex(
+            (candidate) => candidate.id === theme.id
+          ) === index
+      )
+      .slice(0, maxFeaturedThemes);
+
+    const primaryThemeLabel = 'Featured';
     const normalizedThemeQuery =
       themeSearchQuery.trim().toLowerCase();
     const themeGroupOptions =
@@ -1033,10 +1077,7 @@ export default function CreateTopicScreen() {
                     value: 'featured',
                     label:
                       primaryThemeLabel,
-                    accessibilityLabel:
-                      showTrendingThemes
-                        ? 'Show trending themes'
-                        : 'Show featured themes',
+                    accessibilityLabel: 'Show featured themes',
                   },
                   {
                     value: 'all',

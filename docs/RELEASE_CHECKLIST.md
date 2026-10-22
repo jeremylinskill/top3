@@ -67,6 +67,67 @@ in this document.
 These entries do not imply that Production has been updated or
 that the currently published App Store binary includes these changes.
 
+## Album Themes — Development and Release Tracking
+
+**Status:** Nine Themes, Featured discovery, and suggestions verified in Development; Trending qualification QA and Production release pending.
+
+### Agreed Themes
+
+- No-Skip Albums
+- Albums That Changed My Life
+- Most Underrated Albums
+- Albums That Defined My Youth
+- Best Album Artwork
+- Guilty Pleasure Albums
+- Perfect Road Trip Albums
+- Albums That Got Me Through Tough Times
+- Albums I Wish I Could Hear Again for the First Time
+
+### Development
+
+- [x] Define all nine Album Themes.
+- [x] Add collection-option fallbacks.
+- [x] Preserve unrestricted album search for Themes.
+- [x] Avoid generic, potentially misleading Album suggestions.
+- [x] Define five editorial Featured Album Themes.
+- [x] Enable Trending eligibility for all nine Album Themes.
+- [x] Extend Featured selection to mix editorial and eligible Trending Themes.
+- [x] Prepare 135 curated search suggestions (15 per Theme).
+- [x] Replace the song-only suggestion with a valid album using a corrective migration.
+- [x] Verify all 135 Development suggestion records.
+- [x] Pass all eight Album Themes in-app QA checks.
+- [ ] Test qualified Trending Theme promotion with real or controlled activity.
+- [ ] Verify the saved Theme association persists through List editing.
+- [x] Create the Featured/suggestions migration.
+- [x] Apply Featured/suggestions migration to Development.
+- [x] Verify five editorial Featured and nine Browse Themes.
+- [x] Verify 15 suggestions per Theme and initial five-chip display.
+- [x] Verify suggestion shuffling and normal album searching.
+- [ ] Verify Trending promotion with qualified activity.
+- [ ] Verify editorial fallback with insufficient activity.
+- [x] Document the Overall-vs-Theme product rule.
+- [x] Create `20261021231750_add_album_themes.sql`.
+- [x] Apply Album Themes migration to Development.
+- [x] Verify nine active Themes in Development.
+- [x] Test Theme selection and full Create flow.
+- [ ] Verify normal album search within every Theme.
+- [ ] Verify saved List Theme association and editing.
+- [x] Regression-test Album Types and Overall Albums.
+- [x] Complete documentation and commit to GitHub.
+
+### Production — separate approval required
+
+- [ ] Review and approve all three Album Themes migrations.
+- [ ] Apply all three approved Album Themes migrations to Production.
+- [ ] Verify Production collection-option records.
+- [ ] Include and test Themes in upcoming iOS and Android releases.
+
+Themes are subjective prompts, not independently verifiable
+album classifications. They intentionally do not narrow
+Apple Music results.
+
+---
+
 ## Live Albums — Development and Release Tracking
 
 **Status:** Implemented, deployed and tested in Development; Production release pending.

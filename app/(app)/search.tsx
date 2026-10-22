@@ -570,7 +570,9 @@ export default function SearchScreen() {
     isMoviePeopleType ||
     activeCollectionOption?.id === 'albums-type-soundtracks' ||
     activeCollectionOption?.id === 'albums-type-compilations' ||
-    activeCollectionOption?.id === 'albums-type-live'
+    activeCollectionOption?.id === 'albums-type-live' ||
+    (activeCollection?.category === 'albums' &&
+      activeCollectionOption?.kind === 'theme')
       ? []
       : isCustomTopic
         ? curatedOptionSuggestions
@@ -741,7 +743,9 @@ export default function SearchScreen() {
       if (
         activeCollectionOption?.id === 'albums-type-soundtracks' ||
         activeCollectionOption?.id === 'albums-type-compilations' ||
-        activeCollectionOption?.id === 'albums-type-live'
+        activeCollectionOption?.id === 'albums-type-live' ||
+        (categoryId === 'albums' &&
+          activeCollectionOption?.kind === 'theme')
       ) {
         applyThemeSuggestions();
         return;

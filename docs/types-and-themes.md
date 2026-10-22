@@ -23,7 +23,7 @@ by an identifiable format, role or classification.
 | TV Shows | Limited Series, Anthology Series, Animated Series, Reality Competition Shows |
 | Books | Novels, Short Story Collections, Graphic Novels |
 | Video Games | Single-Player Games, Multiplayer Games, Indie Games, Remakes |
-| Albums | Studio Albums, Live Albums, Debut Albums, Concept Albums |
+| Albums | Soundtracks, Compilations, Live Albums |
 | Artists | Vocalists, Guitarists, Drummers, Bassists, DJs, MCs |
 | Songs | Duets, Cover Songs, Instrumentals |
 
@@ -50,7 +50,7 @@ situations or personal opinions.
 | TV Shows | Comfort Shows, Shows I Wish Had Another Season, Most Underrated Shows |
 | Books | Books That Changed My Perspective, Books I Couldn't Put Down, Childhood Favourites |
 | Video Games | Games I Couldn't Put Down, Games Worth Replaying, Games That Defined My Childhood |
-| Albums | No-Skip Albums, Desert Island Albums, Albums That Changed My Life |
+| Albums | No-Skip Albums, Most Underrated Albums, Albums That Changed My Life, Best Album Artwork |
 | Artists | Artists Who Changed My Taste in Music, Most Underrated Artists |
 | Songs | Songs That Remind Me of Summer, Songs That Give Me Goosebumps, Songs I Never Skip |
 
@@ -60,6 +60,16 @@ situations or personal opinions.
 - They should make ranking more interesting and encourage discovery or conversation.
 - They do not need to be objectively verifiable.
 - They should describe a clear idea that someone can apply to three favourites.
+- A Theme should give someone a meaningful reason to choose three different items than they would for their Overall Top 3.
+- The prompt must introduce distinct selection criteria; the actual ranked items may still overlap with an Overall list.
+- Avoid Themes that merely rephrase "favourites", "best of all time", or "essential picks" without adding a new perspective.
+- Subjective Themes should not require objective provider filtering or imply that suggested items are definitively correct.
+- Target 15 curated, searchable suggestions per Theme, with five initially displayed and the ability to explore more.
+- Suggestions provide inspiration, not authoritative or automatically ranked picks.
+- Featured Themes combine editorial defaults with eligible Trending Themes.
+- Trending eligibility is category-specific and should prioritize unique publishing creators rather than lifetime List totals.
+- When publishing activity is insufficient, editorial choices fill Featured positions.
+- Every active Theme remains available through Browse.
 
 ## Classification Framework
 
