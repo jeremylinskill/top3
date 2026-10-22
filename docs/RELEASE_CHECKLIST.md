@@ -103,7 +103,15 @@ that the currently published App Store binary includes these changes.
 - [x] Verify five editorial Featured and nine Browse Themes.
 - [x] Verify 15 suggestions per Theme and initial five-chip display.
 - [x] Verify suggestion shuffling and normal album searching.
-- [ ] Verify Trending promotion with qualified activity.
+- [x] Connect Trending to server-driven Theme options across categories.
+- [x] Remove the requirement for three different Themes to qualify.
+- [x] Validate unique-creator ranking and 30-day expiry using controlled tests.
+- [x] Validate the seven-day distinct-creator ranking tiebreaker.
+- [x] Add a dedicated paginated published Theme activity query.
+- [x] Verify 1,203 simulated activity records across three pages.
+- [x] Validate inactive, disabled and cross-category exclusions.
+- [ ] Verify end-to-end Featured promotion with qualifying published activity.
+- [ ] Evaluate server-side Trending aggregation as usage grows.
 - [ ] Verify editorial fallback with insufficient activity.
 - [x] Document the Overall-vs-Theme product rule.
 - [x] Create `20261021231750_add_album_themes.sql`.

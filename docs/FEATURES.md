@@ -566,8 +566,13 @@ editorial defaults, and 135 suggestion records.
 The Overall-vs-Theme rule is documented in Decision 020.
 Hybrid Featured discovery is documented in Decision 021.
 
-Qualified Trending promotion and the complete saved-List
-editing regression remain to be verified.
+Controlled tests passed for Trending eligibility,
+cross-category matching, unique creators, recency
+and paginated activity retrieval.
+
+Qualified Trending promotion in the live Create flow
+and the complete saved-List editing regression remain
+to be verified.
 
 Production release is pending.
 

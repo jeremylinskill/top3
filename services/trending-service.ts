@@ -1,6 +1,7 @@
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
-import { TOP3_THEMES } from '@/constants/top3-themes';
+import type { CollectionOption } from '@/types/collection-option';
 import { Post } from '@/types/post';
+import type { TrendingThemeActivityPost } from '@/types/trending-theme-activity';
 
 export const TRENDING_WINDOW_DAYS = 30;
 
@@ -25,6 +26,7 @@ export type TrendingTheme = {
   categoryId: string;
   listCount: number;
   uniqueCreatorCount: number;
+  recentCreatorCount: number;
   latestPublishedAt: string;
 };
 
@@ -228,114 +230,139 @@ export function getTrendingTopics(
 }
 
 export function getTrendingThemes(
-  posts: Post[]
+  posts: TrendingThemeActivityPost[],
+  availableThemes: CollectionOption[]
 ): TrendingTheme[] {
-  const themes = new Map<
+  const optionByIdentity = new Map<string, CollectionOption>();
+
+  for (const option of availableThemes) {
+    if (
+      option.kind !== 'theme' ||
+      !option.active ||
+      !option.trendingEnabled
+    ) {
+      continue;
+    }
+
+    const category = normalizeValue(option.categoryId);
+
+    optionByIdentity.set(
+      `${category}:${normalizeValue(option.id)}`,
+      option
+    );
+    optionByIdentity.set(
+      `${category}:${normalizeValue(option.slug)}`,
+      option
+    );
+  }
+
+  const recentCutoff =
+    Date.now() - 7 * 24 * 60 * 60 * 1000;
+
+  const counts = new Map<
     string,
     {
       themeId: string;
       categoryId: string;
       listCount: number;
       creatorIds: Set<string>;
+      recentCreatorIds: Set<string>;
       latestPublishedAt: string;
     }
   >();
 
-  posts.forEach((post) => {
-    const themeId =
-      post.collection.themeId?.trim();
+  const trendingCutoff =
+    Date.now() -
+    TRENDING_WINDOW_DAYS * 24 * 60 * 60 * 1000;
 
-    const categoryId =
-      post.collection.category.trim();
-
-    if (!themeId || !categoryId) {
-      return;
-    }
-
-    const themeDefinition =
-      TOP3_THEMES.find(
-        (theme) =>
-          theme.id === themeId
-      );
+  for (const post of posts) {
+    const publishedTime = new Date(
+      post.publishedAt
+    ).getTime();
 
     if (
-      !themeDefinition ||
-      themeDefinition.trendingEnabled === false
+      !Number.isFinite(publishedTime) ||
+      publishedTime < trendingCutoff
     ) {
-      return;
+      continue;
+    }
+    const category = normalizeValue(
+      post.collection.category
+    );
+    const creator = post.authorId?.trim();
+
+    if (!category || !creator) {
+      continue;
     }
 
-    const existing =
-      themes.get(themeId);
+    const fullId = normalizeValue(
+      post.collection.collectionOptionId
+    );
+    const slug = normalizeValue(
+      post.collection.themeId
+    );
+
+    const option =
+      optionByIdentity.get(`${category}:${fullId}`) ??
+      optionByIdentity.get(`${category}:${slug}`);
+
+    if (!option) {
+      continue;
+    }
+
+    const key = `${category}:${option.id}`;
+    const existing = counts.get(key);
 
     if (existing) {
       existing.listCount += 1;
-      existing.creatorIds.add(
-        post.authorId
-      );
+      existing.creatorIds.add(creator);
 
-      if (
-        new Date(post.publishedAt).getTime() >
-        new Date(
-          existing.latestPublishedAt
-        ).getTime()
-      ) {
-        existing.latestPublishedAt =
-          post.publishedAt;
+      if (publishedTime >= recentCutoff) {
+        existing.recentCreatorIds.add(creator);
       }
 
-      return;
+      if (
+        publishedTime >
+        new Date(existing.latestPublishedAt).getTime()
+      ) {
+        existing.latestPublishedAt = post.publishedAt;
+      }
+
+      continue;
     }
 
-    themes.set(themeId, {
-      themeId,
-      categoryId,
+    counts.set(key, {
+      themeId: option.slug,
+      categoryId: category,
       listCount: 1,
-      creatorIds: new Set([
-        post.authorId,
-      ]),
-      latestPublishedAt:
-        post.publishedAt,
+      creatorIds: new Set([creator]),
+      recentCreatorIds: new Set(
+        publishedTime >= recentCutoff ? [creator] : []
+      ),
+      latestPublishedAt: post.publishedAt,
     });
-  });
+  }
 
-  return Array.from(themes.values())
+  return [...counts.values()]
     .map((theme) => ({
       themeId: theme.themeId,
       categoryId: theme.categoryId,
       listCount: theme.listCount,
-      uniqueCreatorCount:
-        theme.creatorIds.size,
-      latestPublishedAt:
-        theme.latestPublishedAt,
+      uniqueCreatorCount: theme.creatorIds.size,
+      recentCreatorCount: theme.recentCreatorIds.size,
+      latestPublishedAt: theme.latestPublishedAt,
     }))
-    .sort((first, second) => {
-      if (
-        second.uniqueCreatorCount !==
-        first.uniqueCreatorCount
-      ) {
-        return (
-          second.uniqueCreatorCount -
-          first.uniqueCreatorCount
-        );
-      }
-
-      if (
-        second.listCount !== first.listCount
-      ) {
-        return (
-          second.listCount -
-          first.listCount
-        );
-      }
-
-      return (
-        new Date(
-          second.latestPublishedAt
-        ).getTime() -
-        new Date(
-          first.latestPublishedAt
-        ).getTime()
-      );
-    });
+    .sort(
+      (first, second) =>
+        second.uniqueCreatorCount -
+          first.uniqueCreatorCount ||
+        second.recentCreatorCount -
+          first.recentCreatorCount ||
+        first.categoryId.localeCompare(
+          second.categoryId
+        ) ||
+        first.themeId.localeCompare(
+          second.themeId
+        )
+    );
 }

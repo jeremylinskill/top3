@@ -67,7 +67,11 @@ situations or personal opinions.
 - Target 15 curated, searchable suggestions per Theme, with five initially displayed and the ability to explore more.
 - Suggestions provide inspiration, not authoritative or automatically ranked picks.
 - Featured Themes combine editorial defaults with eligible Trending Themes.
-- Trending eligibility is category-specific and should prioritize unique publishing creators rather than lifetime List totals.
+- Trending eligibility is category-specific and requires three unique creators publishing eligible Lists within 30 days.
+- A single qualifying Theme can enter Featured; multiple qualifying Themes are not required.
+- Rank using distinct creators over 30 days, then distinct creators within seven days.
+- Repeated Lists by one creator must not improve a Theme's ranking.
+- Use the active, Trending-enabled server-driven Theme catalogue.
 - When publishing activity is insufficient, editorial choices fill Featured positions.
 - Every active Theme remains available through Browse.
 

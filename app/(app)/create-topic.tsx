@@ -11,12 +11,9 @@ import { useCollectionOptions } from '@/context/collection-options-context';
 import { useTop3 } from '@/context/top3-context';
 import { CollectionOption } from '@/types/collection-option';
 import { useAppColors } from '@/hooks/use-app-colors';
-import { getPublishedPosts } from '@/services/post-service';
-import {
-  getTrendingThemes,
-  getTrendingWindowPosts,
-} from '@/services/trending-service';
-import { Post } from '@/types/post';
+import { getRecentPublishedThemeActivity } from '@/lib/supabase/collections';
+import { getTrendingThemes } from '@/services/trending-service';
+import type { TrendingThemeActivityPost } from '@/types/trending-theme-activity';
 import { Top3List } from '@/types/top3-list';
 import {
   buildCollectionTitle,
@@ -106,7 +103,6 @@ const GENRE_CONTAINER_HORIZONTAL_PADDING = 18;
 const TOPIC_GAP = 12;
 const MIN_THREE_COLUMN_CARD_WIDTH = 112;
 const MIN_TRENDING_THEME_CREATORS = 3;
-const MIN_TRENDING_THEMES = 3;
 const MAX_TRENDING_THEMES = 5;
 
 // The root layout draws a solid Android system-navigation backdrop.
@@ -170,7 +166,7 @@ export default function CreateTopicScreen() {
   const [
     publishedPosts,
     setPublishedPosts,
-  ] = useState<Post[]>([]);
+  ] = useState<TrendingThemeActivityPost[]>([]);
   function fadeThemeGroupHint(toValue: number) {
     Animated.timing(themeGroupHintOpacity, {
       toValue,
@@ -339,9 +335,7 @@ export default function CreateTopicScreen() {
     async function loadThemeActivity() {
       try {
         const posts =
-          await getPublishedPosts({
-            hydrateMissingArtwork: false,
-          });
+          await getRecentPublishedThemeActivity();
         if (isMounted) {
           setPublishedPosts(posts);
         }
@@ -790,16 +784,11 @@ export default function CreateTopicScreen() {
     );
   }
   if (hasThemeOptions && mode === 'theme') {
-    const recentThemePosts =
-      getTrendingWindowPosts(
-        publishedPosts,
-        {
-          fallbackToAll: false,
-        }
-      );
+
     const trendingThemeActivity =
       getTrendingThemes(
-        recentThemePosts
+        publishedPosts,
+        themes
       )
         .filter(
           (theme) =>
@@ -823,8 +812,10 @@ export default function CreateTopicScreen() {
           return theme ? [theme] : [];
         }
       );
+    // A single Theme can qualify when enough distinct
+    // creators have published Lists for it.
     const showTrendingThemes =
-      trendingThemes.length >= MIN_TRENDING_THEMES;
+      trendingThemes.length > 0;
 
     // Proportional Featured capacity:
     // Albums (9 Themes): 5

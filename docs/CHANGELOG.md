@@ -18,6 +18,28 @@ to be deployed to Production or included in a published app binary.
 
 Added
 
+Theme Trending — Development calculation validated (October 21, 2026)
+
+Connected Trending to active, server-driven Themes
+across categories, including Albums and Artists.
+
+Removed the requirement for three different Themes
+to qualify before Trending can appear.
+
+Preserved the three-unique-creator threshold and
+30-day activity window.
+
+Added a seven-day unique-creator tiebreaker.
+
+Separated Trending activity retrieval from the Feed,
+using lightweight, paginated published-List queries.
+
+Passed eight controlled ranking tests and a 1,203-record
+pagination test without modifying community data.
+
+Live end-to-end promotion and future server-side
+aggregation remain outstanding.
+
 Album Themes — Development validated (October 21, 2026)
 
 Added nine subjective Album Themes, with five editorial

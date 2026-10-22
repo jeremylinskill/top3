@@ -1,6 +1,6 @@
 # Product Decisions
 
-Document Version: 1.5
+Document Version: 1.6
 Status: Active
 Owner: Jeremy Linskill
 Last Updated: October 21, 2026
@@ -580,8 +580,26 @@ Retain up to two editorial choices at the beginning of Featured.
 When sufficient publishing activity exists, fill remaining
 positions with eligible Trending Themes.
 
-Use the existing category-specific Trending activity system
-and its unique-creator eligibility threshold.
+Calculate Trending from published, non-removed Lists in a
+rolling 30-day window.
+
+A Theme qualifies once three distinct creators publish
+eligible Lists. One qualifying Theme is enough to enter
+Featured alongside editorial choices.
+
+Rank by distinct creators over 30 days, then distinct
+creators in the most recent seven days. Repeated Lists
+from the same creator must not improve the ranking.
+
+Use active, Trending-enabled server-driven collection
+options rather than the legacy Movies-only catalogue.
+
+Retrieve Theme activity through a dedicated paginated
+query, independently of the user-facing Feed.
+
+The current client-side calculation reflects activity
+visible through Supabase row-level security. A trusted
+server-side aggregate should be evaluated as usage grows.
 
 If Trending activity is insufficient, fill positions with
 editorial choices. Featured should not be empty when active

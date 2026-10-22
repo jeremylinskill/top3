@@ -1,3 +1,4 @@
+import type { TrendingThemeActivityPost } from '@/types/trending-theme-activity';
 import { supabase } from '@/lib/supabase';
 import { Post } from '@/types/post';
 import { Top3Item } from '@/types/top3-item';
@@ -249,6 +250,76 @@ export async function getPublishedPosts(): Promise<
   return (data as CollectionRow[]).map(
     mapPublishedCollectionRowToPost
   );
+}
+
+// Fetch only the fields needed for Theme rankings.
+// Keep this separate from the user-facing Feed query.
+//
+// Supabase/PostgREST may cap individual query responses.
+// Paging prevents unrelated Feed activity from silently
+// excluding qualifying Themes.
+export async function getRecentPublishedThemeActivity(): Promise<
+  TrendingThemeActivityPost[]
+> {
+  const cutoff = new Date(
+    Date.now() - 30 * 24 * 60 * 60 * 1000
+  ).toISOString();
+
+  const pageSize = 500;
+  const results: TrendingThemeActivityPost[] = [];
+
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await supabase
+      .from('collections')
+      .select(
+        'id,user_id,category,theme_id,collection_option_id,published_at'
+      )
+      .eq('status', 'published')
+      .is('removed_at', null)
+      .not('published_at', 'is', null)
+      .gte('published_at', cutoff)
+      .or(
+        'theme_id.not.is.null,collection_option_id.not.is.null'
+      )
+      .order('published_at', { ascending: false })
+      .order('id', { ascending: false })
+      .range(offset, offset + pageSize - 1);
+
+    if (error) {
+      throw new Error(
+        `Failed to load Trending Theme activity: ${error.message}`
+      );
+    }
+
+    const rows = data ?? [];
+
+    for (const row of rows) {
+      if (
+        !row.user_id ||
+        !row.published_at ||
+        (!row.theme_id && !row.collection_option_id)
+      ) {
+        continue;
+      }
+
+      results.push({
+        authorId: row.user_id,
+        publishedAt: row.published_at,
+        collection: {
+          category: row.category,
+          themeId: row.theme_id ?? undefined,
+          collectionOptionId:
+            row.collection_option_id ?? undefined,
+        },
+      });
+    }
+
+    if (rows.length < pageSize) {
+      break;
+    }
+  }
+
+  return results;
 }
 
 export async function getPublishedPostsByUser(
