@@ -179,6 +179,24 @@ export function getSearchProvider(
       );
   }
 
+  // Song recording-version filters run in the Edge Function
+  // before the final result limit. Collaborations stay unrestricted.
+  const songType =
+    categoryId !== 'songs'
+      ? undefined
+      : collectionOption?.id === 'songs-type-live'
+        ? 'live'
+        : collectionOption?.id === 'songs-type-acoustic'
+          ? 'acoustic'
+          : collectionOption?.id === 'songs-type-remixes'
+            ? 'remix'
+            : undefined;
+
+  if (songType) {
+    return (query, topic, signal) =>
+      searchSongs(query, topic, signal, songType);
+  }
+
   // Live Album filtering happens before the Edge Function's
   // final result limit, not after it reaches the app.
   if (

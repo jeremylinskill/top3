@@ -38,11 +38,13 @@ export async function searchArtists(
 export async function searchSongs(
   query: string,
   topic?: string,
-  _signal?: AbortSignal
+  _signal?: AbortSignal,
+  songType?: 'live' | 'acoustic' | 'remix'
 ): Promise<Top3Item[]> {
   return searchAppleMusicSongs(
     query,
-    topic
+    topic,
+    songType
   );
 }
 

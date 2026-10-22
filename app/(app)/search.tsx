@@ -568,6 +568,7 @@ export default function SearchScreen() {
     !selectedType;
   const fallbackSuggestions =
     isMoviePeopleType ||
+    activeCollectionOption?.id?.startsWith('songs-type-') ||
     activeCollectionOption?.id === 'albums-type-soundtracks' ||
     activeCollectionOption?.id === 'albums-type-compilations' ||
     activeCollectionOption?.id === 'albums-type-live' ||
@@ -741,6 +742,7 @@ export default function SearchScreen() {
       // Curated Album Types use option-specific suggestions only.
       // Avoid unrelated community and general album recommendations.
       if (
+        activeCollectionOption?.id?.startsWith('songs-type-') ||
         activeCollectionOption?.id === 'albums-type-soundtracks' ||
         activeCollectionOption?.id === 'albums-type-compilations' ||
         activeCollectionOption?.id === 'albums-type-live' ||

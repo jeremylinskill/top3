@@ -76,7 +76,8 @@ async function searchAppleMusic(
   query: string,
   topic?: string,
   compilationsOnly = false,
-  liveOnly = false
+  liveOnly = false,
+  songType?: 'live' | 'acoustic' | 'remix'
 ): Promise<Top3Item[]> {
   const trimmedQuery =
     query.trim();
@@ -90,6 +91,9 @@ async function searchAppleMusic(
 
   return invokeAppleMusic({
     resource,
+    ...(resource === 'songs' && songType
+      ? { songType }
+      : {}),
     query: trimmedQuery,
     topic:
       trimmedTopic || undefined,
@@ -179,12 +183,16 @@ export async function searchAppleMusicArtists(
 
 export async function searchAppleMusicSongs(
   query: string,
-  topic?: string
+  topic?: string,
+  songType?: 'live' | 'acoustic' | 'remix'
 ): Promise<Top3Item[]> {
   return searchAppleMusic(
     'songs',
     query,
-    topic
+    topic,
+    false,
+    false,
+    songType
   );
 }
 

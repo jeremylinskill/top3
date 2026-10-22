@@ -205,6 +205,8 @@ type AppleMusicSearchSuggestionsResponse = {
   };
 };
 
+type SongRecordingType = "live" | "acoustic" | "remix";
+
 type SongSearchResult = {
   id: string;
   title: string;
@@ -6827,16 +6829,65 @@ async function searchAppleMusicArtists(
   );
 }
 
+function matchesSongRecordingType(
+  song: RankedSong,
+  type: SongRecordingType
+): boolean {
+  const title = song.title;
+  const album = song.albumName;
+
+  if (type === "acoustic") {
+    return /\b(acoustic|unplugged|stripped)\b/i.test(
+      `${title} ${album}`
+    );
+  }
+
+  if (type === "remix") {
+    return /\b(remix|rework|club mix|extended mix)\b/i.test(
+      title
+    );
+  }
+
+  // Avoid treating titles like "Live and Let Die" as concerts.
+  return (
+    /\b(live at|live from|live in|live on|in concert|unplugged)\b/i.test(
+      `${title} ${album}`
+    ) ||
+    /(?:\(|\[|[-–—]\s*)live(?:\s|\)|\]|$)/i.test(title) ||
+    /^live(?:\s+\d{4})?$/i.test(album.trim())
+  );
+}
+
 async function searchAppleMusicSongs(
   query: string,
-  topic?: string
+  topic?: string,
+  songType?: SongRecordingType
 ): Promise<SongSearchResult[]> {
+  const recordingHint =
+    songType === "live" ? "live"
+      : songType === "acoustic" ? "acoustic"
+      : songType === "remix" ? "remix" : undefined;
+
+  const hasRecordingHint =
+    songType === "live"
+      ? /\b(live|unplugged|concert)\b/i.test(query)
+      : songType === "acoustic"
+        ? /\b(acoustic|unplugged|stripped)\b/i.test(query)
+        : songType === "remix"
+          ? /\b(remix|rework|club mix|extended mix)\b/i.test(query)
+          : false;
+
+  const recordingSearchQuery =
+    recordingHint && !hasRecordingHint
+      ? `${query} ${recordingHint}`
+      : query;
+
   const developerToken =
     await getDeveloperToken();
 
   const response =
     await fetch(
-      buildSearchUrl(query, "songs"),
+      buildSearchUrl(recordingSearchQuery, "songs"),
       {
         method: "GET",
         headers: {
@@ -6944,6 +6995,13 @@ async function searchAppleMusicSongs(
         )
     );
 
+  const recordingFilteredSongs =
+    songType
+      ? topicFilteredSongs.filter(song =>
+          matchesSongRecordingType(song, songType)
+        )
+      : topicFilteredSongs;
+
   let chartSongIds: string[] = [];
 
   try {
@@ -6961,7 +7019,7 @@ async function searchAppleMusicSongs(
 
   const rankedSongs =
     rankAndDeduplicateSongs(
-      topicFilteredSongs,
+      recordingFilteredSongs,
       query,
       chartSongIds,
       topic
@@ -7065,6 +7123,18 @@ export default {
       const topic =
         typeof body.topic === "string"
           ? body.topic.trim()
+          : undefined;
+
+      const requestedSongType =
+        typeof body.songType === "string"
+          ? body.songType.trim().toLowerCase()
+          : undefined;
+
+      const songType: SongRecordingType | undefined =
+        requestedSongType === "live" ||
+        requestedSongType === "acoustic" ||
+        requestedSongType === "remix"
+          ? requestedSongType
           : undefined;
 
       const requestedResource =
@@ -7417,10 +7487,7 @@ export default {
                   query,
                   topic
                 )
-              : await searchAppleMusicSongs(
-                  query,
-                  topic
-                );
+              : await searchAppleMusicSongs(query, topic, songType);
 
         return jsonResponse({
           results,

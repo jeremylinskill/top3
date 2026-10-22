@@ -348,3 +348,53 @@ Do not duplicate entire feature specifications here.
 
 Review this checklist at each release checkpoint, and distinguish
 development completion from Production deployment and store publication.
+
+## Song Types — Development validation pending
+
+- [ ] Apply `20261022022100_add_song_types.sql` to Development.
+- [ ] Apply `20261022022101_seed_song_type_suggestions.sql` to Development.
+- [ ] Deploy updated `apple-music-search` to Development.
+- [ ] Confirm all four Types appear in Songs.
+- [ ] Confirm 15 suggestions per Type and five initially shown.
+- [ ] Verify suggestion shuffling and selection.
+- [ ] Test actual Apple Music results across all four Types.
+- [ ] Review false positives and missed recording versions.
+- [ ] Confirm Overall Songs search remains unchanged.
+- [ ] Verify saved and published Lists retain Song Types.
+- [ ] Obtain approval before any Production deployment.
+
+### Song Type suggestion-label QA
+
+- [ ] Apply `20261022023000_song_type_suggestion_labels.sql`
+      to Development.
+- [ ] Verify Song Type chips show song titles with version
+      qualifiers where appropriate.
+- [ ] Verify tapping a chip places that exact text in search.
+- [ ] Verify five suggestions appear and shuffle rotates them.
+- [ ] Verify other categories' suggestion behaviour is unchanged.
+- [ ] Include this migration in the approved Production release.
+
+- [ ] Apply `20261022024000_align_song_suggestion_search_text.sql`
+      to Development and verify all 60 Song suggestions.
+
+### Consolidated Song Type suggestion corrections
+
+- [ ] Apply `20261022121500_refine_song_type_suggestions.sql`
+      to Development.
+- [ ] Recheck corrected suggestions through the Development
+      Apple Music search function.
+- [ ] Verify five suggestions and shuffle for all four Types.
+- [ ] Confirm tapping a suggestion uses identical search text.
+- [ ] Confirm existing Lists and Overall Songs remain unaffected.
+- [ ] Include this migration in the eventual approved
+      Production release.
+
+
+### Suggestion Manager verification
+
+- [x] Editable suggestion_title column added in Development.
+- [x] Manual editing verified through Supabase Table Editor.
+- [x] Existing suggestion identifiers preserved.
+- [ ] Reconcile any manual Development edits with release data.
+- [ ] Complete Song Type search and saved-List QA.
+- [ ] Obtain explicit approval before Production deployment.

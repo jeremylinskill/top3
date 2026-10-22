@@ -116,3 +116,70 @@ maintaining category-specific copies.
 
 Category-specific controls may use contextual terminology,
 such as Genres, Formats, People, or Types.
+
+### Song Types — initial four
+
+- Acoustic Versions
+- Duets & Collaborations
+- Live Performances
+- Remixes
+
+Each Type starts with 15 curated Apple Music search prompts,
+with five initially displayed and available for shuffling.
+
+Live Performances, Acoustic Versions and Remixes use
+conservative title/album evidence in the Apple Music Edge
+Function before the final result limit.
+
+Duets & Collaborations uses curated discovery and unrestricted
+Apple Music search because artist credits are not a reliable
+exclusion filter.
+
+Cover Songs and Instrumentals are deferred.
+
+### Song Type suggestion display convention
+
+Song Type suggestions use the existing Top 3 single-line
+chips, without artist names or separate artist subtitles.
+
+For curated Song Type suggestions:
+
+- `item.title` is both the visible chip label and search text.
+- Recording versions include their identifying qualifier,
+  such as `Everlong (Acoustic)` or `Layla (Unplugged)`.
+- Collaborations generally use the song title alone.
+- There is no hidden `searchQuery` override.
+- Actual recording matches must be verified in Development.
+
+### Song Type suggestion quality audit
+
+Before release, validate curated Song Type suggestions in
+batches against the Development Apple Music search function.
+
+The initial automated audit checked 60 Song Type suggestions.
+The first pass found 45 matching expected song/artist pairs,
+14 results requiring review, and one empty result set.
+
+A follow-up candidate audit identified replacements. Sixteen
+suggestions were refined, including Everlong (Acoustic Version).
+
+Use one matching chip/search title, with no artist subtitle or
+hidden search-query substitution. Matching an artist alone does
+not prove the correct acoustic/live recording or specific remix.
+
+
+### Manual suggestion administration
+
+Suggestion titles can be edited directly in the Supabase
+Table Editor using public.collection_option_suggestions.
+
+- Filter by option_id to find a Type or Theme.
+- Edit suggestion_title, display_order or active.
+- suggestion_title automatically synchronizes with item.title.
+- Keep item_id stable when changing a suggestion title.
+- The app continues reading item.title.
+- No app build or Edge Function deployment is required.
+
+Manual Development edits are not automatically captured
+by Git migrations. Export and reconcile finalized suggestion
+values before deploying to Production.
