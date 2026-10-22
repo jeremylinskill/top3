@@ -467,3 +467,15 @@ development completion from Production deployment and store publication.
 - [ ] Test save, publish and edit workflows.
 - [ ] Reconcile any manual Development suggestion edits.
 - [ ] Obtain approval before Production deployment.
+
+## Books — Types and Themes
+
+- [ ] Apply Book option and suggestion migrations to Development only; verify linked project and migration dry run first.
+- [ ] Verify five Book Types, nine Themes, five Featured Themes, and all nine Trending-enabled.
+- [ ] Verify 15 suggestions per option, five initially visible, Shuffle, and editable Suggestion Manager entries.
+- [ ] Verify format-aware searching in all five Types. Start with Graphic Novels & Comics: Batman and Watchmen positive; ordinary prose Batman biographies negative. Test well-known books in other four formats, and note incomplete metadata.
+- [ ] Verify unrestricted Theme searches and regression-test existing Book Genres and general search.
+- [ ] Test Create, Save, Publish, and Edit; confirm options stay associated with Lists.
+- [ ] Test activity-based Trending with the required qualifying user activity.
+- [ ] Reconcile any manual Development suggestion edits before Production release.
+- [ ] Validate Production migration plan separately; obtain explicit authorization before Production changes.

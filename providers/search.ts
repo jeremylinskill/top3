@@ -11,6 +11,7 @@ import {
   getPopularBooks,
   searchBooks,
 } from './books';
+import { searchBooksByType } from './book-types';
 import {
   getPopularMovies,
   getPopularTvShows,
@@ -268,6 +269,15 @@ export function getSearchProvider(
     ) {
       return (query, topic, signal) =>
         searchGames(query, topic, signal, gameType);
+    }
+  }
+
+  // Book-format searches rely on catalogue metadata, not Genre subjects.
+  if (categoryId === 'books' && collectionOption?.kind === 'type') {
+    const bookType = collectionOption.providerConfig?.bookType;
+    if (typeof bookType === 'string') {
+      return (query, _topic, signal) =>
+        searchBooksByType(query, bookType, signal);
     }
   }
 

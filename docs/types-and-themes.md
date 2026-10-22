@@ -298,3 +298,17 @@ Open-world classification uses IGDB Themes metadata.
 
 Video Game Genres and subjective Top 3 Themes remain
 separate and must not be modified by Type search filters.
+
+## Books — Types and Themes (Development)
+
+Five Book Types: Graphic Novels & Comics, Novellas, Short Story Collections, Essay Collections, and Anthologies.
+
+Nine Book Themes: Books That Defined My Childhood; Books I Couldn't Put Down; Books That Changed How I Think; Books I'd Recommend to Everyone; Books I Wish I Could Read Again for the First Time; Most Underrated Books; Books That Made Me Cry; Books with Unforgettable Characters; Books with the Best Plot Twists.
+
+- Five editorially Featured Themes; all nine are Trending-enabled.
+- Fifteen curated suggestion titles per option (210 total), with five displayed initially and Shuffle.
+- Suggestions use the existing editable Suggestion Manager.
+- Book Types use isolated, metadata-aware Google Books/Open Library searches. Graphic Novels & Comics are strictly classified; other formats use explicit format evidence and may have incomplete provider coverage.
+- Type searches do not reuse Genre subject filters; normal Book Genres and subjective Themes are unchanged.
+- Existing Book Genres remain unchanged.
+- Local implementation requires Development migration and app testing before Git commit or Production release.
