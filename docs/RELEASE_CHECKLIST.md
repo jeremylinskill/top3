@@ -417,3 +417,23 @@ development completion from Production deployment and store publication.
       qualifying Development publishing activity.
 - [ ] Reconcile manual Development suggestion edits.
 - [ ] Obtain explicit approval before Production deployment.
+
+## Podcast Themes — Development verified
+
+- [x] Applied `20261022150000_add_podcast_themes.sql`.
+- [x] Applied `20261022150100_seed_podcast_theme_suggestions.sql`.
+- [x] Confirmed all nine Podcast Themes appear under By theme.
+- [x] Configured five editorial Featured Themes.
+- [x] Configured all nine Themes as Trending-enabled.
+- [x] Verified 135 seeded suggestions, 15 per Theme.
+- [x] Verified five initial suggestions and shuffle in
+      Podcasts with the Best Storytelling.
+- [x] Verified title-only chips match the search-field text.
+- [x] Confirmed Podcast search returns shows, not episodes.
+- [x] Confirmed existing Podcast Genres still work.
+- [x] Verified creating, saving, publishing and editing a
+      themed Podcast List retains its Theme association.
+- [ ] Verify activity-based Trending promotion with
+      qualifying Development publishing activity.
+- [ ] Reconcile manual Development suggestion edits.
+- [ ] Obtain explicit approval before Production deployment.

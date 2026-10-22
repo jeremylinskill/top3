@@ -214,3 +214,32 @@ the recording-version filters used by Song Types.
 
 The existing editable suggestion_title column supports
 manual adjustments in the Development Supabase Table Editor.
+
+### Podcast Themes — initial nine
+
+Podcast Genres already exist and are unchanged.
+These nine subjective Themes rank podcast shows rather
+than individual episodes.
+
+- Podcasts I Never Miss
+- Podcasts That Changed How I Think
+- Most Underrated Podcasts
+- Podcasts I'd Recommend to Everyone
+- Podcasts with the Best Hosts
+- Most Binge-Worthy Podcasts
+- Podcasts I Learn the Most From
+- Podcasts That Make Me Laugh
+- Podcasts with the Best Storytelling
+
+All nine Themes are active and Trending-enabled.
+The first five are editorially Featured.
+
+Each Theme has 15 title-only suggestions, with five
+initially displayed and available for shuffling.
+
+Podcast Theme searches use the existing Podcast search
+provider without a Theme-specific catalogue filter.
+Users determine which shows fit each subjective Theme.
+
+Suggestion titles remain editable in the Development
+Supabase Table Editor using suggestion_title.

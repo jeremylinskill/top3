@@ -573,7 +573,8 @@ export default function SearchScreen() {
     activeCollectionOption?.id === 'albums-type-compilations' ||
     activeCollectionOption?.id === 'albums-type-live' ||
     ((activeCollection?.category === 'albums' ||
-      activeCollection?.category === 'songs') &&
+      activeCollection?.category === 'songs' ||
+      activeCollection?.category === 'podcasts') &&
       activeCollectionOption?.kind === 'theme')
       ? []
       : isCustomTopic
@@ -748,7 +749,8 @@ export default function SearchScreen() {
         activeCollectionOption?.id === 'albums-type-compilations' ||
         activeCollectionOption?.id === 'albums-type-live' ||
         ((categoryId === 'albums' ||
-          categoryId === 'songs') &&
+          categoryId === 'songs' ||
+          categoryId === 'podcasts') &&
           activeCollectionOption?.kind === 'theme')
       ) {
         applyThemeSuggestions();
