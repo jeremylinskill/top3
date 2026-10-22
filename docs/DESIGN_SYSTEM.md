@@ -772,3 +772,18 @@ Implementation status belongs in `CURRENT_STATE.md`.
 Architectural ownership belongs in `ARCHITECTURE.md`.
 
 Historical changes belong in `CHANGELOG.md`.
+
+## Create Flow — Shared Selection Subtitles
+
+Selection cards and their destination screens must use
+identical instructional copy across all categories.
+
+- **By type:** Choose what or who to rank.
+- **By theme:** Rank around an idea or experience.
+
+Reuse shared text values in the Create flow. Do not create
+independent subtitle strings for each category.
+
+The secondary controls can retain category-specific labels,
+including Genres / Formats for Albums and Genres / People
+for Artists.

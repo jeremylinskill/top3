@@ -95,7 +95,7 @@ situations or personal opinions.
 - Apply the same definitions consistently across all categories.
 - Treat example options as candidates until their search and filtering behaviour is verified.
 
-## Recommended In-App Card Subtitles
+## Shared In-App Card and Selection Screen Subtitles
 
 ### Types
 
@@ -104,3 +104,15 @@ Choose what or who to rank.
 ### Themes
 
 Rank around an idea or experience.
+
+### Consistency rule
+
+The By type and By theme selection screens must display the
+same instructional subtitles as their corresponding Create
+cards, across every supported category.
+
+Use one shared text value per selection mode rather than
+maintaining category-specific copies.
+
+Category-specific controls may use contextual terminology,
+such as Genres, Formats, People, or Types.

@@ -279,11 +279,17 @@ export default function CreateTopicScreen() {
   }
   const selectedCategory = category;
   const topics = getSortedTopics(selectedCategory.topics);
-  const typeOptions =
+  const rawTypeOptions =
     getOptionsForCategory(
       selectedCategory.id,
       'type'
     );
+  const typeOptions =
+    selectedCategory.id === 'albums'
+      ? [...rawTypeOptions].sort((first, second) =>
+          first.name.localeCompare(second.name)
+        )
+      : rawTypeOptions;
   const themes =
     getOptionsForCategory(
       selectedCategory.id,
@@ -304,20 +310,14 @@ export default function CreateTopicScreen() {
   const typeOptionsLabel =
     typeOptionsArePeople
       ? 'People'
-      : 'Types';
+      : selectedCategory.id === 'albums'
+        ? 'Formats'
+        : 'Types';
   const hasThemeOptions =
     themes.length > 0;
   const typeCardSubtitle = 'Choose what or who to rank.';
   const themeCardSubtitle = 'Rank around an idea or experience.';
-  const typeScreenSubtitle = hasGenreOptions
-    ? hasTypeOptions
-      ? selectedCategory.id === 'artists'
-        ? 'Choose a genre or type of artist.'
-        : `Choose a genre or ${typeOptionsArePeople ? 'person' : 'type'}.`
-      : 'Choose a genre.'
-    : typeOptionsArePeople
-      ? 'Choose a person.'
-      : 'Choose a type.';
+  const typeScreenSubtitle = typeCardSubtitle;
   const overallCollection = findExistingCollection(
     lists,
     selectedCategory.id,
@@ -1039,7 +1039,7 @@ export default function CreateTopicScreen() {
           scrollEventThrottle={16}>
         <PageHeader
           title="By theme"
-          subtitle={`Choose a theme for your ${selectedCategory.name} Top 3.`}
+          subtitle={themeCardSubtitle}
         />
         <View style={styles.content}>
           <SearchInput
