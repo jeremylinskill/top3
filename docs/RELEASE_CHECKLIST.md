@@ -437,3 +437,19 @@ development completion from Production deployment and store publication.
       qualifying Development publishing activity.
 - [ ] Reconcile manual Development suggestion edits.
 - [ ] Obtain explicit approval before Production deployment.
+
+## Video Game Themes — Development verified
+
+- [x] Applied `20261022160000_add_video_game_themes.sql`.
+- [x] Applied `20261022160100_seed_video_game_theme_suggestions.sql`.
+- [x] Confirmed nine Themes appear under By theme.
+- [x] Configured five editorial Featured Themes.
+- [x] Configured all nine as Trending-enabled.
+- [x] Seeded 135 suggestions, 15 per Theme.
+- [x] Verified five suggestions and Shuffle in Best Stories.
+- [x] Verified title-only chips match search-field text.
+- [x] Confirmed existing game search and Genres work.
+- [x] Created, saved, published and edited a themed List.
+- [ ] Verify activity-based Trending promotion separately.
+- [ ] Reconcile manual Development suggestion edits.
+- [ ] Obtain approval before Production deployment.

@@ -243,3 +243,32 @@ Users determine which shows fit each subjective Theme.
 
 Suggestion titles remain editable in the Development
 Supabase Table Editor using suggestion_title.
+
+### Video Game Themes — initial nine
+
+Video Game Genres remain unchanged. These subjective
+Themes invite users to rank games for different reasons.
+
+- Games That Defined My Childhood
+- Games I Keep Coming Back To
+- Games with the Best Stories
+- Most Underrated Games
+- Best Games to Play with Friends
+- Games with the Best Worlds
+- Games with the Best Soundtracks
+- Most Challenging Games I've Beaten
+- Games I Wish I Could Play Again for the First Time
+
+Five editorial Featured Themes: Childhood, Best Stories,
+Most Underrated, Play with Friends, and First Time.
+All nine Themes are active and Trending-enabled.
+
+Each Theme has 15 title-only curated suggestions,
+five initially displayed with Shuffle support.
+
+Theme search is unrestricted: users decide which games
+fit a subjective prompt. Gameplay Types and RAWG filtering
+will be implemented and verified separately.
+
+Suggestions can be edited via suggestion_title in the
+Development Supabase Table Editor.
