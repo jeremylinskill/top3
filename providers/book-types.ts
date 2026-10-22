@@ -232,3 +232,75 @@ export async function searchBooksByType(
     return true;
   }).slice(0, 10).map(({ item }) => item);
 }
+
+
+/**
+ * Evaluate a saved book by its actual catalogue record rather than a title
+ * search (which can select the wrong edition). A null result is unknown,
+ * not evidence that the book belongs to this Type.
+ */
+export async function checkSavedBookType(
+  item: Top3Item,
+  type: string,
+  signal?: AbortSignal
+): Promise<boolean | null> {
+  if (!isBookType(type)) return null;
+
+  const workId = item.id.match(/^\/works\/(OL\d+W)$/)?.[1];
+  if (workId) {
+    try {
+      const response = await fetch(
+        `https://openlibrary.org/works/${encodeURIComponent(workId)}.json`,
+        { signal }
+      );
+      if (!response.ok) return null;
+      const work = (await response.json()) as {
+        title?: string;
+        subjects?: string[];
+        description?: string | { value?: string };
+      };
+      const description = typeof work.description === 'string'
+        ? work.description
+        : work.description?.value ?? '';
+      if (!work.subjects?.length && !description) return null;
+      return formatStrength(
+        type,
+        work.title ?? item.title,
+        work.subjects ?? [],
+        description
+      ) >= 2;
+    } catch (error) {
+      if (signal?.aborted) throw error;
+      return null;
+    }
+  }
+
+  const volumeId = item.googleBooksVolumeId?.trim() || item.id.trim();
+  if (!GOOGLE_BOOKS_KEY || !volumeId || volumeId.startsWith('fallback-')) {
+    return null;
+  }
+  try {
+    const params = new URLSearchParams({ key: GOOGLE_BOOKS_KEY });
+    const response = await fetch(
+      `${GOOGLE_BOOKS_URL}/${encodeURIComponent(volumeId)}?${params.toString()}`,
+      { signal }
+    );
+    if (!response.ok) return null;
+    const book = (await response.json()) as GoogleBookVolume;
+    const info = book.volumeInfo;
+    if (!info) return null;
+    const classifications = [
+      ...(info.categories ?? []), info.mainCategory ?? '',
+    ].filter(Boolean);
+    if (!classifications.length && !info.description) return null;
+    return formatStrength(
+      type,
+      info.title ?? item.title,
+      classifications,
+      info.description
+    ) >= 2;
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    return null;
+  }
+}

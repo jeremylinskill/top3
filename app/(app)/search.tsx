@@ -37,6 +37,7 @@ import {
   getCachedCollectionOptionSuggestions,
 } from '@/services/collection-option-service';
 import { getPublishedPosts } from '@/services/post-service';
+import { verifySavedEligibility } from '@/services/saved-item-eligibility';
 import { Top3Item } from '@/types/top3-item';
 import {
   getTop3ItemMetadata,
@@ -278,9 +279,8 @@ export default function SearchScreen() {
     if (!selectedCategory) {
       return [];
     }
-    const activeTopic =
-      normalizeValue(activeCollection?.topic) ||
-      'general';
+    // Filtering by the selected Genre or Type happens in the Saved
+    // eligibility verifier below, not via the original source topic.
     const isPeopleCollection =
       activeCollection?.category === 'movies' &&
       ((activeCollectionOption?.providerKey === 'tmdb' &&
@@ -296,9 +296,7 @@ export default function SearchScreen() {
             selectedCategory.id &&
           (isPeopleCollection
             ? savedItem.item.id.startsWith('person-')
-            : activeTopic === 'general' ||
-              normalizeValue(savedItem.sourceTopic) ===
-                activeTopic)
+            : !savedItem.item.id.startsWith('person-'))
       )
       .sort(
         (first, second) =>
@@ -313,6 +311,87 @@ export default function SearchScreen() {
     savedItems,
     selectedCategory,
   ]);
+  // Start checking classifications as soon as the screen opens so the
+  // Saved badge has the correct count before Saved is tapped.
+  // Never alter saved records. Cap concurrent catalogue lookups.
+  const [savedEligibility, setSavedEligibility] = useState<{
+    key: string;
+    ids: Set<string>;
+    unknownCount: number;
+  } | null>(null);
+  const isSavedMoviePeople =
+    selectedCategory?.id === 'movies' &&
+    (activeCollectionOption?.providerMode === 'movie_person' ||
+      ['actors', 'directors'].includes(normalizeValue(activeCollection?.type)));
+  const savedNeedsEligibility =
+    !musicianRole && !isSavedMoviePeople &&
+    activeCollectionOption?.kind !== 'theme' &&
+    (activeCollectionOption?.kind === 'type' ||
+      Boolean(activeCollection?.topic &&
+        normalizeValue(activeCollection.topic) !== 'general'));
+  const savedEligibilityKey = JSON.stringify([
+    selectedCategory?.id ?? '',
+    activeCollectionOption?.id ?? '',
+    activeCollection?.topic ?? '',
+    savedCategoryCandidates.map((item) => [item.id, item.item.id]),
+  ]);
+
+  useEffect(() => {
+    if (
+      !savedNeedsEligibility ||
+      isLoadingSavedItems ||
+      savedCategoryCandidates.length === 0
+    ) return;
+    let cancelled = false;
+    const controller = new AbortController();
+    void (async () => {
+      const ids = new Set<string>();
+      let unknownCount = 0;
+      let nextIndex = 0;
+      const worker = async () => {
+        while (!cancelled && nextIndex < savedCategoryCandidates.length) {
+          const item = savedCategoryCandidates[nextIndex++];
+          const outcome = await verifySavedEligibility(
+            item,
+            activeCollectionOption,
+            activeCollection?.topic,
+            controller.signal
+          );
+          if (outcome === 'match') ids.add(item.id);
+          if (outcome === 'unknown') unknownCount++;
+        }
+      };
+      await Promise.all(
+        Array.from({ length: Math.min(3, savedCategoryCandidates.length) },
+          () => worker())
+      );
+      if (!cancelled) {
+        setSavedEligibility({ key: savedEligibilityKey, ids, unknownCount });
+      }
+    })().catch((error) => {
+      if (!cancelled) {
+        console.error('Saved eligibility verification failed:', error);
+        setSavedEligibility({
+          key: savedEligibilityKey,
+          ids: new Set(),
+          unknownCount: savedCategoryCandidates.length,
+        });
+      }
+    });
+    return () => { cancelled = true; controller.abort(); };
+  }, [
+    savedNeedsEligibility,
+    isLoadingSavedItems,
+    savedCategoryCandidates,
+    activeCollectionOption,
+    activeCollection?.topic,
+    savedEligibilityKey,
+  ]);
+  const isSavedEligibilityLoading =
+    savedNeedsEligibility &&
+    !isLoadingSavedItems && savedCategoryCandidates.length > 0 &&
+    savedEligibility?.key !== savedEligibilityKey;
+
   const savedMusicianIds = useMemo(
     () =>
       [
@@ -402,8 +481,14 @@ export default function SearchScreen() {
   );
 
   const savedCategoryItems = useMemo(() => {
+    const eligibleCandidates = savedNeedsEligibility
+      ? (savedEligibility?.key === savedEligibilityKey
+          ? savedCategoryCandidates.filter((savedItem) =>
+              savedEligibility.ids.has(savedItem.id))
+          : [])
+      : savedCategoryCandidates;
     if (!musicianRole) {
-      return savedCategoryCandidates;
+      return eligibleCandidates;
     }
 
     if (
@@ -414,7 +499,7 @@ export default function SearchScreen() {
       return [];
     }
 
-    return savedCategoryCandidates.filter((savedItem) =>
+    return eligibleCandidates.filter((savedItem) =>
       savedRoleLookup.ids.has(savedItem.item.id)
     );
   }, [
@@ -422,6 +507,9 @@ export default function SearchScreen() {
     savedCategoryCandidates,
     savedRoleLookupKey,
     savedRoleLookup,
+    savedNeedsEligibility,
+    savedEligibility,
+    savedEligibilityKey,
   ]);
 
   const configuredType =
@@ -1402,7 +1490,7 @@ const normalizedRank = Array.isArray(rank)
               value: 'saved',
               label: 'Saved',
               count:
-                isSavedRoleLoading || hasSavedRoleError
+                isLoadingSavedItems || isSavedRoleLoading || hasSavedRoleError || isSavedEligibilityLoading
                   ? undefined
                   : savedCategoryItems.length,
               accessibilityLabel:
@@ -1654,7 +1742,7 @@ const normalizedRank = Array.isArray(rank)
               </>
             )}
           </>
-        ) : isLoadingSavedItems || isSavedRoleLoading ? (
+        ) : isLoadingSavedItems || isSavedRoleLoading || isSavedEligibilityLoading ? (
           <View style={styles.resultsContent}>
             {Array.from(
               { length: 5 },
@@ -1734,7 +1822,7 @@ const normalizedRank = Array.isArray(rank)
               style={styles.messageTitle}>
               {savedItems.length === 0
                 ? 'Nothing saved yet'
-                : `No saved ${savedSelectionName}`}
+                : savedNeedsEligibility ? `No verified saved ${savedSelectionName}` : `No saved ${savedSelectionName}`}
             </AppText>
             <AppText
               variant="bodyLarge"
@@ -1742,7 +1830,7 @@ const normalizedRank = Array.isArray(rank)
               style={styles.messageText}>
               {savedItems.length === 0
                 ? `Save some ${categoryName} from Top 3 lists and they’ll appear here.`
-                : `You haven’t saved any ${categoryName} yet.`}
+                : savedNeedsEligibility ? `No saved items could be verified for this list. You can still use Search.` : `You haven’t saved any ${categoryName} yet.`}
             </AppText>
           </View>
         ) : (
@@ -1752,6 +1840,12 @@ const normalizedRank = Array.isArray(rank)
               style={styles.sectionTitle}>
               Saved {savedSelectionName}
             </AppText>
+            {savedEligibility?.key === savedEligibilityKey &&
+              savedEligibility.unknownCount > 0 && savedNeedsEligibility ? (
+                <AppText variant="bodyLarge" tone="tertiary">
+                  Some saved items could not be verified for this list.
+                </AppText>
+              ) : null}
             <View style={styles.resultsContent}>
               {savedCategoryItems.map((savedItem) =>
                 renderSelectionRow(
