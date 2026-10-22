@@ -272,3 +272,29 @@ will be implemented and verified separately.
 
 Suggestions can be edited via suggestion_title in the
 Development Supabase Table Editor.
+
+### Video Game Types — implementation in progress
+
+Five gameplay-based Types:
+
+- Single-Player Games
+- Online Multiplayer Games
+- Local Co-op Games
+- Online Co-op Games
+- Open-World Games
+
+Each has 15 curated suggestion titles.
+
+The existing Video Game catalogue uses IGDB through the
+Supabase video-game-search Edge Function.
+
+Gameplay filtering must be implemented and tested before
+these Type migrations are deployed to Development.
+
+Single-player uses IGDB game mode metadata.
+Online multiplayer and co-op require verification of
+multiplayer mode metadata.
+Open-world classification uses IGDB Themes metadata.
+
+Video Game Genres and subjective Top 3 Themes remain
+separate and must not be modified by Type search filters.

@@ -249,6 +249,28 @@ export function getSearchProvider(
     };
   }
 
+  if (
+    categoryId === 'games' &&
+    collectionOption?.kind === 'type'
+  ) {
+    const gameType = collectionOption.providerConfig?.gameType;
+    const supportedTypes = [
+      'single-player',
+      'online-multiplayer',
+      'local-coop',
+      'online-coop',
+      'open-world',
+    ];
+
+    if (
+      typeof gameType === 'string' &&
+      supportedTypes.includes(gameType)
+    ) {
+      return (query, topic, signal) =>
+        searchGames(query, topic, signal, gameType);
+    }
+  }
+
   return SEARCH_PROVIDERS[
     categoryId
   ];

@@ -941,6 +941,7 @@ export default function SearchScreen() {
       }
       const cacheKey = [
         categoryId,
+        activeCollectionOption?.id ?? 'default',
         activeCollection?.type?.trim().toLowerCase() ??
           'general',
         activeCollection?.topic?.trim().toLowerCase() ??

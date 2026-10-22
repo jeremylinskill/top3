@@ -31,6 +31,14 @@ type IgdbGame = {
   cover?: IgdbCover;
   videos?: IgdbVideo[];
   genres?: IgdbGenre[];
+  game_modes?: Array<{ name?: string }>;
+  themes?: Array<{ name?: string }>;
+  multiplayer_modes?: Array<{
+    offlinecoop?: boolean;
+    onlinecoop?: boolean;
+    onlinemax?: number;
+    splitscreenonline?: boolean;
+  }>;
 };
 
 type SearchRequestBody = {
@@ -38,6 +46,7 @@ type SearchRequestBody = {
   query?: unknown;
   topic?: unknown;
   limit?: unknown;
+  gameType?: unknown;
 };
 
 type GameSearchResult = {
@@ -597,7 +606,67 @@ function mapIgdbGameToSearchResult(
   };
 }
 
-function buildFieldsClause(): string {
+const GAMEPLAY_TYPES = [
+  'single-player',
+  'online-multiplayer',
+  'local-coop',
+  'online-coop',
+  'open-world',
+] as const;
+
+type GameplayType = (typeof GAMEPLAY_TYPES)[number];
+
+function isGameplayType(value: unknown): value is GameplayType {
+  return typeof value === 'string' &&
+    GAMEPLAY_TYPES.some((candidate) => candidate === value);
+}
+
+function matchesGameplayType(
+  game: IgdbGame,
+  gameType: GameplayType
+): boolean {
+  const hasMode = (name: string) =>
+    game.game_modes?.some(
+      (mode) => mode.name?.trim().toLowerCase() === name
+    ) ?? false;
+
+  const multiplayer = game.multiplayer_modes ?? [];
+
+  switch (gameType) {
+    case 'single-player':
+      return hasMode('single player');
+
+    case 'online-multiplayer':
+      return (
+        hasMode('massively multiplayer online (mmo)') ||
+        multiplayer.some(
+          (mode) =>
+            (typeof mode.onlinemax === 'number' &&
+              mode.onlinemax > 1) ||
+            mode.onlinecoop === true ||
+            mode.splitscreenonline === true
+        )
+      );
+
+    case 'local-coop':
+      return multiplayer.some(
+        (mode) => mode.offlinecoop === true
+      );
+
+    case 'online-coop':
+      return multiplayer.some(
+        (mode) => mode.onlinecoop === true
+      );
+
+    case 'open-world':
+      return game.themes?.some(
+        (theme) =>
+          theme.name?.trim().toLowerCase() === 'open world'
+      ) ?? false;
+  }
+}
+
+function buildFieldsClause(gameplayType?: GameplayType): string {
   return [
     'fields',
     'id,',
@@ -607,6 +676,16 @@ function buildFieldsClause(): string {
     'total_rating_count,',
     'cover.image_id,',
     'genres.name,',
+    ...(gameplayType
+      ? [
+          'game_modes.name,',
+          'themes.name,',
+          'multiplayer_modes.offlinecoop,',
+          'multiplayer_modes.onlinecoop,',
+          'multiplayer_modes.onlinemax,',
+          'multiplayer_modes.splitscreenonline,',
+        ]
+      : []),
     'videos.name,',
     'videos.video_id;',
   ].join(' ');
@@ -675,7 +754,8 @@ async function fetchIgdbGames(
 async function searchIgdbGames(
   query: string,
   clientId: string,
-  accessToken: string
+  accessToken: string,
+  gameplayType?: GameplayType
 ): Promise<GameSearchResult[]> {
   const searchQuery =
     getSearchAlias(query) ?? query;
@@ -687,19 +767,19 @@ async function searchIgdbGames(
 
   const standardSearchBody = [
     `search "${escapedQuery}";`,
-    buildFieldsClause(),
+    buildFieldsClause(gameplayType),
     `where ${buildGameTypeFilter()};`,
-    'limit 20;',
+    gameplayType ? 'limit 50;' : 'limit 20;',
   ].join('\n');
 
   const prefixSearchBody = [
-    buildFieldsClause(),
+    buildFieldsClause(gameplayType),
     [
       'where',
       `name ~ "${escapedQuery}"*`,
       `& ${buildGameTypeFilter()};`,
     ].join(' '),
-    'limit 20;',
+    gameplayType ? 'limit 50;' : 'limit 20;',
   ].join('\n');
 
   const [
@@ -738,7 +818,11 @@ async function searchIgdbGames(
   }
 
   const games =
-    Array.from(gamesById.values());
+    Array.from(gamesById.values()).filter(
+      (game) =>
+        !gameplayType ||
+        matchesGameplayType(game, gameplayType)
+    );
 
   const rankedGames = games
     .filter(
@@ -1047,11 +1131,29 @@ export default {
           );
         }
 
+        const rawGameType = body.gameType;
+
+        if (
+          rawGameType !== undefined &&
+          !isGameplayType(rawGameType)
+        ) {
+          return jsonResponse(
+            { error: 'Invalid gameplay Type.' },
+            400
+          );
+        }
+
+        const gameplayType =
+          isGameplayType(rawGameType)
+            ? rawGameType
+            : undefined;
+
         const results =
           await searchIgdbGames(
             query,
             clientId,
-            accessToken
+            accessToken,
+            gameplayType
           );
 
         return jsonResponse({

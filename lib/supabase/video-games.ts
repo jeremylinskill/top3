@@ -67,7 +67,8 @@ async function invokeVideoGameSearch(
 }
 
 export async function searchVideoGames(
-  query: string
+  query: string,
+  gameType?: string
 ): Promise<Top3Item[]> {
   const trimmedQuery =
     query.trim();
@@ -79,6 +80,7 @@ export async function searchVideoGames(
   return invokeVideoGameSearch({
     mode: 'search',
     query: trimmedQuery,
+    ...(gameType ? { gameType } : {}),
   });
 }
 

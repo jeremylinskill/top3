@@ -8,9 +8,10 @@ import { Top3Item } from '@/types/top3-item';
 export async function searchGames(
   query: string,
   _topic?: string,
-  _signal?: AbortSignal
+  _signal?: AbortSignal,
+  gameType?: string
 ): Promise<Top3Item[]> {
-  return searchVideoGames(query);
+  return searchVideoGames(query, gameType);
 }
 
 

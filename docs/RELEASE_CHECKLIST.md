@@ -453,3 +453,17 @@ development completion from Production deployment and store publication.
 - [ ] Verify activity-based Trending promotion separately.
 - [ ] Reconcile manual Development suggestion edits.
 - [ ] Obtain approval before Production deployment.
+
+## Video Game Types — implementation pending
+
+- [ ] Integrate the five Type identifiers with search.
+- [ ] Extend IGDB Edge Function gameplay metadata handling.
+- [ ] Verify multiplayer and co-op classification accuracy.
+- [ ] Verify Open-World filtering against actual IGDB data.
+- [ ] Verify all five Types return appropriate games.
+- [ ] Verify 15 curated suggestions per Type.
+- [ ] Confirm unrestricted searches still work elsewhere.
+- [ ] Apply Type migrations to Development.
+- [ ] Test save, publish and edit workflows.
+- [ ] Reconcile any manual Development suggestion edits.
+- [ ] Obtain approval before Production deployment.

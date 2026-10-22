@@ -312,10 +312,16 @@ export default function CreateTopicScreen() {
       ? 'People'
       : selectedCategory.id === 'albums'
         ? 'Formats'
-        : 'Types';
+        : selectedCategory.id === 'games'
+          ? 'Play Styles'
+          : 'Types';
   const hasThemeOptions =
     themes.length > 0;
-  const typeCardSubtitle = 'Choose what or who to rank.';
+  const typeScreenTitle = 'By type';
+  const typeCardSubtitle =
+    selectedCategory.id === 'games'
+      ? 'Choose the kind of game to rank.'
+      : 'Choose what or who to rank.';
   const themeCardSubtitle = 'Rank around an idea or experience.';
   const typeScreenSubtitle = typeCardSubtitle;
   const overallCollection = findExistingCollection(
@@ -604,9 +610,9 @@ export default function CreateTopicScreen() {
               ]}
               onPress={() => openMode('type')}
               accessibilityRole="button"
-              accessibilityLabel={`Create a ${selectedCategory.name} Top 3 by type`}>
+              accessibilityLabel={`Create a ${selectedCategory.name} Top 3 ${typeScreenTitle.toLowerCase()}`}>
               <View style={styles.choiceText}>
-                <AppText variant="selectionTitle">By type</AppText>
+                <AppText variant="selectionTitle">{typeScreenTitle}</AppText>
                 <AppText variant="subtitle" style={styles.choiceSubtitle}>
                   {typeCardSubtitle}
                 </AppText>
@@ -670,7 +676,7 @@ export default function CreateTopicScreen() {
           }
           scrollEventThrottle={16}>
         <PageHeader
-          title="By type"
+          title={typeScreenTitle}
           subtitle={typeScreenSubtitle}
         />
         <View style={styles.content}>
