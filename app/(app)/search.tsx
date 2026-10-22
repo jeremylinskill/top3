@@ -572,7 +572,8 @@ export default function SearchScreen() {
     activeCollectionOption?.id === 'albums-type-soundtracks' ||
     activeCollectionOption?.id === 'albums-type-compilations' ||
     activeCollectionOption?.id === 'albums-type-live' ||
-    (activeCollection?.category === 'albums' &&
+    ((activeCollection?.category === 'albums' ||
+      activeCollection?.category === 'songs') &&
       activeCollectionOption?.kind === 'theme')
       ? []
       : isCustomTopic
@@ -746,7 +747,8 @@ export default function SearchScreen() {
         activeCollectionOption?.id === 'albums-type-soundtracks' ||
         activeCollectionOption?.id === 'albums-type-compilations' ||
         activeCollectionOption?.id === 'albums-type-live' ||
-        (categoryId === 'albums' &&
+        ((categoryId === 'albums' ||
+          categoryId === 'songs') &&
           activeCollectionOption?.kind === 'theme')
       ) {
         applyThemeSuggestions();

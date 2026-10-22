@@ -398,3 +398,22 @@ development completion from Production deployment and store publication.
 - [ ] Reconcile any manual Development edits with release data.
 - [ ] Complete Song Type search and saved-List QA.
 - [ ] Obtain explicit approval before Production deployment.
+
+## Song Themes — Development verified
+
+- [x] Applied `20261022133000_add_song_themes.sql`.
+- [x] Applied `20261022133100_seed_song_theme_suggestions.sql`.
+- [x] Confirmed nine Song Themes appear under By theme.
+- [x] Configured five editorial Featured Themes.
+- [x] Configured all nine Themes as Trending-enabled.
+- [x] Verified 135 seeded suggestions, 15 per Theme.
+- [x] Verified five initial suggestions and shuffle in the
+      Songs with the Best Lyrics Theme.
+- [x] Verified suggestion text matches search-field text.
+- [x] Verified unrestricted Apple Music Song search.
+- [x] Verified a themed List can be created, saved,
+      published and edited without losing its Theme.
+- [ ] Verify activity-based Trending promotion with
+      qualifying Development publishing activity.
+- [ ] Reconcile manual Development suggestion edits.
+- [ ] Obtain explicit approval before Production deployment.

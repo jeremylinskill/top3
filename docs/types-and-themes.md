@@ -183,3 +183,34 @@ Table Editor using public.collection_option_suggestions.
 Manual Development edits are not automatically captured
 by Git migrations. Export and reconcile finalized suggestion
 values before deploying to Production.
+
+### Song Themes — initial nine
+
+Song Themes are subjective prompts intended to encourage
+different rankings from a user's Overall Top 3 Songs.
+
+- Songs That Defined My Youth
+- Songs That Remind Me of Someone
+- Songs That Got Me Through Tough Times
+- Songs That Always Lift My Mood
+- Songs That Give Me Goosebumps
+- Most Underrated Songs
+- Best Sing-Along Songs
+- Perfect Road Trip Songs
+- Songs with the Best Lyrics
+
+All nine Themes are active and Trending-enabled.
+Five are editorially Featured initially: Defined My Youth,
+Remind Me of Someone, Always Lift My Mood, Most Underrated,
+and Best Lyrics.
+
+Each Theme has 15 curated suggestions, five initially shown,
+with shuffling. Suggestion chips show song titles only and
+use identical text for search.
+
+Song Theme search is unrestricted; users decide which
+recordings fit the selected Theme. These Themes do not apply
+the recording-version filters used by Song Types.
+
+The existing editable suggestion_title column supports
+manual adjustments in the Development Supabase Table Editor.
