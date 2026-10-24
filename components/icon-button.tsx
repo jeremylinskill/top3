@@ -1,5 +1,7 @@
-import { ReactNode } from 'react';
+import { ReactNode, useRef } from 'react';
 import {
+  Animated,
+  Easing,
   GestureResponderEvent,
   Pressable,
   StyleProp,
@@ -29,6 +31,8 @@ type IconButtonProps = {
   backgroundColor?: string;
   style?: StyleProp<ViewStyle>;
   hitSlop?: number;
+  // Optional for shared header buttons; other buttons retain original behaviour.
+  pressFeedback?: 'scale';
 };
 
 export default function IconButton({
@@ -42,9 +46,20 @@ export default function IconButton({
   backgroundColor,
   style,
   hitSlop = 8,
+  pressFeedback,
 }: IconButtonProps) {
   const dimension =
     ICON_BUTTON_SIZES[size];
+  const pressScale = useRef(new Animated.Value(1)).current;
+
+  function animatePress(toValue: number, duration: number) {
+    Animated.timing(pressScale, {
+      toValue,
+      duration,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }
 
   return (
     <Pressable
@@ -62,10 +77,21 @@ export default function IconButton({
           : null,
         pressed &&
           !disabled &&
+          !pressFeedback &&
           styles.pressed,
         disabled && styles.disabled,
       ]}
       onPress={onPress}
+      onPressIn={
+        pressFeedback && !disabled
+          ? () => animatePress(1.18, 95)
+          : undefined
+      }
+      onPressOut={
+        pressFeedback && !disabled
+          ? () => animatePress(1, 170)
+          : undefined
+      }
       disabled={disabled}
       hitSlop={hitSlop}
       accessibilityRole="button"
@@ -82,7 +108,18 @@ export default function IconButton({
           ? { selected }
           : {}),
       }}>
-      {children}
+      {pressFeedback ? (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.animatedContent,
+            { transform: [{ scale: pressScale }] },
+          ]}>
+          {children}
+        </Animated.View>
+      ) : (
+        children
+      )}
     </Pressable>
   );
 }
@@ -90,6 +127,13 @@ export default function IconButton({
 const styles = StyleSheet.create({
   button: {
     flexShrink: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  animatedContent: {
+    width: '100%',
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
   },

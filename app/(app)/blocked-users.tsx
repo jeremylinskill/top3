@@ -8,6 +8,8 @@ import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
 import { useBlock } from '@/context/block-context';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
+import Reanimated from 'react-native-reanimated';
 import { getProfilesByIds } from '@/lib/supabase/profiles';
 import { UserProfile } from '@/types/user-profile';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,13 +17,11 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 import {
   ActivityIndicator,
   Pressable,
-  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
@@ -31,25 +31,11 @@ export default function BlockedUsersScreen() {
   const colors = useAppColors();
   const insets = useSafeAreaInsets();
   const bottomScrollClearance = Math.max(40, insets.bottom + 24);
-  const [headerHidden, setHeaderHidden] = useState(false);
-  const lastScrollOffset = useRef(0);
-
-  function handleScroll(offsetY: number) {
-    const y = Math.max(0, offsetY);
-    const delta = y - lastScrollOffset.current;
-
-    if (y < 20) {
-      setHeaderHidden(false);
-    } else if (delta >= 7 && y > 36) {
-      setHeaderHidden(true);
-    } else if (delta <= -7) {
-      setHeaderHidden(false);
-    }
-
-    if (Math.abs(delta) >= 7 || y < 20) {
-      lastScrollOffset.current = y;
-    }
-  }
+  // Stable bridge callbacks; the floating header animates on the UI thread.
+  const ignoreListScroll = useCallback((_offsetY: number) => {}, []);
+  const ignoreListScrollState = useCallback((_scrolled: boolean) => {}, []);
+  const { scrollHandler: onBlockedUsersScroll, headerStyle: blockedUsersHeaderStyle } =
+    useHomeStickyHeader(ignoreListScroll, ignoreListScrollState);
 
   const {
     blockedUserIds,
@@ -199,23 +185,38 @@ export default function BlockedUsersScreen() {
             backgroundColor: colors.background,
           },
         ]}
-        edges={['top', 'left', 'right']}>
-        <ScreenHeader
-          showBackButton
-          overlay
-          compact={headerHidden}
-          collapseWithBackButton
-        />
+        edges={['left', 'right']}>
+        <Reanimated.View
+          pointerEvents="box-none"
+          style={[
+            {
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: insets.top + SCREEN_HEADER_HEIGHT + 16,
+              zIndex: 30,
+            },
+            blockedUsersHeaderStyle,
+          ]}>
+          <ScreenHeader
+            showBackButton
+            overlay
+            featheredBackdrop
+            androidStatusBarGlass
+          />
+        </Reanimated.View>
 
-        <ScrollView
+        <Reanimated.ScrollView
           style={styles.scrollView}
           contentContainerStyle={[
             styles.content,
-            { paddingBottom: bottomScrollClearance },
+            {
+              paddingTop: SCREEN_HEADER_HEIGHT + insets.top,
+              paddingBottom: bottomScrollClearance,
+            },
           ]}
-          onScroll={(event) =>
-            handleScroll(event.nativeEvent.contentOffset.y)
-          }
+          onScroll={onBlockedUsersScroll}
           scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}>
           <View style={styles.pageHeaderContainer}>
@@ -435,7 +436,7 @@ export default function BlockedUsersScreen() {
             )}
           </View>
         )}
-        </ScrollView>
+        </Reanimated.ScrollView>
       </SafeAreaView>
 
       <ActionSheet

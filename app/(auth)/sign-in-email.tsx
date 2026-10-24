@@ -6,6 +6,9 @@ import { useOnboardingCollection } from '@/context/onboarding-collection-context
 import { useAppColors } from '@/hooks/use-app-colors';
 import { router } from 'expo-router';
 import {
+  ScrollView,
+  Platform,
+  KeyboardAvoidingView,
   Pressable,
   StyleSheet,
   View,
@@ -57,6 +60,15 @@ export default function SignInEmailScreen() {
       edges={['top', 'bottom']}>
       <ScreenHeader showBackButton />
 
+      <KeyboardAvoidingView
+        style={styles.keyboardArea}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          showsVerticalScrollIndicator={false}>
       <PageHeader
         title="Welcome back"
         subtitle="Sign in to continue discovering people who share your favorite things."
@@ -100,6 +112,8 @@ export default function SignInEmailScreen() {
           </Pressable>
         </View>
       </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -109,14 +123,26 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  content: {
+  keyboardArea: {
     flex: 1,
+  },
+
+  scrollView: {
+    flex: 1,
+  },
+
+  scrollContent: {
+    flexGrow: 1,
+  },
+
+  content: {
+    flexGrow: 1,
     paddingHorizontal: 24,
     paddingBottom: 24,
   },
 
   form: {
-    flex: 1,
+    flexGrow: 1,
     marginTop: 28,
   },
 

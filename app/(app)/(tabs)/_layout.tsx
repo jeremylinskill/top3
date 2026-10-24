@@ -27,6 +27,11 @@ const AVATAR_SIZE = 29;
 const AVATAR_CONTAINER_SIZE = 38;
 const ACTIVE_HIGHLIGHT_WIDTH = 54;
 const ACTIVE_HIGHLIGHT_HEIGHT = 44;
+// Small, Instagram-inspired pulse without resizing the tab bar layout.
+const TAB_PILL_PRESS_SCALE = 1.04;
+const TAB_HIGHLIGHT_PRESS_SCALE = 1.12;
+
+const TabBarPressContext = React.createContext<((pressed: boolean) => void) | null>(null);
 
 function withOpacity(color: string, alpha: number) {
   const hex = color.trim().replace(/^#/, '');
@@ -50,6 +55,18 @@ function withOpacity(color: string, alpha: number) {
 }
 
 function CenteredTabButton(props: BottomTabBarButtonProps) {
+  const pressScale = useRef(new Animated.Value(1)).current;
+  const setTabBarPressed = React.useContext(TabBarPressContext);
+
+  function animatePress(toValue: number, duration: number) {
+    Animated.timing(pressScale, {
+      toValue,
+      duration,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }
+
   return (
     <PlatformPressable
       {...props}
@@ -57,7 +74,28 @@ function CenteredTabButton(props: BottomTabBarButtonProps) {
         props.style,
         { alignItems: 'center', justifyContent: 'center' },
       ]}
-    />
+      onPressIn={(event) => {
+        animatePress(1.18, 95);
+        setTabBarPressed?.(true);
+        props.onPressIn?.(event);
+      }}
+      onPressOut={(event) => {
+        animatePress(1, 170);
+        setTabBarPressed?.(false);
+        props.onPressOut?.(event);
+      }}>
+      <Animated.View
+        pointerEvents="none"
+        style={{
+          width: '100%',
+          height: '100%',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transform: [{ scale: pressScale }],
+        }}>
+        {props.children}
+      </Animated.View>
+    </PlatformPressable>
   );
 }
 
@@ -66,6 +104,29 @@ function FloatingTabBar(props: BottomTabBarProps) {
   const colors = useAppColors();
   const { compact, expand } = useTabBarScroll();
   const scale = useRef(new Animated.Value(1)).current;
+  const pillPressScale = useRef(new Animated.Value(1)).current;
+  const highlightPressScale = useRef(new Animated.Value(1)).current;
+  const combinedPillScale = React.useMemo(
+    () => Animated.multiply(scale, pillPressScale),
+    [scale, pillPressScale]
+  );
+  const setTabBarPressed = React.useCallback((pressed: boolean) => {
+    const duration = pressed ? 95 : 180;
+    Animated.parallel([
+      Animated.timing(pillPressScale, {
+        toValue: pressed ? TAB_PILL_PRESS_SCALE : 1,
+        duration,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(highlightPressScale, {
+        toValue: pressed ? TAB_HIGHLIGHT_PRESS_SCALE : 1,
+        duration,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [pillPressScale, highlightPressScale]);
   const selectedIndex = useRef(
     new Animated.Value(props.state.index)
   ).current;
@@ -133,7 +194,7 @@ function FloatingTabBar(props: BottomTabBarProps) {
         shadowRadius: 16,
         shadowOffset: { width: 0, height: 4 },
         elevation: 6,
-        transform: [{ scaleX: scale }, { scaleY: scale }],
+        transform: [{ scaleX: combinedPillScale }, { scaleY: combinedPillScale }],
       }}>
       {barWidth > 0 && tabCount > 0 && (
         <Animated.View
@@ -151,16 +212,19 @@ function FloatingTabBar(props: BottomTabBarProps) {
               {
                 translateX: Animated.multiply(selectedIndex, tabWidth),
               },
+              { scale: highlightPressScale },
             ],
           }}
         />
       )}
-      <BottomTabBar
-        {...props}
-        // The outer pill supplies the translucent background.
-        // Keep the underlying tab bar transparent and borderless.
-        insets={{ ...props.insets, bottom: 0 }}
-      />
+      <TabBarPressContext.Provider value={setTabBarPressed}>
+        <BottomTabBar
+          {...props}
+          // The outer pill supplies the translucent background.
+          // Keep the underlying tab bar transparent and borderless.
+          insets={{ ...props.insets, bottom: 0 }}
+        />
+      </TabBarPressContext.Provider>
       </Animated.View>
     </>
   );

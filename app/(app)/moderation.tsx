@@ -1,10 +1,13 @@
 import ActionSheet from '@/components/action-sheet';
 import AppText from '@/components/app-text';
 import PageHeader from '@/components/page-header';
-import ScreenHeader from '@/components/screen-header';
+import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
+import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
+import Reanimated from 'react-native-reanimated';
 import {
   dismissReport,
   getPendingReports,
@@ -16,11 +19,10 @@ import {
   ActivityIndicator,
   Pressable,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 function formatTargetType(
   targetType: ModerationReport['targetType']
@@ -96,6 +98,55 @@ function getUsername(
   return `@${profile.username}`;
 }
 
+// Overall comments keep the ranking's canonical ID, e.g.
+// community-movies-all-all-general. Show readable context to moderators
+// without changing that identity or making another server request.
+function formatOverallRankingLabel(rankingKey: string): string {
+  const prefix = 'community-';
+  if (!rankingKey.startsWith(prefix)) {
+    return rankingKey;
+  }
+
+  // Match known category IDs, longest first, so hyphenated IDs remain intact.
+  const category = [...TOP3_CATEGORIES]
+    .sort((a, b) => b.id.length - a.id.length)
+    .find((item) =>
+      rankingKey.startsWith(`${prefix}${item.id.toLowerCase()}-`)
+    );
+
+  if (!category) {
+    return rankingKey;
+  }
+
+  const categoryPrefix = `${prefix}${category.id.toLowerCase()}-`;
+  const remaining = rankingKey.slice(categoryPrefix.length);
+  const match = remaining.match(/^(.+)-(all|specific)-(.+)$/);
+  if (!match) {
+    return rankingKey;
+  }
+
+  const [, rankingType, scope, topic] = match;
+  const readable = (value: string) =>
+    value
+      .replace(/[-_]+/g, ' ')
+      .trim()
+      .replace(/\s+/g, ' ')
+      .replace(/\b[a-z]/g, (letter) => letter.toUpperCase());
+
+  const parts: string[] = [`Overall ${category.name}`];
+  if (rankingType !== 'all') {
+    parts.push(readable(rankingType));
+  }
+  if (topic !== 'general') {
+    parts.push(readable(topic));
+  }
+  if (scope === 'specific') {
+    parts.push('Specific lists');
+  }
+
+  return parts.join(' · ');
+}
+
 function getReportedContentLabel(
   report: ModerationReport
 ) {
@@ -168,6 +219,17 @@ function ReportCard({
   const reportedContentLabel =
     getReportedContentLabel(report);
 
+  const overallRankingLabel =
+    report.source === 'community' &&
+    report.reportedContent?.type === 'comment'
+      ? formatOverallRankingLabel(report.reportedContent.collectionId)
+      : null;
+
+  const overallRankingTitle =
+    overallRankingLabel?.startsWith('Overall ')
+      ? overallRankingLabel.split(' · ')[0]
+      : 'Overall ranking';
+
   return (
     <View
       style={[
@@ -179,9 +241,9 @@ function ReportCard({
       <View style={styles.reportHeader}>
         <View style={styles.reportHeaderText}>
           <AppText variant="headline">
-            {formatTargetType(
-              report.targetType
-            )}
+            {report.source === 'community'
+              ? `Comment on ${overallRankingTitle}`
+              : formatTargetType(report.targetType)}
           </AppText>
 
           <AppText
@@ -259,11 +321,22 @@ function ReportCard({
 
             {report.reportedContent?.type ===
             'comment' ? (
-              <AppText
-                variant="body"
-                style={styles.reportContentText}>
-                {report.reportedContent.content}
-              </AppText>
+              <>
+                <AppText
+                  variant="body"
+                  style={styles.reportContentText}>
+                  {report.reportedContent.content}
+                </AppText>
+                {report.source === 'community' ? (
+                  <AppText
+                    variant="label"
+                    tone="tertiary"
+                    emphasis="regular"
+                    style={styles.reportSecondaryText}>
+                    Ranking: {overallRankingLabel}
+                  </AppText>
+                ) : null}
+              </>
             ) : report.reportedContent?.type ===
               'post' ? (
               <>
@@ -457,6 +530,12 @@ function ReportCard({
 
 export default function ModerationScreen() {
   const colors = useAppColors();
+  const insets = useSafeAreaInsets();
+  // No bottom-tab behaviour to update; only animate the header.
+  const ignoreModerationScroll = useCallback((_y: number) => {}, []);
+  const ignoreModerationScrolled = useCallback((_scrolled: boolean) => {}, []);
+  const { scrollHandler: stickyScrollHandler, headerStyle: stickyHeaderStyle } =
+    useHomeStickyHeader(ignoreModerationScroll, ignoreModerationScrolled);
   const [reports, setReports] = useState<
     ModerationReport[]
   >([]);
@@ -531,12 +610,13 @@ export default function ModerationScreen() {
       setDismissingReportId(report.id);
 
       try {
-        await dismissReport(report.id);
+        await dismissReport(report.id, report.source);
 
         setReports((currentReports) =>
           currentReports.filter(
             (currentReport) =>
-              currentReport.id !== report.id
+              currentReport.id !== report.id ||
+              currentReport.source !== report.source
           )
         );
 
@@ -587,7 +667,7 @@ export default function ModerationScreen() {
       setRemovingContentReportId(report.id);
 
       try {
-        await removeReportedContent(report.id);
+        await removeReportedContent(report.id, report.source);
 
         await loadReports();
 
@@ -763,19 +843,38 @@ export default function ModerationScreen() {
             backgroundColor: colors.background,
           },
         ]}
-        edges={['top', 'left', 'right']}>
-      <ScreenHeader showBackButton />
+        edges={['left', 'right']}>
+        <Reanimated.View
+          pointerEvents="box-none"
+          style={[
+            {
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: insets.top + SCREEN_HEADER_HEIGHT + 16,
+              zIndex: 30,
+            },
+            stickyHeaderStyle,
+          ]}>
+          <ScreenHeader
+            showBackButton
+            overlay
+            featheredBackdrop
+            androidStatusBarGlass
+          />
+        </Reanimated.View>
 
-      <PageHeader
-        title="Moderation"
-        subtitle="Review pending reports."
-      />
-
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
+        <Reanimated.ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={[
+            styles.content,
+            { paddingTop: SCREEN_HEADER_HEIGHT + insets.top },
+          ]}
+          showsVerticalScrollIndicator={false}
+          onScroll={stickyScrollHandler}
+          scrollEventThrottle={16}
+          refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
             tintColor={colors.secondaryText}
@@ -787,7 +886,11 @@ export default function ModerationScreen() {
             }}
           />
         }>
-        <View style={styles.section}>
+          <PageHeader
+            title="Moderation"
+            subtitle="Review pending reports."
+          />
+          <View style={styles.section}>
           <AppText
             variant="sectionTitle"
             style={styles.sectionTitle}>
@@ -856,7 +959,7 @@ export default function ModerationScreen() {
           ) : (
             reports.map((report) => (
               <ReportCard
-                key={report.id}
+                key={`${report.source}:${report.id}`}
                 report={report}
                 isDismissing={
                   dismissingReportId ===
@@ -876,7 +979,7 @@ export default function ModerationScreen() {
             ))
           )}
         </View>
-        </ScrollView>
+        </Reanimated.ScrollView>
       </SafeAreaView>
 
       <ActionSheet
@@ -900,12 +1003,12 @@ const styles = StyleSheet.create({
   },
 
   content: {
-    paddingHorizontal: SPACING.xl,
     paddingBottom: 40,
   },
 
   section: {
     marginTop: SPACING.sm,
+    paddingHorizontal: SPACING.xl,
   },
 
   sectionTitle: {

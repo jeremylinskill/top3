@@ -33,7 +33,7 @@ export default function GoogleAuthButton({
         styles.button,
         {
           backgroundColor: colors.surface,
-          borderColor: colors.border,
+          borderColor: 'transparent',
         },
         pressed && !isDisabled && styles.pressed,
         isDisabled && styles.disabled,

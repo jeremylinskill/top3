@@ -13,6 +13,7 @@ import { useBlock } from '@/context/block-context';
 import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
 import { useAuth } from '@/hooks/use-auth';
 import { trackAnalyticsEvent } from '@/lib/analytics';
 import { sharePublishedCollection } from '@/lib/share';
@@ -34,6 +35,7 @@ import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
 import { isNetworkError } from '@/utils/is-network-error';
 import { router } from 'expo-router';
+import Reanimated from 'react-native-reanimated';
 import {
   useCallback,
   useEffect,
@@ -43,7 +45,7 @@ import {
 } from 'react';
 import {
   ActivityIndicator,
-  ScrollView,
+  Platform,
   StyleSheet,
   View,
 } from 'react-native';
@@ -128,25 +130,30 @@ export default function ProfileScreen({
 }: ProfileScreenProps) {
   const colors = useAppColors();
   const insets = useSafeAreaInsets();
-  const [headerHidden, setHeaderHidden] = useState(false);
-  const lastScrollOffset = useRef(0);
-
-  function handleScroll(offsetY: number) {
-    const y = Math.max(0, offsetY);
-    const delta = y - lastScrollOffset.current;
-
-    if (y < 20) {
-      setHeaderHidden(false);
-    } else if (delta >= 7 && y > 36) {
-      setHeaderHidden(true);
-    } else if (delta <= -7) {
-      setHeaderHidden(false);
+  const [headerScrolled, setHeaderScrolled] = useState(false);
+  const floatingCircleVisible = useRef(false);
+  // Once Profile has scrolled, retain the frosted action circle when the
+  // user scrolls upward or stops. Restore the plain top-of-page style only
+  // upon reaching the actual top (rather than at the old 56px threshold).
+  const handleProfileScroll = useCallback((offsetY: number) => {
+    const next = offsetY <= 2
+      ? false
+      : offsetY > 56
+        ? true
+        : floatingCircleVisible.current;
+    if (next !== floatingCircleVisible.current) {
+      floatingCircleVisible.current = next;
+      setHeaderScrolled(next);
     }
-
-    if (Math.abs(delta) >= 7 || y < 20) {
-      lastScrollOffset.current = y;
-    }
-  }
+  }, []);
+  // Profile previously did not update bottom tabs on scroll. Leave that
+  // behaviour untouched; the existing shared Reanimated hook handles motion.
+  const ignoreHeaderThreshold = useCallback((_scrolled: boolean) => {}, []);
+  const {
+    scrollHandler: stickyScrollHandler,
+    headerStyle: stickyHeaderStyle,
+    scrollY: circleScrollY,
+  } = useHomeStickyHeader(handleProfileScroll, ignoreHeaderThreshold);
 
   const bottomScrollClearance = Math.max(
     40,
@@ -1479,38 +1486,59 @@ export default function ProfileScreen({
             colors.background,
         },
       ]}
-      edges={['top', 'left', 'right']}>
-      <ScreenHeader
-        showBackButton={showBackButton}
-        overlay
-        compact={headerHidden}
-        collapseWithBackButton={showBackButton}
-        rightIconName={
-          isCurrentUser
-            ? 'settings-outline'
-            : 'ellipsis-horizontal'
-        }
-        onRightPress={
-          isCurrentUser
-            ? openSettings
-            : openProfileMenu
-        }
-        rightAccessibilityLabel={
-          isCurrentUser
-            ? 'Open settings'
-            : 'Open profile actions'
-        }
-      />
+      edges={['left', 'right']}>
+      <Reanimated.View
+        pointerEvents="box-none"
+        style={[
+          {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: insets.top + SCREEN_HEADER_HEIGHT + 16,
+            zIndex: 30,
+          },
+          stickyHeaderStyle,
+        ]}>
+        <ScreenHeader
+          showBackButton={showBackButton}
+          overlay
+          scrolled={headerScrolled}
+          floatingCircleStyle="tab-bar"
+          floatingCircleScrollY={circleScrollY}
+          featheredBackdrop
+          androidStatusBarGlass
+          rightIconName={
+            isCurrentUser
+              ? 'settings-outline'
+              : 'ellipsis-horizontal'
+          }
+          onRightPress={
+            isCurrentUser
+              ? openSettings
+              : openProfileMenu
+          }
+          rightAccessibilityLabel={
+            isCurrentUser
+              ? 'Open settings'
+              : 'Open profile actions'
+          }
+        />
+      </Reanimated.View>
 
-      <ScrollView
+      <Reanimated.ScrollView
         contentContainerStyle={[
           styles.content,
-          { paddingBottom: bottomScrollClearance },
+          {
+            // Original padding was 44 + 20, below the iOS top SafeAreaView.
+            // Compensate for the removed inset so the avatar doesn't jump.
+            paddingTop: SCREEN_HEADER_HEIGHT + 20 +
+              insets.top,
+            paddingBottom: bottomScrollClearance,
+          },
         ]}
         showsVerticalScrollIndicator={false}
-        onScroll={(event) =>
-          handleScroll(event.nativeEvent.contentOffset.y)
-        }
+        onScroll={stickyScrollHandler}
         scrollEventThrottle={16}>
         <ProfileScreenContent
           user={viewedUser}
@@ -1593,7 +1621,7 @@ export default function ProfileScreen({
             void shareCollection(post);
           }}
         />
-      </ScrollView>
+      </Reanimated.ScrollView>
 
       <ActionSheet
         visible={moderationSheet !== null}

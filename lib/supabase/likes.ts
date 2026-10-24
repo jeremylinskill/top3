@@ -1,4 +1,10 @@
 import { supabase } from '@/lib/supabase';
+import {
+  isCommunityRankingId,
+  getCommunityLikeSnapshot,
+  createCommunityLike,
+  deleteCommunityLike,
+} from '@/lib/supabase/community-engagement';
 
 export type LikeCountsByCollectionId = Record<
   string,
@@ -18,6 +24,7 @@ type LikeRow = {
 export async function getLikeSnapshot(
   userId: string
 ): Promise<LikeSnapshot> {
+  const overallSnapshot = await getCommunityLikeSnapshot();
   const { data, error } = await supabase
     .from('likes')
     .select('user_id, collection_id')
@@ -44,8 +51,8 @@ export async function getLikeSnapshot(
   });
 
   return {
-    likedCollectionIds,
-    likeCounts,
+    likedCollectionIds: [...likedCollectionIds, ...overallSnapshot.likedCollectionIds],
+    likeCounts: { ...likeCounts, ...overallSnapshot.likeCounts },
   };
 }
 
@@ -53,6 +60,9 @@ export async function createLike(
   userId: string,
   collectionId: string
 ): Promise<void> {
+  if (isCommunityRankingId(collectionId)) {
+    return createCommunityLike(userId, collectionId);
+  }
   const { error } = await supabase
     .from('likes')
     .upsert(
@@ -77,6 +87,9 @@ export async function deleteLike(
   userId: string,
   collectionId: string
 ): Promise<void> {
+  if (isCommunityRankingId(collectionId)) {
+    return deleteCommunityLike(userId, collectionId);
+  }
   const { error } = await supabase
     .from('likes')
     .delete()

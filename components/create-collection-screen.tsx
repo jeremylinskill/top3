@@ -1,23 +1,24 @@
 import PageHeader from '@/components/page-header';
-import ScreenHeader from '@/components/screen-header';
+import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
 import {
   CategoryId,
   TOP3_CATEGORIES,
 } from '@/constants/top3-categories';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
+import Reanimated from 'react-native-reanimated';
 import {
   router,
   useLocalSearchParams,
 } from 'expo-router';
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const CATEGORY_ORDER: CategoryId[] = [
   'albums',
@@ -32,6 +33,15 @@ const CATEGORY_ORDER: CategoryId[] = [
 
 export default function CreateCollectionScreen() {
   const colors = useAppColors();
+  const insets = useSafeAreaInsets();
+  const [scrollViewportHeight, setScrollViewportHeight] = useState(0);
+
+  // Create has no custom bottom-bar scroll contract or floating icon actions.
+  // Reuse the approved UI-thread header gesture without changing those systems.
+  const ignoreCreateTabScroll = useCallback((_y: number) => {}, []);
+  const ignoreCreateActionState = useCallback((_scrolled: boolean) => {}, []);
+  const { scrollHandler: stickyScrollHandler, headerStyle: stickyHeaderStyle } =
+    useHomeStickyHeader(ignoreCreateTabScroll, ignoreCreateActionState);
 
   const params =
     useLocalSearchParams<{
@@ -126,15 +136,24 @@ export default function CreateCollectionScreen() {
             colors.background,
         },
       ]}
-      edges={['top', 'left', 'right']}>
-      <ScreenHeader />
+      edges={['left', 'right']}>
+      <Reanimated.View
+        pointerEvents="box-none"
+        style={[
+          {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: insets.top + SCREEN_HEADER_HEIGHT + 16,
+            zIndex: 30,
+          },
+          stickyHeaderStyle,
+        ]}>
+        <ScreenHeader overlay featheredBackdrop androidStatusBarGlass />
+      </Reanimated.View>
 
-      <PageHeader
-        title="Create a Top 3"
-        subtitle="What would you like to rank?"
-      />
-
-      <ScrollView
+      <Reanimated.ScrollView
         style={[
           styles.scrollView,
           {
@@ -142,69 +161,92 @@ export default function CreateCollectionScreen() {
               colors.background,
           },
         ]}
-        contentContainerStyle={
-          styles.content
-        }
-        showsVerticalScrollIndicator={false}>
-        <View style={styles.categoryGrid}>
-          {categories.map(
-            (category, index) => {
-              const isLastOddCard =
-                categories.length % 2 === 1 &&
-                index ===
-                  categories.length - 1;
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            // Overlay header no longer consumes layout space. Preserve
+            // the original title and category-card starting positions.
+            paddingTop: SCREEN_HEADER_HEIGHT + insets.top,
+          },
+          scrollViewportHeight > 0 && {
+            minHeight: scrollViewportHeight + 128,
+          },
+        ]}
+        onLayout={(event) => {
+          const height = event.nativeEvent.layout.height;
+          if (height > 0 && height !== scrollViewportHeight) {
+            setScrollViewportHeight(height);
+          }
+        }}
+        showsVerticalScrollIndicator={false}
+        onScroll={stickyScrollHandler}
+        scrollEventThrottle={16}>
+        <PageHeader
+          title="Create a Top 3"
+          subtitle="What would you like to rank?"
+        />
 
-              return (
-                <View
-                  key={category.id}
-                  style={[
-                    styles.categoryCardWrapper,
-                    isLastOddCard &&
-                      styles.lastCategoryCard,
-                  ]}>
-                  <Pressable
-                    style={({ pressed }) => [
-                      styles.categoryCard,
-                      {
-                        backgroundColor:
-                          colors.surface,
-                      },
-                      pressed &&
-                        styles.categoryCardPressed,
-                    ]}
-                    onPress={() =>
-                      chooseCategory(
-                        category.id
-                      )
-                    }
-                    accessibilityRole="button"
-                    accessibilityLabel={
-                      `Create a Top 3 ${category.name} list`
-                    }>
-                    <Text
-                      style={
-                        styles.categoryIcon
-                      }>
-                      {category.icon}
-                    </Text>
+        <View style={styles.content}>
+          <View style={styles.categoryGrid}>
+            {categories.map(
+              (category, index) => {
+                const isLastOddCard =
+                  categories.length % 2 === 1 &&
+                  index ===
+                    categories.length - 1;
 
-                    <Text
-                      style={[
-                        styles.categoryLabel,
+                return (
+                  <View
+                    key={category.id}
+                    style={[
+                      styles.categoryCardWrapper,
+                      isLastOddCard &&
+                        styles.lastCategoryCard,
+                    ]}>
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.categoryCard,
                         {
-                          color:
-                            colors.text,
+                          backgroundColor:
+                            colors.surface,
                         },
-                      ]}>
-                      {category.name}
-                    </Text>
-                  </Pressable>
-                </View>
-              );
-            }
-          )}
+                        pressed &&
+                          styles.categoryCardPressed,
+                      ]}
+                      onPress={() =>
+                        chooseCategory(
+                          category.id
+                        )
+                      }
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        `Create a Top 3 ${category.name} list`
+                      }>
+                      <Text
+                        style={
+                          styles.categoryIcon
+                        }>
+                        {category.icon}
+                      </Text>
+
+                      <Text
+                        style={[
+                          styles.categoryLabel,
+                          {
+                            color:
+                              colors.text,
+                          },
+                        ]}>
+                        {category.name}
+                      </Text>
+                    </Pressable>
+                  </View>
+                );
+              }
+            )}
+          </View>
         </View>
-      </ScrollView>
+      </Reanimated.ScrollView>
     </SafeAreaView>
   );
 }
@@ -218,10 +260,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
+  scrollContent: {
+    paddingBottom: 36,
+  },
+
   content: {
     paddingHorizontal: 20,
     paddingTop: 0,
-    paddingBottom: 36,
   },
 
   categoryGrid: {

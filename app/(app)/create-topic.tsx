@@ -11,6 +11,8 @@ import { useCollectionOptions } from '@/context/collection-options-context';
 import { useTop3 } from '@/context/top3-context';
 import { CollectionOption } from '@/types/collection-option';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
+import Reanimated from 'react-native-reanimated';
 import { getRecentPublishedThemeActivity } from '@/lib/supabase/collections';
 import { getTrendingThemes } from '@/services/trending-service';
 import type { TrendingThemeActivityPost } from '@/types/trending-theme-activity';
@@ -25,6 +27,8 @@ import {
   useLocalSearchParams,
 } from 'expo-router';
 import {
+  type ReactNode,
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -42,7 +46,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets, type Edge } from 'react-native-safe-area-context';
 function normalizeValue(value?: string) {
   const normalizedValue = value?.trim().toLowerCase() ?? '';
   return normalizedValue === 'general' ? '' : normalizedValue;
@@ -111,27 +115,70 @@ const SCREEN_SAFE_AREA_EDGES: Edge[] =
   Platform.OS === 'android'
     ? ['top', 'left', 'right', 'bottom']
     : ['top', 'left', 'right'];
+
+// Each Create Topic mode mounts its own animated scroll shell. This keeps
+// the Home-tested gesture-linked header state independent when navigating
+// between Overall, By type and By theme (without changing their content).
+function CreateTopicScrollShell({
+  children,
+  backgroundColor,
+  persistKeyboardTaps = false,
+}: {
+  children: ReactNode;
+  backgroundColor: string;
+  persistKeyboardTaps?: boolean;
+}) {
+  const insets = useSafeAreaInsets();
+  const ignoreTopicScroll = useCallback((_offset: number) => {}, []);
+  const ignoreTopicScrolled = useCallback((_scrolled: boolean) => {}, []);
+  const { scrollHandler, headerStyle } =
+    useHomeStickyHeader(ignoreTopicScroll, ignoreTopicScrolled);
+
+  return (
+    <SafeAreaView
+      style={[styles.container, { backgroundColor }]}
+      edges={Platform.OS === 'android'
+        ? ['left', 'right', 'bottom']
+        : ['left', 'right']}>
+      <Reanimated.View
+        pointerEvents="box-none"
+        style={[
+          {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: insets.top + SCREEN_HEADER_HEIGHT + 16,
+            zIndex: 30,
+          },
+          headerStyle,
+        ]}>
+        <ScreenHeader
+          showBackButton
+          overlay
+          featheredBackdrop
+          androidStatusBarGlass
+        />
+      </Reanimated.View>
+      <Reanimated.ScrollView
+        style={[styles.scrollView, { backgroundColor }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          // Removing the top safe-area edge must not shift the title/cards.
+          { paddingTop: SCREEN_HEADER_HEIGHT + insets.top },
+        ]}
+        keyboardShouldPersistTaps={persistKeyboardTaps ? 'handled' : undefined}
+        showsVerticalScrollIndicator={false}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}>
+        {children}
+      </Reanimated.ScrollView>
+    </SafeAreaView>
+  );
+}
+
 export default function CreateTopicScreen() {
   const colors = useAppColors();
-  const [headerHidden, setHeaderHidden] = useState(false);
-  const lastScrollOffset = useRef(0);
-
-  function handleScroll(offsetY: number) {
-    const y = Math.max(0, offsetY);
-    const delta = y - lastScrollOffset.current;
-
-    if (y < 20) {
-      setHeaderHidden(false);
-    } else if (delta >= 7 && y > 36) {
-      setHeaderHidden(true);
-    } else if (delta <= -7) {
-      setHeaderHidden(false);
-    }
-
-    if (Math.abs(delta) >= 7 || y < 20) {
-      lastScrollOffset.current = y;
-    }
-  }
   const { width: windowWidth } = useWindowDimensions();
   const [
     themeSearchQuery,
@@ -232,10 +279,6 @@ export default function CreateTopicScreen() {
       ? requestedMode
       : undefined;
 
-  useEffect(() => {
-    lastScrollOffset.current = 0;
-    setHeaderHidden(false);
-  }, [categoryId, mode]);
   const { createList, lists, selectList } = useTop3();
   const { getOptionsForCategory } =
     useCollectionOptions();
@@ -545,23 +588,9 @@ export default function CreateTopicScreen() {
   }, [requestedThemeSlug, mode, themes]);
   if (!mode) {
     return (
-      <SafeAreaView
-        style={[styles.container, { backgroundColor: colors.background }]}
-        edges={SCREEN_SAFE_AREA_EDGES}>
-        <ScreenHeader
-          showBackButton
-          overlay
-          compact={headerHidden}
-          collapseWithBackButton
-        />
-        <ScrollView
-          style={[styles.scrollView, { backgroundColor: colors.background }]}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          onScroll={(event) =>
-            handleScroll(event.nativeEvent.contentOffset.y)
-          }
-          scrollEventThrottle={16}>
+      <CreateTopicScrollShell
+        key={`${selectedCategory.id}:choice`}
+        backgroundColor={colors.background}>
         <PageHeader
           title={`${selectedCategory.icon} ${selectedCategory.name}`}
           subtitle="How would you like to rank them?"
@@ -649,32 +678,14 @@ export default function CreateTopicScreen() {
             </Pressable>
           ) : null}
         </View>
-        </ScrollView>
-      </SafeAreaView>
+      </CreateTopicScrollShell>
     );
   }
   if (hasTypeChoices && mode === 'type') {
     return (
-      <SafeAreaView
-        style={[styles.container, { backgroundColor: colors.background }]}
-        edges={SCREEN_SAFE_AREA_EDGES}>
-        <ScreenHeader
-          showBackButton
-          overlay
-          compact={headerHidden}
-          collapseWithBackButton
-        />
-        <ScrollView
-          style={[
-            styles.scrollView,
-            { backgroundColor: colors.background },
-          ]}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          onScroll={(event) =>
-            handleScroll(event.nativeEvent.contentOffset.y)
-          }
-          scrollEventThrottle={16}>
+      <CreateTopicScrollShell
+        key={`${selectedCategory.id}:type`}
+        backgroundColor={colors.background}>
         <PageHeader
           title={typeScreenTitle}
           subtitle={typeScreenSubtitle}
@@ -785,8 +796,7 @@ export default function CreateTopicScreen() {
                 ))}
           </View>
         </View>
-        </ScrollView>
-      </SafeAreaView>
+      </CreateTopicScrollShell>
     );
   }
   if (hasThemeOptions && mode === 'theme') {
@@ -1013,36 +1023,10 @@ export default function CreateTopicScreen() {
       );
     }
     return (
-      <SafeAreaView
-        style={[
-          styles.container,
-          {
-            backgroundColor:
-              colors.background,
-          },
-        ]}
-        edges={SCREEN_SAFE_AREA_EDGES}>
-        <ScreenHeader
-          showBackButton
-          overlay
-          compact={headerHidden}
-          collapseWithBackButton
-        />
-        <ScrollView
-          style={[
-            styles.scrollView,
-            {
-              backgroundColor:
-                colors.background,
-            },
-          ]}
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-          onScroll={(event) =>
-            handleScroll(event.nativeEvent.contentOffset.y)
-          }
-          scrollEventThrottle={16}>
+      <CreateTopicScrollShell
+        key={`${selectedCategory.id}:theme`}
+        backgroundColor={colors.background}
+        persistKeyboardTaps>
         <PageHeader
           title="By theme"
           subtitle={themeCardSubtitle}
@@ -1240,28 +1224,13 @@ export default function CreateTopicScreen() {
             )}
           </View>
         </View>
-        </ScrollView>
-      </SafeAreaView>
+      </CreateTopicScrollShell>
     );
   }
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      edges={SCREEN_SAFE_AREA_EDGES}>
-      <ScreenHeader
-        showBackButton
-        overlay
-        compact={headerHidden}
-        collapseWithBackButton
-      />
-      <ScrollView
-        style={[styles.scrollView, { backgroundColor: colors.background }]}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        onScroll={(event) =>
-          handleScroll(event.nativeEvent.contentOffset.y)
-        }
-        scrollEventThrottle={16}>
+      <CreateTopicScrollShell
+        key={`${selectedCategory.id}:fallback`}
+        backgroundColor={colors.background}>
       <PageHeader
         title={`${selectedCategory.icon} ${selectedCategory.name}`}
         subtitle="Rank them all, or choose a genre."
@@ -1361,8 +1330,7 @@ export default function CreateTopicScreen() {
           </View>
         ) : null}
       </View>
-      </ScrollView>
-    </SafeAreaView>
+    </CreateTopicScrollShell>
   );
 }
 const styles = StyleSheet.create({

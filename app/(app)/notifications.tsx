@@ -4,6 +4,7 @@ import IconButton from '@/components/icon-button';
 import PageHeader from '@/components/page-header';
 import PrimaryButton from '@/components/primary-button';
 import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
+import { Platform as NavPlatform } from 'react-native';
 import Card from '@/components/ui/card';
 import SecondaryActionPill from '@/components/ui/secondary-action-pill';
 import SectionHeader from '@/components/ui/section-header';
@@ -19,6 +20,8 @@ import {
   useNotifications,
 } from '@/context/notification-context';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
+import Reanimated from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
@@ -126,24 +129,17 @@ function formatNotificationTime(
 export default function NotificationsScreen() {
   const colors = useAppColors();
   const insets = useSafeAreaInsets();
-  const [headerHidden, setHeaderHidden] = useState(false);
-  const lastScrollOffset = useRef(0);
+  const [headerScrolled, setHeaderScrolled] = useState(false);
+  const {
+    scrollHandler: onStickyHeaderScroll,
+    headerStyle: stickyHeaderStyle,
+    scrollY: floatingCircleScrollY,
+  } = useHomeStickyHeader(handleScroll, setHeaderScrolled);
 
   function handleScroll(offsetY: number) {
     const y = Math.max(0, offsetY);
-    const delta = y - lastScrollOffset.current;
+    setHeaderScrolled(y > 56);
 
-    if (y < 20) {
-      setHeaderHidden(false);
-    } else if (delta >= 7 && y > 36) {
-      setHeaderHidden(true);
-    } else if (delta <= -7) {
-      setHeaderHidden(false);
-    }
-
-    if (Math.abs(delta) >= 7 || y < 20) {
-      lastScrollOffset.current = y;
-    }
   }
   const bottomScrollClearance = Math.max(
     40,
@@ -377,19 +373,33 @@ export default function NotificationsScreen() {
             backgroundColor: colors.background,
           },
         ]}
-        edges={['top', 'left', 'right']}>
-      <ScreenHeader overlay compact={headerHidden} />
+        edges={['left', 'right']}>
+      <Reanimated.View
+        pointerEvents="box-none"
+        style={[
+          {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: insets.top + SCREEN_HEADER_HEIGHT + 16,
+            zIndex: 30,
+          },
+          stickyHeaderStyle,
+        ]}>
+        <ScreenHeader overlay androidStatusBarGlass scrolled={headerScrolled} floatingCircleScrollY={floatingCircleScrollY} />
+      </Reanimated.View>
 
-      <ScrollView
+      <Reanimated.ScrollView
         style={styles.scrollView}
         contentContainerStyle={[
           styles.content,
-          { paddingBottom: bottomScrollClearance },
+          { paddingTop: SCREEN_HEADER_HEIGHT +
+              insets.top,
+            paddingBottom: bottomScrollClearance },
         ]}
         showsVerticalScrollIndicator={false}
-        onScroll={(event) =>
-          handleScroll(event.nativeEvent.contentOffset.y)
-        }
+        onScroll={onStickyHeaderScroll}
         scrollEventThrottle={16}
         refreshControl={
           <RefreshControl
@@ -751,7 +761,7 @@ export default function NotificationsScreen() {
             ) : null}
           </>
         )}
-        </ScrollView>
+        </Reanimated.ScrollView>
       </SafeAreaView>
 
       <ActionSheet

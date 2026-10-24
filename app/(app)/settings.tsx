@@ -6,6 +6,8 @@ import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
 import { useProfile } from '@/context/profile-context';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
+import Reanimated from 'react-native-reanimated';
 import { useAuth } from '@/hooks/use-auth';
 import {
   getExistingPushToken,
@@ -36,7 +38,6 @@ import {
   AppState,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Switch,
   View
@@ -49,25 +50,12 @@ export default function SettingsScreen() {
   const bottomScrollClearance = Math.max(40, insets.bottom + 24);
   const { signOut, user } = useAuth();
   const { profile } = useProfile();
-  const [headerHidden, setHeaderHidden] = useState(false);
-  const lastScrollOffset = useRef(0);
-
-  function handleScroll(offsetY: number) {
-    const y = Math.max(0, offsetY);
-    const delta = y - lastScrollOffset.current;
-
-    if (y < 20) {
-      setHeaderHidden(false);
-    } else if (delta >= 7 && y > 36) {
-      setHeaderHidden(true);
-    } else if (delta <= -7) {
-      setHeaderHidden(false);
-    }
-
-    if (Math.abs(delta) >= 7 || y < 20) {
-      lastScrollOffset.current = y;
-    }
-  }
+  // Stable callbacks keep this UI-thread handler independent of Settings
+  // state changes (notification toggle, dialogs, account actions).
+  const ignoreSettingsScroll = useCallback((_offsetY: number) => {}, []);
+  const ignoreSettingsScrolled = useCallback((_scrolled: boolean) => {}, []);
+  const { scrollHandler: onSettingsScroll, headerStyle: settingsHeaderStyle } =
+    useHomeStickyHeader(ignoreSettingsScroll, ignoreSettingsScrolled);
 
   const [isSigningOut, setIsSigningOut] =
     useState(false);
@@ -105,38 +93,49 @@ export default function SettingsScreen() {
     setIsPushUpdating,
   ] = useState(false);
 
+  // Separate refs from render state: block duplicate writes synchronously
+  // and ignore status reads started before a user presses the switch.
+  const pushOperationRef = useRef(false);
+  const pushRefreshVersionRef = useRef(0);
+
   const refreshPushState =
     useCallback(async () => {
+      if (pushOperationRef.current) {
+        // A permission prompt can briefly re-activate the app. Don't let
+        // that refresh overwrite the user's in-progress switch animation.
+        return;
+      }
+
+      const refreshVersion = ++pushRefreshVersionRef.current;
+
       try {
-        if (!user?.id) {
-          setIsPushEnabled(false);
-          return;
+        let nextEnabled = false;
+
+        if (user?.id) {
+          const pushNotificationsEnabled =
+            await getPushNotificationsEnabled(
+              user.id
+            );
+
+          if (pushNotificationsEnabled) {
+            const expoPushToken =
+              await getExistingPushToken();
+
+            if (expoPushToken) {
+              nextEnabled =
+                await isPushTokenRegistered(
+                  expoPushToken
+                );
+            }
+          }
         }
 
-        const pushNotificationsEnabled =
-          await getPushNotificationsEnabled(
-            user.id
-          );
-
-        if (!pushNotificationsEnabled) {
-          setIsPushEnabled(false);
-          return;
+        if (
+          !pushOperationRef.current &&
+          refreshVersion === pushRefreshVersionRef.current
+        ) {
+          setIsPushEnabled(nextEnabled);
         }
-
-        const expoPushToken =
-          await getExistingPushToken();
-
-        if (!expoPushToken) {
-          setIsPushEnabled(false);
-          return;
-        }
-
-        const isRegistered =
-          await isPushTokenRegistered(
-            expoPushToken
-          );
-
-        setIsPushEnabled(isRegistered);
       } catch (error) {
         if (__DEV__) {
           console.log(
@@ -169,13 +168,21 @@ export default function SettingsScreen() {
     enabled: boolean
   ) {
     if (
-      isPushUpdating ||
+      pushOperationRef.current ||
       !user?.id
     ) {
       return;
     }
 
+    const previousValue = isPushEnabled;
+    pushOperationRef.current = true;
+    pushRefreshVersionRef.current += 1;
+
+    // Animate immediately; permission/token/database work continues without
+    // replacing the Switch with a loading indicator.
+    setIsPushEnabled(enabled);
     setIsPushUpdating(true);
+    let refreshAfterFailure = false;
 
     try {
       if (!enabled) {
@@ -223,6 +230,7 @@ export default function SettingsScreen() {
         Platform.OS !== 'ios' &&
         Platform.OS !== 'android'
       ) {
+        setIsPushEnabled(previousValue);
         return;
       }
 
@@ -244,13 +252,21 @@ export default function SettingsScreen() {
         error
       );
 
+      // Failed writes should never leave the switch falsely enabled/disabled.
+      setIsPushEnabled(previousValue);
+      refreshAfterFailure = true;
       setErrorSheet({
         title: 'Unable to Update Notifications',
         message:
           'Something went wrong while updating your notification settings. Please try again.',
       });
     } finally {
+      pushOperationRef.current = false;
       setIsPushUpdating(false);
+      if (refreshAfterFailure) {
+        // Reconcile rare partial writes (e.g. token removed, preference not saved).
+        void refreshPushState();
+      }
     }
   }
 
@@ -406,13 +422,27 @@ export default function SettingsScreen() {
           backgroundColor: colors.background,
         },
       ]}
-      edges={['top', 'left', 'right']}>
-      <ScreenHeader
-        showBackButton
-        overlay
-        compact={headerHidden}
-        collapseWithBackButton
-      />
+      edges={['left', 'right']}>
+      <Reanimated.View
+        pointerEvents="box-none"
+        style={[
+          {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: insets.top + SCREEN_HEADER_HEIGHT + 16,
+            zIndex: 30,
+          },
+          settingsHeaderStyle,
+        ]}>
+        <ScreenHeader
+          showBackButton
+          overlay
+          featheredBackdrop
+          androidStatusBarGlass
+        />
+      </Reanimated.View>
 
       <ActionSheet
         visible={isSignOutSheetVisible}
@@ -483,15 +513,16 @@ export default function SettingsScreen() {
         }}
       />
 
-      <ScrollView
+      <Reanimated.ScrollView
         style={styles.scrollView}
         contentContainerStyle={[
           styles.content,
+          // Retain the original Settings heading position after removing
+          // the SafeAreaView top inset; content can now scroll behind glass.
+          { paddingTop: SCREEN_HEADER_HEIGHT + insets.top },
           { paddingBottom: bottomScrollClearance },
         ]}
-        onScroll={(event) =>
-          handleScroll(event.nativeEvent.contentOffset.y)
-        }
+        onScroll={onSettingsScroll}
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}>
         <View style={styles.pageHeaderContainer}>
@@ -768,32 +799,27 @@ export default function SettingsScreen() {
                 </AppText>
               </View>
 
-              <View style={styles.notificationControl}>
-                {isPushUpdating ? (
-                  <ActivityIndicator
-                    size="small"
-                    color={colors.accent}
-                  />
-                ) : (
-                  <Switch
-                    value={isPushEnabled}
-                    onValueChange={(enabled) => {
-                      void handlePushToggle(
-                        enabled
-                      );
-                    }}
-                    trackColor={{
-                      false: colors.disabledBackground,
-                      true: colors.accent,
-                    }}
-                    thumbColor="#FFFFFF"
-                    ios_backgroundColor={
-                      colors.disabledBackground
-                    }
-                    accessibilityLabel="Push notifications"
-                    accessibilityHint="Turns Top 3 push notifications on or off"
-                  />
-                )}
+              <View
+                style={styles.notificationControl}
+                // Block a second tap without dimming, replacing or remounting
+                // the native switch during its animation.
+                pointerEvents={isPushUpdating ? 'none' : 'auto'}>
+                <Switch
+                  value={isPushEnabled}
+                  onValueChange={(enabled) => {
+                    void handlePushToggle(enabled);
+                  }}
+                  trackColor={{
+                    false: colors.disabledBackground,
+                    true: colors.accent,
+                  }}
+                  thumbColor="#FFFFFF"
+                  ios_backgroundColor={
+                    colors.disabledBackground
+                  }
+                  accessibilityLabel="Push notifications"
+                  accessibilityHint="Turns Top 3 push notifications on or off"
+                />
               </View>
             </View>
 
@@ -1195,7 +1221,7 @@ export default function SettingsScreen() {
               styles.signOutButton,
               {
                 backgroundColor: colors.surface,
-                borderColor: colors.border,
+                borderColor: 'transparent',
               },
               pressed &&
                 !isSigningOut &&
@@ -1277,7 +1303,7 @@ export default function SettingsScreen() {
             </AppText>
           </Pressable>
         </View>
-      </ScrollView>
+      </Reanimated.ScrollView>
     </SafeAreaView>
   );
 }

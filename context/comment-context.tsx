@@ -1,4 +1,15 @@
 import { useBlock } from '@/context/block-context';
+import {
+  isCommunityRankingId,
+  getCommunityComments,
+  getCommunityCommentCounts,
+  createCommunityComment,
+  updateCommunityComment,
+  deleteCommunityComment,
+  getLikedCommunityCommentIds,
+  createCommunityCommentLike,
+  deleteCommunityCommentLike,
+} from '@/lib/supabase/community-engagement';
 import { useAuth } from '@/hooks/use-auth';
 import { trackAnalyticsEvent } from '@/lib/analytics';
 import {
@@ -169,6 +180,16 @@ function normalizeCollectionIds(
   );
 }
 
+async function getAllEngagementCommentCounts(collectionIds: string[]): Promise<CommentCounts> {
+  const individual = collectionIds.filter(id => !isCommunityRankingId(id));
+  const overall = collectionIds.filter(isCommunityRankingId);
+  const [individualCounts, overallCounts] = await Promise.all([
+    individual.length ? getSupabaseCommentCounts(individual) : Promise.resolve({}),
+    overall.length ? getCommunityCommentCounts(overall) : Promise.resolve({}),
+  ]);
+  return { ...individualCounts, ...overallCounts };
+}
+
 export function CommentProvider({
   children,
 }: CommentProviderProps) {
@@ -289,10 +310,9 @@ export function CommentProvider({
         }
 
         try {
-          return await getSupabaseLikedCommentIds(
-            currentUserId,
-            commentIds
-          );
+          return sourceComments.some(comment => isCommunityRankingId(comment.postId))
+            ? await getLikedCommunityCommentIds(currentUserId, commentIds)
+            : await getSupabaseLikedCommentIds(currentUserId, commentIds);
         } catch (error) {
           if (__DEV__) {
             console.log(
@@ -328,10 +348,9 @@ export function CommentProvider({
         setIsLoading(true);
 
         try {
-          const commentRecords =
-            await getSupabaseCommentsForCollection(
-              collectionId
-            );
+          const commentRecords = isCommunityRankingId(collectionId)
+            ? await getCommunityComments(collectionId)
+            : await getSupabaseCommentsForCollection(collectionId);
 
           if (
             commentsRequestIdRef.current !==
@@ -441,9 +460,7 @@ export function CommentProvider({
 
       try {
         const loadedCounts =
-          await getSupabaseCommentCounts(
-            normalizedCollectionIds
-          );
+          await getAllEngagementCommentCounts(normalizedCollectionIds);
 
         if (
           countsRequestIdRef.current !==
@@ -505,10 +522,9 @@ export function CommentProvider({
       }
 
       try {
-        const commentRecords =
-          await getSupabaseCommentsForCollection(
-            collectionId
-          );
+        const commentRecords = isCommunityRankingId(collectionId)
+          ? await getCommunityComments(collectionId)
+          : await getSupabaseCommentsForCollection(collectionId);
 
         if (
           activeCollectionIdRef.current !==
@@ -576,9 +592,7 @@ export function CommentProvider({
 
       try {
         const loadedCounts =
-          await getSupabaseCommentCounts(
-            collectionIds
-          );
+          await getAllEngagementCommentCounts(collectionIds);
 
         setCommentCounts(
           (currentCounts) => ({
@@ -611,7 +625,20 @@ export function CommentProvider({
         },
       });
 
-    return unsubscribe;
+    const unsubscribeOverall = subscribeToTableChanges({
+      channelName: `community-comments-${user.id}`,
+      table: 'community_ranking_comments',
+      onChange: async () => {
+        await Promise.all([
+          refreshCommentsFromRealtime(),
+          refreshCommentCountsFromRealtime(),
+        ]);
+      },
+    });
+    return () => {
+      unsubscribe();
+      unsubscribeOverall();
+    };
   }, [
     user?.id,
     refreshCommentsFromRealtime,
@@ -770,16 +797,21 @@ export function CommentProvider({
       );
 
       try {
+        const overall = isCommunityRankingId(
+          comments.find(comment => comment.id === commentId)?.postId
+        );
         if (wasLiked) {
-          await deleteCommentLike(
-            currentUserId,
-            commentId
-          );
+          if (overall) {
+            await deleteCommunityCommentLike(currentUserId, commentId);
+          } else {
+            await deleteCommentLike(currentUserId, commentId);
+          }
         } else {
-          await createCommentLike(
-            currentUserId,
-            commentId
-          );
+          if (overall) {
+            await createCommunityCommentLike(currentUserId, commentId);
+          } else {
+            await createCommentLike(currentUserId, commentId);
+          }
         }
       } catch (error) {
         console.error(
@@ -819,6 +851,7 @@ export function CommentProvider({
     [
       user?.id,
       likedCommentIds,
+      comments,
     ]
   );
 
@@ -885,12 +918,9 @@ export function CommentProvider({
 
       try {
         const createdComment =
-          await createComment(
-            currentUserId,
-            collectionId,
-            trimmedText,
-            input.replyToCommentId
-          );
+          await (isCommunityRankingId(collectionId)
+            ? createCommunityComment(currentUserId, collectionId, trimmedText, input.replyToCommentId)
+            : createComment(currentUserId, collectionId, trimmedText, input.replyToCommentId));
 
         trackAnalyticsEvent(
           'comment_added'
@@ -1014,10 +1044,9 @@ export function CommentProvider({
       }
 
       const savedComment =
-        await updateSupabaseComment(
-          commentId,
-          normalizedText
-        );
+        await (isCommunityRankingId(existingComment.postId)
+          ? updateCommunityComment(commentId, normalizedText)
+          : updateSupabaseComment(commentId, normalizedText));
 
       setComments((currentComments) =>
         currentComments.map((comment) =>
@@ -1090,9 +1119,9 @@ export function CommentProvider({
 
       async function removeComment() {
         try {
-          await deleteSupabaseComment(
-            commentId
-          );
+          await (isCommunityRankingId(collectionId)
+            ? deleteCommunityComment(commentId)
+            : deleteSupabaseComment(commentId));
         } catch (error) {
           console.error(
             'Failed to delete comment:',

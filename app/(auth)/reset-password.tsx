@@ -19,6 +19,9 @@ import {
   useState,
 } from 'react';
 import {
+  ScrollView,
+  Platform,
+  KeyboardAvoidingView,
   ActivityIndicator,
   Pressable,
   StyleSheet,
@@ -395,6 +398,15 @@ export default function ResetPasswordScreen() {
         edges={['top', 'bottom']}>
         <ScreenHeader />
 
+        <KeyboardAvoidingView
+          style={styles.keyboardArea}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            showsVerticalScrollIndicator={false}>
         <PageHeader
           title="Choose a new password"
           subtitle="Enter a new password for your Top 3 account."
@@ -584,6 +596,8 @@ export default function ResetPasswordScreen() {
           </View>
           </View>
         </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
 
       <ActionSheet
@@ -628,8 +642,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  content: {
+  keyboardArea: {
     flex: 1,
+  },
+
+  scrollView: {
+    flex: 1,
+  },
+
+  scrollContent: {
+    flexGrow: 1,
+  },
+
+  content: {
+    flexGrow: 1,
     paddingHorizontal: 24,
     paddingBottom: 24,
   },
@@ -651,7 +677,6 @@ const styles = StyleSheet.create({
     minHeight: 54,
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
     borderRadius: 12,
   },
 

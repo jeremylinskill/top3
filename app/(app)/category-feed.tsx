@@ -21,6 +21,8 @@ import { useProfile } from '@/context/profile-context';
 import { useSavedItems } from '@/context/saved-items-context';
 import { useTop3 } from '@/context/top3-context';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
+import Reanimated from 'react-native-reanimated';
 import {
   shareOverallCollection,
   sharePublishedCollection,
@@ -65,12 +67,12 @@ import {
   Text,
   View
 } from 'react-native';
-import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
+import { SafeAreaView, type Edge, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const CATEGORY_FEED_SAFE_AREA_EDGES: Edge[] =
   Platform.OS === 'android'
-    ? ['top', 'left', 'right', 'bottom']
-    : ['top', 'left', 'right'];
+    ? ['left', 'right', 'bottom']
+    : ['left', 'right'];
 
 type CategoryView = 'lists' | 'overall';
 
@@ -148,24 +150,18 @@ function formatTopicLabel(topic: string) {
 
 export default function CategoryFeedScreen() {
   const colors = useAppColors();
-  const [headerHidden, setHeaderHidden] = useState(false);
-  const lastScrollOffset = useRef(0);
+  const insets = useSafeAreaInsets();
+  const [headerScrolled, setHeaderScrolled] = useState(false);
+  const {
+    scrollHandler: onStickyHeaderScroll,
+    headerStyle: stickyHeaderStyle,
+    scrollY: floatingCircleScrollY,
+  } = useHomeStickyHeader(handleScroll, setHeaderScrolled);
 
   function handleScroll(offsetY: number) {
     const y = Math.max(0, offsetY);
-    const delta = y - lastScrollOffset.current;
+    setHeaderScrolled(y > 56);
 
-    if (y < 20) {
-      setHeaderHidden(false);
-    } else if (delta >= 7 && y > 36) {
-      setHeaderHidden(true);
-    } else if (delta <= -7) {
-      setHeaderHidden(false);
-    }
-
-    if (Math.abs(delta) >= 7 || y < 20) {
-      lastScrollOffset.current = y;
-    }
   }
   const params = useLocalSearchParams<{
     category?: string | string[];
@@ -265,6 +261,7 @@ export default function CategoryFeedScreen() {
 
   const {
     getCommentCount,
+    loadCommentCounts,
     isLoading: isLoadingComments,
   } = useComments();
 
@@ -583,8 +580,11 @@ if (isMounted) {
           )}`
         : '';
 
+      // Include every ranking dimension so Actors and Movies never share engagement.
+      const rankingType = normalizedType || 'all';
+      const rankingScope = isSpecificCollection ? 'specific' : 'all';
       const postId =
-        `community-${normalizedCategory}-` +
+        `community-${normalizedCategory}-${rankingType}-${rankingScope}-` +
         `${normalizedTopic}${queryKey}`;
 
       const items: Post['collection']['items'] =
@@ -635,9 +635,18 @@ if (isMounted) {
       category?.name,
       normalizedTopic,
       normalizedItemQuery,
+      normalizedType,
+      isSpecificCollection,
       topicParam,
     ]
   );
+
+  // Fetch the shared Overall count from its persistent engagement record.
+  useEffect(() => {
+    if (activeView === 'overall' && communityPost) {
+      void loadCommentCounts([communityPost.id]);
+    }
+  }, [activeView, communityPost?.id, loadCommentCounts]);
 
   const communityIsLiked = communityPost
     ? isLiked(communityPost.id)
@@ -1535,19 +1544,39 @@ if (isMounted) {
         },
       ]}
       edges={CATEGORY_FEED_SAFE_AREA_EDGES}>
-      <ScreenHeader
-        showBackButton
-        overlay
-        compact={headerHidden}
-        collapseWithBackButton
-      />
+      <Reanimated.View
+        pointerEvents="box-none"
+        style={[
+          {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: insets.top + SCREEN_HEADER_HEIGHT + 16,
+            zIndex: 30,
+          },
+          stickyHeaderStyle,
+        ]}>
+        <ScreenHeader
+          showBackButton
+          overlay
+          androidStatusBarGlass
+          scrolled={headerScrolled} floatingCircleScrollY={floatingCircleScrollY}
+          collapseWithBackButton
+        />
+      </Reanimated.View>
 
-      <ScrollView
-        contentContainerStyle={styles.content}
+      <Reanimated.ScrollView
+        contentContainerStyle={[
+          styles.content,
+          {
+            // Preserve original first-toggle/card position after removing
+            // the top safe-area padding on both platforms.
+            paddingTop: insets.top + SCREEN_HEADER_HEIGHT,
+          },
+        ]}
         showsVerticalScrollIndicator={false}
-        onScroll={(event) =>
-          handleScroll(event.nativeEvent.contentOffset.y)
-        }
+        onScroll={onStickyHeaderScroll}
         scrollEventThrottle={16}>
         {isItemFiltered ? (
           <View style={styles.filteredHeader}>
@@ -2081,7 +2110,7 @@ if (isMounted) {
             </View>
           </View>
         )}
-      </ScrollView>
+      </Reanimated.ScrollView>
 
       <ActionSheet
         visible={moderationSheet !== null}

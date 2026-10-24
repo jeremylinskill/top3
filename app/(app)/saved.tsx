@@ -17,11 +17,13 @@ import {
 } from '@/constants/top3-categories';
 import { useSavedItems } from '@/context/saved-items-context';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
+import Reanimated from 'react-native-reanimated';
 import {
   getTop3ItemMetadata,
 } from '@/utils/top3-item-metadata';
 import { Ionicons } from '@expo/vector-icons';
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
     Pressable,
@@ -76,25 +78,11 @@ export default function SavedScreen() {
   const colors = useAppColors();
   const insets = useSafeAreaInsets();
   const bottomScrollClearance = Math.max(40, insets.bottom + 24);
-  const [headerHidden, setHeaderHidden] = useState(false);
-  const lastScrollOffset = useRef(0);
-
-  function handleScroll(offsetY: number) {
-    const y = Math.max(0, offsetY);
-    const delta = y - lastScrollOffset.current;
-
-    if (y < 20) {
-      setHeaderHidden(false);
-    } else if (delta >= 7 && y > 36) {
-      setHeaderHidden(true);
-    } else if (delta <= -7) {
-      setHeaderHidden(false);
-    }
-
-    if (Math.abs(delta) >= 7 || y < 20) {
-      lastScrollOffset.current = y;
-    }
-  }
+  // The Saved filters, sort sheet and nested horizontal rail stay untouched.
+  const ignoreSavedFeedScroll = useCallback((_y: number) => {}, []);
+  const ignoreSavedScrolled = useCallback((_scrolled: boolean) => {}, []);
+  const { scrollHandler: onSavedScroll, headerStyle: savedHeaderStyle } =
+    useHomeStickyHeader(ignoreSavedFeedScroll, ignoreSavedScrolled);
 
   const {
     savedItems,
@@ -155,13 +143,27 @@ export default function SavedScreen() {
           backgroundColor: colors.background,
         },
       ]}
-      edges={['top', 'left', 'right']}>
-      <ScreenHeader
-        showBackButton
-        overlay
-        compact={headerHidden}
-        collapseWithBackButton
-      />
+      edges={['left', 'right']}>
+      <Reanimated.View
+        pointerEvents="box-none"
+        style={[
+          {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: insets.top + SCREEN_HEADER_HEIGHT + 16,
+            zIndex: 30,
+          },
+          savedHeaderStyle,
+        ]}>
+        <ScreenHeader
+          showBackButton
+          overlay
+          featheredBackdrop
+          androidStatusBarGlass
+        />
+      </Reanimated.View>
 
       <ActionSheet
         visible={isSortSheetVisible}
@@ -200,17 +202,17 @@ export default function SavedScreen() {
         }}
       />
 
-      <ScrollView
+      <Reanimated.ScrollView
         style={styles.listScroller}
         contentContainerStyle={[
           styles.content,
+          // Remove top SafeArea padding but retain the original content start.
+          { paddingTop: SCREEN_HEADER_HEIGHT + insets.top },
           { paddingBottom: bottomScrollClearance },
           visibleItems.length === 0 &&
             styles.emptyContent,
         ]}
-        onScroll={(event) =>
-          handleScroll(event.nativeEvent.contentOffset.y)
-        }
+        onScroll={onSavedScroll}
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}>
         <View style={styles.pageHeaderContainer}>
@@ -525,7 +527,7 @@ export default function SavedScreen() {
             })}
           </View>
         )}
-      </ScrollView>
+      </Reanimated.ScrollView>
     </SafeAreaView>
   );
 }

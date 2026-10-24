@@ -5,14 +5,17 @@ import NotificationHistory from '@/components/notification-history';
 import AuthProviderButton from '@/components/auth-provider-button';
 import PageHeader from '@/components/page-header';
 import PrimaryButton from '@/components/primary-button';
-import ScreenHeader from '@/components/screen-header';
+import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
 import SegmentedControl from '@/components/segmented-control';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { RADIUS } from '@/constants/radius';
+import { TEXT_STYLES } from '@/constants/typography';
 import { useCollectionOptions } from '@/context/collection-options-context';
 import { useFeedback } from '@/context/feedback-context';
 import { useProfile } from '@/context/profile-context';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
+import Reanimated from 'react-native-reanimated';
 import { getExistingPushToken } from '@/lib/notifications';
 import { isPushTokenRegistered } from '@/lib/supabase/push-tokens';
 import { sendCampaignTestNotification } from '@/lib/supabase/campaign-notifications';
@@ -28,7 +31,7 @@ import {
   NotificationDestination,
   resolveDestinationOption,
 } from '@/types/notification-destination';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { buildNotificationCopy } from '@/utils/build-notification-copy';
 import { combineTorontoScheduleTime } from '@/utils/notification-schedule-time';
 import {
@@ -36,12 +39,11 @@ import {
   Keyboard,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const MAX_TITLE_LENGTH = 100;
 const MAX_MESSAGE_LENGTH = 220;
@@ -77,6 +79,17 @@ function formatScheduleSelection(
 
 export default function NotificationComposerScreen() {
   const colors = useAppColors();
+  const insets = useSafeAreaInsets();
+  const ignoreComposerScroll = useCallback((_y: number) => {}, []);
+  const ignoreComposerScrolled = useCallback((_scrolled: boolean) => {}, []);
+  const {
+    scrollHandler: stickyScrollHandler,
+    headerStyle: stickyHeaderStyle,
+    resetHeader: resetComposerHeader,
+  } = useHomeStickyHeader(ignoreComposerScroll, ignoreComposerScrolled);
+  // The segmented switcher is part of each view's scroll content;
+  // the shared floating header remains overlaid above it.
+  const scrollContentTop = insets.top + SCREEN_HEADER_HEIGHT;
   const { showFeedback } = useFeedback();
   const { profile } = useProfile();
   const { options } = useCollectionOptions();
@@ -824,6 +837,36 @@ export default function NotificationComposerScreen() {
     }
   }
 
+  const viewSwitcher = (
+    <View style={styles.viewSwitcher}>
+      <SegmentedControl<'compose' | 'manage' | 'history'>
+        value={activeView}
+        options={[
+          {
+            value: 'compose',
+            label: 'Compose',
+            accessibilityLabel: 'Compose notification',
+          },
+          {
+            value: 'manage',
+            label: 'Manage',
+            accessibilityLabel: 'Manage notification drafts',
+          },
+          {
+            value: 'history',
+            label: 'History',
+            accessibilityLabel: 'View notification history',
+          },
+        ]}
+        onChange={(view) => {
+          Keyboard.dismiss();
+          resetComposerHeader();
+          setActiveView(view);
+        }}
+      />
+    </View>
+  );
+
   if (!profile.isAdmin) {
     return (
       <SafeAreaView
@@ -845,49 +888,60 @@ export default function NotificationComposerScreen() {
       style={[
         styles.container,
         { backgroundColor: colors.background },
-      ]}>
-      <ScreenHeader showBackButton />
-
-      <View style={styles.viewSwitcher}>
-        <SegmentedControl<'compose' | 'manage' | 'history'>
-          value={activeView}
-          options={[
-            {
-              value: 'compose',
-              label: 'Compose',
-              accessibilityLabel: 'Compose notification',
-            },
-            {
-              value: 'manage',
-              label: 'Manage',
-              accessibilityLabel: 'Manage notification drafts',
-            },
-            {
-              value: 'history',
-              label: 'History',
-              accessibilityLabel: 'View notification history',
-            },
-          ]}
-          onChange={(view) => {
-            Keyboard.dismiss();
-            setActiveView(view);
-          }}
+      ]}
+      edges={['left', 'right', 'bottom']}>
+      <Reanimated.View
+        pointerEvents="box-none"
+        style={[
+          {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: insets.top + SCREEN_HEADER_HEIGHT + 16,
+            zIndex: 30,
+          },
+          stickyHeaderStyle,
+        ]}>
+        <ScreenHeader
+          showBackButton
+          overlay
+          featheredBackdrop
+          androidStatusBarGlass
         />
-      </View>
+      </Reanimated.View>
 
       {activeView === 'history' ? (
-        <NotificationHistory mode="history" />
+        <NotificationHistory
+          key="history"
+          mode="history"
+          onScroll={stickyScrollHandler}
+          headerContent={viewSwitcher}
+          contentTopInset={scrollContentTop}
+        />
       ) : activeView === 'manage' ? (
         <NotificationHistory
+          key="manage"
           mode="manage"
           onEditDraft={handleEditDraft}
           onEditScheduled={handleEditScheduled}
+          onScroll={stickyScrollHandler}
+          headerContent={viewSwitcher}
+          contentTopInset={scrollContentTop}
         />
       ) : (
-      <ScrollView
+      <Reanimated.ScrollView
+        style={{ flex: 1 }}
         keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}>
+        onScroll={stickyScrollHandler}
+        scrollEventThrottle={16}
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: scrollContentTop },
+        ]}>
+        {viewSwitcher}
         {draftId || title || message || selectedDestination ? (
           <Pressable
             accessibilityRole="button"
@@ -929,7 +983,6 @@ export default function NotificationComposerScreen() {
               styles.destinationSelector,
               {
                 backgroundColor: colors.surface,
-                borderColor: colors.border,
               },
             ]}>
             <AppText
@@ -961,11 +1014,11 @@ export default function NotificationComposerScreen() {
             maxLength={MAX_TITLE_LENGTH}
             placeholder="Enter notification title"
             placeholderTextColor={colors.tertiaryText}
+            underlineColorAndroid="transparent"
             style={[
               styles.input,
               {
                 backgroundColor: colors.surface,
-                borderColor: colors.border,
                 color: colors.text,
               },
             ]}
@@ -991,12 +1044,12 @@ export default function NotificationComposerScreen() {
             textAlignVertical="top"
             placeholder="Write a short message…"
             placeholderTextColor={colors.tertiaryText}
+            underlineColorAndroid="transparent"
             style={[
               styles.input,
               styles.messageInput,
               {
                 backgroundColor: colors.surface,
-                borderColor: colors.border,
                 color: colors.text,
               },
             ]}
@@ -1057,7 +1110,6 @@ export default function NotificationComposerScreen() {
                 styles.scheduleField,
                 {
                   backgroundColor: colors.surface,
-                  borderColor: colors.border,
                 },
               ]}>
               <AppText variant="formLabel">Date</AppText>
@@ -1094,7 +1146,6 @@ export default function NotificationComposerScreen() {
                 styles.scheduleField,
                 {
                   backgroundColor: colors.surface,
-                  borderColor: colors.border,
                 },
               ]}>
               <AppText variant="formLabel">Time</AppText>
@@ -1276,7 +1327,7 @@ export default function NotificationComposerScreen() {
             </>
           )}
         </View>
-      </ScrollView>
+      </Reanimated.ScrollView>
       )}
 
       <NotificationDestinationPicker
@@ -1355,7 +1406,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   viewSwitcher: {
-    paddingHorizontal: 20,
     paddingTop: 12,
   },
   content: {
@@ -1364,7 +1414,7 @@ const styles = StyleSheet.create({
   },
   field: {
     marginTop: 24,
-    gap: 10,
+    gap: 8,
   },
   newNotificationButton: {
     alignSelf: 'flex-end',
@@ -1383,22 +1433,20 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   input: {
-    borderWidth: 1,
-    borderRadius: RADIUS.lg,
+    ...TEXT_STYLES.bodyLarge,
+    borderRadius: 12,
     minHeight: 52,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
   },
   messageInput: {
     minHeight: 105,
   },
   destinationSelector: {
     minHeight: 52,
-    borderWidth: 1,
-    borderRadius: RADIUS.lg,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -1444,8 +1492,7 @@ const styles = StyleSheet.create({
   scheduleField: {
     flex: 1,
     minWidth: 0,
-    borderWidth: 1,
-    borderRadius: RADIUS.lg,
+    borderRadius: 12,
     padding: 12,
     gap: 8,
     justifyContent: 'space-between',

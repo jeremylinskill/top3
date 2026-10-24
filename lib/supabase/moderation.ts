@@ -57,6 +57,7 @@ export type ModerationReportedContent =
 
 export type ModerationReport = {
   id: string;
+  source: 'standard' | 'community';
   reporterId: string;
   reportedUserId: string;
   reason: string;
@@ -116,6 +117,7 @@ type PendingReportedContentRow =
 
 type PendingReportRow = {
   id: string;
+  source?: 'standard' | 'community';
   reporter_id: string;
   reported_user_id: string;
   reason: string;
@@ -167,6 +169,7 @@ function mapPendingReportRow(
 ): ModerationReport {
   return {
     id: row.id,
+    source: row.source ?? 'standard',
     reporterId: row.reporter_id,
     reportedUserId: row.reported_user_id,
     reason: row.reason,
@@ -308,7 +311,8 @@ export async function getPendingReports(): Promise<
 }
 
 export async function dismissReport(
-  reportId: string
+  reportId: string,
+  source: 'standard' | 'community' = 'standard'
 ): Promise<void> {
   const normalizedReportId =
     reportId.trim();
@@ -327,6 +331,7 @@ export async function dismissReport(
         body: {
           action: 'dismiss-report',
           reportId: normalizedReportId,
+          source,
         },
       }
     );
@@ -383,7 +388,8 @@ export async function dismissReport(
 }
 
 export async function removeReportedContent(
-  reportId: string
+  reportId: string,
+  source: 'standard' | 'community' = 'standard'
 ): Promise<void> {
   const normalizedReportId =
     reportId.trim();
@@ -402,6 +408,7 @@ export async function removeReportedContent(
         body: {
           action: 'remove-content',
           reportId: normalizedReportId,
+          source,
         },
       }
     );

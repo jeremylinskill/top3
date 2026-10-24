@@ -1,10 +1,13 @@
 import AppText from '@/components/app-text';
+import SearchInput from '@/components/search-input';
+import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
 import {
   CategoryId,
   TOP3_CATEGORIES,
 } from '@/constants/top3-categories';
 import { useCollectionOptions } from '@/context/collection-options-context';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
 import type {
   CollectionOption,
   CollectionOptionKind,
@@ -14,19 +17,18 @@ import {
   NotificationDestination,
 } from '@/types/notification-destination';
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import Reanimated from 'react-native-reanimated';
 import {
   Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
-  TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Props = {
   visible: boolean;
@@ -40,6 +42,83 @@ const categories = TOP3_CATEGORIES
   .filter((category) => category.id !== 'podcasts')
   .sort((a, b) => a.name.localeCompare(b.name));
 
+
+// Modal content consumes insets from its own SafeAreaProvider (native Modal
+// is a separate view root). Match the shared floating header used by screens.
+function DestinationPickerLayout({
+  title,
+  showBackButton,
+  onBack,
+  onClose,
+  pageKey,
+  children,
+}: {
+  title: string;
+  showBackButton: boolean;
+  onBack: () => void;
+  onClose: () => void;
+  pageKey: string;
+  children: ReactNode;
+}) {
+  const colors = useAppColors();
+  const insets = useSafeAreaInsets();
+  const onScrollOffset = useCallback((_offset: number) => {}, []);
+  const onScrollState = useCallback((_scrolled: boolean) => {}, []);
+  const { scrollHandler, headerStyle, resetHeader } =
+    useHomeStickyHeader(onScrollOffset, onScrollState);
+
+  // The category and result screens have independent scroll starting points.
+  // Reset shared header state whenever the drill-down changes.
+  useEffect(() => {
+    resetHeader();
+  }, [pageKey]);
+
+  return (
+    <SafeAreaView
+      edges={['left', 'right', 'bottom']}
+      style={[styles.screen, { backgroundColor: colors.background }]}>
+      <KeyboardAvoidingView
+        style={styles.screen}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <Reanimated.View
+          pointerEvents="box-none"
+          style={[
+            styles.floatingHeader,
+            { height: insets.top + SCREEN_HEADER_HEIGHT + 16 },
+            headerStyle,
+          ]}>
+          <ScreenHeader
+            overlay
+            featheredBackdrop
+            androidStatusBarGlass
+            centerTitle={title}
+            showBackButton={showBackButton}
+            onBackPress={onBack}
+            backAccessibilityLabel="Back to categories"
+            rightIconName="close"
+            onRightPress={onClose}
+            rightAccessibilityLabel="Close destination selector"
+          />
+        </Reanimated.View>
+        <Reanimated.ScrollView
+          key={pageKey}
+          style={styles.screen}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingTop: insets.top + SCREEN_HEADER_HEIGHT + 24 },
+          ]}
+          keyboardShouldPersistTaps="always"
+          keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+          showsVerticalScrollIndicator={false}
+          onScroll={scrollHandler}
+          scrollEventThrottle={16}>
+          {children}
+        </Reanimated.ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
+
 export default function NotificationDestinationPicker({
   visible,
   selected,
@@ -52,7 +131,6 @@ export default function NotificationDestinationPicker({
   const [categoryId, setCategoryId] =
     useState<CategoryId | null>(null);
   const [query, setQuery] = useState('');
-  const searchRef = useRef<TextInput>(null);
 
   useEffect(() => {
     if (visible) {
@@ -290,96 +368,31 @@ export default function NotificationDestinationPicker({
       visible={visible}
       animationType="slide"
       presentationStyle="fullScreen"
-      onRequestClose={onClose}>
-      <SafeAreaView
-        style={[
-          styles.screen,
-          { backgroundColor: colors.background },
-        ]}>
-        <KeyboardAvoidingView
-          style={styles.screen}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <View style={styles.header}>
-            {currentCategory ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Back to categories"
-                onPress={() => {
-                  Keyboard.dismiss();
-                  setCategoryId(null);
-                }}
-                style={styles.headerAction}>
-                <Ionicons
-                  name="chevron-back"
-                  size={25}
-                  color={colors.text}
-                />
-              </Pressable>
-            ) : (
-              <View style={styles.headerAction} />
-            )}
-
-            <AppText variant="sectionTitle">
-              {currentCategory?.name ?? 'Choose a Top 3'}
-            </AppText>
-
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Close destination selector"
-              onPress={onClose}
-              style={styles.headerAction}>
-              <Ionicons
-                name="close"
-                size={24}
-                color={colors.text}
-              />
-            </Pressable>
-          </View>
-
-          <View
-            style={[
-              styles.searchBox,
-              { backgroundColor: colors.secondarySurface },
-            ]}>
-            <Ionicons
-              name="search"
-              size={20}
-              color={colors.secondaryText}
-            />
-            <TextInput
-              ref={searchRef}
-              accessibilityLabel="Search all Top 3 destinations"
+      onRequestClose={onClose}
+      statusBarTranslucent={Platform.OS === 'android'}>
+      <SafeAreaProvider
+        style={[styles.screen, { backgroundColor: colors.background }]}>
+        <DestinationPickerLayout
+          title={currentCategory?.name ?? 'Choose a Top 3'}
+          showBackButton={Boolean(currentCategory)}
+          onBack={() => {
+            Keyboard.dismiss();
+            setCategoryId(null);
+          }}
+          onClose={onClose}
+          pageKey={`${visible ? 'open' : 'closed'}:${categoryId ?? 'all'}`}>
+          <View style={styles.searchBox}>
+            <SearchInput
               value={query}
               onChangeText={setQuery}
               placeholder="Search all Top 3s"
-              placeholderTextColor={colors.tertiaryText}
+              accessibilityLabel="Search all Top 3 destinations"
               autoCorrect={false}
-              style={[
-                styles.searchInput,
-                { color: colors.text },
-              ]}
+              onClear={() => setQuery('')}
             />
-            {query ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Clear search"
-                onPress={() => {
-                  setQuery('');
-                  searchRef.current?.focus();
-                }}>
-                <Ionicons
-                  name="close-circle"
-                  size={20}
-                  color={colors.secondaryText}
-                />
-              </Pressable>
-            ) : null}
           </View>
 
-          <ScrollView
-            keyboardShouldPersistTaps="always"
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.content}>
+          <View style={styles.content}>
             {search ? (
               hasSearchResults ? (
                 categories.map((category) =>
@@ -419,9 +432,9 @@ export default function NotificationDestinationPicker({
                 </Pressable>
               ))
             )}
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
+          </View>
+        </DestinationPickerLayout>
+      </SafeAreaProvider>
     </Modal>
   );
 }
@@ -430,38 +443,24 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
   },
-  header: {
-    minHeight: 60,
-    paddingHorizontal: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  floatingHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 30,
+    elevation: 0,
   },
-  headerAction: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
+  scrollContent: {
+    paddingBottom: 48,
   },
   searchBox: {
     marginHorizontal: 20,
     marginTop: 12,
     marginBottom: 8,
-    minHeight: 48,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    paddingVertical: 12,
   },
   content: {
     paddingHorizontal: 20,
-    paddingBottom: 48,
   },
   categoryRow: {
     minHeight: 62,

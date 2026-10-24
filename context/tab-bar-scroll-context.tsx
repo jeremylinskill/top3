@@ -13,7 +13,7 @@ export const FLOATING_TAB_BAR_CONTENT_PADDING =
   FLOATING_TAB_BAR_HEIGHT + FLOATING_TAB_BAR_BOTTOM_SPACING + 20;
 
 // Let the Feed scroll noticeably before the top header rolls away.
-const HEADER_HIDE_SCROLL_THRESHOLD = 140;
+const HEADER_HIDE_SCROLL_THRESHOLD = 6;
 
 type TabBarScrollContextValue = {
   compact: boolean;
@@ -38,19 +38,27 @@ export function TabBarScrollProvider({
     const y = Math.max(0, offsetY);
     const delta = y - lastOffset.current;
 
-    if (y < 40) {
-      setCompact(false);
+    // Begin rolling the entire overlay header away within the first
+    // few pixels of downward movement; restore it on upward scrolling.
+    if (y <= 4) {
       setHeaderHidden(false);
-    } else if (delta >= 7) {
-      if (y > 70) setCompact(true);
-      if (y > HEADER_HIDE_SCROLL_THRESHOLD) setHeaderHidden(true);
+    } else if (y >= HEADER_HIDE_SCROLL_THRESHOLD && delta >= 4) {
+      setHeaderHidden(true);
     } else if (delta <= -7) {
-      setCompact(false);
       setHeaderHidden(false);
     }
 
-    // Small onScroll changes accumulate instead of causing flicker.
-    if (Math.abs(delta) >= 7 || y < 40) {
+    // Preserve the bottom navigation's existing collapse thresholds.
+    if (y < 40) {
+      setCompact(false);
+    } else if (delta >= 7 && y > 70) {
+      setCompact(true);
+    } else if (delta <= -7) {
+      setCompact(false);
+    }
+
+    // Accumulate micro-scroll deltas for stable, direction-aware response.
+    if (Math.abs(delta) >= 4 || y <= 4) {
       lastOffset.current = y;
     }
   }, []);

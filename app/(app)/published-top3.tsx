@@ -10,6 +10,8 @@ import Top3Card from '@/components/top3-card';
 import UserAvatar from '@/components/user-avatar';
 import { useProfile } from '@/context/profile-context';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
+import Reanimated from 'react-native-reanimated';
 import { trackAnalyticsEvent } from '@/lib/analytics';
 import { sharePublishedCollection } from '@/lib/share';
 import { getProfileById } from '@/lib/supabase/profiles';
@@ -26,6 +28,7 @@ import {
   useLocalSearchParams,
 } from 'expo-router';
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -38,12 +41,14 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
+import { SafeAreaView, type Edge, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+// Populated screen scrolls under the status bar; loading/error states
+// use their existing full safe-area layout unchanged.
 const PUBLISHED_TOP3_SAFE_AREA_EDGES: Edge[] =
   Platform.OS === 'android'
-    ? ['top', 'left', 'right', 'bottom']
-    : ['top', 'left', 'right'];
+    ? ['left', 'right', 'bottom']
+    : ['left', 'right'];
 
 function normalizeTopic(topic?: string) {
   return topic?.trim().toLowerCase() || 'general';
@@ -63,6 +68,7 @@ type ReportTop3Sheet =
 
 export default function PublishedTop3Screen() {
   const colors = useAppColors();
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{
     postId?: string | string[];
     openComments?: string | string[];
@@ -86,26 +92,12 @@ export default function PublishedTop3Screen() {
   const trackedCollectionViewPostIdRef =
     useRef<string | null>(null);
 
-  const [headerHidden, setHeaderHidden] =
-    useState(false);
-  const lastScrollOffset = useRef(0);
-
-  function handleScroll(offsetY: number) {
-    const y = Math.max(0, offsetY);
-    const delta = y - lastScrollOffset.current;
-
-    if (y < 20) {
-      setHeaderHidden(false);
-    } else if (delta >= 7 && y > 36) {
-      setHeaderHidden(true);
-    } else if (delta <= -7) {
-      setHeaderHidden(false);
-    }
-
-    if (Math.abs(delta) >= 7 || y < 20) {
-      lastScrollOffset.current = y;
-    }
-  }
+  // No JS header state updates while scrolling; sharing and reporting
+  // remain driven by their original callbacks.
+  const ignorePublishedFeedScroll = useCallback((_y: number) => {}, []);
+  const ignorePublishedScrolled = useCallback((_scrolled: boolean) => {}, []);
+  const { scrollHandler: onPublishedScroll, headerStyle: publishedHeaderStyle } =
+    useHomeStickyHeader(ignorePublishedFeedScroll, ignorePublishedScrolled);
 
 
   const [post, setPost] = useState<Post | null>(
@@ -645,12 +637,25 @@ export default function PublishedTop3Screen() {
       ]}
       edges={PUBLISHED_TOP3_SAFE_AREA_EDGES}>
       <View style={styles.keyboardView}>
-        <ScreenHeader
-          showBackButton
-          overlay
-          compact={headerHidden}
-          collapseWithBackButton
-          rightIconName={
+        <Reanimated.View
+          pointerEvents="box-none"
+          style={[
+            {
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: insets.top + SCREEN_HEADER_HEIGHT + 16,
+              zIndex: 30,
+            },
+            publishedHeaderStyle,
+          ]}>
+          <ScreenHeader
+            showBackButton
+            overlay
+            featheredBackdrop
+            androidStatusBarGlass
+            rightIconName={
             isCurrentUserPost
               ? 'share-outline'
               : 'ellipsis-horizontal'
@@ -680,20 +685,19 @@ export default function PublishedTop3Screen() {
                 }
           }
           secondaryRightAccessibilityLabel="Share Top 3"
-        />
+          />
+        </Reanimated.View>
 
-        <ScrollView
+        <Reanimated.ScrollView
           style={styles.scrollView}
-          contentContainerStyle={
-            styles.content
-          }
+          contentContainerStyle={[
+            styles.content,
+            // Keep original Page/Card start after removing top safe area.
+            { paddingTop: SCREEN_HEADER_HEIGHT + 20 + insets.top },
+          ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          onScroll={(event) =>
-            handleScroll(
-              event.nativeEvent.contentOffset.y
-            )
-          }
+          onScroll={onPublishedScroll}
           scrollEventThrottle={16}>
           {author ? (
             <Pressable
@@ -753,7 +757,7 @@ export default function PublishedTop3Screen() {
             }
           />
 
-        </ScrollView>
+        </Reanimated.ScrollView>
 
       </View>
 

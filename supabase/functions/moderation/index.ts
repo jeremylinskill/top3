@@ -5,6 +5,7 @@ import { withSupabase } from "@supabase/server";
 type ModerationRequestBody = {
   action?: unknown;
   reportId?: unknown;
+  source?: unknown;
 };
 
 type ModerationProfileRow = {
@@ -42,6 +43,28 @@ type ModerationReportUpdate = {
   reviewed_at?: string | null;
   resolution?: string | null;
   moderator_notes?: string | null;
+};
+
+type CommunityModerationReportRow = {
+  id: string;
+  reporter_id: string;
+  reported_user_id: string;
+  reported_comment_id: string;
+  reason: string;
+  status: string;
+  created_at: string;
+};
+
+type CommunityModerationCommentRow = {
+  id: string;
+  ranking_key: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+};
+
+type PendingModerationReport = ModerationReportRow & {
+  source: "standard" | "community";
 };
 
 type ModerationCommentRow = {
@@ -191,6 +214,162 @@ export default {
           message:
             "Moderation access verified.",
         });
+      }
+
+
+      // Overall ranking comments are not collection UUIDs. Their reports are
+      // handled by the same admin-only endpoint, but in separate tables.
+      const source = body.source === "community"
+        ? "community"
+        : "standard";
+
+      if (
+        source === "community" &&
+        (action === "dismiss-report" || action === "remove-content")
+      ) {
+        const reportId =
+          typeof body.reportId === "string"
+            ? body.reportId.trim()
+            : "";
+
+        if (!reportId) {
+          return Response.json(
+            { error: "Report ID is required." },
+            { status: 400 }
+          );
+        }
+
+        const { data: reportData, error: reportError } =
+          await ctx.supabaseAdmin
+            .from("community_ranking_comment_reports")
+            .select("id, reported_comment_id, reported_user_id, status")
+            .eq("id", reportId)
+            .eq("status", "pending")
+            .maybeSingle();
+
+        if (reportError) {
+          console.error("Failed to load Overall comment report:", reportError);
+          return Response.json(
+            { error: "Failed to load Overall comment report." },
+            { status: 500 }
+          );
+        }
+
+        const report = reportData as {
+          id: string;
+          reported_comment_id: string;
+          reported_user_id: string;
+          status: string;
+        } | null;
+
+        if (!report) {
+          return Response.json(
+            { error: "Pending Overall comment report not found." },
+            { status: 404 }
+          );
+        }
+
+        if (action === "dismiss-report") {
+          const { data: dismissed, error: dismissError } =
+            await ctx.supabaseAdmin
+              .from("community_ranking_comment_reports")
+              .update({ status: "dismissed" } as never)
+              .eq("id", reportId)
+              .eq("status", "pending")
+              .select("id, status")
+              .maybeSingle();
+
+          if (dismissError || !dismissed) {
+            console.error("Failed to dismiss Overall comment report:", dismissError);
+            return Response.json(
+              { error: "Failed to dismiss Overall comment report." },
+              { status: dismissError ? 500 : 409 }
+            );
+          }
+
+          return Response.json({
+            success: true,
+            report: { id: reportId, status: "dismissed" },
+          });
+        }
+
+        // Soft-delete the actual Overall comment so all users stop seeing it.
+        // Do not delete the row; preserve it as a moderation record.
+        const removedAt = new Date().toISOString();
+        const { data: removedComment, error: removalError } =
+          await ctx.supabaseAdmin
+            .from("community_ranking_comments")
+            .update({ removed_at: removedAt } as never)
+            .eq("id", report.reported_comment_id)
+            .eq("user_id", report.reported_user_id)
+            .is("removed_at", null)
+            .select("id, user_id")
+            .maybeSingle();
+
+        if (removalError) {
+          console.error("Failed to remove Overall comment:", removalError);
+          return Response.json(
+            { error: "Failed to remove Overall comment." },
+            { status: 500 }
+          );
+        }
+
+        if (!removedComment) {
+          // Another admin may have just removed it, or a previous attempt
+          // may have removed it before resolving all reports. In both cases
+          // it is safe to finish resolving remaining pending reports.
+          const { data: existing, error: existingError } =
+            await ctx.supabaseAdmin
+              .from("community_ranking_comments")
+              .select("id, user_id, removed_at")
+              .eq("id", report.reported_comment_id)
+              .eq("user_id", report.reported_user_id)
+              .maybeSingle();
+          const previouslyRemoved = existing as {
+            id: string;
+            user_id: string;
+            removed_at: string | null;
+          } | null;
+          if (existingError || !previouslyRemoved?.removed_at) {
+            return Response.json(
+              { error: "Reported Overall comment not found." },
+              { status: existingError ? 500 : 404 }
+            );
+          }
+        }
+
+        const { error: resolveError } =
+          await ctx.supabaseAdmin
+            .from("community_ranking_comment_reports")
+            .update({ status: "removed" } as never)
+            .eq("reported_comment_id", report.reported_comment_id)
+            .eq("status", "pending");
+
+        if (resolveError) {
+          console.error("Overall comment was removed but reports could not be resolved:", resolveError);
+          return Response.json(
+            { error: "Comment removed, but reports could not be resolved." },
+            { status: 500 }
+          );
+        }
+
+        // Preserve the existing app response contract even though the
+        // community table calls the terminal status 'removed'.
+        return Response.json({
+          success: true,
+          report: {
+            id: reportId,
+            status: "resolved",
+            resolution: "content_removed",
+          },
+        });
+      }
+
+      if (source === "community") {
+        return Response.json(
+          { error: "Unsupported Overall moderation action." },
+          { status: 400 }
+        );
       }
 
       if (action === "remove-content") {
@@ -798,9 +977,49 @@ export default {
           );
         }
 
-        const pendingReports =
+        const standardReports =
           (reports ??
             []) as ModerationReportRow[];
+
+        const { data: overallReports, error: overallReportsError } =
+          await ctx.supabaseAdmin
+            .from("community_ranking_comment_reports")
+            .select(
+              "id,reporter_id,reported_user_id,reported_comment_id,reason,status,created_at"
+            )
+            .eq("status", "pending")
+            .order("created_at", { ascending: false });
+
+        if (overallReportsError) {
+          console.error("Failed to load Overall comment reports:", overallReportsError);
+          return Response.json(
+            { error: "Failed to load Overall comment reports." },
+            { status: 500 }
+          );
+        }
+
+        const communityReports =
+          (overallReports ?? []) as CommunityModerationReportRow[];
+
+        const pendingReports: PendingModerationReport[] = [
+          ...standardReports.map((report) => ({ ...report, source: "standard" as const })),
+          ...communityReports.map((report) => ({
+            id: report.id,
+            reporter_id: report.reporter_id,
+            reported_user_id: report.reported_user_id,
+            reported_comment_id: report.reported_comment_id,
+            reported_post_id: null,
+            reason: report.reason,
+            details: null,
+            status: report.status,
+            created_at: report.created_at,
+            target_type: "comment",
+            reviewed_at: null,
+            resolution: null,
+            moderator_notes: null,
+            source: "community" as const,
+          })),
+        ].sort((a, b) => b.created_at.localeCompare(a.created_at));
 
         const profileIds = Array.from(
           new Set(
@@ -948,6 +1167,41 @@ export default {
           );
         }
 
+        // Fetch Overall comment bodies separately: their IDs are not
+        // present in the standard comments table.
+        const communityCommentIds = Array.from(
+          new Set(
+            pendingReports
+              .filter((report) => report.source === "community")
+              .map((report) => report.reported_comment_id)
+              .filter((id): id is string => Boolean(id))
+          )
+        );
+        const communityCommentsById = new Map<
+          string,
+          CommunityModerationCommentRow
+        >();
+
+        if (communityCommentIds.length > 0) {
+          const { data: rows, error: commentsError } =
+            await ctx.supabaseAdmin
+              .from("community_ranking_comments")
+              .select("id,ranking_key,user_id,content,created_at")
+              .in("id", communityCommentIds);
+
+          if (commentsError) {
+            console.error("Failed to load Overall reported comments:", commentsError);
+            return Response.json(
+              { error: "Failed to load Overall reported comments." },
+              { status: 500 }
+            );
+          }
+
+          for (const row of (rows ?? []) as CommunityModerationCommentRow[]) {
+            communityCommentsById.set(row.id, row);
+          }
+        }
+
         const collectionIds = Array.from(
           new Set(
             pendingReports
@@ -1035,10 +1289,17 @@ export default {
               const reportedComment =
                 report.target_type ===
                   "comment" &&
-                report.reported_comment_id
+                report.reported_comment_id &&
+                report.source === "standard"
                   ? commentsById.get(
                       report.reported_comment_id
                     ) ?? null
+                  : null;
+
+              const reportedCommunityComment =
+                report.source === "community" &&
+                report.reported_comment_id
+                  ? communityCommentsById.get(report.reported_comment_id) ?? null
                   : null;
 
               const reportedCollectionId =
@@ -1066,7 +1327,17 @@ export default {
                     report.reported_user_id
                   ) ?? null,
                 reportedContent:
-                  report.target_type ===
+                  report.source === "community" &&
+                  reportedCommunityComment
+                    ? {
+                        type: "comment",
+                        id: reportedCommunityComment.id,
+                        collectionId: reportedCommunityComment.ranking_key,
+                        userId: reportedCommunityComment.user_id,
+                        content: reportedCommunityComment.content,
+                        createdAt: reportedCommunityComment.created_at,
+                      }
+                    : report.target_type ===
                     "comment" &&
                   reportedComment
                     ? {

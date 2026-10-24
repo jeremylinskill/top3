@@ -5,6 +5,9 @@ import AppText from '@/components/app-text';
 import CommentsSheet from '@/components/comments-sheet';
 import PrimaryButton from '@/components/primary-button';
 import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
+import Reanimated from 'react-native-reanimated';
+import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
+import { Platform as NavPlatform } from 'react-native';
 import Top3Card from '@/components/top3-card';
 import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
@@ -136,7 +139,14 @@ type FeedReportSheet =
 export default function FeedScreen() {
   const colors = useAppColors();
   const insets = useSafeAreaInsets();
-  const { headerHidden, onFeedScroll } = useTabBarScroll();
+  const { onFeedScroll } = useTabBarScroll();
+  const [headerScrolled, setHeaderScrolled] = useState(false);
+  const {
+    scrollHandler: onStickyHeaderScroll,
+    headerStyle: stickyHeaderStyle,
+    scrollY: floatingCircleScrollY,
+  } = useHomeStickyHeader(onFeedScroll, setHeaderScrolled);
+
   const {
     isAuthenticated,
     isLoading: isAuthLoading,
@@ -1277,12 +1287,31 @@ export default function FeedScreen() {
           backgroundColor: colors.background,
         },
       ]}
-      edges={[
-        'top',
-        'left',
-        'right',
-      ]}>
-      <ScreenHeader compact={headerHidden && personalizedFeed.length > 0} overlay={personalizedFeed.length > 0} />
+      edges={personalizedFeed.length > 0 ? ['left', 'right'] : ['top', 'left', 'right']}>
+      {personalizedFeed.length > 0 ? (
+        <Reanimated.View
+          pointerEvents="box-none"
+          style={[
+            {
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: insets.top + SCREEN_HEADER_HEIGHT + 16,
+              zIndex: 30,
+            },
+            stickyHeaderStyle,
+          ]}>
+      <ScreenHeader
+                featheredBackdrop
+        androidStatusBarGlass
+        overlay={personalizedFeed.length > 0}
+        scrolled={headerScrolled} floatingCircleScrollY={floatingCircleScrollY}
+      />
+        </Reanimated.View>
+      ) : (
+        <ScreenHeader />
+      )}
 
       {isLoadingFeed ? (
         <View style={styles.loadingState}>
@@ -1323,20 +1352,19 @@ export default function FeedScreen() {
           </View>
         </View>
       ) : (
-        <FlatList
+        <Reanimated.FlatList
           data={personalizedFeed}
           keyExtractor={({ post }) =>
             post.id
           }
           renderItem={renderFeedItem}
-          onScroll={(event) =>
-            onFeedScroll(event.nativeEvent.contentOffset.y)
-          }
+          onScroll={onStickyHeaderScroll}
           scrollEventThrottle={16}
           contentContainerStyle={[
             styles.content,
             {
-              paddingTop: SCREEN_HEADER_HEIGHT + 20,
+              paddingTop: SCREEN_HEADER_HEIGHT + 20 +
+                insets.top,
               paddingBottom:
                 insets.bottom + FLOATING_TAB_BAR_CONTENT_PADDING,
             },

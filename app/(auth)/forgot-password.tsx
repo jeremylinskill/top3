@@ -11,6 +11,8 @@ import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
+  ScrollView,
+  KeyboardAvoidingView,
   Platform,
   Pressable,
   StyleSheet,
@@ -170,6 +172,15 @@ export default function ForgotPasswordScreen() {
         edges={['top', 'bottom']}>
         <ScreenHeader showBackButton />
 
+        <KeyboardAvoidingView
+          style={styles.keyboardArea}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            showsVerticalScrollIndicator={false}>
         {hasSubmitted ? (
           <View style={styles.successHeader}>
             <AppText
@@ -291,6 +302,8 @@ export default function ForgotPasswordScreen() {
             </View>
           )}
         </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
 
       <ActionSheet
@@ -352,8 +365,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  content: {
+  keyboardArea: {
     flex: 1,
+  },
+
+  scrollView: {
+    flex: 1,
+  },
+
+  scrollContent: {
+    flexGrow: 1,
+  },
+
+  content: {
+    flexGrow: 1,
     paddingHorizontal: 24,
     paddingBottom: 24,
   },
@@ -374,7 +399,6 @@ const styles = StyleSheet.create({
     width: '100%',
     minHeight: 54,
     paddingHorizontal: 16,
-    borderWidth: 1,
     borderRadius: 12,
     ...TEXT_STYLES.bodyLarge,
   },

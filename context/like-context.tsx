@@ -176,7 +176,15 @@ export function LikeProvider({
           }),
       });
 
-    return unsubscribe;
+    const unsubscribeOverall = subscribeToTableChanges({
+      channelName: `community-likes-${userId}`,
+      table: 'community_ranking_likes',
+      onChange: () => refreshLikes({ showLoading: false }),
+    });
+    return () => {
+      unsubscribe();
+      unsubscribeOverall();
+    };
   }, [userId, refreshLikes]);
 
   useEffect(() => {

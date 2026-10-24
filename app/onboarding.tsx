@@ -434,7 +434,7 @@ export default function OnboardingScreen() {
           styles.container,
           {
             backgroundColor:
-              step === 'category'
+              step !== 'intro'
                 ? colors.background
                 : splashBackgroundColor,
           },
@@ -462,7 +462,8 @@ export default function OnboardingScreen() {
               ],
             },
           ]}>
-          Top 3
+          <Text style={styles.brandTop}>Top</Text>
+          <Text style={styles.brandThree}>3</Text>
         </Animated.Text>
 
         {step !== 'category' ? (
@@ -679,26 +680,11 @@ export default function OnboardingScreen() {
           styles.bottomArea,
           {
             backgroundColor:
-              step === 'category'
+              step !== 'intro'
                 ? colors.background
                 : splashBackgroundColor,
           },
         ]}>
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.bottomRule,
-            {
-              backgroundColor:
-                colors.border,
-              opacity:
-                step === 'category'
-                  ? 1
-                  : introFooterOpacity,
-            },
-          ]}
-        />
-
         {step !== 'category' ? (
           <Animated.View
             pointerEvents={
@@ -792,6 +778,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
+  brandTop: {
+    fontWeight: '700',
+  },
+
+  brandThree: {
+    fontWeight: '400',
+  },
+
   contentGroup: {
     position: 'absolute',
     top: 0,
@@ -859,14 +853,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 24,
-  },
-
-  bottomRule: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: StyleSheet.hairlineWidth,
   },
 
   signInContainer: {

@@ -15,6 +15,8 @@ import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
+import Reanimated from 'react-native-reanimated';
 import { getFollowSnapshot } from '@/lib/supabase/follows';
 import {
   getProfileById,
@@ -30,6 +32,7 @@ import {
   useLocalSearchParams,
 } from 'expo-router';
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -39,7 +42,6 @@ import {
   Keyboard,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
@@ -73,25 +75,11 @@ export default function SocialScreen() {
       FLOATING_TAB_BAR_HEIGHT +
       24
   );
-  const [headerHidden, setHeaderHidden] = useState(false);
-  const lastScrollOffset = useRef(0);
-
-  function handleScroll(offsetY: number) {
-    const y = Math.max(0, offsetY);
-    const delta = y - lastScrollOffset.current;
-
-    if (y < 20) {
-      setHeaderHidden(false);
-    } else if (delta >= 7 && y > 36) {
-      setHeaderHidden(true);
-    } else if (delta <= -7) {
-      setHeaderHidden(false);
-    }
-
-    if (Math.abs(delta) >= 7 || y < 20) {
-      lastScrollOffset.current = y;
-    }
-  }
+  // Keep header motion on the UI thread while followers and search results load.
+  const ignoreSocialScroll = useCallback((_offsetY: number) => {}, []);
+  const ignoreSocialScrollState = useCallback((_scrolled: boolean) => {}, []);
+  const { scrollHandler: onSocialScroll, headerStyle: socialHeaderStyle } =
+    useHomeStickyHeader(ignoreSocialScroll, ignoreSocialScrollState);
 
   const params = useLocalSearchParams<{
     tab?: string | string[];
@@ -833,18 +821,35 @@ export default function SocialScreen() {
             backgroundColor: colors.background,
           },
         ]}
-        edges={['top', 'left', 'right']}>
-      <ScreenHeader
-        showBackButton
-        overlay
-        compact={headerHidden}
-        collapseWithBackButton
-      />
+        edges={['left', 'right']}>
+      <Reanimated.View
+        pointerEvents="box-none"
+        style={[
+          {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: insets.top + SCREEN_HEADER_HEIGHT + 16,
+            zIndex: 30,
+          },
+          socialHeaderStyle,
+        ]}>
+        <ScreenHeader
+          showBackButton
+          overlay
+          featheredBackdrop
+          androidStatusBarGlass
+        />
+      </Reanimated.View>
 
-      <ScrollView
+      <Reanimated.ScrollView
         contentContainerStyle={[
           styles.content,
-          { paddingBottom: bottomScrollClearance },
+          {
+            paddingTop: SCREEN_HEADER_HEIGHT + insets.top,
+            paddingBottom: bottomScrollClearance,
+          },
         ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -853,9 +858,7 @@ export default function SocialScreen() {
             ? 'interactive'
             : 'on-drag'
         }
-        onScroll={(event) =>
-          handleScroll(event.nativeEvent.contentOffset.y)
-        }
+        onScroll={onSocialScroll}
         scrollEventThrottle={16}
         onScrollBeginDrag={Keyboard.dismiss}>
         <View
@@ -1245,7 +1248,7 @@ export default function SocialScreen() {
             })}
           </View>
         )}
-        </ScrollView>
+        </Reanimated.ScrollView>
       </SafeAreaView>
 
       <ActionSheet

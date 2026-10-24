@@ -12,6 +12,8 @@ import { useBlock } from '@/context/block-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
+import Reanimated from 'react-native-reanimated';
 import { trackAnalyticsEvent } from '@/lib/analytics';
 import { getPublicProfilesByIds } from '@/lib/supabase/profiles';
 import {
@@ -26,6 +28,7 @@ import {
 } from '@/utils/calculate-taste-match';
 import { useLocalSearchParams } from 'expo-router';
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -33,7 +36,7 @@ import {
 } from 'react';
 import {
   ActivityIndicator,
-  ScrollView,
+  Animated,
   StyleSheet,
   Text,
   View
@@ -211,6 +214,32 @@ function getComparisonCardTitle(
   return `All ${categoryName}`;
 }
 
+function getTasteMatchCardTitle(
+  comparison: SharedRankComparison
+) {
+  const originalTitle =
+    comparison.collectionTitle ||
+    (comparison.type
+      ? `All ${comparison.type}`
+      : getComparisonCardTitle(
+          comparison.category,
+          comparison.topic
+        ));
+
+  // Hide the app-specific prefix only in Taste Match card headings.
+  // Do not rename collections or alter ranked item titles.
+  const displayTitle = originalTitle
+    .replace(/\btop\s*3\b\s*(?:[:\-–—]\s*)?/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+
+  return displayTitle ||
+    getComparisonCardTitle(
+      comparison.category,
+      comparison.topic
+    );
+}
+
 function getSharedPickCount(
   comparisons: SharedRankComparison[]
 ) {
@@ -225,25 +254,11 @@ export default function TasteMatchScreen() {
   const colors = useAppColors();
   const insets = useSafeAreaInsets();
   const bottomScrollClearance = Math.max(40, insets.bottom + 24);
-  const [headerHidden, setHeaderHidden] = useState(false);
-  const lastScrollOffset = useRef(0);
-
-  function handleScroll(offsetY: number) {
-    const y = Math.max(0, offsetY);
-    const delta = y - lastScrollOffset.current;
-
-    if (y < 20) {
-      setHeaderHidden(false);
-    } else if (delta >= 7 && y > 36) {
-      setHeaderHidden(true);
-    } else if (delta <= -7) {
-      setHeaderHidden(false);
-    }
-
-    if (Math.abs(delta) >= 7 || y < 20) {
-      lastScrollOffset.current = y;
-    }
-  }
+  // Keep the header on the UI thread; match calculations remain unchanged.
+  const ignoreTasteScroll = useCallback((_offsetY: number) => {}, []);
+  const ignoreTasteScrollState = useCallback((_scrolled: boolean) => {}, []);
+  const { scrollHandler: onTasteScroll, headerStyle: tasteHeaderStyle } =
+    useHomeStickyHeader(ignoreTasteScroll, ignoreTasteScrollState);
   const params = useLocalSearchParams<{
     userId?: string | string[];
   }>();
@@ -290,6 +305,28 @@ export default function TasteMatchScreen() {
 
   const [animatedScore, setAnimatedScore] =
     useState(0);
+
+  // One stable native animated value keeps both avatars in sync.
+  // 0 = separated; 1 = their existing overlapping resting position.
+  const [avatarConvergence] = useState(
+    () => new Animated.Value(0)
+  );
+
+  const leftAvatarX = useMemo(
+    () => avatarConvergence.interpolate({
+      inputRange: [0, 1],
+      outputRange: [-36, 0],
+    }),
+    [avatarConvergence]
+  );
+
+  const rightAvatarX = useMemo(
+    () => avatarConvergence.interpolate({
+      inputRange: [0, 1],
+      outputRange: [36, 0],
+    }),
+    [avatarConvergence]
+  );
 
   const scoreAnimationFrame =
     useRef<number | null>(null);
@@ -478,6 +515,8 @@ return getTasteRecommendationForUser({
 
   useEffect(() => {
     if (!tasteMatch) {
+      avatarConvergence.stopAnimation();
+      avatarConvergence.setValue(0);
       setAnimatedScore(0);
       return;
     }
@@ -487,6 +526,18 @@ return getTasteRecommendationForUser({
     );
     const duration = 1700;
     const startTime = Date.now();
+
+    // Match the existing 1.7s score ease-out exactly. Transforms
+    // run natively and do not rely on JS percentage re-renders.
+    avatarConvergence.stopAnimation();
+    avatarConvergence.setValue(0);
+    Animated.timing(avatarConvergence, {
+      toValue: 1,
+      duration,
+      easing: (progress: number) =>
+        1 - Math.pow(1 - progress, 2.4),
+      useNativeDriver: true,
+    }).start();
 
     if (scoreAnimationFrame.current !== null) {
       cancelAnimationFrame(
@@ -533,6 +584,7 @@ return getTasteRecommendationForUser({
       requestAnimationFrame(animateScore);
 
     return () => {
+      avatarConvergence.stopAnimation();
       if (
         scoreAnimationFrame.current !== null
       ) {
@@ -542,7 +594,7 @@ return getTasteRecommendationForUser({
         scoreAnimationFrame.current = null;
       }
     };
-  }, [tasteMatch]);
+  }, [tasteMatch, avatarConvergence]);
 
   const sharedPickCount = tasteMatch
     ? getSharedPickCount(
@@ -729,22 +781,37 @@ return getTasteRecommendationForUser({
           backgroundColor: colors.background,
         },
       ]}
-      edges={['top', 'left', 'right']}>
-      <ScreenHeader
-        showBackButton
-        overlay
-        compact={headerHidden}
-        collapseWithBackButton
-      />
+      edges={['left', 'right']}>
+      <Reanimated.View
+        pointerEvents="box-none"
+        style={[
+          {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: insets.top + SCREEN_HEADER_HEIGHT + 16,
+            zIndex: 30,
+          },
+          tasteHeaderStyle,
+        ]}>
+        <ScreenHeader
+          showBackButton
+          overlay
+          featheredBackdrop
+          androidStatusBarGlass
+        />
+      </Reanimated.View>
 
-      <ScrollView
+      <Reanimated.ScrollView
         contentContainerStyle={[
           styles.content,
-          { paddingBottom: bottomScrollClearance },
+          {
+            paddingTop: SCREEN_HEADER_HEIGHT + insets.top + 20,
+            paddingBottom: bottomScrollClearance,
+          },
         ]}
-        onScroll={(event) =>
-          handleScroll(event.nativeEvent.contentOffset.y)
-        }
+        onScroll={onTasteScroll}
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}>
         {isLoading ? (
@@ -787,11 +854,12 @@ return getTasteRecommendationForUser({
                 },
               ]}>
               <View style={styles.avatarPair}>
-                <View
+                <Animated.View
                   style={[
                     styles.avatarFrame,
                     {
                       backgroundColor: colors.surface,
+                      transform: [{ translateX: leftAvatarX }],
                     },
                     styles.currentUserAvatarFrame,
                   ]}>
@@ -801,13 +869,14 @@ return getTasteRecommendationForUser({
                     size={48}
                     fontSize={19}
                   />
-                </View>
+                </Animated.View>
 
-                <View
+                <Animated.View
                   style={[
                     styles.avatarFrame,
                     {
                       backgroundColor: colors.surface,
+                      transform: [{ translateX: rightAvatarX }],
                     },
                     styles.otherUserAvatarFrame,
                   ]}>
@@ -817,7 +886,7 @@ return getTasteRecommendationForUser({
                     size={48}
                     fontSize={19}
                   />
-                </View>
+                </Animated.View>
               </View>
 
               <AppText
@@ -899,9 +968,8 @@ return getTasteRecommendationForUser({
                                 variant="sectionTitle"
                                 style={styles.comparisonTitle}
                                 numberOfLines={2}>
-                                {getComparisonCardTitle(
-                                  comparison.category,
-                                  comparison.topic
+                                {getTasteMatchCardTitle(
+                                  comparison
                                 )}
                               </AppText>
                             </View>
@@ -1022,7 +1090,7 @@ return getTasteRecommendationForUser({
 
           </>
         )}
-      </ScrollView>
+      </Reanimated.ScrollView>
     </SafeAreaView>
   );
 }

@@ -13,6 +13,7 @@ import { useOnboardingCollection } from '@/context/onboarding-collection-context
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
 import { useAuth } from '@/hooks/use-auth';
 import { Top3Item } from '@/types/top3-item';
 import { formatRelativeTime } from '@/utils/format-relative-time';
@@ -24,18 +25,18 @@ import {
   useLocalSearchParams,
   useNavigation,
 } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
-  ScrollView,
   StyleSheet,
   View
 } from 'react-native';
 import DraggableFlatList, {
   RenderItemParams,
 } from 'react-native-draggable-flatlist';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import Reanimated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 
 type DraggableRow = {
@@ -151,29 +152,64 @@ export default function CollectionScreen() {
   const [activeIndex, setActiveIndex] =
     useState<number | null>(null);
 
-  const [headerHidden, setHeaderHidden] = useState(false);
-  const lastScrollOffset = useRef(0);
+  const insets = useSafeAreaInsets();
+  const ignoreCollectionScroll = useCallback((_offset: number) => {}, []);
+  const ignoreCollectionScrolled = useCallback((_scrolled: boolean) => {}, []);
+  const {
+    scrollHandler: onEmptyCollectionScroll,
+    headerStyle: emptyCollectionHeaderStyle,
+  } = useHomeStickyHeader(ignoreCollectionScroll, ignoreCollectionScrolled);
 
-  function handleScroll(offsetY: number) {
+  // DraggableFlatList owns its Reanimated scroll handler internally and only
+  // exposes scroll offsets through onScrollOffsetChange. Keep that contract,
+  // and update a shared animated header position without React state renders.
+  const draggableHeaderOffset = useSharedValue(0);
+  const draggableHeaderStyle = useAnimatedStyle(() => ({
+    opacity: 1 - draggableHeaderOffset.value / SCREEN_HEADER_HEIGHT,
+    transform: [{ translateY: -draggableHeaderOffset.value }],
+  }));
+  const previousDraggableOffset = useRef(0);
+  const reverseScrollDistance = useRef(0);
+  const lastDraggableDirection = useRef(0);
+  const isReorderingRef = useRef(false);
+
+  function handleDraggableScroll(offsetY: number) {
     const y = Math.max(0, offsetY);
+    const delta = y - previousDraggableOffset.current;
+    previousDraggableOffset.current = y;
 
-    if (activeIndex !== null) {
-      lastScrollOffset.current = y;
+    // The draggable list can auto-scroll while moving an item. Its drag/drop
+    // scroll events must not move the navigation header.
+    if (isReorderingRef.current) return;
+
+    if (y <= 2) {
+      draggableHeaderOffset.value = 0;
+      lastDraggableDirection.current = 0;
+      reverseScrollDistance.current = 0;
       return;
     }
 
-    const delta = y - lastScrollOffset.current;
-
-    if (y < 20) {
-      setHeaderHidden(false);
-    } else if (delta >= 7 && y > 36) {
-      setHeaderHidden(true);
-    } else if (delta <= -7) {
-      setHeaderHidden(false);
-    }
-
-    if (Math.abs(delta) >= 7 || y < 20) {
-      lastScrollOffset.current = y;
+    if (delta < -0.5) {
+      // Start the reveal once per upward gesture; restarting withTiming on
+      // every offset callback would make the header lag behind the finger.
+      if (lastDraggableDirection.current !== -1) {
+        draggableHeaderOffset.value = withTiming(0, { duration: 110 });
+      }
+      lastDraggableDirection.current = -1;
+      reverseScrollDistance.current = 0;
+    } else if (delta > 0.5) {
+      if (lastDraggableDirection.current < 0) {
+        // Ignore a small downward rebound immediately after revealing the
+        // header, but allow an intentional new downward scroll to hide it.
+        reverseScrollDistance.current += delta;
+        if (reverseScrollDistance.current < 10) return;
+        lastDraggableDirection.current = 1;
+        reverseScrollDistance.current = 0;
+      }
+      draggableHeaderOffset.value = Math.min(
+        SCREEN_HEADER_HEIGHT,
+        draggableHeaderOffset.value + delta,
+      );
     }
   }
 
@@ -199,6 +235,16 @@ export default function CollectionScreen() {
 
   const selectedItemCount = selectedItems.length;
   const emptySlotCount = 3 - selectedItemCount;
+
+  // Moving between empty and draggable layouts, or opening another list,
+  // should never inherit a header position from the previous layout/list.
+  useEffect(() => {
+    draggableHeaderOffset.value = 0;
+    previousDraggableOffset.current = 0;
+    reverseScrollDistance.current = 0;
+    lastDraggableDirection.current = 0;
+    isReorderingRef.current = false;
+  }, [requestedListId, currentList?.id, isOnboardingCollection, selectedItemCount > 0]);
 
   const persistedCollection =
     isOnboardingCollection
@@ -445,6 +491,7 @@ export default function CollectionScreen() {
     }
 
 
+    isReorderingRef.current = true;
     setActiveIndex(index);
     drag();
   }
@@ -750,10 +797,12 @@ function openSearch(rank: number) {
 
 
           <Pressable
-            style={[
+            style={({ pressed }) => [
               styles.dragHandleContainer,
               {
-                backgroundColor: isActive
+                // Shade the complete right-hand drag rail as soon as the
+                // finger touches it, and keep it shaded while dragging.
+                backgroundColor: isActive || pressed
                   ? colors.secondarySurface
                   : colors.surface,
               },
@@ -845,6 +894,7 @@ function openSearch(rank: number) {
       setCurrentListItems(nextItems);
     }
 
+    isReorderingRef.current = false;
     setActiveIndex(null);
   }
 
@@ -857,13 +907,30 @@ function openSearch(rank: number) {
           {
             backgroundColor: colors.background,
           },
-        ]}>
-        <ScreenHeader
-          showBackButton
-          overlay
-          compact={headerHidden}
-          collapseWithBackButton
-        />
+        ]}
+        edges={['left', 'right', 'bottom']}>
+        <Reanimated.View
+          pointerEvents="box-none"
+          style={[
+            {
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: insets.top + SCREEN_HEADER_HEIGHT + 16,
+              zIndex: 30,
+            },
+            selectedItemCount > 0
+              ? draggableHeaderStyle
+              : emptyCollectionHeaderStyle,
+          ]}>
+          <ScreenHeader
+            showBackButton
+            overlay
+            featheredBackdrop
+            androidStatusBarGlass
+          />
+        </Reanimated.View>
 
       <View style={styles.listArea}>
         {selectedItemCount > 0 ? (
@@ -883,29 +950,36 @@ function openSearch(rank: number) {
               renderEmptySlots
             }
             scrollEnabled={true}
-            onScrollOffsetChange={handleScroll}
-            onDragBegin={setActiveIndex}
-            onRelease={() =>
-              setActiveIndex(null)
-            }
+            onScrollOffsetChange={handleDraggableScroll}
+            onDragBegin={(index) => {
+              isReorderingRef.current = true;
+              setActiveIndex(index);
+            }}
+            onRelease={() => {
+              // Drop animation can still auto-scroll; keep the header fixed
+              // until onDragEnd finishes saving the reordered items.
+              setActiveIndex(null);
+            }}
             onDragEnd={({ data }) =>
               saveReorderedItems(data)
             }
             activationDistance={12}
             dragItemOverflow
             removeClippedSubviews={false}
-            contentContainerStyle={
-              styles.listContent
-            }
+            contentContainerStyle={[
+              styles.listContent,
+              { paddingTop: SCREEN_HEADER_HEIGHT + insets.top },
+            ]}
             extraData={activeIndex}
           />
         ) : (
-          <ScrollView
-            contentContainerStyle={styles.listContent}
+          <Reanimated.ScrollView
+            contentContainerStyle={[
+              styles.listContent,
+              { paddingTop: SCREEN_HEADER_HEIGHT + insets.top },
+            ]}
             showsVerticalScrollIndicator={false}
-            onScroll={(event) =>
-              handleScroll(event.nativeEvent.contentOffset.y)
-            }
+            onScroll={onEmptyCollectionScroll}
             scrollEventThrottle={16}>
             <View style={styles.listHeader}>
               <PageHeader
@@ -914,7 +988,7 @@ function openSearch(rank: number) {
               />
             </View>
             {renderEmptySlots()}
-          </ScrollView>
+          </Reanimated.ScrollView>
         )}
       </View>
 
@@ -924,7 +998,6 @@ function openSearch(rank: number) {
           styles.bottomBar,
           {
             backgroundColor: colors.background,
-            borderTopColor: colors.border,
           },
         ]}>
         <PrimaryButton
@@ -1076,8 +1149,8 @@ const styles = StyleSheet.create({
   dragHandleContainer: {
     position: 'absolute',
     right: 0,
-    top: 8,
-    bottom: 8,
+    top: 0,
+    bottom: 0,
     width: 64,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1089,8 +1162,8 @@ const styles = StyleSheet.create({
   dragDivider: {
     position: 'absolute',
     left: 0,
-    top: 10,
-    bottom: 10,
+    top: 0,
+    bottom: 0,
     width: StyleSheet.hairlineWidth,
   },
 
@@ -1112,7 +1185,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 8,
-    borderTopWidth:
-      StyleSheet.hairlineWidth,
   },
 });

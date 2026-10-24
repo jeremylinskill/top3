@@ -14,12 +14,12 @@ import {
 } from '@/lib/supabase/notification-campaigns';
 import type { CollectionOption } from '@/types/collection-option';
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ComponentProps, type ReactNode } from 'react';
+import Reanimated from 'react-native-reanimated';
 import {
   ActivityIndicator,
   Pressable,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
@@ -128,12 +128,20 @@ type NotificationHistoryProps = {
   mode?: 'manage' | 'history';
   onEditDraft?: (campaign: NotificationCampaign) => void;
   onEditScheduled?: (campaign: NotificationCampaign) => void;
+  onScroll?: ComponentProps<typeof Reanimated.ScrollView>['onScroll'];
+  headerContent?: ReactNode;
+  viewportTopInset?: number;
+  contentTopInset?: number;
 };
 
 export default function NotificationHistory({
   mode = 'history',
   onEditDraft,
   onEditScheduled,
+  onScroll,
+  headerContent,
+  viewportTopInset,
+  contentTopInset,
 }: NotificationHistoryProps) {
   const colors = useAppColors();
   const { options } = useCollectionOptions();
@@ -309,9 +317,17 @@ export default function NotificationHistory({
   );
 
   return (
-    <ScrollView
-      style={styles.scroll}
-      contentContainerStyle={styles.content}
+    <Reanimated.ScrollView
+      style={[
+        styles.scroll,
+        viewportTopInset === undefined ? null : { marginTop: viewportTopInset },
+      ]}
+      contentContainerStyle={[
+        styles.content,
+        contentTopInset === undefined ? null : { paddingTop: contentTopInset },
+      ]}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl
@@ -322,6 +338,7 @@ export default function NotificationHistory({
           tintColor={colors.accent}
         />
       }>
+      {headerContent}
       {isLoading ? (
         <View style={styles.state}>
           <ActivityIndicator color={colors.accent} />
@@ -598,7 +615,7 @@ export default function NotificationHistory({
         ]}
         onClose={() => setCancelConfirmationCampaign(null)}
       />
-    </ScrollView>
+    </Reanimated.ScrollView>
   );
 }
 

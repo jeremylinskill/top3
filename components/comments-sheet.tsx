@@ -20,6 +20,11 @@ import {
   ReportReason,
 } from '@/lib/supabase/reports';
 import { Post } from '@/types/post';
+import {
+  CommunityCommentAlreadyReportedError,
+  isCommunityRankingId,
+  reportCommunityComment,
+} from '@/lib/supabase/community-engagement';
 import { formatRelativeTime } from '@/utils/format-relative-time';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -71,6 +76,9 @@ type CommentActionSheet =
     }
   | {
       type: 'report-success';
+    }
+  | {
+      type: 'report-already-submitted';
     }
   | {
       type: 'report-error';
@@ -604,17 +612,36 @@ export default function CommentsSheet({
     }
 
     try {
-      await createCommentReport({
-        reporterId: profile.id,
-        reportedUserId: comment.authorId,
-        reportedCommentId: comment.id,
-        reason,
-      });
+      if (isCommunityRankingId(comment.postId)) {
+        await reportCommunityComment({
+          reporterId: profile.id,
+          reportedUserId: comment.authorId,
+          commentId: comment.id,
+          reason,
+        });
+      } else {
+        await createCommentReport({
+          reporterId: profile.id,
+          reportedUserId: comment.authorId,
+          reportedCommentId: comment.id,
+          reason,
+        });
+      }
 
       setCommentActionSheet({
         type: 'report-success',
       });
     } catch (error) {
+      if (
+        error instanceof
+        CommunityCommentAlreadyReportedError
+      ) {
+        setCommentActionSheet({
+          type: 'report-already-submitted',
+        });
+        return;
+      }
+
       console.error(
         'Failed to report comment:',
         error
@@ -814,6 +841,21 @@ export default function CommentsSheet({
           'Report submitted';
         commentActionSheetMessage =
           'Thanks for letting us know. Your report has been submitted for review.';
+
+        commentActionSheetActions = [
+          {
+            label: 'OK',
+            variant: 'cancel',
+            onPress: closeCommentActionSheet,
+          },
+        ];
+        break;
+
+      case 'report-already-submitted':
+        commentActionSheetTitle =
+          'Already reported';
+        commentActionSheetMessage =
+          "You've already reported this comment.";
 
         commentActionSheetActions = [
           {

@@ -72,9 +72,7 @@ export default function AuthProviderButton({
               ? colors.disabledBackground
               : colors.primary
             : colors.surface,
-          borderColor: isPrimary
-            ? 'transparent'
-            : colors.border,
+          borderColor: 'transparent',
           borderWidth: isPrimary
             ? 0
             : 1,

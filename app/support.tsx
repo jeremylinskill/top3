@@ -6,39 +6,26 @@ import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
 import { SUPPORT_EMAIL } from '@/constants/support';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
 import { Ionicons } from '@expo/vector-icons';
-import { useRef, useState } from 'react';
+import { useCallback } from 'react';
 import {
   Linking,
-  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import Reanimated from 'react-native-reanimated';
 
 export default function SupportScreen() {
   const colors = useAppColors();
   const insets = useSafeAreaInsets();
   const bottomScrollClearance = Math.max(40, insets.bottom + 24);
-  const [headerHidden, setHeaderHidden] = useState(false);
-  const lastScrollOffset = useRef(0);
-
-  function handleScroll(offsetY: number) {
-    const y = Math.max(0, offsetY);
-    const delta = y - lastScrollOffset.current;
-
-    if (y < 20) {
-      setHeaderHidden(false);
-    } else if (delta >= 7 && y > 36) {
-      setHeaderHidden(true);
-    } else if (delta <= -7) {
-      setHeaderHidden(false);
-    }
-
-    if (Math.abs(delta) >= 7 || y < 20) {
-      lastScrollOffset.current = y;
-    }
-  }
+  // Use the same UI-thread scroll-linked header as the updated app screens.
+  const ignoreInformationScroll = useCallback((_offsetY: number) => {}, []);
+  const ignoreInformationScrolled = useCallback((_scrolled: boolean) => {}, []);
+  const { scrollHandler: onInformationScroll, headerStyle: informationHeaderStyle } =
+    useHomeStickyHeader(ignoreInformationScroll, ignoreInformationScrolled);
 
   async function contactSupport() {
     const subject = encodeURIComponent(
@@ -59,23 +46,38 @@ export default function SupportScreen() {
           backgroundColor: colors.background,
         },
       ]}
-      edges={['top', 'left', 'right']}>
-      <ScreenHeader
-        showBackButton
-        overlay
-        compact={headerHidden}
-        collapseWithBackButton
-      />
+      edges={['left', 'right']}>
+      <Reanimated.View
+        pointerEvents="box-none"
+        style={[
+          {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: insets.top + SCREEN_HEADER_HEIGHT + 16,
+            zIndex: 30,
+          },
+          informationHeaderStyle,
+        ]}>
+        <ScreenHeader
+          showBackButton
+          overlay
+          featheredBackdrop
+          androidStatusBarGlass
+        />
+      </Reanimated.View>
 
-      <ScrollView
+      <Reanimated.ScrollView
         style={styles.scrollView}
         contentContainerStyle={[
           styles.content,
-          { paddingBottom: bottomScrollClearance },
+          {
+            paddingTop: SCREEN_HEADER_HEIGHT + insets.top,
+            paddingBottom: bottomScrollClearance,
+          },
         ]}
-        onScroll={(event) =>
-          handleScroll(event.nativeEvent.contentOffset.y)
-        }
+        onScroll={onInformationScroll}
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}>
         <View style={styles.pageHeaderContainer}>
@@ -137,7 +139,7 @@ export default function SupportScreen() {
             {SUPPORT_EMAIL}
           </AppText>
         </View>
-      </ScrollView>
+      </Reanimated.ScrollView>
     </SafeAreaView>
   );
 }

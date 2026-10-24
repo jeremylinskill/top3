@@ -19,6 +19,8 @@ import { useOnboardingCollection } from '@/context/onboarding-collection-context
 import { useSavedItems } from '@/context/saved-items-context';
 import { useTop3 } from '@/context/top3-context';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
+import Reanimated from 'react-native-reanimated';
 import { trackAnalyticsEvent } from '@/lib/analytics';
 import { stopAllMediaPreviewsFromCoordinator } from '@/lib/media-preview-coordinator';
 import { submitMusicianSuggestion } from '@/lib/supabase/musician-suggestions';
@@ -44,7 +46,7 @@ import {
 } from '@/utils/top3-item-metadata';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { type ComponentRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Keyboard,
@@ -55,7 +57,7 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 type SearchSource = 'search' | 'saved';
 const MUSICIAN_SUGGESTION_LABELS = {
   vocalist: 'Suggest a Vocalist',
@@ -167,26 +169,17 @@ function normalizeValue(value?: string) {
 }
 export default function SearchScreen() {
   const colors = useAppColors();
-  const [headerHidden, setHeaderHidden] = useState(false);
-  const lastScrollOffset = useRef(0);
-  const scrollViewRef = useRef<ScrollView>(null);
+  const insets = useSafeAreaInsets();
+  // Reanimated.ScrollView exposes an animated wrapper ref, not a plain RN
+  // ScrollView instance. Keep the correct wrapper type for the ref prop.
+  const scrollViewRef = useRef<ComponentRef<typeof Reanimated.ScrollView>>(null);
 
-  function handleScroll(offsetY: number) {
-    const y = Math.max(0, offsetY);
-    const delta = y - lastScrollOffset.current;
-
-    if (y < 20) {
-      setHeaderHidden(false);
-    } else if (delta >= 7 && y > 36) {
-      setHeaderHidden(true);
-    } else if (delta <= -7) {
-      setHeaderHidden(false);
-    }
-
-    if (Math.abs(delta) >= 7 || y < 20) {
-      lastScrollOffset.current = y;
-    }
-  }
+  // Search retains its own scroll ref, keyboard management and tab reset.
+  // Only the decorative header follows the existing UI-thread scroll hook.
+  const ignoreSearchTabScroll = useCallback((_y: number) => {}, []);
+  const ignoreSearchHeaderState = useCallback((_scrolled: boolean) => {}, []);
+  const { scrollHandler: onStickySearchScroll, headerStyle: stickySearchHeaderStyle } =
+    useHomeStickyHeader(ignoreSearchTabScroll, ignoreSearchHeaderState);
 
   const params = useLocalSearchParams();
   const rank = params.rank;
@@ -1448,66 +1441,89 @@ const normalizedRank = Array.isArray(rank)
           {
             backgroundColor: colors.background,
           },
+        ]}
+        edges={['left', 'right', 'bottom']}>
+      <Reanimated.View
+        pointerEvents="box-none"
+        style={[
+          {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: insets.top + SCREEN_HEADER_HEIGHT + 16,
+            zIndex: 30,
+          },
+          stickySearchHeaderStyle,
         ]}>
-      <ScreenHeader
-        showBackButton
-        overlay
-        compact={headerHidden}
-        collapseWithBackButton
-      />
-      <ScrollView
+        <ScreenHeader
+          showBackButton
+          overlay
+          featheredBackdrop
+          androidStatusBarGlass
+        />
+      </Reanimated.View>
+      <Reanimated.ScrollView
         ref={scrollViewRef}
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            // SafeArea top padding is removed for both platforms. Preserve
+            // exactly where PageHeader and search tabs originally started.
+            paddingTop: SCREEN_HEADER_HEIGHT + insets.top,
+          },
+        ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="interactive"
-        onScroll={(event) =>
-          handleScroll(event.nativeEvent.contentOffset.y)
-        }
+        onScroll={onStickySearchScroll}
         scrollEventThrottle={16}>
       <PageHeader
         title={`${selectedCategory?.icon ?? '⭐'} ${pageTitle}`}
         subtitle={pageSubtitle}
       />
-      <View
-        style={[
-          styles.segmentedContainer,
-          {
-            backgroundColor: colors.background,
-          },
-        ]}>
-        <SegmentedControl<SearchSource>
-          value={activeSource}
-          options={[
+      {!isOnboardingSearch ? (
+        <View
+          style={[
+            styles.segmentedContainer,
             {
-              value: 'search',
-              label: 'Search',
-              accessibilityLabel:
-                `Search for ${categoryName}`,
+              backgroundColor: colors.background,
             },
-            {
-              value: 'saved',
-              label: 'Saved',
-              count:
-                isLoadingSavedItems || isSavedRoleLoading || hasSavedRoleError || isSavedEligibilityLoading
-                  ? undefined
-                  : savedCategoryItems.length,
-              accessibilityLabel:
-                `Choose from saved ${savedSelectionName}`,
-            },
-          ]}
-          onChange={(nextSource) => {
-            if (nextSource === 'saved') {
-              Keyboard.dismiss();
-            }
-            setActiveSource(nextSource);
-            scrollViewRef.current?.scrollTo({ y: 0, animated: false });
-            lastScrollOffset.current = 0;
-            setHeaderHidden(false);
-          }}
-        />
-      </View>
+          ]}>
+          <SegmentedControl<SearchSource>
+            value={activeSource}
+            options={[
+              {
+                value: 'search',
+                label: 'Search',
+                accessibilityLabel:
+                  `Search for ${categoryName}`,
+              },
+              {
+                value: 'saved',
+                label: 'Saved',
+                count:
+                  isLoadingSavedItems || isSavedRoleLoading || hasSavedRoleError || isSavedEligibilityLoading
+                    ? undefined
+                    : savedCategoryItems.length,
+                accessibilityLabel:
+                  `Choose from saved ${savedSelectionName}`,
+              },
+            ]}
+            onChange={(nextSource) => {
+              if (nextSource === 'saved') {
+                Keyboard.dismiss();
+              }
+              setActiveSource(nextSource);
+              // The native scroll handler restores the header at offset zero.
+              scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+            }}
+          />
+        </View>
+      ) : (
+        <View style={styles.onboardingSearchSpacing} />
+      )}
       <View
         style={[
           styles.content,
@@ -1515,7 +1531,7 @@ const normalizedRank = Array.isArray(rank)
             backgroundColor: colors.background,
           },
         ]}>
-        {activeSource === 'search' ? (
+        {isOnboardingSearch || activeSource === 'search' ? (
           <>
             <View style={styles.searchInputWrapper}>
               <SearchInput
@@ -1857,7 +1873,7 @@ const normalizedRank = Array.isArray(rank)
           </>
         )}
       </View>
-      </ScrollView>
+      </Reanimated.ScrollView>
       {musicianRole ? (
         <SuggestMusicianSheet
           visible={isSuggestMusicianVisible}
@@ -1909,6 +1925,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 0,
     paddingBottom: 20,
+  },
+  onboardingSearchSpacing: {
+    height: 20,
   },
   content: {
     flexGrow: 1,

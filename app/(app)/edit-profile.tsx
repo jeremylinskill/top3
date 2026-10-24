@@ -7,21 +7,22 @@ import UserAvatar from '@/components/user-avatar';
 import { TEXT_STYLES } from '@/constants/typography';
 import { useProfile } from '@/context/profile-context';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
+import Reanimated from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState, type ComponentRef } from 'react';
 import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const MAX_AVATAR_FILE_SIZE =
   5 * 1024 * 1024;
@@ -37,29 +38,18 @@ type ProfileActionSheet =
 
 export default function EditProfileScreen() {
   const colors = useAppColors();
+  const insets = useSafeAreaInsets();
   const { profile, updateProfile } = useProfile();
-  const [headerHidden, setHeaderHidden] = useState(false);
-  const lastScrollOffset = useRef(0);
 
-  function handleScroll(offsetY: number) {
-    const y = Math.max(0, offsetY);
-    const delta = y - lastScrollOffset.current;
+  // Editing inputs and loading/saving profile must not recreate the UI-thread
+  // scroll handler. Avoid sending keystrokes over the JS bridge on scroll.
+  const ignoreFormScroll = useCallback((_offsetY: number) => {}, []);
+  const ignoreFormScrollState = useCallback((_scrolled: boolean) => {}, []);
+  const { scrollHandler: onFormScroll, headerStyle: editProfileHeaderStyle } =
+    useHomeStickyHeader(ignoreFormScroll, ignoreFormScrollState);
 
-    if (y < 20) {
-      setHeaderHidden(false);
-    } else if (delta >= 7 && y > 36) {
-      setHeaderHidden(true);
-    } else if (delta <= -7) {
-      setHeaderHidden(false);
-    }
-
-    // Match the Feed's direction sensitivity without affecting its tab state.
-    if (Math.abs(delta) >= 7 || y < 20) {
-      lastScrollOffset.current = y;
-    }
-  }
-
-  const scrollViewRef = useRef<ScrollView>(null);
+  // Reanimated.ScrollView has a wrapper ref; preserve the Bio scroll-to-end.
+  const scrollViewRef = useRef<ComponentRef<typeof Reanimated.ScrollView>>(null);
   const usernameInputRef =
     useRef<TextInput>(null);
   const bioInputRef =
@@ -288,13 +278,28 @@ export default function EditProfileScreen() {
         {
           backgroundColor: colors.background,
         },
-      ]}>
-      <ScreenHeader
-        showBackButton
-        overlay
-        compact={headerHidden}
-        collapseWithBackButton
-      />
+      ]}
+      edges={['left', 'right', 'bottom']}>
+      <Reanimated.View
+        pointerEvents="box-none"
+        style={[
+          {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: insets.top + SCREEN_HEADER_HEIGHT + 16,
+            zIndex: 30,
+          },
+          editProfileHeaderStyle,
+        ]}>
+        <ScreenHeader
+          showBackButton
+          overlay
+          featheredBackdrop
+          androidStatusBarGlass
+        />
+      </Reanimated.View>
 
       <KeyboardAvoidingView
         style={styles.keyboardContainer}
@@ -303,7 +308,7 @@ export default function EditProfileScreen() {
             ? 'padding'
             : 'height'
         }>
-        <ScrollView
+        <Reanimated.ScrollView
           ref={scrollViewRef}
           style={[
             styles.scrollView,
@@ -313,11 +318,11 @@ export default function EditProfileScreen() {
           ]}
           contentContainerStyle={[
             styles.content,
-            { paddingTop: SCREEN_HEADER_HEIGHT },
+            // Removing the SafeArea top inset leaves initial content at
+            // the exact same y-position on both platforms.
+            { paddingTop: SCREEN_HEADER_HEIGHT + insets.top },
           ]}
-          onScroll={(event) =>
-            handleScroll(event.nativeEvent.contentOffset.y)
-          }
+          onScroll={onFormScroll}
           scrollEventThrottle={16}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode={
@@ -525,7 +530,7 @@ export default function EditProfileScreen() {
             </View>
 
           </Pressable>
-        </ScrollView>
+        </Reanimated.ScrollView>
 
         <View
           style={[

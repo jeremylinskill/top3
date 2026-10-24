@@ -620,7 +620,6 @@ const styles = StyleSheet.create({
     width: '100%',
     minHeight: 54,
     paddingHorizontal: 16,
-    borderWidth: 1,
     borderRadius: 12,
     ...TEXT_STYLES.bodyLarge,
   },
@@ -630,7 +629,6 @@ const styles = StyleSheet.create({
     minHeight: 54,
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
     borderRadius: 12,
   },
 

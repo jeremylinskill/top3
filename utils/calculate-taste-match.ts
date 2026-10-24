@@ -3,6 +3,8 @@ import { Post } from '@/types/post';
 export type SharedRankComparison = {
   category: string;
   topic?: string;
+  type?: string;
+  collectionTitle?: string;
 
   currentUserItems: string[];
   otherUserItems: string[];
@@ -48,15 +50,16 @@ function unique(values: string[]) {
 }
 
 function getPostKey(post: Post) {
-  const category = normalize(
-    post.collection.category
-  );
-
-  const topic =
-    normalize(post.collection.topic) ||
-    'general';
-
-  return `${category}:${topic}`;
+  // Do not compare Actors, Directors or other typed lists with
+  // an overall list merely because both use the Movies category.
+  // Theme IDs keep themes separate from regular genre lists.
+  // Normalize legacy records without their optional identity fields.
+  return JSON.stringify([
+    normalize(post.collection.category),
+    normalize(post.collection.type) || 'general',
+    normalize(post.collection.topic) || 'general',
+    normalize(post.collection.themeId) || 'no-theme',
+  ]);
 }
 
 function getItemTitles(post: Post) {
@@ -64,10 +67,6 @@ function getItemTitles(post: Post) {
     .filter(Boolean)
     .map((item) => item?.title.trim() ?? '')
     .filter(Boolean);
-}
-
-function getNormalizedItemTitles(post: Post) {
-  return getItemTitles(post).map(normalize);
 }
 
 function getRankDistanceMultiplier(
@@ -335,6 +334,23 @@ function buildSharedRankComparisons(
       currentPosts.forEach((currentPost) => {
         matchingOtherPosts.forEach(
           (otherPost) => {
+            // When both records have stable collection-option IDs,
+            // never equate two different options even if their
+            // display names happen to be identical.
+            const currentOptionId = normalize(
+              currentPost.collection.collectionOptionId
+            );
+            const otherOptionId = normalize(
+              otherPost.collection.collectionOptionId
+            );
+            if (
+              currentOptionId &&
+              otherOptionId &&
+              currentOptionId !== otherOptionId
+            ) {
+              return;
+            }
+
             const currentUserItems =
               getItemTitles(currentPost);
 
@@ -386,6 +402,10 @@ function buildSharedRankComparisons(
                 currentPost.collection.category,
               topic:
                 currentPost.collection.topic,
+              type:
+                currentPost.collection.type,
+              collectionTitle:
+                currentPost.collection.title,
               currentUserItems,
               otherUserItems,
               sharedItems,
@@ -454,120 +474,55 @@ function getMatchingNumberOneItems(
 }
 
 function getSharedItems(
-  currentUserPosts: Post[],
-  otherUserPosts: Post[]
+  comparisons: SharedRankComparison[]
 ) {
-  const currentItems =
-    currentUserPosts.flatMap((post) =>
-      getNormalizedItemTitles(post)
-    );
+  // Score and explain only genuinely comparable lists; a name
+  // occurring in an unrelated category/type is not shared taste.
+  const seen = new Set<string>();
+  const sharedItems: string[] = [];
 
-  const otherItems =
-    otherUserPosts.flatMap((post) =>
-      getNormalizedItemTitles(post)
-    );
-
-  const sharedItemKeys = unique(
-    currentItems.filter((item) =>
-      otherItems.includes(item)
-    )
-  );
-
-  return sharedItemKeys.map(
-    (sharedItemKey) => {
-      for (const post of currentUserPosts) {
-        const titles =
-          getItemTitles(post);
-
-        const normalizedTitles =
-          titles.map(normalize);
-
-        const index =
-          normalizedTitles.indexOf(
-            sharedItemKey
-          );
-
-        if (index >= 0) {
-          return titles[index];
-        }
+  comparisons.forEach((comparison) => {
+    comparison.sharedItems.forEach((title) => {
+      const key = normalize(title);
+      if (key && !seen.has(key)) {
+        seen.add(key);
+        sharedItems.push(title);
       }
+    });
+  });
 
-      for (const post of otherUserPosts) {
-        const titles =
-          getItemTitles(post);
-
-        const normalizedTitles =
-          titles.map(normalize);
-
-        const index =
-          normalizedTitles.indexOf(
-            sharedItemKey
-          );
-
-        if (index >= 0) {
-          return titles[index];
-        }
-      }
-
-      return sharedItemKey;
-    }
-  );
+  return sharedItems;
 }
 
 export function calculateTasteMatch(
   currentUserPosts: Post[],
   otherUserPosts: Post[]
 ): TasteMatchResult {
-  const currentCategories =
-    currentUserPosts.map((post) =>
-      normalize(post.collection.category)
-    );
-
-  const otherCategories =
-    otherUserPosts.map((post) =>
-      normalize(post.collection.category)
-    );
-
-  const sharedCategories = unique(
-    currentCategories.filter((category) =>
-      otherCategories.includes(category)
-    )
-  );
-
-  const currentTopics = currentUserPosts
-    .map((post) =>
-      normalize(post.collection.topic)
-    )
-    .filter(Boolean)
-    .filter(
-      (topic) => topic !== 'general'
-    );
-
-  const otherTopics = otherUserPosts
-    .map((post) =>
-      normalize(post.collection.topic)
-    )
-    .filter(Boolean)
-    .filter(
-      (topic) => topic !== 'general'
-    );
-
-  const sharedTopics = unique(
-    currentTopics.filter((topic) =>
-      otherTopics.includes(topic)
-    )
-  );
-
-  const sharedItems = getSharedItems(
-    currentUserPosts,
-    otherUserPosts
-  );
-
   const sharedRankComparisons =
     buildSharedRankComparisons(
       currentUserPosts,
       otherUserPosts
     );
+
+  const sharedCategories = unique(
+    sharedRankComparisons.map((comparison) =>
+      normalize(comparison.category)
+    )
+  );
+
+  const sharedTopics = unique(
+    sharedRankComparisons
+      .map((comparison) =>
+        normalize(comparison.topic)
+      )
+      .filter(
+        (topic) => Boolean(topic) && topic !== 'general'
+      )
+  );
+
+  const sharedItems = getSharedItems(
+    sharedRankComparisons
+  );
 
   const matchingNumberOneItems =
     getMatchingNumberOneItems(

@@ -6,15 +6,16 @@ import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
 import { useProfile } from '@/context/profile-context';
 import { useAppColors } from '@/hooks/use-app-colors';
-import { useRef, useState } from 'react';
+import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
-  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import Reanimated from 'react-native-reanimated';
 
 type VisibilityOption = 'public' | 'private';
 
@@ -143,25 +144,11 @@ export default function PrivacyScreen() {
   const { profile, updateProfile } =
     useProfile();
 
-  const [headerHidden, setHeaderHidden] = useState(false);
-  const lastScrollOffset = useRef(0);
-
-  function handleScroll(offsetY: number) {
-    const y = Math.max(0, offsetY);
-    const delta = y - lastScrollOffset.current;
-
-    if (y < 20) {
-      setHeaderHidden(false);
-    } else if (delta >= 7 && y > 36) {
-      setHeaderHidden(true);
-    } else if (delta <= -7) {
-      setHeaderHidden(false);
-    }
-
-    if (Math.abs(delta) >= 7 || y < 20) {
-      lastScrollOffset.current = y;
-    }
-  }
+  // Use the same UI-thread scroll-linked header as the updated app screens.
+  const ignoreInformationScroll = useCallback((_offsetY: number) => {}, []);
+  const ignoreInformationScrolled = useCallback((_scrolled: boolean) => {}, []);
+  const { scrollHandler: onInformationScroll, headerStyle: informationHeaderStyle } =
+    useHomeStickyHeader(ignoreInformationScroll, ignoreInformationScrolled);
 
   const [selectedVisibility, setSelectedVisibility] =
     useState<VisibilityOption>(
@@ -221,23 +208,38 @@ export default function PrivacyScreen() {
             backgroundColor: colors.background,
           },
         ]}
-        edges={['top', 'left', 'right']}>
-        <ScreenHeader
-          showBackButton
-          overlay
-          compact={headerHidden}
-          collapseWithBackButton
-        />
+        edges={['left', 'right']}>
+        <Reanimated.View
+          pointerEvents="box-none"
+          style={[
+            {
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: insets.top + SCREEN_HEADER_HEIGHT + 16,
+              zIndex: 30,
+            },
+            informationHeaderStyle,
+          ]}>
+          <ScreenHeader
+            showBackButton
+            overlay
+            featheredBackdrop
+            androidStatusBarGlass
+          />
+        </Reanimated.View>
 
-        <ScrollView
+        <Reanimated.ScrollView
           style={styles.scrollView}
           contentContainerStyle={[
             styles.content,
-            { paddingBottom: bottomScrollClearance },
+            {
+              paddingTop: SCREEN_HEADER_HEIGHT + insets.top,
+              paddingBottom: bottomScrollClearance,
+            },
           ]}
-          onScroll={(event) =>
-            handleScroll(event.nativeEvent.contentOffset.y)
-          }
+          onScroll={onInformationScroll}
           scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}>
           <View style={styles.pageHeaderContainer}>
@@ -302,7 +304,7 @@ export default function PrivacyScreen() {
               </AppText>
             </View>
           ) : null}
-        </ScrollView>
+        </Reanimated.ScrollView>
       </SafeAreaView>
 
       <ActionSheet

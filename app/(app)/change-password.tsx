@@ -5,6 +5,8 @@ import PageHeader from '@/components/page-header';
 import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
 import { TEXT_STYLES } from '@/constants/typography';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
+import Reanimated from 'react-native-reanimated';
 import { useAuth } from '@/hooks/use-auth';
 import {
   signInWithEmail,
@@ -13,6 +15,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import {
+  useCallback,
   useRef,
   useState,
 } from 'react';
@@ -21,35 +24,22 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ChangePasswordScreen() {
   const colors = useAppColors();
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const [headerHidden, setHeaderHidden] = useState(false);
-  const lastScrollOffset = useRef(0);
 
-  function handleScroll(offsetY: number) {
-    const y = Math.max(0, offsetY);
-    const delta = y - lastScrollOffset.current;
-
-    if (y < 20) {
-      setHeaderHidden(false);
-    } else if (delta >= 7 && y > 36) {
-      setHeaderHidden(true);
-    } else if (delta <= -7) {
-      setHeaderHidden(false);
-    }
-
-    if (Math.abs(delta) >= 7 || y < 20) {
-      lastScrollOffset.current = y;
-    }
-  }
+  // Keep the UI-thread scroll handler stable while typing into password fields.
+  const ignorePasswordScroll = useCallback((_offsetY: number) => {}, []);
+  const ignorePasswordScrollState = useCallback((_scrolled: boolean) => {}, []);
+  const { scrollHandler: onPasswordScroll, headerStyle: passwordHeaderStyle } =
+    useHomeStickyHeader(ignorePasswordScroll, ignorePasswordScrollState);
 
   const newPasswordInputRef =
     useRef<TextInput>(null);
@@ -304,13 +294,27 @@ export default function ChangePasswordScreen() {
             backgroundColor: colors.background,
           },
         ]}
-        edges={['top', 'bottom']}>
-        <ScreenHeader
-          showBackButton
-          overlay
-          compact={headerHidden}
-          collapseWithBackButton
-        />
+        edges={['bottom']}>
+        <Reanimated.View
+          pointerEvents="box-none"
+          style={[
+            {
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: insets.top + SCREEN_HEADER_HEIGHT + 16,
+              zIndex: 30,
+            },
+            passwordHeaderStyle,
+          ]}>
+          <ScreenHeader
+            showBackButton
+            overlay
+            featheredBackdrop
+            androidStatusBarGlass
+          />
+        </Reanimated.View>
 
         <KeyboardAvoidingView
           style={styles.keyboardContainer}
@@ -319,7 +323,7 @@ export default function ChangePasswordScreen() {
               ? 'padding'
               : 'height'
           }>
-          <ScrollView
+          <Reanimated.ScrollView
             style={[
               styles.scrollView,
               {
@@ -327,10 +331,11 @@ export default function ChangePasswordScreen() {
                   colors.background,
               },
             ]}
-            contentContainerStyle={styles.content}
-            onScroll={(event) =>
-              handleScroll(event.nativeEvent.contentOffset.y)
-            }
+            contentContainerStyle={[
+              styles.content,
+              { paddingTop: SCREEN_HEADER_HEIGHT + insets.top },
+            ]}
+            onScroll={onPasswordScroll}
             scrollEventThrottle={16}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode={
@@ -605,7 +610,7 @@ export default function ChangePasswordScreen() {
                 </View>
               </View>
             </Pressable>
-          </ScrollView>
+          </Reanimated.ScrollView>
 
           <View
             style={[

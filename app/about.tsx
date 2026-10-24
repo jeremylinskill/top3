@@ -3,14 +3,15 @@ import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
 import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
+import Reanimated from 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import * as Application from 'expo-application';
-import { useRef, useState } from 'react';
+import { useCallback } from 'react';
 import {
   Image,
   Linking,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -61,25 +62,11 @@ export default function AboutScreen() {
   const colorScheme = useColorScheme();
   const insets = useSafeAreaInsets();
   const bottomScrollClearance = Math.max(40, insets.bottom + 24);
-  const [headerHidden, setHeaderHidden] = useState(false);
-  const lastScrollOffset = useRef(0);
-
-  function handleScroll(offsetY: number) {
-    const y = Math.max(0, offsetY);
-    const delta = y - lastScrollOffset.current;
-
-    if (y < 20) {
-      setHeaderHidden(false);
-    } else if (delta >= 7 && y > 36) {
-      setHeaderHidden(true);
-    } else if (delta <= -7) {
-      setHeaderHidden(false);
-    }
-
-    if (Math.abs(delta) >= 7 || y < 20) {
-      lastScrollOffset.current = y;
-    }
-  }
+  // Stable callbacks avoid rebuilding the UI-thread scroll handler.
+  const ignoreAboutScroll = useCallback((_offsetY: number) => {}, []);
+  const ignoreAboutScrolled = useCallback((_scrolled: boolean) => {}, []);
+  const { scrollHandler: onAboutScroll, headerStyle: aboutHeaderStyle } =
+    useHomeStickyHeader(ignoreAboutScroll, ignoreAboutScrolled);
 
   const version =
     Application.nativeApplicationVersion ??
@@ -190,22 +177,37 @@ export default function AboutScreen() {
           backgroundColor: colors.background,
         },
       ]}
-      edges={['top', 'left', 'right']}>
-      <ScreenHeader
-        showBackButton
-        overlay
-        compact={headerHidden}
-        collapseWithBackButton
-      />
+      edges={['left', 'right']}>
+      <Reanimated.View
+        pointerEvents="box-none"
+        style={[
+          {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: insets.top + SCREEN_HEADER_HEIGHT + 16,
+            zIndex: 30,
+          },
+          aboutHeaderStyle,
+        ]}>
+        <ScreenHeader
+          showBackButton
+          overlay
+          featheredBackdrop
+          androidStatusBarGlass
+        />
+      </Reanimated.View>
 
-      <ScrollView
+      <Reanimated.ScrollView
         contentContainerStyle={[
           styles.content,
-          { paddingBottom: bottomScrollClearance },
+          {
+            paddingTop: SCREEN_HEADER_HEIGHT + SPACING.xxl + insets.top,
+            paddingBottom: bottomScrollClearance,
+          },
         ]}
-        onScroll={(event) =>
-          handleScroll(event.nativeEvent.contentOffset.y)
-        }
+        onScroll={onAboutScroll}
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}>
         <View style={styles.hero}>
@@ -390,7 +392,7 @@ export default function AboutScreen() {
             © {currentYear} Top 3
           </AppText>
         </View>
-      </ScrollView>
+      </Reanimated.ScrollView>
     </SafeAreaView>
   );
 }

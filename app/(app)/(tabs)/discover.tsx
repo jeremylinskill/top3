@@ -2,6 +2,7 @@ import AppText from '@/components/app-text';
 import DiscoverListCard from '@/components/discover-list-card';
 import PrimaryButton from '@/components/primary-button';
 import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
+import { Platform as NavPlatform } from 'react-native';
 import SearchInput from '@/components/search-input';
 import SegmentedControl from '@/components/segmented-control';
 import TasteMatchBadge from '@/components/taste-match-badge';
@@ -22,6 +23,8 @@ import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
+import Reanimated from 'react-native-reanimated';
 import {
   getNewestPublicProfiles,
   getPublicProfilesByIds,
@@ -150,24 +153,17 @@ function formatResultCaption(
 export default function DiscoverScreen() {
   const colors = useAppColors();
   const insets = useSafeAreaInsets();
-  const [headerHidden, setHeaderHidden] = useState(false);
-  const lastScrollOffset = useRef(0);
+  const [headerScrolled, setHeaderScrolled] = useState(false);
+  const {
+    scrollHandler: onStickyHeaderScroll,
+    headerStyle: stickyHeaderStyle,
+    scrollY: floatingCircleScrollY,
+  } = useHomeStickyHeader(handleScroll, setHeaderScrolled);
 
   function handleScroll(offsetY: number) {
     const y = Math.max(0, offsetY);
-    const delta = y - lastScrollOffset.current;
+    setHeaderScrolled(y > 56);
 
-    if (y < 20) {
-      setHeaderHidden(false);
-    } else if (delta >= 7 && y > 36) {
-      setHeaderHidden(true);
-    } else if (delta <= -7) {
-      setHeaderHidden(false);
-    }
-
-    if (Math.abs(delta) >= 7 || y < 20) {
-      lastScrollOffset.current = y;
-    }
   }
   const bottomScrollClearance = Math.max(
     40,
@@ -1481,18 +1477,32 @@ export default function DiscoverScreen() {
           backgroundColor: colors.background,
         },
       ]}
-      edges={['top', 'left', 'right']}>
-      <ScreenHeader overlay compact={headerHidden} />
+      edges={['left', 'right']}>
+      <Reanimated.View
+        pointerEvents="box-none"
+        style={[
+          {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: insets.top + SCREEN_HEADER_HEIGHT + 16,
+            zIndex: 30,
+          },
+          stickyHeaderStyle,
+        ]}>
+        <ScreenHeader overlay androidStatusBarGlass scrolled={headerScrolled} floatingCircleScrollY={floatingCircleScrollY} />
+      </Reanimated.View>
 
-      <ScrollView
+      <Reanimated.ScrollView
         contentContainerStyle={[
           styles.content,
-          { paddingBottom: bottomScrollClearance },
+          { paddingTop: SCREEN_HEADER_HEIGHT + 24 +
+              insets.top,
+            paddingBottom: bottomScrollClearance },
         ]}
         showsVerticalScrollIndicator={false}
-        onScroll={(event) =>
-          handleScroll(event.nativeEvent.contentOffset.y)
-        }
+        onScroll={onStickyHeaderScroll}
         scrollEventThrottle={16}
         keyboardShouldPersistTaps="handled"
         refreshControl={
@@ -2377,7 +2387,7 @@ export default function DiscoverScreen() {
           )
         )}
         </Pressable>
-      </ScrollView>
+      </Reanimated.ScrollView>
     </SafeAreaView>
   );
 }
