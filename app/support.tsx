@@ -121,7 +121,7 @@ export default function SupportScreen() {
             style={styles.message}>
             If you have a question, need help with
             Top3, or want to report a problem, get in
-            touch and we'll be happy to help.
+            touch and we&apos;ll be happy to help.
           </AppText>
 
           <View style={styles.buttonContainer}>

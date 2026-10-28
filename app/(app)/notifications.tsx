@@ -129,12 +129,16 @@ function formatNotificationTime(
 export default function NotificationsScreen() {
   const colors = useAppColors();
   const insets = useSafeAreaInsets();
+  // Native iOS refresh stays below the wordmark without a second spinner.
+  const nativeRefreshInsetTop = NavPlatform.OS === 'ios'
+    ? insets.top + SCREEN_HEADER_HEIGHT
+    : 0;
   const [headerScrolled, setHeaderScrolled] = useState(false);
   const {
     scrollHandler: onStickyHeaderScroll,
     headerStyle: stickyHeaderStyle,
     scrollY: floatingCircleScrollY,
-  } = useHomeStickyHeader(handleScroll, setHeaderScrolled);
+  } = useHomeStickyHeader(handleScroll, setHeaderScrolled, nativeRefreshInsetTop);
 
   function handleScroll(offsetY: number) {
     const y = Math.max(0, offsetY);
@@ -392,9 +396,13 @@ export default function NotificationsScreen() {
 
       <Reanimated.ScrollView
         style={styles.scrollView}
+        contentInset={NavPlatform.OS === 'ios' ? { top: nativeRefreshInsetTop } : undefined}
+        contentOffset={NavPlatform.OS === 'ios' ? { x: 0, y: -nativeRefreshInsetTop } : undefined}
+        contentInsetAdjustmentBehavior={NavPlatform.OS === 'ios' ? 'never' : undefined}
+        automaticallyAdjustContentInsets={false}
         contentContainerStyle={[
           styles.content,
-          { paddingTop: SCREEN_HEADER_HEIGHT +
+          { paddingTop: NavPlatform.OS === 'ios' ? 0 : SCREEN_HEADER_HEIGHT +
               insets.top,
             paddingBottom: bottomScrollClearance },
         ]}

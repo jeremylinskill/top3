@@ -68,6 +68,7 @@ async function sendNotification({
   const response = await fetch(
     "https://api.resend.com/emails",
     {
+      signal: AbortSignal.timeout(8000),
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -85,7 +86,7 @@ async function sendNotification({
           `Known for: ${knownFor || "Not provided"}`,
           `Submitted by user ID: ${userId}`,
           "",
-          `Review this suggestion in DEV Supabase: ${MUSICIAN_SUGGESTION_REVIEW_URL}`,
+          `Review this suggestion in Supabase: ${MUSICIAN_SUGGESTION_REVIEW_URL}`,
         ].join("\n"),
         html: [
           '<div style="font-family: Arial, sans-serif; line-height: 1.6;">',
@@ -94,7 +95,7 @@ async function sendNotification({
           `<strong>Category:</strong> ${escapeHtml(ROLE_LABELS[role])}<br>`,
           `<strong>Known for:</strong> ${escapeHtml(knownFor || "Not provided")}<br>`,
           `<strong>Submitted by user ID:</strong> ${escapeHtml(userId)}</p>`,
-          `<p><a href="${MUSICIAN_SUGGESTION_REVIEW_URL}">Review this suggestion in DEV Supabase</a>.</p>`,
+          `<p><a href="${MUSICIAN_SUGGESTION_REVIEW_URL}">Review this suggestion in Supabase</a>.</p>`,
           "</div>",
         ].join(""),
       }),
@@ -132,8 +133,17 @@ export default {
 
       let body: Record<string, unknown>;
 
+      const declaredLength = Number(request.headers.get("content-length"));
+      if (Number.isFinite(declaredLength) && declaredLength > 4096) {
+        return Response.json({ error: "Request is too large." }, { status: 413 });
+      }
+
       try {
-        const parsed: unknown = await request.json();
+        const raw = await request.text();
+        if (new TextEncoder().encode(raw).byteLength > 4096) {
+          return Response.json({ error: "Request is too large." }, { status: 413 });
+        }
+        const parsed: unknown = JSON.parse(raw);
 
         if (
           !parsed ||

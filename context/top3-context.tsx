@@ -40,6 +40,9 @@ type Top3ContextValue = {
   hasCollectionsLoadError: boolean;
   retryCollectionsLoad: () => void;
   createList: (input: CreateListInput) => Promise<string>;
+  startListWithoutSaving: (input: CreateListInput) => string;
+  saveFirstItemForPendingList: (rank: number, item: Top3Item) => Promise<string>;
+  resolvedPendingList: { temporaryId: string; savedId: string } | null;
   selectList: (listId: string) => void;
   setItemAtRank: (
     rank: number,
@@ -116,6 +119,13 @@ export function Top3Provider({
   );
 
   const [posts, setPosts] = useState<Post[]>([]);
+  const [pendingList, setPendingList] = useState<Top3List | null>(null);
+  const pendingListRef = useRef<Top3List | null>(null);
+  const pendingCreatePromiseRef = useRef<Promise<string> | null>(null);
+  const [resolvedPendingList, setResolvedPendingList] = useState<{
+    temporaryId: string;
+    savedId: string;
+  } | null>(null);
 
   const [currentListId, setCurrentListId] =
     useState('');
@@ -150,10 +160,9 @@ export function Top3Provider({
 
   const currentList = useMemo(
     () =>
-      lists.find(
-        (list) => list.id === currentListId
-      ) ?? null,
-    [lists, currentListId]
+      lists.find((list) => list.id === currentListId) ??
+      (pendingList?.id === currentListId ? pendingList : null),
+    [lists, currentListId, pendingList]
   );
 
   const isCollectionsLoaded =
@@ -168,6 +177,10 @@ export function Top3Provider({
       setLists([]);
       setPosts([]);
       setCurrentListId('');
+      pendingListRef.current = null;
+      pendingCreatePromiseRef.current = null;
+      setPendingList(null);
+      setResolvedPendingList(null);
       setHasCollectionsLoadError(false);
       publishedListSnapshotsRef.current.clear();
 
@@ -313,6 +326,90 @@ export function Top3Provider({
       },
     });
   }, [user?.id]);
+
+  // DEFER_LIST_CREATION_UNTIL_FIRST_ITEM_20261025
+  // Opening a ranking creates only an in-memory placeholder. It is intentionally
+  // absent from `lists`, so profiles, drafts and Create/Edit cards ignore it.
+  function startListWithoutSaving(input: CreateListInput): string {
+    if (!user || loadedUserId !== user.id) {
+      throw new Error('Wait for your lists to finish loading before starting a new one.');
+    }
+    const temporaryId = `pending-list:${Date.now()}:${Math.random().toString(36).slice(2)}`;
+    const preview: Top3List = {
+      id: temporaryId,
+      category: input.category,
+      type: input.type,
+      topic: input.topic,
+      themeId: input.themeId,
+      collectionOptionId: input.collectionOptionId,
+      title: input.title,
+      items: [null, null, null],
+    };
+    pendingListRef.current = preview;
+    pendingCreatePromiseRef.current = null;
+    setPendingList(preview);
+    setResolvedPendingList(null);
+    setCurrentListId(temporaryId);
+    return temporaryId;
+  }
+
+  // The first item and the new list are persisted together in one INSERT.
+  // If saving fails, the user stays in Search and no empty row is created.
+  async function saveFirstItemForPendingList(rank: number, item: Top3Item): Promise<string> {
+    if (rank < 1 || rank > 3) {
+      throw new Error('Invalid Top 3 ranking position.');
+    }
+    if (pendingCreatePromiseRef.current) {
+      return pendingCreatePromiseRef.current;
+    }
+    const pending = pendingListRef.current;
+    if (!pending || pending.id !== currentListId || !user) {
+      throw new Error('The unsaved list is no longer active.');
+    }
+    const nextItems = [...pending.items] as Top3List['items'];
+    nextItems[rank - 1] = item;
+    const creation = (async () => {
+      let saved = await createCollection({
+        userId: user.id,
+        category: pending.category,
+        type: pending.type,
+        topic: pending.topic,
+        themeId: pending.themeId,
+        collectionOptionId: pending.collectionOptionId,
+        title: pending.title,
+        items: nextItems,
+      });
+      // On a uniqueness race, createCollection may return an already-existing
+      // record. Never overwrite a populated or published ranking inadvertently.
+      if (saved.items[rank - 1]?.id !== item.id) {
+        if (saved.publishedAt || saved.items.some((choice) => choice !== null)) {
+          throw new Error('This ranking already exists; reload your lists.');
+        }
+        saved = await updateCollection(saved.id, { items: nextItems });
+      }
+      setLists((existing) =>
+        existing.some((list) => list.id === saved.id)
+          ? existing
+          : [...existing, saved]
+      );
+      if (pendingListRef.current?.id === pending.id) {
+        pendingListRef.current = null;
+        setPendingList(null);
+        setCurrentListId(saved.id);
+        setResolvedPendingList({ temporaryId: pending.id, savedId: saved.id });
+      }
+      trackAnalyticsEvent('collection_started', { category: saved.category });
+      return saved.id;
+    })();
+    pendingCreatePromiseRef.current = creation;
+    try {
+      return await creation;
+    } finally {
+      if (pendingCreatePromiseRef.current === creation) {
+        pendingCreatePromiseRef.current = null;
+      }
+    }
+  }
 
   async function createList(
     input: CreateListInput
@@ -831,6 +928,9 @@ export function Top3Provider({
         hasCollectionsLoadError,
         retryCollectionsLoad,
         createList,
+        startListWithoutSaving,
+        saveFirstItemForPendingList,
+        resolvedPendingList,
         selectList,
         setItemAtRank,
         removeItemAtRank,

@@ -24,6 +24,7 @@ import {
   router,
   useLocalSearchParams,
   useNavigation,
+  useFocusEffect,
 } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -68,6 +69,7 @@ export default function CollectionScreen() {
   const {
     currentList,
     lists,
+    resolvedPendingList,
     isCollectionsLoaded,
     hasCollectionsLoadError,
     retryCollectionsLoad,
@@ -135,6 +137,21 @@ export default function CollectionScreen() {
     currentList?.id,
     selectList,
   ]);
+
+  // DEFER_LIST_CREATION_UNTIL_FIRST_ITEM_20261025
+  // Once the first choice is saved, replace the temporary route identifier
+  // so re-opening, refreshing and selecting more items use the real row ID.
+  useFocusEffect(
+    useCallback(() => {
+      if (
+        requestedListId &&
+        resolvedPendingList?.temporaryId === requestedListId &&
+        currentList?.id === resolvedPendingList.savedId
+      ) {
+        router.setParams({ listId: resolvedPendingList.savedId });
+      }
+    }, [requestedListId, resolvedPendingList, currentList?.id])
+  );
 
 
   const isOnboardingCollection =
@@ -234,6 +251,7 @@ export default function CollectionScreen() {
 
 
   const selectedItemCount = selectedItems.length;
+  const hasDraggableItemsForHeaderReset = selectedItemCount > 0;
   const emptySlotCount = 3 - selectedItemCount;
 
   // Moving between empty and draggable layouts, or opening another list,
@@ -244,7 +262,7 @@ export default function CollectionScreen() {
     reverseScrollDistance.current = 0;
     lastDraggableDirection.current = 0;
     isReorderingRef.current = false;
-  }, [requestedListId, currentList?.id, isOnboardingCollection, selectedItemCount > 0]);
+  }, [requestedListId, currentList?.id, isOnboardingCollection, hasDraggableItemsForHeaderReset, draggableHeaderOffset]);
 
   const persistedCollection =
     isOnboardingCollection
@@ -1017,7 +1035,8 @@ function openSearch(rank: number) {
         />
 
         {!isOnboardingCollection &&
-        persistedCollection ? (
+        persistedCollection &&
+        !persistedCollection.id.startsWith('pending-list:') ? (
           <Pressable
             style={({ pressed }) => [
               styles.deleteButton,

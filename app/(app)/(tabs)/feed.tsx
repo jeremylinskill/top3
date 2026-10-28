@@ -140,12 +140,17 @@ export default function FeedScreen() {
   const colors = useAppColors();
   const insets = useSafeAreaInsets();
   const { onFeedScroll } = useTabBarScroll();
+  // Native iOS refresh pilot: the inset replaces the top content padding.
+  // Android retains the exact existing layout and refresh behaviour.
+  const nativeRefreshInsetTop = NavPlatform.OS === 'ios'
+    ? insets.top + SCREEN_HEADER_HEIGHT + 20
+    : 0;
   const [headerScrolled, setHeaderScrolled] = useState(false);
   const {
     scrollHandler: onStickyHeaderScroll,
     headerStyle: stickyHeaderStyle,
     scrollY: floatingCircleScrollY,
-  } = useHomeStickyHeader(onFeedScroll, setHeaderScrolled);
+  } = useHomeStickyHeader(onFeedScroll, setHeaderScrolled, nativeRefreshInsetTop);
 
   const {
     isAuthenticated,
@@ -1360,10 +1365,16 @@ export default function FeedScreen() {
           renderItem={renderFeedItem}
           onScroll={onStickyHeaderScroll}
           scrollEventThrottle={16}
+          // On iOS, UIScrollView manages the native refresh indicator
+          // relative to the top content inset instead of a padded child.
+          contentInset={NavPlatform.OS === 'ios' ? { top: nativeRefreshInsetTop } : undefined}
+          contentOffset={NavPlatform.OS === 'ios' ? { x: 0, y: -nativeRefreshInsetTop } : undefined}
+          contentInsetAdjustmentBehavior={NavPlatform.OS === 'ios' ? 'never' : undefined}
+          automaticallyAdjustContentInsets={false}
           contentContainerStyle={[
             styles.content,
             {
-              paddingTop: SCREEN_HEADER_HEIGHT + 20 +
+              paddingTop: NavPlatform.OS === 'ios' ? 0 : SCREEN_HEADER_HEIGHT + 20 +
                 insets.top,
               paddingBottom:
                 insets.bottom + FLOATING_TAB_BAR_CONTENT_PADDING,

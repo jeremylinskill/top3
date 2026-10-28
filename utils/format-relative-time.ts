@@ -1,4 +1,8 @@
-export function formatRelativeTime(value?: string) {
+// TOP3_CARD_FULL_MONTH_OPT_IN_20261025: cards may request full month names.
+export function formatRelativeTime(
+  value?: string,
+  monthFormat: 'short' | 'long' = 'short'
+) {
   if (!value) {
     return null;
   }
@@ -45,7 +49,7 @@ export function formatRelativeTime(value?: string) {
   return `Updated ${new Date(value).toLocaleDateString(
     undefined,
     {
-      month: 'short',
+      month: monthFormat,
       day: 'numeric',
     }
   )}`;

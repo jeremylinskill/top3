@@ -260,7 +260,10 @@ export default function CreateTopicScreen() {
     categoryId?: string | string[];
     topicId?: string | string[];
     themeSlug?: string | string[];
+    typeOptionId?: string | string[];
     mode?: string | string[];
+    // CARD_RETURN_TO_ORIGIN_20261025
+    fromFeedCard?: string | string[];
   }>();
   const categoryId = Array.isArray(params.categoryId)
     ? params.categoryId[0]
@@ -271,6 +274,25 @@ export default function CreateTopicScreen() {
   const requestedThemeSlug = Array.isArray(params.themeSlug)
     ? params.themeSlug[0]
     : params.themeSlug;
+  const requestedTypeOptionId = Array.isArray(params.typeOptionId)
+    ? params.typeOptionId[0]
+    : params.typeOptionId;
+  // A card launch must not leave this intermediate chooser in the Back stack.
+  // Replace it with the collection so the prior route remains the same
+  // mounted feed instance (including its card/scroll position).
+  const isFromFeedCard =
+    (Array.isArray(params.fromFeedCard)
+      ? params.fromFeedCard[0]
+      : params.fromFeedCard) === '1';
+
+  const openCollectionFromSelection = (destination: Parameters<typeof router.push>[0]) => {
+    if (isFromFeedCard) {
+      router.replace(destination);
+    } else {
+      router.push(destination);
+    }
+  };
+
   const requestedMode = Array.isArray(params.mode)
     ? params.mode[0]
     : params.mode;
@@ -279,48 +301,20 @@ export default function CreateTopicScreen() {
       ? requestedMode
       : undefined;
 
-  const { createList, lists, selectList } = useTop3();
+  const { startListWithoutSaving, lists, selectList } = useTop3();
   const { getOptionsForCategory } =
     useCollectionOptions();
   const hasHandledRequestedTopic = useRef(false);
   const hasHandledRequestedTheme = useRef(false);
+  const hasHandledRequestedType = useRef(false);
   const isCreatingRef = useRef(false);
   const [creatingCollectionKey, setCreatingCollectionKey] = useState<
     string | null
   >(null);
   const category = TOP3_CATEGORIES.find((item) => item.id === categoryId);
-  if (!category) {
-    return (
-      <SafeAreaView
-        style={[styles.container, { backgroundColor: colors.background }]}
-        edges={SCREEN_SAFE_AREA_EDGES}>
-        <ScreenHeader showBackButton />
-        <PageHeader
-          title="Choose a category"
-          subtitle="Select a category before choosing a topic."
-        />
-        <View style={styles.emptyState}>
-          <Pressable
-            style={({ pressed }) => [
-              styles.returnButton,
-              { backgroundColor: colors.primary },
-              pressed && styles.pressed,
-            ]}
-            onPress={() => router.back()}
-            accessibilityRole="button"
-            accessibilityLabel="Return to categories">
-            <AppText
-              variant="action"
-              tone="onPrimary"
-              emphasis="strong">
-              Choose a category
-            </AppText>
-          </Pressable>
-        </View>
-      </SafeAreaView>
-    );
-  }
-  const selectedCategory = category;
+  // Allow the four Hooks to run before the missing-category fallback.
+  // Effects below skip work when category is absent.
+  const selectedCategory = category ?? TOP3_CATEGORIES[0];
   const topics = getSortedTopics(selectedCategory.topics);
   const rawTypeOptions =
     getOptionsForCategory(
@@ -375,6 +369,7 @@ export default function CreateTopicScreen() {
   const overallIsPublished = Boolean(overallCollection?.publishedAt);
   useEffect(() => {
     if (
+      !category ||
       mode !== 'theme' ||
       !hasThemeOptions
     ) {
@@ -404,7 +399,8 @@ export default function CreateTopicScreen() {
     return () => {
       isMounted = false;
     };
-  }, [mode, selectedCategory.id]);
+  }, [mode, selectedCategory.id, category, hasThemeOptions]);
+  // DEFER_LIST_CREATION_UNTIL_FIRST_ITEM_20261025: navigate without an INSERT.
   async function chooseCollection(
     topic?: Pick<Top3Topic, 'id' | 'name'>,
     titleOverride?: string,
@@ -425,7 +421,7 @@ export default function CreateTopicScreen() {
     );
     if (existingCollection) {
       selectList(existingCollection.id);
-      router.push({
+      openCollectionFromSelection({
         pathname: '/collection',
         params: { listId: existingCollection.id },
       });
@@ -440,7 +436,7 @@ export default function CreateTopicScreen() {
     isCreatingRef.current = true;
     setCreatingCollectionKey(collectionKey);
     try {
-      const listId = await createList({
+      const listId = startListWithoutSaving({
         category: selectedCategory.id,
         topic: topicName,
         themeId:
@@ -452,7 +448,7 @@ export default function CreateTopicScreen() {
           collectionOption?.id,
         title,
       });
-      router.push({
+      openCollectionFromSelection({
         pathname: '/collection',
         params: { listId },
       });
@@ -506,7 +502,7 @@ export default function CreateTopicScreen() {
         : undefined);
     if (existingCollection) {
       selectList(existingCollection.id);
-      router.push({
+      openCollectionFromSelection({
         pathname: '/collection',
         params: { listId: existingCollection.id },
       });
@@ -515,13 +511,13 @@ export default function CreateTopicScreen() {
     isCreatingRef.current = true;
     setCreatingCollectionKey(option.id);
     try {
-      const listId = await createList({
+      const listId = startListWithoutSaving({
         category: selectedCategory.id,
         type: option.name,
         collectionOptionId: option.id,
         title: buildEntityCollectionTitle(option.name),
       });
-      router.push({
+      openCollectionFromSelection({
         pathname: '/collection',
         params: { listId },
       });
@@ -541,6 +537,31 @@ export default function CreateTopicScreen() {
       setCreatingCollectionKey(null);
     }
   }
+  // CREATE_YOURS_FEED_ACTION_20261025: open the matching Type from a card.
+  // The existing Type handler resumes an owned list or creates empty ranks.
+  useEffect(() => {
+    if (
+      !category ||
+      !requestedTypeOptionId ||
+      mode !== 'type' ||
+      hasHandledRequestedType.current
+    ) {
+      return;
+    }
+    const requestedKey = requestedTypeOptionId.trim().toLowerCase();
+    const requestedType = typeOptions.find((option) =>
+      [option.id, option.slug, option.name].some(
+        (value) => value?.trim().toLowerCase() === requestedKey
+      )
+    );
+    if (!requestedType) {
+      // Options may still be loading; keep the selection screen available.
+      return;
+    }
+    hasHandledRequestedType.current = true;
+    void chooseEntityType(requestedType);
+  }, [requestedTypeOptionId, mode, typeOptions, category]);
+
   function chooseRequestedTopic() {
     if (!requestedTopicId) {
       return;
@@ -557,14 +578,15 @@ export default function CreateTopicScreen() {
     }
   }
   useEffect(() => {
-    if (!requestedTopicId || hasHandledRequestedTopic.current) {
+    if (!category || !requestedTopicId || hasHandledRequestedTopic.current) {
       return;
     }
     hasHandledRequestedTopic.current = true;
     chooseRequestedTopic();
-  }, [requestedTopicId]);
+  }, [requestedTopicId, category]);
   useEffect(() => {
     if (
+      !category ||
       !requestedThemeSlug ||
       mode !== 'theme' ||
       hasHandledRequestedTheme.current
@@ -585,7 +607,38 @@ export default function CreateTopicScreen() {
       `Top 3 ${requestedTheme.name}`,
       requestedTheme
     );
-  }, [requestedThemeSlug, mode, themes]);
+  }, [requestedThemeSlug, mode, themes, category]);
+  if (!category) {
+    return (
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colors.background }]}
+        edges={SCREEN_SAFE_AREA_EDGES}>
+        <ScreenHeader showBackButton />
+        <PageHeader
+          title="Choose a category"
+          subtitle="Select a category before choosing a topic."
+        />
+        <View style={styles.emptyState}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.returnButton,
+              { backgroundColor: colors.primary },
+              pressed && styles.pressed,
+            ]}
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel="Return to categories">
+            <AppText
+              variant="action"
+              tone="onPrimary"
+              emphasis="strong">
+              Choose a category
+            </AppText>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
   if (!mode) {
     return (
       <CreateTopicScrollShell

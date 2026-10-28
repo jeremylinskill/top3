@@ -8,7 +8,8 @@ import { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
  */
 export function useHomeStickyHeader(
   onFeedScroll: (offsetY: number) => void,
-  onHeaderScrolled: (scrolled: boolean) => void
+  onHeaderScrolled: (scrolled: boolean) => void,
+  nativeInsetTop = 0
 ) {
   const hidden = useSharedValue(0);
   const previousY = useSharedValue(0);
@@ -20,10 +21,10 @@ export function useHomeStickyHeader(
     onBeginDrag(event) {
       isDragging.value = true;
       lastDragDirection.value = 0;
-      previousY.value = Math.max(0, event.contentOffset.y);
+      previousY.value = Math.max(0, event.contentOffset.y + nativeInsetTop);
     },
     onScroll(event) {
-      const y = Math.max(0, event.contentOffset.y);
+      const y = Math.max(0, event.contentOffset.y + nativeInsetTop);
       const delta = y - previousY.value;
       previousY.value = y;
 

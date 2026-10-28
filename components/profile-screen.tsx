@@ -26,6 +26,7 @@ import {
   createUserReport,
   ReportReason,
 } from '@/lib/supabase/reports';
+import { hydrateProfileArtworkProgressively } from '@/services/post-service';
 import {
   getPublishedPostsByUser,
   refreshMusicianEditorialInPosts,
@@ -45,11 +46,17 @@ import {
 } from 'react';
 import {
   ActivityIndicator,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
   Platform,
   StyleSheet,
   View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+
+// Six cards render initially; expand automatically as the user scrolls.
+const PROFILE_CARD_BATCH_SIZE = 6;
+const PROFILE_CARD_LOAD_AHEAD_PX = 500;
 
 type ProfileScreenProps = {
   userId?: string;
@@ -186,6 +193,14 @@ export default function ProfileScreen({
     Post[]
   >([]);
 
+  // Rendering only nearby cards avoids mounting a large profile at once.
+  const [visiblePostCount, setVisiblePostCount] = useState(PROFILE_CARD_BATCH_SIZE);
+  const profileScrollMetricsRef = useRef({
+    offsetY: 0,
+    viewportHeight: 0,
+    contentHeight: 0,
+  });
+
   const profilePostsRefreshRunRef = useRef(0);
 
   const [isLoadingPosts, setIsLoadingPosts] =
@@ -291,6 +306,13 @@ export default function ProfileScreen({
 
   const viewedUserId = viewedUser?.id;
 
+  // A different profile starts with a fresh first batch.
+  useEffect(() => {
+    setVisiblePostCount(PROFILE_CARD_BATCH_SIZE);
+    profileScrollMetricsRef.current.offsetY = 0;
+    profileScrollMetricsRef.current.contentHeight = 0;
+  }, [viewedUserId]);
+
   const userIsFollowed =
     viewedUserId && !isCurrentUser
       ? isFollowing(viewedUserId)
@@ -361,139 +383,116 @@ export default function ProfileScreen({
     };
   }, [isCurrentUser, viewedUserId]);
 
+  // Prevent an earlier load/artwork lookup from overwriting a newer profile.
+  const profilePostsRequestRef = useRef(0);
+  const [comparisonReadyForUserId, setComparisonReadyForUserId] =
+    useState<string | null>(null);
+
   const loadProfilePosts = useCallback(
-    async ({
-      showLoading = false,
-    }: {
-      showLoading?: boolean;
-    } = {}) => {
-      const loadRun =
-        ++profilePostsRefreshRunRef.current;
+    async ({ showLoading = false }: { showLoading?: boolean } = {}) => {
+      const requestId = ++profilePostsRequestRef.current;
+      const isCurrentRequest = () =>
+        profilePostsRequestRef.current === requestId;
+      const startedAt = Date.now();
 
-      function displayPosts(posts: Post[]) {
-        if (
-          loadRun !==
-          profilePostsRefreshRunRef.current
-        ) {
-          return;
-        }
-
-        setAllPosts(posts);
-
-        void refreshMusicianEditorialInPosts(posts)
-          .then((refreshedPosts) => {
-            if (
-              loadRun ===
-              profilePostsRefreshRunRef.current
-            ) {
-              setAllPosts(refreshedPosts);
-            }
-          })
-          .catch((error) => {
-            if (__DEV__) {
-              console.log(
-                'Profile musician editorial refresh failed:',
-                error
-              );
-            }
-          });
+      if (!isAuthenticated || !profile.id || !viewedUserId) {
+        setAllPosts([]);
+        setIsLoadingPosts(false);
+        return;
       }
 
-      if (
-        !isAuthenticated ||
-        !profile.id ||
-        !viewedUserId
-      ) {
+      // Do not fetch another person's private lists without permission.
+      if (viewedUserId !== profile.id && !canViewPosts) {
         setAllPosts([]);
-        setHasPostsLoadError(false);
         setIsLoadingPosts(false);
         return;
       }
 
       if (showLoading) {
-        setHasPostsLoadError(false);
         setIsLoadingPosts(true);
       }
 
+      const applyHydratedPost = (hydrated: Post) => {
+        if (!isCurrentRequest()) return;
+        setAllPosts((current) => current.map((post) =>
+          post.id === hydrated.id
+            ? {
+                ...post,
+                collection: {
+                  ...post.collection,
+                  items: hydrated.collection.items,
+                },
+              }
+            : post
+        ));
+      };
+
+      const startBackgroundArtwork = (raw: Post[]) => {
+        void hydrateProfileArtworkProgressively(raw, applyHydratedPost)
+          .catch((error) => {
+            if (__DEV__ && isCurrentRequest()) {
+              console.log('Profile artwork lookup failed:', error);
+            }
+          });
+      };
+
       try {
-        const currentUserPosts =
-          await getPublishedPostsByUser(
-            profile.id
-          );
-
-        if (
-          loadRun !==
-          profilePostsRefreshRunRef.current
-        ) {
-          return;
-        }
-
-        setHasPostsLoadError(false);
-
-        if (viewedUserId === profile.id) {
-          displayPosts(currentUserPosts);
-          return;
-        }
-
-        if (!canViewPosts) {
-          displayPosts(currentUserPosts);
-          return;
-        }
-
-        const viewedUserPosts =
-          await getPublishedPostsByUser(
-            viewedUserId
-          );
-
-        displayPosts(
-          mergePosts(
-            currentUserPosts,
-            viewedUserPosts
-          )
+        // The visible profile's data has priority over Taste Match and artwork.
+        const viewedPosts = await getPublishedPostsByUser(
+          viewedUserId,
+          { hydrateMissingArtwork: false }
         );
+        if (!isCurrentRequest()) return;
+
+        setAllPosts(viewedPosts);
+        setIsLoadingPosts(false);
+        if (__DEV__) {
+          console.log('[Profile performance] Lists ready', {
+            count: viewedPosts.length,
+            elapsedMs: Date.now() - startedAt,
+          });
+        }
+        startBackgroundArtwork(viewedPosts);
+
+        // Taste Match also needs the signed-in user's posts, but cards do not.
+        // Fetch those only after displaying the viewed person's lists.
+        if (viewedUserId !== profile.id) {
+          try {
+            const ownPosts = await getPublishedPostsByUser(
+              profile.id,
+              { hydrateMissingArtwork: false }
+            );
+            if (!isCurrentRequest()) return;
+            setAllPosts((current) => mergePosts(ownPosts, current));
+            setComparisonReadyForUserId(viewedUserId);
+            startBackgroundArtwork(ownPosts);
+          } catch (error) {
+            if (__DEV__ && isCurrentRequest()) {
+              console.log('Profile Taste Match data unavailable:', error);
+            }
+          }
+        }
       } catch (error) {
-        if (
-          loadRun !==
-          profilePostsRefreshRunRef.current
-        ) {
-          return;
-        }
-
-        if (!isNetworkError(error)) {
-          console.error(
-            'Failed to load profile posts:',
-            error
-          );
-        }
-
-        if (showLoading) {
-          setHasPostsLoadError(true);
-        }
+        if (!isCurrentRequest()) return;
+        console.error('Failed to load profile posts:', error);
+        setAllPosts([]);
       } finally {
-        if (
-          showLoading &&
-          loadRun ===
-            profilePostsRefreshRunRef.current
-        ) {
-          setIsLoadingPosts(false);
-        }
+        if (isCurrentRequest()) setIsLoadingPosts(false);
       }
     },
-    [
-      canViewPosts,
-      isAuthenticated,
-      profile.id,
-      viewedUserId,
-    ]
+    [canViewPosts, isAuthenticated, profile.id, viewedUserId]
   );
 
   useEffect(() => {
+    // Capture the stable ref object, not its current counter. Cleanup
+    // must increment the latest value to invalidate earlier requests.
+    const refreshRunRefForCleanup = profilePostsRefreshRunRef;
     void loadProfilePosts({
       showLoading: true,
     });
 
     return () => {
-      ++profilePostsRefreshRunRef.current;
+      ++refreshRunRefForCleanup.current;
     };
   }, [loadProfilePosts]);
 
@@ -548,8 +547,49 @@ export default function ProfileScreen({
       );
   }, [allPosts, viewedUserId]);
 
+  // Leave the existing Reanimated header handler untouched. These callbacks
+  // run only when dragging ends or the available scroll height changes.
+  const maybeRevealMoreProfileCards = useCallback(() => {
+    if (isLoadingPosts || publishedPosts.length <= PROFILE_CARD_BATCH_SIZE) {
+      return;
+    }
+
+    const { offsetY, viewportHeight, contentHeight } =
+      profileScrollMetricsRef.current;
+    if (viewportHeight <= 0 || contentHeight <= 0) {
+      return;
+    }
+    if (
+      offsetY + viewportHeight + PROFILE_CARD_LOAD_AHEAD_PX <
+      contentHeight
+    ) {
+      return;
+    }
+
+    setVisiblePostCount((current) =>
+      current >= publishedPosts.length
+        ? current
+        : Math.min(publishedPosts.length, current + PROFILE_CARD_BATCH_SIZE)
+    );
+  }, [isLoadingPosts, publishedPosts.length]);
+
+  const handleProfileBatchScrollEnd = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const { contentOffset, contentSize, layoutMeasurement } =
+        event.nativeEvent;
+      profileScrollMetricsRef.current = {
+        offsetY: Math.max(0, contentOffset.y),
+        viewportHeight: layoutMeasurement.height,
+        contentHeight: contentSize.height,
+      };
+      maybeRevealMoreProfileCards();
+    },
+    [maybeRevealMoreProfileCards]
+  );
+
   const tasteMatch = useMemo(() => {
     if (
+      comparisonReadyForUserId !== viewedUserId ||
       !viewedUserId ||
       isCurrentUser ||
       !canViewPosts ||
@@ -573,6 +613,7 @@ export default function ProfileScreen({
     isLoadingPosts,
     profile.id,
     viewedUser,
+    comparisonReadyForUserId,
     viewedUserId,
   ]);
 
@@ -1539,10 +1580,22 @@ export default function ProfileScreen({
         ]}
         showsVerticalScrollIndicator={false}
         onScroll={stickyScrollHandler}
+        onScrollEndDrag={handleProfileBatchScrollEnd}
+        onMomentumScrollEnd={handleProfileBatchScrollEnd}
+        onLayout={(event) => {
+          profileScrollMetricsRef.current.viewportHeight =
+            event.nativeEvent.layout.height;
+          maybeRevealMoreProfileCards();
+        }}
+        onContentSizeChange={(_width, height) => {
+          profileScrollMetricsRef.current.contentHeight = height;
+          maybeRevealMoreProfileCards();
+        }}
         scrollEventThrottle={16}>
         <ProfileScreenContent
           user={viewedUser}
           publishedPosts={publishedPosts}
+          visiblePostCount={visiblePostCount}
           isCurrentUser={isCurrentUser}
           followerCount={
             isCurrentUser

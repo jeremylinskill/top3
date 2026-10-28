@@ -116,7 +116,7 @@ const MAX_ARTIST_NAME_LENGTH = 200;
 const MAX_MEDIA_TITLE_LENGTH = 300;
 const MAX_ALBUM_NAME_LENGTH = 300;
 const MAX_BYLINE_LENGTH = 120;
-const GENERATOR_VERSION = '4';
+const GENERATOR_VERSION = '5';
 
 const PERSON_ENTITY_ID = 'Q5';
 
@@ -225,8 +225,96 @@ function isValidAppleMusicId(
 ): boolean {
   return (
     value.length > 0 &&
+    value.length <= 20 &&
     /^[0-9]+$/.test(value)
   );
+}
+
+type CanonicalAppleMusic = {
+  title: string;
+  artistName: string;
+  albumName: string;
+  releaseYear: string | undefined;
+  artistId: string;
+};
+
+// Shared cached descriptions must never rely on caller-provided identities.
+// An unresolved Apple lookup is a cache miss, not authorization to write
+// unverified client metadata into a global cache.
+async function lookupCanonicalAppleMusic(
+  entityKind: MediaPreviewEntityKind,
+  itemId: string
+): Promise<CanonicalAppleMusic | null> {
+  for (const country of ['ca', 'us']) {
+    const lookup = new URL('https://itunes.apple.com/lookup');
+    lookup.searchParams.set('id', itemId);
+    lookup.searchParams.set('country', country);
+
+    try {
+      const response = await fetch(lookup.toString(), {
+        headers: { Accept: 'application/json' },
+        signal: AbortSignal.timeout(4500),
+      });
+      if (!response.ok) continue;
+
+      const result: unknown = await response.json();
+      if (!result || typeof result !== 'object' || !('results' in result)) {
+        continue;
+      }
+      const records = (result as { results?: unknown }).results;
+      if (!Array.isArray(records)) continue;
+
+      const record = records.find((entry: unknown) => {
+        if (!entry || typeof entry !== 'object') return false;
+        const e = entry as Record<string, unknown>;
+        const idKey = entityKind === 'artist'
+          ? 'artistId' : entityKind === 'album' ? 'collectionId' : 'trackId';
+        const kindOk = entityKind === 'artist'
+          ? e.wrapperType === 'artist'
+          : entityKind === 'album'
+            ? e.wrapperType === 'collection' && e.collectionType === 'Album'
+            : e.wrapperType === 'track' && e.kind === 'song';
+        return kindOk && String(e[idKey]) === itemId;
+      }) as Record<string, unknown> | undefined;
+
+      if (!record) continue;
+      const appleArtist = record.artistName;
+      const appleTitle = entityKind === 'artist'
+        ? appleArtist
+        : entityKind === 'album'
+          ? record.collectionName : record.trackName;
+      if (typeof appleTitle !== 'string' ||
+          typeof appleArtist !== 'string') continue;
+
+      const title = normalizeWhitespace(appleTitle);
+      const artistName = normalizeWhitespace(appleArtist);
+      if (!title || !artistName ||
+          title.length > MAX_MEDIA_TITLE_LENGTH ||
+          artistName.length > MAX_ARTIST_NAME_LENGTH) continue;
+
+      const albumName = entityKind === 'album'
+        ? title
+        : entityKind === 'song' && typeof record.collectionName === 'string'
+          ? normalizeWhitespace(record.collectionName).slice(0, MAX_ALBUM_NAME_LENGTH)
+          : '';
+      const rawYear = typeof record.releaseDate === 'string'
+        ? record.releaseDate.slice(0, 4) : '';
+      const releaseYear = /^\d{4}$/.test(rawYear) ? rawYear : undefined;
+      const artistId = String(record.artistId ?? '');
+      return {
+        title,
+        artistName,
+        albumName,
+        releaseYear,
+        artistId: isValidAppleMusicId(artistId) ? artistId : '',
+      };
+    } catch (error) {
+      // Apple may be unavailable or a country may not carry the item.
+      console.warn('Apple Music identity lookup unavailable:',
+        error instanceof Error ? error.message : 'Unknown error');
+    }
+  }
+  return null;
 }
 
 async function fetchJson<T>(
@@ -2213,6 +2301,10 @@ export default {
           );
         }
 
+        if (!body || typeof body !== 'object' || Array.isArray(body)) {
+          return jsonResponse({ error: 'Invalid request body.' }, 400);
+        }
+
         const requestedEntityKind =
           typeof body.entityKind ===
           'string'
@@ -2261,7 +2353,7 @@ export default {
               ? legacyArtistId
               : '';
 
-        const artistName =
+        let artistName =
           typeof body.artistName ===
           'string'
             ? normalizeWhitespace(
@@ -2269,7 +2361,7 @@ export default {
               )
             : '';
 
-        const title =
+        let title =
           typeof body.title ===
           'string'
             ? normalizeWhitespace(
@@ -2279,12 +2371,12 @@ export default {
               ? artistName
               : '';
 
-        const appleMusicArtistId =
+        let appleMusicArtistId =
           entityKind === 'artist'
             ? appleMusicItemId
             : legacyArtistId;
 
-        const releaseYear =
+        let releaseYear =
           typeof body.releaseYear ===
             'string' &&
           /^\d{4}$/.test(
@@ -2293,7 +2385,7 @@ export default {
             ? body.releaseYear.trim()
             : undefined;
 
-        const albumName =
+        let albumName =
           typeof body.albumName ===
           'string'
             ? normalizeWhitespace(
@@ -2389,6 +2481,27 @@ export default {
             cached: true,
           });
         }
+
+        // Cache hits are already server-managed. Before a new cache write,
+        // independently resolve the item ID through Apple's fixed lookup API.
+        // Never use caller metadata to define a shared cache entry.
+        const canonical = await lookupCanonicalAppleMusic(
+          entityKind,
+          appleMusicItemId
+        );
+        if (!canonical) {
+          return jsonResponse({
+            byline: null,
+            kind: null,
+            cached: false,
+            reason: 'metadata_unverified',
+          });
+        }
+        title = canonical.title;
+        artistName = canonical.artistName;
+        albumName = canonical.albumName;
+        releaseYear = canonical.releaseYear;
+        appleMusicArtistId = canonical.artistId;
 
         let generated:
           | {

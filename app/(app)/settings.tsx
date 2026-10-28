@@ -685,7 +685,7 @@ export default function SettingsScreen() {
                   tone="tertiary"
                   emphasis="regular"
                   style={styles.rowSubtitle}>
-                  Manage people you've blocked
+                  Manage people you&apos;ve blocked
                 </AppText>
               </View>
 

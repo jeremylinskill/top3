@@ -156,6 +156,22 @@ export default {
         );
       }
 
+      // Do not accept new/edited scheduled tests before the delivery
+      // worker and its triggering mechanism have been verified. This
+      // server-side guard also protects older client builds.
+      // Existing drafts, history, and cancellation remain available.
+      if (
+        (body.action === "schedule" ||
+          body.action === "edit-scheduled" ||
+          body.action === "reschedule") &&
+        Deno.env.get("SCHEDULED_TEST_CREATION_ENABLED") !== "true"
+      ) {
+        return Response.json(
+          { error: "Scheduled test delivery is not enabled." },
+          { status: 503 }
+        );
+      }
+
       const campaignAdmin =
         ctx.supabaseAdmin as unknown as
           SupabaseClient<CampaignHistoryDatabase>;

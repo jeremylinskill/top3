@@ -44,3 +44,6 @@ app-example
 .env
 # Local audit artifacts
 privacy-audit.zip
+
+# Development-only broadcast notification experiment
+/supabase/functions/send-broadcast-notification/

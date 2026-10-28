@@ -4,10 +4,17 @@ import { SPACING } from '@/constants/spacing';
 import { useAppColors } from '@/hooks/use-app-colors';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { usePreviewSheetColors } from '@/hooks/use-preview-sheet-colors';
+import { useEffect, useRef, type ReactNode } from 'react';
 import {
+  Animated,
+  Dimensions,
+  Easing,
+  Keyboard,
+  type KeyboardEvent,
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
@@ -31,6 +38,10 @@ type ActionSheetProps = {
   message?: string;
   actions: ActionSheetAction[];
   onClose: () => void;
+  // Optional custom content lets forms reuse this same sheet surface.
+  children?: ReactNode;
+  keyboardAvoiding?: boolean;
+  dismissDisabled?: boolean;
 };
 
 export default function ActionSheet({
@@ -39,6 +50,9 @@ export default function ActionSheet({
   message,
   actions,
   onClose,
+  children,
+  keyboardAvoiding = false,
+  dismissDisabled = false,
 }: ActionSheetProps) {
   const colors = useAppColors();
   const previewColors = usePreviewSheetColors();
@@ -59,13 +73,64 @@ export default function ActionSheet({
       ? SPACING.xxl + Math.max(insets.bottom, 24)
       : SPACING.xxl;
 
+  // iOS: move only this sheet with the keyboard, keeping the overlay and
+  // floating bottom gap stable. KeyboardAvoidingView padding changes
+  // the layout before the keyboard arrives, causing an abrupt jump.
+  // Other ActionSheet instances opt out by default.
+  const keyboardTranslateY = useRef(new Animated.Value(0)).current;
+  const animateWithKeyboard = Platform.OS === 'ios' && keyboardAvoiding;
+
+  useEffect(() => {
+    if (!visible || !animateWithKeyboard) {
+      keyboardTranslateY.stopAnimation();
+      keyboardTranslateY.setValue(0);
+      return;
+    }
+
+    const animateToFrame = (event: KeyboardEvent, hiding = false) => {
+      const screenHeight = Dimensions.get('screen').height;
+      const keyboardHeight = hiding
+        ? 0
+        : Math.max(
+            0,
+            Math.min(screenHeight,
+              screenHeight - event.endCoordinates.screenY
+            )
+          );
+
+      Animated.timing(keyboardTranslateY, {
+        toValue: -keyboardHeight,
+        duration: event.duration ?? 250,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+        useNativeDriver: true,
+      }).start();
+    };
+
+    const frameSubscription = Keyboard.addListener(
+      'keyboardWillChangeFrame',
+      event => animateToFrame(event)
+    );
+    const hideSubscription = Keyboard.addListener(
+      'keyboardWillHide',
+      event => animateToFrame(event, true)
+    );
+
+    return () => {
+      frameSubscription.remove();
+      hideSubscription.remove();
+      keyboardTranslateY.stopAnimation();
+    };
+  }, [visible, animateWithKeyboard, keyboardTranslateY]);
+
   return (
     <Modal
       visible={visible}
       transparent
       animationType="fade"
       presentationStyle="overFullScreen"
-      onRequestClose={onClose}>
+      onRequestClose={() => {
+        if (!dismissDisabled) onClose();
+      }}>
       <View
         style={[
           styles.overlay,
@@ -74,126 +139,139 @@ export default function ActionSheet({
             paddingBottom: overlayBottomPadding,
           },
         ]}>
-        <Pressable
-          style={StyleSheet.absoluteFill}
-          onPress={onClose}
-          accessibilityRole="button"
-          accessibilityLabel="Close action sheet"
-        />
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={onClose}
+            disabled={dismissDisabled}
+            accessibilityRole="button"
+            accessibilityLabel="Close action sheet"
+          />
 
-        <View
-          style={[
-            styles.sheet,
-            {
-              backgroundColor: previewColors.surface,
-            },
-          ]}>
-          {showHeader ? (
-            <View style={styles.header}>
-              {title ? (
-                <AppText
-                  variant="pageTitle"
-                  tone={invertedTextTone}
-                  style={styles.title}>
-                  {title}
-                </AppText>
-              ) : null}
-
-              {message ? (
-                <AppText
-                  variant="body"
-                  tone={invertedTextTone}
-                  style={[
-                    styles.message,
-                    !title &&
-                      styles.messageWithoutTitle,
-                  ]}>
-                  {message}
-                </AppText>
-              ) : null}
-            </View>
-          ) : null}
-
-          <View
+          <Animated.View
             style={[
-              styles.actions,
-              showHeader &&
-                styles.actionsWithHeader,
+              styles.sheet,
+              children != null && styles.sheetWithContent,
+              {
+                backgroundColor: previewColors.surface,
+                transform: [{ translateY: keyboardTranslateY }],
+              },
             ]}>
-            {actions.map(
-              (
-                action,
-                index
-              ) => {
-                const variant =
-                  action.variant ?? 'default';
+            {showHeader ? (
+              <View style={styles.header}>
+                {title ? (
+                  <AppText
+                    variant="modalTitle"
+                    tone={invertedTextTone}
+                    style={styles.title}>
+                    {title}
+                  </AppText>
+                ) : null}
 
-                const isDestructive =
-                  variant === 'destructive';
-
-                const isCancel =
-                  variant === 'cancel';
-
-                const actionBackgroundColor =
-                  isDestructive || isCancel
-                    ? previewColors.surface
-                    : previewColors.control;
-
-                const actionBorderColor =
-                  isDestructive
-                    ? colors.destructive
-                    : isCancel
-                      ? previewColors.border
-                      : 'transparent';
-
-                const actionTextTone =
-                  isDestructive
-                    ? 'destructive'
-                    : invertedTextTone;
-
-                return (
-                  <Pressable
-                    key={`${action.label}-${index}`}
-                    disabled={action.disabled}
-                    accessibilityRole="button"
-                    accessibilityLabel={action.label}
-                    onPress={() => {
-                      action.onPress();
-                    }}
-                    style={({ pressed }) => [
-                      styles.actionButton,
-                      {
-                        backgroundColor:
-                          actionBackgroundColor,
-                        borderColor:
-                          actionBorderColor,
-                        borderWidth:
-                          isDestructive || isCancel
-                            ? 1
-                            : 0,
-                      },
-                      index > 0 &&
-                        styles.actionButtonSpacing,
-                      isCancel &&
-                        styles.cancelSpacing,
-                      action.disabled &&
-                        styles.actionButtonDisabled,
-                      pressed &&
-                        !action.disabled &&
-                        styles.actionButtonPressed,
+                {message ? (
+                  <AppText
+                    variant="body"
+                    tone={invertedTextTone}
+                    style={[
+                      styles.message,
+                      !title &&
+                        styles.messageWithoutTitle,
                     ]}>
-                    <AppText
-                      variant="headline"
-                      tone={actionTextTone}
-                      style={styles.actionText}>
-                      {action.label}
-                    </AppText>
-                  </Pressable>
-                );
-              }
-            )}
-          </View>
-        </View>
+                    {message}
+                  </AppText>
+                ) : null}
+              </View>
+            ) : null}
+
+            {children != null ? (
+              <ScrollView
+                style={styles.customContent}
+                contentContainerStyle={styles.customContentContainer}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}>
+                {children}
+              </ScrollView>
+            ) : null}
+
+            <View
+              style={[
+                styles.actions,
+                (showHeader || children != null) &&
+                  styles.actionsWithHeader,
+              ]}>
+              {actions.map(
+                (
+                  action,
+                  index
+                ) => {
+                  const variant =
+                    action.variant ?? 'default';
+
+                  const isDestructive =
+                    variant === 'destructive';
+
+                  const isCancel =
+                    variant === 'cancel';
+
+                  const actionBackgroundColor =
+                    isDestructive || isCancel
+                      ? previewColors.surface
+                      : previewColors.control;
+
+                  const actionBorderColor =
+                    isDestructive
+                      ? colors.destructive
+                      : isCancel
+                        ? previewColors.border
+                        : 'transparent';
+
+                  const actionTextTone =
+                    isDestructive
+                      ? 'destructive'
+                      : invertedTextTone;
+
+                  return (
+                    <Pressable
+                      key={`${action.label}-${index}`}
+                      disabled={action.disabled}
+                      accessibilityRole="button"
+                      accessibilityLabel={action.label}
+                      onPress={() => {
+                        action.onPress();
+                      }}
+                      style={({ pressed }) => [
+                        styles.actionButton,
+                        {
+                          backgroundColor:
+                            actionBackgroundColor,
+                          borderColor:
+                            actionBorderColor,
+                          borderWidth:
+                            isDestructive || isCancel
+                              ? 1
+                              : 0,
+                        },
+                        index > 0 &&
+                          styles.actionButtonSpacing,
+                        isCancel &&
+                          styles.cancelSpacing,
+                        action.disabled &&
+                          styles.actionButtonDisabled,
+                        pressed &&
+                          !action.disabled &&
+                          styles.actionButtonPressed,
+                      ]}>
+                      <AppText
+                        variant="headline"
+                        tone={actionTextTone}
+                        style={styles.actionText}>
+                        {action.label}
+                      </AppText>
+                    </Pressable>
+                  );
+                }
+              )}
+            </View>
+          </Animated.View>
       </View>
     </Modal>
   );
@@ -213,6 +291,18 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.xxl,
     paddingBottom: SPACING.xxl,
     borderRadius: RADIUS.xxxl,
+  },
+
+  sheetWithContent: {
+    maxHeight: '90%',
+  },
+
+  customContent: {
+    flexShrink: 1,
+  },
+
+  customContentContainer: {
+    paddingBottom: 2,
   },
 
   header: {

@@ -20,6 +20,7 @@ import {
 type ProfileScreenContentProps = {
   user: UserProfile;
   publishedPosts: Post[];
+  visiblePostCount?: number;
   isCurrentUser: boolean;
 
   followerCount?: number;
@@ -60,6 +61,7 @@ type ProfileScreenContentProps = {
 export default function ProfileScreenContent({
   user,
   publishedPosts,
+  visiblePostCount = Number.POSITIVE_INFINITY,
   isCurrentUser,
 
   followerCount = 0,
@@ -340,7 +342,7 @@ export default function ProfileScreenContent({
               variant="body"
               tone="tertiary"
               style={styles.emptyStateText}>
-              This person's lists are only visible to approved followers.
+              This person&apos;s lists are only visible to approved followers.
             </AppText>
           </View>
         ) : hasPostsLoadError ? (
@@ -393,7 +395,7 @@ export default function ProfileScreenContent({
           </View>
         ) : (
           <View style={styles.postList}>
-            {publishedPosts.map((post) => (
+            {publishedPosts.slice(0, visiblePostCount).map((post) => (
               <Top3Card
                 key={post.id}
                 post={post}

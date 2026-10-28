@@ -2,6 +2,7 @@ import ActionSheet from '@/components/action-sheet';
 import AppText from '@/components/app-text';
 import PageHeader from '@/components/page-header';
 import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
+import { Platform as NavPlatform } from 'react-native';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
@@ -531,11 +532,15 @@ function ReportCard({
 export default function ModerationScreen() {
   const colors = useAppColors();
   const insets = useSafeAreaInsets();
+  // Moderator list uses the same native iOS pull-to-refresh inset as Home.
+  const nativeRefreshInsetTop = NavPlatform.OS === 'ios'
+    ? insets.top + SCREEN_HEADER_HEIGHT
+    : 0;
   // No bottom-tab behaviour to update; only animate the header.
   const ignoreModerationScroll = useCallback((_y: number) => {}, []);
   const ignoreModerationScrolled = useCallback((_scrolled: boolean) => {}, []);
   const { scrollHandler: stickyScrollHandler, headerStyle: stickyHeaderStyle } =
-    useHomeStickyHeader(ignoreModerationScroll, ignoreModerationScrolled);
+    useHomeStickyHeader(ignoreModerationScroll, ignoreModerationScrolled, nativeRefreshInsetTop);
   const [reports, setReports] = useState<
     ModerationReport[]
   >([]);
@@ -867,9 +872,13 @@ export default function ModerationScreen() {
 
         <Reanimated.ScrollView
           style={styles.scrollView}
+          contentInset={NavPlatform.OS === 'ios' ? { top: nativeRefreshInsetTop } : undefined}
+          contentOffset={NavPlatform.OS === 'ios' ? { x: 0, y: -nativeRefreshInsetTop } : undefined}
+          contentInsetAdjustmentBehavior={NavPlatform.OS === 'ios' ? 'never' : undefined}
+          automaticallyAdjustContentInsets={false}
           contentContainerStyle={[
             styles.content,
-            { paddingTop: SCREEN_HEADER_HEIGHT + insets.top },
+            { paddingTop: NavPlatform.OS === 'ios' ? 0 : SCREEN_HEADER_HEIGHT + insets.top },
           ]}
           showsVerticalScrollIndicator={false}
           onScroll={stickyScrollHandler}

@@ -289,7 +289,7 @@ export default function EmailSignUpForm({
     await createAccount(normalizedEmail);
   }
 
-  async function useSuggestedEmail() {
+  async function applySuggestedEmail() {
     if (!emailSuggestion) {
       return;
     }
@@ -549,7 +549,7 @@ export default function EmailSignUpForm({
               ? `Use ${emailSuggestion.suggestedDomain}`
               : 'Use suggested address',
             onPress: () => {
-              void useSuggestedEmail();
+              void applySuggestedEmail();
             },
           },
           {

@@ -2,6 +2,26 @@ CHANGELOG.md
 
 This document records significant milestones in the evolution of Top3.
 
+October 25, 2026 — Defer signed-in list creation until first selection (Development)
+
+DEFER_LIST_CREATION_UNTIL_FIRST_ITEM_20261025: Selecting Overall, a Genre, a Type
+or a Theme opens a temporary list screen, without writing an empty Supabase
+collection. The first ranking selection creates the list with that item in a
+single database insert. Leaving an untouched screen creates no draft.
+Existing drafts/published lists, onboarding handoff and later edits are unchanged.
+The collection URL is updated to the saved list ID. iOS first-item saving and empty-list navigation checks passed October 28, 2026. Android device QA remains pending. No schema migration or native build required.
+
+October 25, 2026 — Create yours feed shortcut (Development; device QA pending)
+
+CREATE_YOURS_FEED_ACTION_20261025: Shared Top3 feed cards now show a
+Create yours action at bottom-right, using a vector list-plus icon.
+It forwards category, genre/Type or Theme
+to the existing Create flow, never copying somebody else's ranked items.
+Existing owned lists are resumed rather than duplicated, following current
+Create behaviour. Legacy or missing taxonomy options remain available for
+manual selection. iOS Create Similar List, back-navigation and first-item saving checks passed October 28, 2026. Android device QA remains pending.
+No database migration or native build is required for this change.
+
 v3.5 --- Post-Launch Features, Android Development & Soundtracks
 
 Development checkpoint: October 21, 2026

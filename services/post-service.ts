@@ -443,7 +443,8 @@ export async function getPublishedPosts(
 }
 
 export async function getPublishedPostsByUser(
-  userId: string
+  userId: string,
+  options: { hydrateMissingArtwork?: boolean } = {}
 ): Promise<Post[]> {
   const normalizedUserId = userId.trim();
 
@@ -456,6 +457,10 @@ export async function getPublishedPostsByUser(
       normalizedUserId
     );
 
+  if (options.hydrateMissingArtwork === false) {
+    return sortPostsByPublishedDate(publishedPosts);
+  }
+
   const hydratedPosts = await Promise.all(
     publishedPosts.map((post) =>
       hydratePost(
@@ -466,5 +471,33 @@ export async function getPublishedPostsByUser(
 
   return sortPostsByPublishedDate(
     hydratedPosts
+  );
+}
+
+/**
+ * Fill in missing artwork after the profile's lists are already visible.
+ * Each card updates independently; slow providers cannot block the list view.
+ */
+export async function hydrateProfileArtworkProgressively(
+  posts: Post[],
+  onHydratedPost: (post: Post) => void
+): Promise<void> {
+  const missingArtwork = posts.filter((post) =>
+    post.collection.items.some((item) => item && !item.imageUrl)
+  );
+  let nextIndex = 0;
+
+  // Only three cards look up artwork simultaneously to avoid provider floods.
+  await Promise.all(
+    Array.from({ length: Math.min(3, missingArtwork.length) }, async () => {
+      while (nextIndex < missingArtwork.length) {
+        const post = missingArtwork[nextIndex++];
+        try {
+          onHydratedPost(await hydratePost(post));
+        } catch (error) {
+          if (__DEV__) console.log('Profile card artwork unavailable:', error);
+        }
+      }
+    })
   );
 }

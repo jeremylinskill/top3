@@ -18,7 +18,12 @@ import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
 import Reanimated from 'react-native-reanimated';
 import { getExistingPushToken } from '@/lib/notifications';
 import { isPushTokenRegistered } from '@/lib/supabase/push-tokens';
-import { sendCampaignTestNotification } from '@/lib/supabase/campaign-notifications';
+import {
+  sendCampaignTestNotification,
+  previewNotificationBroadcast,
+  sendNotificationBroadcast,
+  type BroadcastPreview,
+} from '@/lib/supabase/campaign-notifications';
 import {
   editScheduledNotificationCampaign,
   saveNotificationCampaignDraft,
@@ -47,6 +52,12 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const MAX_TITLE_LENGTH = 100;
 const MAX_MESSAGE_LENGTH = 220;
+
+// Until the scheduled-delivery worker is independently configured and
+// verified, the scheduling editor remains a Development-only tool.
+// Fail closed if the runtime environment is unknown or Production.
+const ALLOW_TEST_SCHEDULING =
+  process.env.EXPO_PUBLIC_SUPABASE_URL?.includes('kkltzygebomopysklaqq') === true;
 
 function getCategoryName(categoryId: string): string {
   return (
@@ -105,6 +116,20 @@ export default function NotificationComposerScreen() {
   const [isPickingDestination, setIsPickingDestination] =
     useState(false);
   const [isSendingTest, setIsSendingTest] = useState(false);
+  const [isPreparingBroadcast, setIsPreparingBroadcast] = useState(false);
+  const [isSendingBroadcast, setIsSendingBroadcast] = useState(false);
+  // Once a broadcast is attempted, keep actions locked until a new
+  // notification is started. A failed network response may be ambiguous.
+  const [broadcastSubmitted, setBroadcastSubmitted] = useState(false);
+  const [broadcastOutcome, setBroadcastOutcome] = useState<'queued' | 'review' | null>(null);
+  const broadcastSendingRef = useRef(false);
+  const [broadcastConfirmation, setBroadcastConfirmation] = useState<(
+    BroadcastPreview & {
+      title: string;
+      message: string;
+      destination: NotificationDestination;
+    }
+  ) | null>(null);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [isScheduling, setIsScheduling] = useState(false);
   const schedulingRef = useRef(false);
@@ -117,10 +142,10 @@ export default function NotificationComposerScreen() {
     useState(false);
   const savingScheduledRef = useRef(false);
   const [scheduledDate, setScheduledDate] = useState(
-    () => new Date(Date.now() + 3600000)
+    () => new Date(Date.now() + 5 * 60 * 1000)
   );
   const [scheduledTime, setScheduledTime] = useState(
-    () => new Date(Date.now() + 3600000)
+    () => new Date(Date.now() + 5 * 60 * 1000)
   );
   const [openSchedulePicker, setOpenSchedulePicker] =
     useState<'date' | 'time' | null>(null);
@@ -128,7 +153,7 @@ export default function NotificationComposerScreen() {
     'compose' | 'manage' | 'history'
   >('compose');
   const [pendingConfirmation, setPendingConfirmation] =
-    useState<'new' | 'discard' | 'historyUnconfirmed' | null>(null);
+    useState<'new' | 'discard' | 'historyUnconfirmed' | 'sendAll' | null>(null);
 
   const [scheduleValidationNow, setScheduleValidationNow] =
     useState(() => Date.now());
@@ -216,6 +241,7 @@ export default function NotificationComposerScreen() {
     );
 
   const isScheduleTestReady =
+    ALLOW_TEST_SCHEDULING &&
     profile.isAdmin &&
     hasValidScheduleContent &&
     scheduleTimeError === null;
@@ -304,6 +330,8 @@ export default function NotificationComposerScreen() {
     setIsMessageManuallyEdited(true);
     setIsPickingDestination(false);
     setOpenSchedulePicker(null);
+    setBroadcastSubmitted(false);
+    setBroadcastOutcome(null);
     Keyboard.dismiss();
     setActiveView('compose');
   }
@@ -311,6 +339,8 @@ export default function NotificationComposerScreen() {
   function handleEditDraft(campaign: NotificationCampaign) {
     if (
       campaign.status !== 'draft' ||
+      isPreparingBroadcast ||
+      isSendingBroadcast ||
       isSavingDraft ||
       isSendingTest ||
       isScheduling ||
@@ -328,6 +358,8 @@ export default function NotificationComposerScreen() {
   function handleEditScheduled(campaign: NotificationCampaign) {
     if (
       campaign.status !== 'scheduled' ||
+      isPreparingBroadcast ||
+      isSendingBroadcast ||
       campaign.audience !== 'test' ||
       !campaign.scheduledAt ||
       isSavingDraft ||
@@ -359,6 +391,8 @@ export default function NotificationComposerScreen() {
 
   function handleNewNotification() {
     if (
+      isPreparingBroadcast ||
+      isSendingBroadcast ||
       isSavingDraft ||
       isSendingTest ||
       isScheduling ||
@@ -371,11 +405,13 @@ export default function NotificationComposerScreen() {
   }
 
   function startNewNotification() {
+    setBroadcastSubmitted(false);
+    setBroadcastOutcome(null);
     setDraftId(null);
     setEditingScheduledId(null);
     setEditingScheduledOriginal(null);
     setOpenSchedulePicker(null);
-    const defaultTime = new Date(Date.now() + 3600000);
+    const defaultTime = new Date(Date.now() + 5 * 60 * 1000);
     setScheduledDate(defaultTime);
     setScheduledTime(defaultTime);
     setTitle('');
@@ -417,7 +453,21 @@ export default function NotificationComposerScreen() {
   }
 
   async function handleScheduleTest() {
+    // Guard the action as well as the button: an unavailable worker must
+    // never produce a scheduled campaign in a Production app.
+    if (!ALLOW_TEST_SCHEDULING) {
+      showFeedback({
+        kind: 'warning',
+        title: 'Scheduling Unavailable',
+        message: 'Scheduled test delivery has not been enabled for this environment.',
+      });
+      return;
+    }
+
     if (
+      broadcastSubmitted ||
+      isPreparingBroadcast ||
+      isSendingBroadcast ||
       schedulingRef.current ||
       isScheduling ||
       isSavingDraft ||
@@ -543,9 +593,9 @@ export default function NotificationComposerScreen() {
       setActiveView('manage');
 
       showFeedback({
-        kind: 'warning',
+        kind: 'success',
         title: 'Test Scheduled',
-        message: `Scheduled for ${dateLabel} at ${timeLabel}. Automatic delivery is not enabled yet.`,
+        message: `Scheduled for ${dateLabel} at ${timeLabel}. Check History for delivery status.`,
       });
     } catch (error) {
       showFeedback({
@@ -563,6 +613,9 @@ export default function NotificationComposerScreen() {
 
   async function handleSaveDraft() {
     if (
+      broadcastSubmitted ||
+      isPreparingBroadcast ||
+      isSendingBroadcast ||
       isSavingDraft ||
       isSendingTest ||
       isScheduling ||
@@ -617,7 +670,7 @@ export default function NotificationComposerScreen() {
     setOpenSchedulePicker(null);
 
     const defaultTime = new Date(
-      Date.now() + 3600000
+      Date.now() + 5 * 60 * 1000
     );
     setScheduledDate(defaultTime);
     setScheduledTime(defaultTime);
@@ -748,6 +801,9 @@ export default function NotificationComposerScreen() {
 
   async function handleSendTest() {
     if (
+      broadcastSubmitted ||
+      isPreparingBroadcast ||
+      isSendingBroadcast ||
       isSendingTest ||
       isSavingDraft ||
       isScheduling ||
@@ -834,6 +890,96 @@ export default function NotificationComposerScreen() {
       });
     } finally {
       setIsSendingTest(false);
+    }
+  }
+
+  async function handlePrepareBroadcast() {
+    if (broadcastSubmitted || isPreparingBroadcast || isSendingBroadcast ||
+        isSendingTest || isSavingDraft || isScheduling ||
+        isSavingScheduled || editingScheduledId !== null ||
+        !profile.isAdmin) {
+      return;
+    }
+
+    if (!hasValidScheduleContent || !selectedDestination) {
+      showFeedback({
+        kind: 'warning',
+        title: 'Incomplete Notification',
+        message: 'Add a title, message, and valid destination Top 3.',
+      });
+      return;
+    }
+
+    const prepared = {
+      title: title.trim(),
+      message: message.trim(),
+      destination: selectedDestination,
+    };
+
+    setIsPreparingBroadcast(true);
+    try {
+      const preview = await previewNotificationBroadcast(prepared);
+      if (preview.deviceCount < 1) {
+        showFeedback({
+          kind: 'warning',
+          title: 'No Registered Devices',
+          message: 'No devices in this database are currently registered to receive push notifications.',
+        });
+        return;
+      }
+      setBroadcastConfirmation({ ...prepared, ...preview });
+      setPendingConfirmation('sendAll');
+    } catch (error) {
+      showFeedback({
+        kind: 'error',
+        title: 'Unable to Preview Broadcast',
+        message: error instanceof Error ? error.message : 'Please try again.',
+      });
+    } finally {
+      setIsPreparingBroadcast(false);
+    }
+  }
+
+  async function handleConfirmBroadcast() {
+    if (broadcastSendingRef.current || broadcastSubmitted || !broadcastConfirmation) return;
+    broadcastSendingRef.current = true;
+    // Lock this composed notification before the request. Even an error
+    // may mean that Expo received it, so do not allow an accidental retry.
+    setBroadcastSubmitted(true);
+    setIsSendingBroadcast(true);
+    setPendingConfirmation(null);
+    const confirmed = broadcastConfirmation;
+    // Never reuse the confirmation ID after an attempted send.
+    setBroadcastConfirmation(null);
+    try {
+      const result = await sendNotificationBroadcast({
+        title: confirmed.title,
+        message: confirmed.message,
+        destination: confirmed.destination,
+        requestId: confirmed.requestId,
+        expectedDeviceCount: confirmed.deviceCount,
+      });
+      const fullyAccepted = result.accepted === result.targetCount && result.failed === 0;
+      setBroadcastOutcome(fullyAccepted ? 'queued' : 'review');
+      showFeedback({
+        kind: fullyAccepted ? 'success' : 'warning',
+        title: fullyAccepted
+          ? 'Broadcast queued'
+          : result.accepted > 0
+            ? 'Broadcast partially queued'
+            : 'Broadcast not accepted',
+        message: `${result.accepted} of ${result.targetCount} notifications accepted for delivery. ${result.failed > 0 ? 'Some were not accepted. Check History. ' : ''}${!result.historyRecorded ? 'History not confirmed. Check History. ' : ''}Delivery may take a moment.`,
+      });
+    } catch (error) {
+      setBroadcastOutcome('review');
+      showFeedback({
+        kind: 'error',
+        title: 'Broadcast Outcome Uncertain',
+        message: `${error instanceof Error ? error.message : 'The request failed.'} Check Notification History before considering another send.`,
+      });
+    } finally {
+      broadcastSendingRef.current = false;
+      setIsSendingBroadcast(false);
     }
   }
 
@@ -947,6 +1093,8 @@ export default function NotificationComposerScreen() {
             accessibilityRole="button"
             accessibilityLabel="Start new notification"
             disabled={
+              isPreparingBroadcast ||
+              isSendingBroadcast ||
               isSavingDraft ||
               isSendingTest ||
               isScheduling ||
@@ -1224,6 +1372,11 @@ export default function NotificationComposerScreen() {
           <AppText variant="label" tone="tertiary">
             All scheduling times are in Toronto time (ET).
           </AppText>
+          {!ALLOW_TEST_SCHEDULING ? (
+            <AppText variant="label" tone="tertiary">
+              Automatic scheduled delivery is not yet enabled. You can send a test immediately instead.
+            </AppText>
+          ) : null}
 
           {scheduleTimeError ? (
             <AppText
@@ -1265,13 +1418,16 @@ export default function NotificationComposerScreen() {
           ) : (
             <>
               <PrimaryButton
-                title={isScheduling ? 'Scheduling…' : 'Schedule Test'}
+                title={!ALLOW_TEST_SCHEDULING ? 'Scheduling Unavailable' : isScheduling ? 'Scheduling…' : 'Schedule Test'}
                 keepAppearanceWhenDisabled={
                   isScheduleTestReady &&
                   !isScheduling &&
                   (isSavingDraft || isSendingTest)
                 }
                 disabled={
+                  broadcastSubmitted ||
+                  isPreparingBroadcast ||
+                  isSendingBroadcast ||
                   !isScheduleTestReady ||
                   isScheduling ||
                   isSavingDraft ||
@@ -1294,7 +1450,7 @@ export default function NotificationComposerScreen() {
                 }
                 variant="secondary"
                 style={styles.secondaryActionButton}
-                disabled={isSavingDraft || isSendingTest || isScheduling}
+                disabled={broadcastSubmitted || isPreparingBroadcast || isSendingBroadcast || isSavingDraft || isSendingTest || isScheduling}
                 onPress={() => {
                   void handleSaveDraft();
                 }}
@@ -1305,7 +1461,7 @@ export default function NotificationComposerScreen() {
                 title={isSendingTest ? 'Sending Test…' : 'Send Test'}
                 variant="secondary"
                 style={styles.secondaryActionButton}
-                disabled={isSendingTest || isSavingDraft || isScheduling}
+                disabled={broadcastSubmitted || isPreparingBroadcast || isSendingBroadcast || isSendingTest || isSavingDraft || isScheduling}
                 onPress={() => {
                   void handleSendTest();
                 }}
@@ -1313,16 +1469,31 @@ export default function NotificationComposerScreen() {
             </View>
           </View>
           <PrimaryButton
-            title="Send to All"
-            disabled
-            onPress={() => {}}
+            title={isPreparingBroadcast
+              ? 'Checking Audience…'
+              : isSendingBroadcast
+                ? 'Sending Broadcast…'
+                : broadcastSubmitted
+                  ? broadcastOutcome === 'queued'
+                    ? 'Broadcast Queued'
+                    : 'Check History'
+                  : 'Send to All'}
+            disabled={
+              broadcastSubmitted || isPreparingBroadcast || isSendingBroadcast ||
+              isSavingDraft || isSendingTest || isScheduling ||
+              isSavingScheduled || !hasValidScheduleContent
+            }
+            onPress={() => { void handlePrepareBroadcast(); }}
           />
           <AppText
             variant="label"
             tone="tertiary"
             style={styles.note}>
-            Test notifications go only to this device.
-            Sending to all users is not available yet.
+            {broadcastSubmitted
+              ? broadcastOutcome === 'queued'
+                ? 'To send another notification, select New Notification above. See History for details.'
+                : 'Check History before preparing another notification. Select New Notification to start fresh.'
+              : 'Test sends only to this device. Send to All previews the registered push devices in the current database and requires confirmation before any broadcast.'}
           </AppText>
             </>
           )}
@@ -1339,24 +1510,44 @@ export default function NotificationComposerScreen() {
       <ActionSheet
         visible={pendingConfirmation !== null}
         title={
-          pendingConfirmation === 'new'
-            ? 'New Notification'
+          pendingConfirmation === 'sendAll'
+            ? 'Confirm Broadcast to All?'
+            : pendingConfirmation === 'new'
+              ? 'New Notification'
             : pendingConfirmation === 'historyUnconfirmed'
               ? 'Test Accepted — History Not Confirmed'
               : 'Discard Changes?'
         }
         message={
-          pendingConfirmation === 'new'
-            ? 'Start a new notification? Unsaved changes in this form will be lost. Your previously saved drafts will remain in Manage.'
+          pendingConfirmation === 'sendAll'
+            ? `Send this notification to ${broadcastConfirmation?.deviceCount ?? 0} registered devices belonging to ${broadcastConfirmation?.userCount ?? 0} users in the connected database? This cannot be undone. Some devices may be registered more than once per user.`
+            : pendingConfirmation === 'new'
+              ? 'Start a new notification? Unsaved changes in this form will be lost. Your previously saved drafts will remain in Manage.'
             : pendingConfirmation === 'historyUnconfirmed'
               ? 'Expo accepted the notification, but its history could not be confirmed. Check your iPhone before considering another send.'
               : 'You have unsaved changes to this notification.'
         }
         actions={
-          pendingConfirmation === 'new'
+          pendingConfirmation === 'sendAll'
             ? [
                 {
-                  label: 'Start New',
+                  label: 'Send to All Devices',
+                  variant: 'destructive',
+                  onPress: () => { void handleConfirmBroadcast(); },
+                },
+                {
+                  label: 'Cancel',
+                  variant: 'cancel',
+                  onPress: () => {
+                    setPendingConfirmation(null);
+                    setBroadcastConfirmation(null);
+                  },
+                },
+              ]
+            : pendingConfirmation === 'new'
+              ? [
+                  {
+                    label: 'Start New',
                   onPress: () => {
                     setPendingConfirmation(null);
                     startNewNotification();
@@ -1394,6 +1585,9 @@ export default function NotificationComposerScreen() {
         onClose={() => {
           if (pendingConfirmation !== 'historyUnconfirmed') {
             setPendingConfirmation(null);
+            if (pendingConfirmation === 'sendAll') {
+              setBroadcastConfirmation(null);
+            }
           }
         }}
       />

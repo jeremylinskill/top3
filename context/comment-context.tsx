@@ -566,6 +566,21 @@ export function CommentProvider({
           })
         );
       } catch (error) {
+        // Losing connectivity during an app wake or Realtime event
+        // is expected; retain the last successfully loaded comments.
+        if (
+          /network request failed|failed to fetch|network error/i.test(
+            String(error)
+          )
+        ) {
+          if (__DEV__) {
+            console.log(
+              'Realtime comments refresh deferred: network unavailable.'
+            );
+          }
+          return;
+        }
+
         console.error(
           'Failed to refresh comments from Realtime:',
           error
@@ -601,6 +616,21 @@ export function CommentProvider({
           })
         );
       } catch (error) {
+        // Keep existing counts if a short network outage interrupts
+        // the foreground/Realtime refresh. Non-network errors are logged.
+        if (
+          /network request failed|failed to fetch|network error/i.test(
+            String(error)
+          )
+        ) {
+          if (__DEV__) {
+            console.log(
+              'Realtime comment-count refresh deferred: network unavailable.'
+            );
+          }
+          return;
+        }
+
         console.error(
           'Failed to refresh comment counts from Realtime:',
           error

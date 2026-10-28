@@ -1,3 +1,4 @@
+import ListPlusIcon from '@/components/list-plus-icon';
 import UserAvatar from '@/components/user-avatar';
 import { useNotifications } from '@/context/notification-context';
 import { useProfile } from '@/context/profile-context';
@@ -304,12 +305,8 @@ function TabNavigator() {
         name="top3"
         options={{
           title: 'Create',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? 'add-circle' : 'add-circle-outline'}
-              size={TAB_ICON_SIZE}
-              color={color}
-            />
+          tabBarIcon: ({ color }) => (
+            <ListPlusIcon size={TAB_ICON_SIZE} color={color} />
           ),
         }}
       />

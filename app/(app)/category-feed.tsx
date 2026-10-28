@@ -641,12 +641,14 @@ if (isMounted) {
     ]
   );
 
+  // Depend on the post ID itself; object identity is not needed for counts.
+  const overallPostIdForCommentCounts = communityPost?.id;
   // Fetch the shared Overall count from its persistent engagement record.
   useEffect(() => {
-    if (activeView === 'overall' && communityPost) {
-      void loadCommentCounts([communityPost.id]);
+    if (activeView === 'overall' && overallPostIdForCommentCounts) {
+      void loadCommentCounts([overallPostIdForCommentCounts]);
     }
-  }, [activeView, communityPost?.id, loadCommentCounts]);
+  }, [activeView, overallPostIdForCommentCounts, loadCommentCounts]);
 
   const communityIsLiked = communityPost
     ? isLiked(communityPost.id)
@@ -1954,27 +1956,8 @@ if (isMounted) {
               )}
             </View>
 
-            <View style={styles.overallFooter}>
-              <View style={styles.sourceItem}>
-                <Ionicons
-                  name="people-outline"
-                  size={16}
-                  color={colors.tertiaryText}
-                />
-
-                <AppText
-                  variant="metadata"
-                  tone="tertiary"
-                  style={styles.footerText}>
-                  Based on{' '}
-                  {overallResult.totalLists}{' '}
-                  {overallResult.totalLists === 1
-                    ? 'published list'
-                    : 'published lists'}
-                </AppText>
-              </View>
-
-              <View style={styles.engagement}>
+            <View style={[styles.overallFooter, { flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start', rowGap: 6 }]}>
+              <View style={[styles.engagement, { alignSelf: 'flex-start', justifyContent: 'flex-start', marginLeft: 0 }]}>
                 <Pressable
                   style={({ pressed }) => [
                     styles.engagementButton,
@@ -2106,6 +2089,19 @@ if (isMounted) {
                     color={colors.tertiaryText}
                   />
                 </Pressable>
+              </View>
+              <View style={[styles.sourceItem, { alignSelf: 'flex-start', justifyContent: 'flex-start', marginLeft: 0 }]}>
+
+                <AppText
+                  variant="metadata"
+                  tone="tertiary"
+                  style={styles.footerText}>
+                  Based on{' '}
+                  {overallResult.totalLists}{' '}
+                  {overallResult.totalLists === 1
+                    ? 'published list'
+                    : 'published lists'}
+                </AppText>
               </View>
             </View>
           </View>
@@ -2356,3 +2352,4 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
 });
+// TOP3_OVERALL_CARD_FOOTER_LEFT_20261025

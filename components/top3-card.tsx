@@ -1,4 +1,6 @@
 import { formatCollectionDisplayTitle } from '@/utils/build-collection-title';
+import { findMatchingOwnedList, getCreateSimilarListParams } from '@/utils/create-similar-list-params';
+import { useTop3 } from '@/context/top3-context';
 import IconButton from '@/components/icon-button';
 import AppText from '@/components/app-text';
 import ArtworkThumbnail from '@/components/artwork-thumbnail';
@@ -7,6 +9,7 @@ import {
   MediaPreviewItemButton,
 } from '@/components/media-preview-button';
 import TasteMatchBadge from '@/components/taste-match-badge';
+import ListPlusIcon from '@/components/list-plus-icon';
 import UserAvatar from '@/components/user-avatar';
 import {
   getCategoryArtworkRule,
@@ -133,6 +136,8 @@ export default function Top3Card({
   onTasteMatchPress,
 }: Top3CardProps) {
   const colors = useAppColors();
+  const { lists, selectList, isCollectionsLoaded, hasCollectionsLoadError } = useTop3();
+  const matchingOwnedList = findMatchingOwnedList(lists, post.collection);
 
 
   const {
@@ -197,9 +202,8 @@ export default function Top3Card({
     formatCollectionDisplayTitle(post.collection.title);
 
 
-  const publishedText = formatRelativeTime(
-    post.publishedAt
-  )?.replace(/^Updated\s+/i, '');
+  // TOP3_CARD_ICON_DATE_POLISH_20261025
+  const publishedText = formatRelativeTime(post.publishedAt, 'long')?.replace(/^Updated\s+/i, '');
 
 
   const likeCollectionId = post.collection.id;
@@ -270,6 +274,37 @@ export default function Top3Card({
     toggleLike(likeCollectionId);
   }
 
+
+  // UNIFIED_CREATE_EDIT_CARD_ACTION_20261025
+  // Own posts keep their original edit callback; all other matches open
+  // the signed-in user's list, not the list belonging to the post author.
+  function handleCreateOrEditPress() {
+    if (!isCollectionsLoaded || hasCollectionsLoadError) return;
+
+    // CARD_RETURN_TO_ORIGIN_20261025: use a push, not replacement,
+    // so Back restores this actual feed screen and its scroll position.
+    if (matchingOwnedList) {
+      selectList(matchingOwnedList.id);
+      router.push({
+        pathname: '/collection',
+        params: { listId: matchingOwnedList.id },
+      });
+      return;
+    }
+
+    if (onEditPress) {
+      onEditPress();
+      return;
+    }
+
+    router.push({
+      pathname: '/create-topic',
+      params: {
+        ...getCreateSimilarListParams(post.collection),
+        fromFeedCard: '1',
+      },
+    } as never);
+  }
 
   function openRecommendationTasteMatch() {
     router.push({
@@ -538,20 +573,6 @@ export default function Top3Card({
         </Pressable>
 
 
-        {onEditPress ? (
-          <IconButton
-            style={styles.headerIconButton}
-            onPress={() => {
-              onEditPress?.();
-            }}
-            accessibilityLabel={`Edit ${displayTitle}`}>
-            <Ionicons
-              name="create-outline"
-              size={20}
-              color={colors.secondaryText}
-            />
-          </IconButton>
-        ) : null}
 
 
         {!showAuthor && onMorePress ? (
@@ -902,24 +923,8 @@ export default function Top3Card({
 
 
       <View style={styles.footer}>
-        <View style={styles.footerItem}>
-          <Ionicons
-            name="time-outline"
-            size={15}
-            color={colors.tertiaryText}
-          />
-
-
-          <AppText
-            variant="metadata"
-            tone="secondary"
-            style={styles.footerText}>
-            {publishedText ?? 'Published'}
-          </AppText>
-        </View>
-
-
-        <View style={styles.engagement}>
+        <View style={styles.footerActionsRow}>
+          <View style={styles.engagement}>
           <Pressable
             style={({ pressed }) => [
               styles.footerItem,
@@ -1056,6 +1061,37 @@ export default function Top3Card({
               />
             </Pressable>
           ) : null}
+          </View>
+
+          {isCollectionsLoaded && !hasCollectionsLoadError ? (
+            <Pressable
+              style={({ pressed }) => [
+                styles.createYoursAction,
+                pressed && styles.pressed,
+              ]}
+              onPress={handleCreateOrEditPress}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel={
+                matchingOwnedList || onEditPress
+                  ? `Edit your ${displayTitle} list`
+                  : `Create your own ${displayTitle} list`
+              }>
+              {matchingOwnedList || onEditPress ? (
+                <Ionicons name="create-outline" size={20} color={colors.secondaryText} />
+              ) : (
+                <ListPlusIcon size={20} color={colors.secondaryText} />
+              )}
+            </Pressable>
+          ) : null}
+        </View>
+        <View style={[styles.footerItem, styles.footerDate]}>
+          <AppText
+            variant="metadata"
+            tone="secondary"
+            style={styles.footerText}>
+            {publishedText ?? 'Published'}
+          </AppText>
         </View>
       </View>
       </View>
@@ -1256,17 +1292,38 @@ const styles = StyleSheet.create({
 
 
   footer: {
+    paddingTop: 14,
+  },
+
+  footerActionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 14,
+    minHeight: 40,
+    marginTop: 2,
+  },
+
+  // CREATE_YOURS_FOOTER_POLISH_V4_20261025
+  footerDate: {
+    alignSelf: 'flex-start',
+    marginTop: 4,
   },
 
 
   engagement: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: 12,
+  },
+
+  createYoursAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    flexShrink: 0,
+    minHeight: 40,
+    paddingLeft: 8,
+    gap: 5,
   },
 
 

@@ -48,6 +48,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { type ComponentRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Alert,
   Animated,
   Keyboard,
   Pressable,
@@ -189,6 +190,7 @@ export default function SearchScreen() {
   const {
     currentList,
     setItemAtRank: setCurrentListItemAtRank,
+    saveFirstItemForPendingList,
   } = useTop3();
   const {
     getOptionById,
@@ -261,6 +263,8 @@ export default function SearchScreen() {
   const shuffleRotation =
     useRef(new Animated.Value(0)).current;
   const isShuffling = useRef(false);
+  // DEFER_LIST_CREATION_UNTIL_FIRST_ITEM_20261025
+  const isSavingFirstItemRef = useRef(false);
   const latestSearchId = useRef(0);
   const trackedSearchKeys = useRef(
     new Set<string>()
@@ -1279,10 +1283,11 @@ function chooseSuggestion(
     suggestion.title
   );
 }
-  function selectItem(
+  async function selectItem(
     item: Top3Item,
     source: SearchSource = 'search'
   ) {
+    if (isSavingFirstItemRef.current) return;
     const selectedRank = Number(rank);
     if (selectedRank < 1 || selectedRank > 3) {
       return;
@@ -1303,6 +1308,19 @@ function chooseSuggestion(
         selectedRank,
         item
       );
+    } else if (currentList?.id.startsWith('pending-list:')) {
+      isSavingFirstItemRef.current = true;
+      try {
+        await saveFirstItemForPendingList(selectedRank, item);
+      } catch (error) {
+        isSavingFirstItemRef.current = false;
+        if (__DEV__) console.log('Failed to save first Top 3 selection:', error);
+        Alert.alert(
+          'Couldn’t save your first choice',
+          'Please check your connection and try again.'
+        );
+        return;
+      }
     } else {
       setCurrentListItemAtRank(
         selectedRank,
