@@ -43,6 +43,7 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 
@@ -136,6 +137,9 @@ export default function Top3Card({
   onTasteMatchPress,
 }: Top3CardProps) {
   const colors = useAppColors();
+  const { width: screenWidth, fontScale } = useWindowDimensions();
+  // Preserve artwork and action sizes. Scale only ranking text on compact layouts.
+  const useCompactItemText = screenWidth / Math.max(fontScale, 1) < 390;
   const { lists, selectList, isCollectionsLoaded, hasCollectionsLoadError } = useTop3();
   const matchingOwnedList = findMatchingOwnedList(lists, post.collection);
 
@@ -764,6 +768,7 @@ export default function Top3Card({
                           ? 'heavy'
                           : 'default'
                       }
+                      style={useCompactItemText ? styles.compactItemTitle : undefined}
                       numberOfLines={2}
                       ellipsizeMode="tail">
                       {item?.title ??
@@ -779,7 +784,10 @@ export default function Top3Card({
                             ? 'onHighlight'
                             : 'secondary'
                         }
-                        style={styles.itemSubtitle}
+                        style={[
+                          styles.itemSubtitle,
+                          useCompactItemText && styles.compactItemSubtitle,
+                        ]}
                         numberOfLines={2}
                         ellipsizeMode="tail">
                         {itemMetadata}
@@ -1085,7 +1093,7 @@ export default function Top3Card({
             </Pressable>
           ) : null}
         </View>
-        <View style={[styles.footerItem, styles.footerDate]}>
+        <View style={styles.footerDate}>
           <AppText
             variant="metadata"
             tone="secondary"
@@ -1278,6 +1286,17 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
+  // Typography-only compact adjustment; touch targets and artwork stay unchanged.
+  compactItemTitle: {
+    fontSize: 16,
+    lineHeight: 21,
+  },
+
+  compactItemSubtitle: {
+    fontSize: 12,
+    lineHeight: 17,
+  },
+
 
   ratingRow: {
     flexDirection: 'row',
@@ -1305,7 +1324,10 @@ const styles = StyleSheet.create({
 
   // CREATE_YOURS_FOOTER_POLISH_V4_20261025
   footerDate: {
-    alignSelf: 'flex-start',
+    // Give the date its own complete line below the action buttons.
+    // Avoid the horizontal footerItem row shrinking text on Android.
+    width: '100%',
+    alignSelf: 'stretch',
     marginTop: 4,
   },
 

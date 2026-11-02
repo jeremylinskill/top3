@@ -158,6 +158,10 @@ export default function IndexScreen() {
           collectionToPublish.topic
             ?.trim()
             .toLowerCase() ?? 'general';
+        const normalizedOptionId =
+          collectionToPublish.collectionOptionId?.trim().toLowerCase() ?? '';
+        const normalizedThemeId =
+          collectionToPublish.themeId?.trim().toLowerCase() ?? '';
 
         const existingCollections =
           await getCollections(
@@ -182,14 +186,25 @@ export default function IndexScreen() {
                   ?.trim()
                   .toLowerCase() ?? 'general';
 
-              return (
-                existingCategory ===
-                  normalizedCategory &&
-                existingType ===
-                  normalizedType &&
-                existingTopic ===
-                  normalizedTopic
-              );
+              if (existingCategory !== normalizedCategory) {
+                return false;
+              }
+              // An option-based Type/Theme must not overwrite an Overall
+              // or Genre list with a coincidentally identical display name.
+              const existingOptionId =
+                collection.collectionOptionId?.trim().toLowerCase() ?? '';
+              if (normalizedOptionId || existingOptionId) {
+                return Boolean(normalizedOptionId) &&
+                  normalizedOptionId === existingOptionId;
+              }
+              const existingThemeId =
+                collection.themeId?.trim().toLowerCase() ?? '';
+              if (normalizedThemeId || existingThemeId) {
+                return Boolean(normalizedThemeId) &&
+                  normalizedThemeId === existingThemeId;
+              }
+              return existingType === normalizedType &&
+                existingTopic === normalizedTopic;
             }
           );
 
@@ -204,6 +219,10 @@ export default function IndexScreen() {
                     collectionToPublish.type,
                   topic:
                     collectionToPublish.topic,
+                  themeId:
+                    collectionToPublish.themeId,
+                  collectionOptionId:
+                    collectionToPublish.collectionOptionId,
                   title:
                     collectionToPublish.title,
                   items:
@@ -219,6 +238,10 @@ export default function IndexScreen() {
                   collectionToPublish.type,
                 topic:
                   collectionToPublish.topic,
+                themeId:
+                  collectionToPublish.themeId,
+                collectionOptionId:
+                  collectionToPublish.collectionOptionId,
                 title:
                   collectionToPublish.title,
                 items:
@@ -378,6 +401,28 @@ export default function IndexScreen() {
           await hasSeenWelcome();
 
         if (!isMounted) {
+          return;
+        }
+
+        // If Android interrupts Google sign-in before Supabase creates a
+        // session, restore the saved publishing handoff rather than sending
+        // the user back to editing their completed Top 3.
+        // Email verification above still takes priority.
+        if (
+          onboardingCollection &&
+          isPendingPublish &&
+          onboardingCollection.items.some(
+            (item) => item !== null
+          )
+        ) {
+          if (authIntent === 'sign-in') {
+            router.replace({
+              pathname: '/sign-in',
+              params: { source: 'onboarding-publish' },
+            });
+          } else {
+            router.replace('/create-account');
+          }
           return;
         }
 

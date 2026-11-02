@@ -2,7 +2,7 @@
   "expo": {
     "name": "Top 3",
     "slug": "top3",
-    "version": "1.1.0",
+    "version": "1.1.2",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "top3",
@@ -84,6 +84,12 @@
         "projectId": "2f351cfa-5f52-43cb-be1e-956449a676f5"
       }
     },
-    "owner": "jeremylinskills-team"
+    "owner": "jeremylinskills-team",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/2f351cfa-5f52-43cb-be1e-956449a676f5"
+    }
   }
 }

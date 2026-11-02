@@ -4,6 +4,14 @@ import {
   TASTE_MATCH_RANK_COLORS,
 } from '@/constants/colors';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
+import { TOP3_THEME_SUGGESTIONS } from '@/constants/top3-theme-suggestions';
+import { useCollectionOptions } from '@/context/collection-options-context';
+import { getMusicianRole, getPopularSuggestionsByCategory } from '@/providers/search';
+import {
+  fetchCollectionOptionSuggestions,
+  getCachedCollectionOptionSuggestions,
+} from '@/services/collection-option-service';
+import { Top3Item } from '@/types/top3-item';
 import { TEXT_STYLES } from '@/constants/typography';
 import { useTop3 } from '@/context/top3-context';
 import { useAppColors } from '@/hooks/use-app-colors';
@@ -95,6 +103,158 @@ export default function OnboardingTasteMatchScreen() {
     ]
   );
 
+
+  const { getOptionById } = useCollectionOptions();
+
+  const optionId = activeCollection?.collectionOptionId?.trim() ?? '';
+  const selectedOption = optionId
+    ? getOptionById(optionId)
+    : undefined;
+
+  const specificListName =
+    selectedOption?.name?.trim() ||
+    activeCollection?.topic?.trim() ||
+    activeCollection?.type?.trim() ||
+    (activeCollection?.themeId
+      ? activeCollection.title.replace(/^Top 3\s+/i, '').split('•').pop()?.trim()
+      : undefined) ||
+    '';
+
+  const isSpecializedList = Boolean(
+    optionId ||
+    activeCollection?.themeId ||
+    activeCollection?.type ||
+    (activeCollection?.topic?.trim() &&
+      activeCollection.topic.trim().toLowerCase() !== 'general')
+  );
+
+  // Key suggestions by list identity so an old async response cannot
+  // accidentally appear after the user changes category/type/theme.
+  const exampleSelectionKey = JSON.stringify([
+    activeCollection?.category ?? '',
+    optionId,
+    activeCollection?.topic ?? '',
+    activeCollection?.type ?? '',
+    activeCollection?.themeId ?? '',
+  ]);
+
+  const [resolvedDemoSuggestions, setResolvedDemoSuggestions] = useState<{
+    key: string;
+    titles: string[];
+  }>({ key: '', titles: [] });
+
+  useEffect(() => {
+    const categoryId = activeCollection?.category ?? '';
+    if (!isSpecializedList || !categoryId) return;
+
+    let cancelled = false;
+    const accept = (items: Top3Item[]) => {
+      if (cancelled) return;
+      setResolvedDemoSuggestions({
+        key: exampleSelectionKey,
+        titles: items
+          .map((item) => item.title?.trim())
+          .filter((title): title is string => Boolean(title)),
+      });
+    };
+
+    async function loadExamples() {
+      // Use the SAME option-specific suggestions as the main Search screen.
+      // The option ID is the identity; the name alone is not reliable.
+      if (optionId) {
+        let cachedItems: Top3Item[] = [];
+        try {
+          cachedItems = (await getCachedCollectionOptionSuggestions(optionId))
+            .filter((entry) => entry.active)
+            .map((entry) => entry.item);
+          if (cachedItems.length > 0) accept(cachedItems);
+        } catch (error) {
+          if (__DEV__) console.log('Could not load cached Taste Match examples:', error);
+        }
+        try {
+          const freshItems = (await fetchCollectionOptionSuggestions(optionId))
+            .filter((entry) => entry.active)
+            .map((entry) => entry.item);
+          if (freshItems.length > 0) {
+            accept(freshItems);
+            return;
+          }
+        } catch (error) {
+          if (__DEV__) console.log('Could not refresh Taste Match examples:', error);
+        }
+        if (cachedItems.length > 0) return;
+      }
+
+      // Bundled themes remain available when offline; future curated options
+      // need no edits here when their suggestions are added to Supabase.
+      const lookupNames = [
+        selectedOption?.name,
+        activeCollection?.topic,
+        activeCollection?.type,
+        specificListName,
+      ];
+      for (const name of lookupNames) {
+        const bundled = name
+          ? TOP3_THEME_SUGGESTIONS[name.trim().toLowerCase()]
+          : undefined;
+        if (bundled?.length) {
+          accept(bundled);
+          return;
+        }
+      }
+
+      // The shared Search provider can give category-specific suggestions for
+      // ordinary genres, and for modes with an explicit specialized provider.
+      // Do NOT use generic category charts for a new Type or Theme: an
+      // unrelated suggestion is worse than an honest placeholder.
+      const hasSpecializedProvider = Boolean(
+        selectedOption && (
+          (selectedOption.providerKey === 'tmdb' &&
+            selectedOption.providerMode === 'discover') ||
+          (selectedOption.providerKey === 'apple_music' &&
+            selectedOption.providerMode === 'current_chart') ||
+          getMusicianRole(selectedOption)
+        )
+      );
+      const isGenreWithoutOption = Boolean(
+        !optionId &&
+        !activeCollection?.type &&
+        activeCollection?.topic &&
+        activeCollection.topic.toLowerCase() !== 'general'
+      );
+      if (hasSpecializedProvider || isGenreWithoutOption) {
+        try {
+          const providerItems = await getPopularSuggestionsByCategory(
+            categoryId,
+            activeCollection?.topic,
+            20,
+            undefined,
+            selectedOption,
+            true
+          );
+          if (providerItems.length > 0) {
+            accept(providerItems);
+            return;
+          }
+        } catch (error) {
+          if (__DEV__) console.log('Could not load Taste Match provider examples:', error);
+        }
+      }
+      accept([]);
+    }
+
+    void loadExamples();
+    return () => { cancelled = true; };
+  }, [
+    activeCollection?.category,
+    activeCollection?.topic,
+    activeCollection?.type,
+    exampleSelectionKey,
+    isSpecializedList,
+    optionId,
+    selectedOption,
+    specificListName,
+  ]);
 
   useEffect(() => {
     if (
@@ -268,30 +428,33 @@ export default function OnboardingTasteMatchScreen() {
   }
 
 
+  // The two matching choices are the user's actual first two picks.
+  // Exclude ALL three user picks from Alex's third example.
   const existingExampleTitles = new Set(
-    userTitles
-      .slice(0, 2)
-      .map(normalizeTitle)
+    userTitles.map(normalizeTitle)
   );
 
+  const exampleThirdPickChoices = isSpecializedList
+    ? resolvedDemoSuggestions.key === exampleSelectionKey
+      ? resolvedDemoSuggestions.titles
+      : []
+    : exampleThirdPicksByCategory[
+        activeCollection?.category ?? ''
+      ] ?? [];
 
-  const exampleThirdPick =
-    exampleThirdPicksByCategory[
-      activeCollection?.category ?? ''
-    ]?.find(
-      (title) =>
-        !existingExampleTitles.has(
-          normalizeTitle(title)
-        )
-    ) ?? 'Another favourite';
-
+  const exampleThirdPick = exampleThirdPickChoices.find(
+    (title) => !existingExampleTitles.has(normalizeTitle(title))
+  ) ?? (
+    isSpecializedList && specificListName
+      ? `Another ${specificListName} favourite`
+      : 'Another favourite'
+  );
 
   const exampleTitles = [
     userTitles[0],
     userTitles[1],
     exampleThirdPick,
   ];
-
 
   const category = TOP3_CATEGORIES.find(
     (item) =>

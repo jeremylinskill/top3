@@ -1,3 +1,4 @@
+import { isVisibleTop3Genre } from '@/utils/visible-top3-topics';
 import AppText from '@/components/app-text';
 import SearchInput from '@/components/search-input';
 import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
@@ -268,6 +269,13 @@ export default function NotificationDestinationPicker({
       category.name,
       'theme'
     );
+    const genres = category.topics
+      .filter(topic => isVisibleTop3Genre(topic, category.id) && (
+        !search || topic.name.toLowerCase().includes(search) ||
+        category.name.toLowerCase().includes(search) ||
+        'genre'.includes(search)
+      ))
+      .sort((a, b) => a.name.localeCompare(b.name));
 
     const includeOverall =
       !isSearchResult ||
@@ -279,7 +287,8 @@ export default function NotificationDestinationPicker({
       isSearchResult &&
       !includeOverall &&
       types.length === 0 &&
-      themes.length === 0
+      themes.length === 0 &&
+      genres.length === 0
     ) {
       return null;
     }
@@ -300,6 +309,23 @@ export default function NotificationDestinationPicker({
               { categoryId: category.id, kind: 'overall' },
               isSearchResult ? 'Overall' : undefined
             )}
+          </View>
+        ) : null}
+
+        {genres.length > 0 || !isSearchResult ? (
+          <View>
+            {!isSearchResult ? sectionHeading('Genres') : null}
+            {genres.length > 0
+              ? genres.map(genre => renderChoice(
+                  genre.name,
+                  { categoryId: category.id, kind: 'genre', optionId: genre.id },
+                  isSearchResult ? 'Genre' : undefined
+                ))
+              : (
+                <AppText variant="label" tone="tertiary" style={styles.emptySection}>
+                  No genres available yet.
+                </AppText>
+              )}
           </View>
         ) : null}
 
@@ -359,7 +385,12 @@ export default function NotificationDestinationPicker({
     return (
       includeOverall ||
       optionsFor(category.id, category.name, 'type').length > 0 ||
-      optionsFor(category.id, category.name, 'theme').length > 0
+      optionsFor(category.id, category.name, 'theme').length > 0 ||
+      category.topics.some(topic => isVisibleTop3Genre(topic, category.id) && (
+        topic.name.toLowerCase().includes(search) ||
+        category.name.toLowerCase().includes(search) ||
+        'genre'.includes(search)
+      ))
     );
   });
 

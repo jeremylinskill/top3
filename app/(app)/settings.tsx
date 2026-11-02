@@ -220,7 +220,7 @@ export default function SettingsScreen() {
         setErrorSheet({
           title: 'Notifications Are Off',
           message:
-            'Enable notifications for Top 3 in your iPhone Settings, then return here and turn notifications on.',
+            'Enable notifications for Top 3 in your phone’s Settings, then return here and turn notifications on.',
         });
 
         return;

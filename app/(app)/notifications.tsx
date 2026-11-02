@@ -10,6 +10,11 @@ import SecondaryActionPill from '@/components/ui/secondary-action-pill';
 import SectionHeader from '@/components/ui/section-header';
 import UserAvatar from '@/components/user-avatar';
 import { useBlock } from '@/context/block-context';
+import { useTop3 } from '@/context/top3-context';
+import { useCollectionOptions } from '@/context/collection-options-context';
+import { TOP3_CATEGORIES, type CategoryId } from '@/constants/top3-categories';
+import type { NotificationDestination } from '@/types/notification-destination';
+import { resolveNotificationCollection } from '@/utils/resolve-notification-collection';
 import {
   FLOATING_TAB_BAR_BOTTOM_SPACING,
   FLOATING_TAB_BAR_HEIGHT,
@@ -23,10 +28,11 @@ import { useAppColors } from '@/hooks/use-app-colors';
 import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
 import Reanimated from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { useMemo, useRef, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -45,6 +51,11 @@ function getNotificationMessage(
     notification.collection?.title;
 
   switch (notification.type) {
+    case 'announcement':
+      return notification.announcement
+        ? `${notification.announcement.title}. ${notification.announcement.message}`
+        : 'Top 3 announcement.';
+
     case 'like':
       return collectionTitle
         ? `liked your ${collectionTitle}.`
@@ -166,15 +177,30 @@ export default function NotificationsScreen() {
     declineFollowRequest,
   } = useNotifications();
 
+  // Show the pull-to-refresh spinner only for a user-initiated pull.
+  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
+
+  // Re-fetch when users open Notifications or return from a push destination.
+  // Supabase Realtime remains active, and pull-to-refresh still works.
+  useFocusEffect(
+    useCallback(() => {
+      void refreshNotifications();
+    }, [refreshNotifications])
+  );
+
+  const { lists, isCollectionsLoaded, hasCollectionsLoadError,
+    startListWithoutSaving, selectList } = useTop3();
+  const { options } = useCollectionOptions();
+  const openingAnnouncementRef = useRef(false);
+
   const { blockedUserIds } = useBlock();
 
   const visibleNotifications = useMemo(
     () =>
       notifications.filter(
         (notification) =>
-          !blockedUserIds.includes(
-            notification.actorUserId
-          )
+          (!notification.actorUserId ||
+            !blockedUserIds.includes(notification.actorUserId))
       ),
     [
       blockedUserIds,
@@ -230,10 +256,65 @@ export default function NotificationsScreen() {
     notification: EnrichedNotification
   ) {
     try {
+      if (notification.type === 'announcement') {
+        if (openingAnnouncementRef.current) return;
+        const announcement = notification.announcement;
+        if (!announcement || !isCollectionsLoaded || hasCollectionsLoadError) {
+          Alert.alert('Unable to Open Top 3',
+            'Your lists are not available yet. Please try again.');
+          return;
+        }
+        const category = TOP3_CATEGORIES.find(item =>
+          item.id === announcement.categoryId && item.id !== 'podcasts');
+        const kind = announcement.destinationKind;
+        const optionId = announcement.optionId;
+        if (!category || !(
+          (kind === 'overall' && !optionId) ||
+          ((kind === 'type' || kind === 'theme' || kind === 'genre') && optionId)
+        )) {
+          Alert.alert('Destination Unavailable',
+            'This Top 3 destination is no longer available.');
+          return;
+        }
+        const destination: NotificationDestination = kind === 'overall'
+          ? { categoryId: category.id as CategoryId, kind: 'overall' }
+          : { categoryId: category.id as CategoryId,
+              kind: kind as 'type' | 'theme' | 'genre', optionId: optionId! };
+        const input = resolveNotificationCollection(destination, options);
+        if (!input) {
+          Alert.alert('Destination Unavailable',
+            'This Top 3 destination is no longer available.');
+          return;
+        }
+        openingAnnouncementRef.current = true;
+        try {
+          const normalize = (value?: string) => {
+            const normalized = value?.trim().toLowerCase() ?? '';
+            return normalized === 'general' ? '' : normalized;
+          };
+          const matching = lists.filter(list => {
+            if (normalize(list.category) !== normalize(input.category)) return false;
+            if (input.collectionOptionId && list.collectionOptionId) {
+              return normalize(input.collectionOptionId) === normalize(list.collectionOptionId);
+            }
+            return normalize(list.type) === normalize(input.type) &&
+              normalize(list.topic) === normalize(input.topic);
+          });
+          const existing = matching.find(list => Boolean(list.publishedAt)) ??
+            matching.find(list => list.items.some(item => item !== null)) ?? matching[0];
+          const listId = existing
+            ? (selectList(existing.id), existing.id)
+            : startListWithoutSaving(input);
+          if (!notification.isRead) await markNotificationRead(notification.id);
+          router.push({ pathname: '/collection', params: { listId } });
+        } finally {
+          openingAnnouncementRef.current = false;
+        }
+        return;
+      }
+
       if (!notification.isRead) {
-        await markNotificationRead(
-          notification.id
-        );
+        await markNotificationRead(notification.id);
       }
 
       if (
@@ -411,8 +492,13 @@ export default function NotificationsScreen() {
         scrollEventThrottle={16}
         refreshControl={
           <RefreshControl
-            refreshing={isLoading}
-            onRefresh={refreshNotifications}
+            refreshing={isPullRefreshing}
+            onRefresh={() => {
+              setIsPullRefreshing(true);
+              void refreshNotifications().finally(() => {
+                setIsPullRefreshing(false);
+              });
+            }}
             tintColor={colors.secondaryText}
             colors={[colors.secondaryText]}
           />
@@ -657,7 +743,9 @@ export default function NotificationsScreen() {
 
                 {visibleNotifications.map((notification) => {
                   const actorName =
-                    notification.actor?.displayName ||
+                    notification.type === 'announcement'
+                      ? 'Top 3'
+                      : notification.actor?.displayName ||
                     notification.actor?.username ||
                     'Someone';
 
@@ -667,9 +755,9 @@ export default function NotificationsScreen() {
                       style={styles.notificationRow}>
                       <Pressable
                         accessibilityRole="button"
-                        accessibilityLabel={`${actorName} ${getNotificationMessage(
-                          notification
-                        )}`}
+                        accessibilityLabel={notification.type === 'announcement'
+                          ? getNotificationMessage(notification)
+                          : `${actorName} ${getNotificationMessage(notification)}`}
                         onPress={() =>
                           handleNotificationPress(
                             notification
@@ -679,13 +767,31 @@ export default function NotificationsScreen() {
                           styles.notificationPressable,
                           pressed && styles.pressed,
                         ]}>
-                        <UserAvatar
-                          displayName={actorName}
-                          avatarUrl={notification.actor?.avatarUrl}
-                          size={48}
-                        />
+                        {notification.type === 'announcement' ? (
+                          <View style={[styles.announcementIcon, {
+                            backgroundColor: colors.accent,
+                          }]}>
+                            <Ionicons name="megaphone-outline" size={24} color="#FFFFFF" />
+                          </View>
+                        ) : (
+                          <UserAvatar
+                            displayName={actorName}
+                            avatarUrl={notification.actor?.avatarUrl}
+                            size={48}
+                          />
+                        )}
 
                         <View style={styles.notificationBody}>
+                          {notification.type === 'announcement' ? (
+                            <View>
+                              <AppText variant="body" tone="primary" emphasis="strong">
+                                {notification.announcement?.title ?? 'Top 3 announcement'}
+                              </AppText>
+                              <AppText variant="body" tone="primary">
+                                {notification.announcement?.message ?? 'An announcement from Top 3.'}
+                              </AppText>
+                            </View>
+                          ) : (
                           <AppText
                             variant="body"
                             tone="primary">
@@ -738,6 +844,7 @@ export default function NotificationsScreen() {
                               'interacted with your profile.'
                             )}
                           </AppText>
+                          )}
 
                           <AppText
                             variant="metadata"
@@ -897,6 +1004,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 14,
+  },
+
+  announcementIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   notificationBody: {

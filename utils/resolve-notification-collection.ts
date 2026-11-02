@@ -6,6 +6,7 @@ import type { CollectionOption } from '@/types/collection-option';
 import {
   NotificationDestination,
   resolveDestinationOption,
+  resolveDestinationGenre,
 } from '@/types/notification-destination';
 import {
   buildCollectionTitle,
@@ -39,6 +40,16 @@ export function resolveNotificationCollection(
     return {
       category: category.id,
       title: buildCollectionTitle(category.id),
+    };
+  }
+
+  if (destination.kind === 'genre') {
+    const genre = resolveDestinationGenre(destination);
+    if (!genre) return null;
+    return {
+      category: category.id,
+      topic: genre.name,
+      title: buildCollectionTitle(category.id, genre.id),
     };
   }
 

@@ -815,6 +815,16 @@ async function getSongChartIds(
       topic
     );
 
+  // A genre-specific request must never use a general chart as
+  // evidence of genre membership when Apple cannot resolve its ID.
+  if (
+    normalizedTopic !== "general" &&
+    !genreId
+  ) {
+    console.warn("Apple Music song chart genre unavailable:", normalizedTopic);
+    return [];
+  }
+
   const response =
     await fetch(
       buildSongChartUrl(
@@ -945,6 +955,15 @@ async function getAlbumChartIds(
       developerToken,
       topic
     );
+
+  // Do not treat the general album chart as genre-specific evidence.
+  if (
+    normalizedTopic !== "general" &&
+    !genreId
+  ) {
+    console.warn("Apple Music album chart genre unavailable:", normalizedTopic);
+    return [];
+  }
 
   const response =
     await fetch(
@@ -1335,6 +1354,32 @@ function genreNamesMatchTopic(
         normalizedGenre.startsWith(
           `${acceptedGenre} `
         )
+    );
+  });
+}
+
+// For recordings, Apple sometimes uses a neighbouring Rock subgenre
+// instead of the genre selected in Top 3. Keep this compatibility narrow:
+// a matching title alone is NOT evidence of genre eligibility.
+function recordingMatchesTopic(
+  genreNames: string[],
+  topic?: string
+): boolean {
+  if (genreNamesMatchTopic(genreNames, topic)) {
+    return true;
+  }
+
+  const normalizedTopic = normalizeText(topic ?? "");
+  const compatibleGenres: Record<string, string[]> = {
+    alternative: ["rock", "grunge", "indie rock", "alternative rock"],
+    rock: ["alternative", "alternative rock", "grunge", "hard rock", "classic rock", "indie rock"],
+  };
+  const accepted = compatibleGenres[normalizedTopic] ?? [];
+  return genreNames.some((genre) => {
+    const normalizedGenre = normalizeText(genre);
+    return accepted.some((candidate) =>
+      normalizedGenre === candidate ||
+      normalizedGenre.startsWith(`${candidate} `)
     );
   });
 }
@@ -2256,6 +2301,42 @@ function rankAndDeduplicateAlbums(
   return results;
 }
 
+
+// A typed artist search must match the artist NAME, not just the
+// selected Apple Music genre. Support partial names, optional "The",
+// and ordered partial words (e.g. "red chili" -> Red Hot Chili Peppers).
+function artistNameMatchesSearchQuery(
+  artistName: string,
+  query: string
+): boolean {
+  const name = normalizeText(artistName);
+  const searched = normalizeText(query);
+  if (!name || !searched) return false;
+  if (name.includes(searched)) return true;
+
+  const withoutThe = (value: string) =>
+    value.replace(/^the\s+/, "");
+  const normalizedName = withoutThe(name);
+  const normalizedQuery = withoutThe(searched);
+  if (!normalizedQuery) return false;
+  if (normalizedName.includes(normalizedQuery)) return true;
+
+  const artistWords = normalizedName.split(" ");
+  const queryWords = normalizedQuery.split(" ");
+  let searchIndex = 0;
+  for (const word of queryWords) {
+    let found = false;
+    while (searchIndex < artistWords.length) {
+      if (artistWords[searchIndex++].startsWith(word)) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) return false;
+  }
+  return true;
+}
+
 function rankAndDeduplicateArtists(
   artists: RankedArtist[],
   query: string,
@@ -2475,12 +2556,19 @@ function rankAndDeduplicateSongs(
          * while still preferring results whose
          * metadata matches the selected Top 3 topic.
          */
+        // Use the same primary-genre compatibility as the search filter.
+        // Rock originals should not lose to Alternative-labelled compilations.
         const topicBoost =
-          songMatchesTopic(
-            song,
-            topic
-          )
+          recordingMatchesTopic(song.genreNames.slice(0, 1), topic)
             ? 450
+            : 0;
+
+        // Within the same song/artist, prefer a proper album release to
+        // a greatest-hits or themed compilation when Apple's text scores tie.
+        // This is a modest tie-break, not a hard exclusion.
+        const compilationPenalty =
+          /\b(greatest hits|the essential|best of|pop anthems|sing.alongs|various artists|top hits|now that's what i call)\b/i.test(song.albumName)
+            ? 220
             : 0;
 
         return {
@@ -2491,7 +2579,8 @@ function rankAndDeduplicateSongs(
               query
             ) +
             topicBoost +
-            popularityBoost,
+            popularityBoost -
+            compilationPenalty,
         };
       })
       .sort((first, second) => {
@@ -6206,30 +6295,6 @@ async function searchAppleMusicAlbums(
           album !== null
       );
 
-  const topicFilteredAlbums =
-    mappedAlbums.filter(
-      (album) =>
-        (!compilationsOnly ||
-          (album.isCompilation === true &&
-            !isIdentifiableSoundtrackAlbum(album))) &&
-        (!liveOnly || hasLiveAlbumEvidence(album)) &&
-        !normalizeText(
-          album.title
-        ).endsWith(
-          " single"
-        ) &&
-        (
-          albumMatchesTopic(
-            album,
-            topic
-          ) ||
-          albumStronglyMatchesQuery(
-            album,
-            query
-          )
-        )
-    );
-
   let chartAlbumIds: string[] = [];
 
   try {
@@ -6244,6 +6309,28 @@ async function searchAppleMusicAlbums(
       error
     );
   }
+
+  // Use the primary genre; broad secondary tags can misclassify Country/Pop albums.
+  const chartAlbumIdSet = new Set(chartAlbumIds);
+  const topicFilteredAlbums =
+    mappedAlbums.filter(
+      (album) =>
+        (!compilationsOnly ||
+          (album.isCompilation === true &&
+            !isIdentifiableSoundtrackAlbum(album))) &&
+        (!liveOnly || hasLiveAlbumEvidence(album)) &&
+        !normalizeText(
+          album.title
+        ).endsWith(
+          " single"
+        ) &&
+        (
+          recordingMatchesTopic(album.genreNames.slice(0, 1), topic) ||
+          chartAlbumIdSet.has(
+            album.id.replace(/^apple-music-album-/, "")
+          )
+        )
+    );
 
   return rankAndDeduplicateAlbums(
     topicFilteredAlbums,
@@ -6770,13 +6857,44 @@ async function searchAppleMusicArtists(
           artist !== null
       );
 
+  /*
+   * A genre's Suggested Artists come from its album chart. Apple may
+   * assign those artists a different genre on their artist record.
+   * Preserve that specific exception, not a blanket exception for
+   * every exact-name search result (e.g. an unrelated artist "Radio").
+   * Only artists on the actual top-50 Suggestions list are eligible.
+   * If suggestions cannot be fetched, use strict genre filtering.
+   */
+  const recommendedArtistNames = new Set<string>();
+  if (topic && normalizeText(topic) !== "general") {
+    try {
+      const recommendedArtists =
+        await getPopularAppleMusicArtists(
+          topic,
+          MAX_POPULAR_RESULT_LIMIT
+        );
+      for (const recommendedArtist of recommendedArtists) {
+        recommendedArtistNames.add(
+          normalizeText(recommendedArtist.title)
+        );
+      }
+    } catch (error) {
+      console.warn(
+        "Artist suggestion eligibility lookup failed; using strict genre filtering:",
+        error
+      );
+    }
+  }
+
   const topicFilteredArtists =
-    mappedArtists.filter((artist) =>
-      artistMatchesTopic(
-        artist,
-        topic
-      )
-    );
+    mappedArtists.filter((artist) => {
+      if (!artistNameMatchesSearchQuery(artist.title, query)) {
+        return false;
+      }
+
+      return artistMatchesTopic(artist, topic) ||
+        recommendedArtistNames.has(normalizeText(artist.title));
+    });
 
   const rankedArtists =
     rankAndDeduplicateArtists(
@@ -6948,10 +7066,36 @@ async function searchAppleMusicSongs(
     );
   }
 
-  const songs =
-    data?.results
-      ?.songs
-      ?.data ?? [];
+  const firstPageSongs =
+    data?.results?.songs?.data ?? [];
+
+  // Apple Music's standard search returns a limited candidate pool.
+  // An additional page gives original recordings a better chance of
+  // reaching the existing ranking logic without changing its scores.
+  let secondPageSongs: AppleMusicSong[] = [];
+  if (firstPageSongs.length >= APPLE_SEARCH_LIMIT) {
+    try {
+      const nextUrl = new URL(buildSearchUrl(recordingSearchQuery, "songs"));
+      nextUrl.searchParams.set("offset", String(APPLE_SEARCH_LIMIT));
+      const nextResponse = await fetch(nextUrl.toString(), {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${developerToken}`,
+        },
+      });
+      if (nextResponse.ok) {
+        const nextData = await nextResponse.json() as AppleMusicSearchResponse;
+        secondPageSongs = nextData.results?.songs?.data ?? [];
+      } else {
+        console.warn("Apple Music second song search page failed:", nextResponse.status);
+      }
+    } catch (error) {
+      console.warn("Apple Music second song search page unavailable:", error);
+    }
+  }
+
+  const songs = [...firstPageSongs, ...secondPageSongs];
 
   const mappedSongs =
     songs
@@ -6972,36 +7116,6 @@ async function searchAppleMusicSongs(
           song !== null
       );
 
-  /*
-   * Typed Song search should not discard an
-   * otherwise strong result solely because Apple's
-   * genre metadata does not line up perfectly with
-   * the selected Top 3 topic.
-   *
-   * Keep songs that either match the topic OR match
-   * the user's query strongly. Weak query matches
-   * with unrelated genre metadata are still removed.
-   */
-  const topicFilteredSongs =
-    mappedSongs.filter(
-      (song) =>
-        songMatchesTopic(
-          song,
-          topic
-        ) ||
-        songStronglyMatchesQuery(
-          song,
-          query
-        )
-    );
-
-  const recordingFilteredSongs =
-    songType
-      ? topicFilteredSongs.filter(song =>
-          matchesSongRecordingType(song, songType)
-        )
-      : topicFilteredSongs;
-
   let chartSongIds: string[] = [];
 
   try {
@@ -7016,6 +7130,27 @@ async function searchAppleMusicSongs(
       error
     );
   }
+
+  // A title match does not override the selected genre.
+  // Selected-genre chart entries can still qualify when Apple's
+  // recording metadata uses another classification.
+  // Primary genre plus explicit chart exceptions, not incidental secondary tags.
+  const chartSongIdSet = new Set(chartSongIds);
+  const topicFilteredSongs =
+    mappedSongs.filter(
+      (song) =>
+        recordingMatchesTopic(song.genreNames.slice(0, 1), topic) ||
+        chartSongIdSet.has(
+          song.id.replace(/^apple-music-song-/, "")
+        )
+    );
+
+  const recordingFilteredSongs =
+    songType
+      ? topicFilteredSongs.filter(song =>
+          matchesSongRecordingType(song, songType)
+        )
+      : topicFilteredSongs;
 
   const rankedSongs =
     rankAndDeduplicateSongs(

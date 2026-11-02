@@ -1,8 +1,45 @@
 import "@supabase/functions-js/edge-runtime.d.ts";
+import { isNotificationGenre } from "../_shared/notification-genres.ts";
 import { withSupabase } from "@supabase/server";
 import type { SupabaseClient } from "npm:@supabase/supabase-js@^2";
 
 const HISTORY_LIMIT = 50;
+const MAX_BROADCAST_DEVICES = 500;
+const EXPO_TOKEN_PATTERN = /^(ExpoPushToken|ExponentPushToken)\[[^\]]+\]$/;
+
+async function inspectBroadcastAudience(admin: any): Promise<
+  | { ok: true; deviceCount: number; userCount: number }
+  | { ok: false; status: number; error: string }
+> {
+  const { data, error } = await admin
+    .from("push_tokens")
+    .select("id,user_id,expo_push_token")
+    .order("id", { ascending: true })
+    .limit(MAX_BROADCAST_DEVICES + 1);
+
+  if (error || !Array.isArray(data)) {
+    return { ok: false, status: 500, error: "Unable to preview registered devices." };
+  }
+  if (data.length > MAX_BROADCAST_DEVICES) {
+    return { ok: false, status: 409,
+      error: `More than ${MAX_BROADCAST_DEVICES} devices are registered. Queued delivery is required before scheduling for all users.` };
+  }
+  if (data.some((row) =>
+    typeof row.id !== "string" ||
+    typeof row.user_id !== "string" ||
+    typeof row.expo_push_token !== "string" ||
+    !EXPO_TOKEN_PATTERN.test(row.expo_push_token)
+  )) {
+    return { ok: false, status: 409, error: "An invalid registered push token needs attention before broadcasting." };
+  }
+  if (new Set(data.map((row) => row.expo_push_token)).size !== data.length) {
+    return { ok: false, status: 409, error: "Duplicate push tokens need attention before broadcasting." };
+  }
+  return { ok: true,
+    deviceCount: data.length,
+    userCount: new Set(data.map((row) => row.user_id)).size };
+}
+
 
 type CampaignStatus =
   | "draft"
@@ -13,7 +50,7 @@ type CampaignStatus =
   | "cancelled";
 
 type CampaignAudience = "test" | "all";
-type DestinationKind = "overall" | "type" | "theme";
+type DestinationKind = "overall" | "type" | "theme" | "genre";
 
 type CampaignHistoryDatabase = {
   public: {
@@ -143,8 +180,10 @@ export default {
         typeof body !== "object" ||
         Array.isArray(body) ||
         !("action" in body) ||
+        body.action !== "preview-all" &&
         body.action !== "list" &&
         body.action !== "save-draft" &&
+        body.action !== "delete-draft" &&
         body.action !== "schedule" &&
         body.action !== "cancel" &&
         body.action !== "edit-scheduled" &&
@@ -161,13 +200,12 @@ export default {
       // server-side guard also protects older client builds.
       // Existing drafts, history, and cancellation remain available.
       if (
-        (body.action === "schedule" ||
-          body.action === "edit-scheduled" ||
-          body.action === "reschedule") &&
-        Deno.env.get("SCHEDULED_TEST_CREATION_ENABLED") !== "true"
+        body.action === "schedule" &&
+        Deno.env.get("SCHEDULED_TEST_CREATION_ENABLED") !== "true" &&
+        Deno.env.get("SCHEDULED_BROADCAST_CREATION_ENABLED") !== "true"
       ) {
         return Response.json(
-          { error: "Scheduled test delivery is not enabled." },
+          { error: "Scheduled delivery is not enabled." },
           { status: 503 }
         );
       }
@@ -176,11 +214,48 @@ export default {
         ctx.supabaseAdmin as unknown as
           SupabaseClient<CampaignHistoryDatabase>;
 
+      if (body.action === "preview-all") {
+        const audience = await inspectBroadcastAudience(ctx.supabaseAdmin);
+        if (!audience.ok) {
+          return Response.json({ error: audience.error }, { status: audience.status });
+        }
+        return Response.json({ success: true, deviceCount: audience.deviceCount,
+          userCount: audience.userCount, maxDevices: MAX_BROADCAST_DEVICES });
+      }
 
       if (body.action === "schedule") {
         const payload = body as Record<string, unknown>;
         const invalid = (message: string) =>
           Response.json({ error: message }, { status: 400 });
+
+        const isBroadcast = payload.audience === "all";
+        if (payload.audience !== undefined &&
+            payload.audience !== "test" && payload.audience !== "all") {
+          return invalid("Invalid notification audience.");
+        }
+        const flag = isBroadcast
+          ? "SCHEDULED_BROADCAST_CREATION_ENABLED"
+          : "SCHEDULED_TEST_CREATION_ENABLED";
+        if (Deno.env.get(flag) !== "true") {
+          return Response.json({ error: "Scheduling is not enabled for this audience." },
+            { status: 503 });
+        }
+        if (isBroadcast) {
+          if (!Number.isSafeInteger(payload.expectedDeviceCount) ||
+              (payload.expectedDeviceCount as number) < 1) {
+            return invalid("Preview all registered devices before scheduling.");
+          }
+          const audience = await inspectBroadcastAudience(ctx.supabaseAdmin);
+          if (!audience.ok) {
+            return Response.json({ error: audience.error }, { status: audience.status });
+          }
+          if (audience.deviceCount === 0 ||
+              audience.deviceCount !== payload.expectedDeviceCount) {
+            return Response.json({
+              error: "The registered audience changed. Preview again before scheduling."
+            }, { status: 409 });
+          }
+        }
 
         if (
           typeof payload.title !== "string" ||
@@ -255,7 +330,8 @@ export default {
           ].includes(categoryId) ||
           (kind !== "overall" &&
            kind !== "type" &&
-           kind !== "theme")
+           kind !== "theme" &&
+            kind !== "genre")
         ) {
           return invalid("Invalid notification destination.");
         }
@@ -274,72 +350,69 @@ export default {
             return invalid("Invalid destination option.");
           }
 
-          const { data: matchedOption, error: optionError } =
+          if (kind === "genre") {
+            if (!isNotificationGenre(categoryId, rawOptionId)) {
+              return invalid("Genre is not available for this category.");
+            }
+            optionId = rawOptionId;
+          } else {
+            const { data: matchedOption, error: optionError } =
+              await ctx.supabaseAdmin
+                .from("collection_options")
+                .select("id")
+                .eq("id", rawOptionId)
+                .eq("category_id", categoryId)
+                .eq("kind", kind)
+                .eq("active", true)
+                .maybeSingle();
+
+            if (optionError) {
+              console.error(
+                "Scheduling destination verification failed:",
+                optionError.message
+              );
+              return Response.json(
+                { error: "Unable to verify destination." },
+                { status: 500 }
+              );
+            }
+
+            if (!matchedOption) {
+              return invalid("Destination is no longer available.");
+            }
+
+            optionId = rawOptionId;
+          }
+        }
+
+        let targetDeviceId: string | null = null;
+        if (!isBroadcast) {
+          const rawToken = payload.expoPushToken;
+          if (
+            typeof rawToken !== "string" ||
+            rawToken.trim().length > 300 ||
+            !EXPO_TOKEN_PATTERN.test(rawToken.trim())
+          ) {
+            return invalid("A valid test device is required.");
+          }
+          const { data: device, error: deviceError } =
             await ctx.supabaseAdmin
-              .from("collection_options")
+              .from("push_tokens")
               .select("id")
-              .eq("id", rawOptionId)
-              .eq("category_id", categoryId)
-              .eq("kind", kind)
-              .eq("active", true)
+              .eq("user_id", userId)
+              .eq("expo_push_token", rawToken.trim())
               .maybeSingle();
-
-          if (optionError) {
-            console.error(
-              "Scheduling destination verification failed:",
-              optionError.message
-            );
-            return Response.json(
-              { error: "Unable to verify destination." },
-              { status: 500 }
-            );
+          if (deviceError) {
+            console.error("Scheduling device verification failed:", deviceError.message);
+            return Response.json({ error: "Unable to verify test device." },
+              { status: 500 });
           }
-
-          if (!matchedOption) {
-            return invalid("Destination is no longer available.");
+          const verifiedDevice = device as { id: string } | null;
+          if (!verifiedDevice) {
+            return Response.json({ error: "Test device is not registered." },
+              { status: 403 });
           }
-
-          optionId = rawOptionId;
-        }
-
-        const rawToken = payload.expoPushToken;
-
-        if (
-          typeof rawToken !== "string" ||
-          rawToken.trim().length > 300 ||
-          !/^(ExpoPushToken|ExponentPushToken)\[[^\]]+\]$/.test(
-            rawToken.trim()
-          )
-        ) {
-          return invalid("A valid test device is required.");
-        }
-
-        const { data: device, error: deviceError } =
-          await ctx.supabaseAdmin
-            .from("push_tokens")
-            .select("id")
-            .eq("user_id", userId)
-            .eq("expo_push_token", rawToken.trim())
-            .maybeSingle();
-
-        if (deviceError) {
-          console.error(
-            "Scheduling device verification failed:",
-            deviceError.message
-          );
-          return Response.json(
-            { error: "Unable to verify test device." },
-            { status: 500 }
-          );
-        }
-
-        const verifiedDevice = device as { id: string } | null;
-
-        if (!verifiedDevice) {
-          return Response.json(
-            { error: "Test device is not registered." },
-            { status: 403 }
-          );
+          targetDeviceId = verifiedDevice.id;
         }
 
         const scheduledAt = scheduledDate.toISOString();
@@ -349,10 +422,10 @@ export default {
           category_id: categoryId,
           destination_kind: kind as DestinationKind,
           option_id: optionId,
-          audience: "test" as const,
+          audience: (isBroadcast ? "all" : "test") as CampaignAudience,
           status: "scheduled" as const,
           scheduled_at: scheduledAt,
-          target_push_token_id: verifiedDevice.id,
+          target_push_token_id: targetDeviceId,
           updated_at: new Date().toISOString(),
         };
 
@@ -393,6 +466,22 @@ export default {
       }
 
       if (body.action === "edit-scheduled") {
+        // Editing and rescheduling must respect the flag for the
+        // campaign's audience, not merely either scheduling flag.
+        const allowedScheduledAudiences: CampaignAudience[] = [];
+        if (Deno.env.get("SCHEDULED_TEST_CREATION_ENABLED") === "true") {
+          allowedScheduledAudiences.push("test");
+        }
+        if (Deno.env.get("SCHEDULED_BROADCAST_CREATION_ENABLED") === "true") {
+          allowedScheduledAudiences.push("all");
+        }
+        if (allowedScheduledAudiences.length === 0) {
+          return Response.json(
+            { error: "Scheduled delivery is not enabled." },
+            { status: 503 }
+          );
+        }
+
         const payload = body as Record<string, unknown>;
 
         const invalid = (message: string) =>
@@ -486,7 +575,8 @@ export default {
           (
             kind !== "overall" &&
             kind !== "type" &&
-            kind !== "theme"
+            kind !== "theme" &&
+            kind !== "genre"
           )
         ) {
           return invalid("Invalid notification destination.");
@@ -511,35 +601,42 @@ export default {
             return invalid("Invalid destination option.");
           }
 
-          const { data: matchedOption, error: optionError } =
-            await ctx.supabaseAdmin
-              .from("collection_options")
-              .select("id")
-              .eq("id", rawOptionId)
-              .eq("category_id", categoryId)
-              .eq("kind", kind)
-              .eq("active", true)
-              .maybeSingle();
+          if (kind === "genre") {
+            if (!isNotificationGenre(categoryId, rawOptionId)) {
+              return invalid("Genre is not available for this category.");
+            }
+            optionId = rawOptionId;
+          } else {
+            const { data: matchedOption, error: optionError } =
+              await ctx.supabaseAdmin
+                .from("collection_options")
+                .select("id")
+                .eq("id", rawOptionId)
+                .eq("category_id", categoryId)
+                .eq("kind", kind)
+                .eq("active", true)
+                .maybeSingle();
 
-          if (optionError) {
-            console.error(
-              "Scheduled edit destination verification failed:",
-              optionError.message
-            );
+            if (optionError) {
+              console.error(
+                "Scheduled edit destination verification failed:",
+                optionError.message
+              );
 
-            return Response.json(
-              { error: "Unable to verify destination." },
-              { status: 500 }
-            );
+              return Response.json(
+                { error: "Unable to verify destination." },
+                { status: 500 }
+              );
+            }
+
+            if (!matchedOption) {
+              return invalid(
+                "Destination is no longer available."
+              );
+            }
+
+            optionId = rawOptionId;
           }
-
-          if (!matchedOption) {
-            return invalid(
-              "Destination is no longer available."
-            );
-          }
-
-          optionId = rawOptionId;
         }
 
         // Update content and delivery time atomically.
@@ -560,7 +657,7 @@ export default {
             })
             .eq("id", campaignId)
             .eq("created_by", userId)
-            .eq("audience", "test")
+            .in("audience", allowedScheduledAudiences)
             .eq("status", "scheduled")
             .select("id")
             .maybeSingle();
@@ -597,6 +694,22 @@ export default {
       }
 
       if (body.action === "reschedule") {
+        // Editing and rescheduling must respect the flag for the
+        // campaign's audience, not merely either scheduling flag.
+        const allowedScheduledAudiences: CampaignAudience[] = [];
+        if (Deno.env.get("SCHEDULED_TEST_CREATION_ENABLED") === "true") {
+          allowedScheduledAudiences.push("test");
+        }
+        if (Deno.env.get("SCHEDULED_BROADCAST_CREATION_ENABLED") === "true") {
+          allowedScheduledAudiences.push("all");
+        }
+        if (allowedScheduledAudiences.length === 0) {
+          return Response.json(
+            { error: "Scheduled delivery is not enabled." },
+            { status: 503 }
+          );
+        }
+
         const payload = body as Record<string, unknown>;
         const campaignId = payload.id;
         const rawScheduledAt = payload.scheduledAt;
@@ -651,7 +764,7 @@ export default {
             })
             .eq("id", campaignId)
             .eq("created_by", userId)
-            .eq("audience", "test")
+            .in("audience", allowedScheduledAudiences)
             .eq("status", "scheduled")
             .select("id")
             .maybeSingle();
@@ -712,7 +825,7 @@ export default {
             })
             .eq("id", campaignId)
             .eq("created_by", userId)
-            .eq("audience", "test")
+            .in("audience", ["test", "all"])
             .eq("status", "scheduled")
             .select("id")
             .maybeSingle();
@@ -742,6 +855,59 @@ export default {
         return Response.json({
           success: true,
           campaignId: cancelled.id,
+        });
+      }
+
+      if (body.action === "delete-draft") {
+        const payload = body as Record<string, unknown>;
+        const campaignId = payload.id;
+
+        if (
+          typeof campaignId !== "string" ||
+          !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+            campaignId
+          )
+        ) {
+          return Response.json(
+            { error: "Invalid draft identifier." },
+            { status: 400 }
+          );
+        }
+
+        // Enforce draft-only deletion on the server. A campaign that has
+        // been scheduled, claimed, sent or cancelled cannot be deleted.
+        // The admin check above and creator check below both apply.
+        const { data: deleted, error: deleteError } =
+          await campaignAdmin
+            .from("notification_campaigns")
+            .delete()
+            .eq("id", campaignId)
+            .eq("created_by", userId)
+            .eq("status", "draft")
+            .select("id")
+            .maybeSingle();
+
+        if (deleteError) {
+          console.error(
+            "Unable to delete notification draft:",
+            deleteError.message
+          );
+          return Response.json(
+            { error: "Unable to delete notification draft." },
+            { status: 500 }
+          );
+        }
+
+        if (!deleted) {
+          return Response.json(
+            { error: "Draft not found or no longer deletable." },
+            { status: 404 }
+          );
+        }
+
+        return Response.json({
+          success: true,
+          campaignId: deleted.id,
         });
       }
 
@@ -816,7 +982,8 @@ export default {
             (
               kind !== "overall" &&
               kind !== "type" &&
-              kind !== "theme"
+              kind !== "theme" &&
+            kind !== "genre"
             )
           ) {
             return invalid("Invalid draft destination.");
@@ -835,6 +1002,9 @@ export default {
               return invalid("Invalid draft destination option.");
             }
 
+            if (kind === 'genre' && !isNotificationGenre(category, option)) {
+              return invalid('Genre is not available for this category.');
+            }
             optionId = option.trim();
           }
 

@@ -1,3 +1,4 @@
+import { isVisibleTop3Genre } from '@/utils/visible-top3-topics';
 import AppText from '@/components/app-text';
 import PageHeader from '@/components/page-header';
 import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
@@ -8,6 +9,7 @@ import {
   Top3Topic,
 } from '@/constants/top3-categories';
 import { useCollectionOptions } from '@/context/collection-options-context';
+import { useOnboardingCollection } from '@/context/onboarding-collection-context';
 import { useTop3 } from '@/context/top3-context';
 import { CollectionOption } from '@/types/collection-option';
 import { useAppColors } from '@/hooks/use-app-colors';
@@ -97,9 +99,9 @@ function findExistingCollection(
   );
   return populatedCollection ?? matchingCollections[0];
 }
-function getSortedTopics(topics: Top3Topic[]) {
+function getSortedTopics(topics: Top3Topic[], categoryId: string) {
   return topics
-    .filter((topic) => topic.id !== 'general')
+    .filter((topic) => isVisibleTop3Genre(topic, categoryId))
     .sort((first, second) => first.name.localeCompare(second.name));
 }
 const SCREEN_HORIZONTAL_PADDING = 20;
@@ -262,6 +264,7 @@ export default function CreateTopicScreen() {
     themeSlug?: string | string[];
     typeOptionId?: string | string[];
     mode?: string | string[];
+    source?: string | string[];
     // CARD_RETURN_TO_ORIGIN_20261025
     fromFeedCard?: string | string[];
   }>();
@@ -301,7 +304,10 @@ export default function CreateTopicScreen() {
       ? requestedMode
       : undefined;
 
+  const isOnboardingCreate =
+    (Array.isArray(params.source) ? params.source[0] : params.source) === 'onboarding';
   const { startListWithoutSaving, lists, selectList } = useTop3();
+  const { startCollection: startOnboardingCollection } = useOnboardingCollection();
   const { getOptionsForCategory } =
     useCollectionOptions();
   const hasHandledRequestedTopic = useRef(false);
@@ -315,7 +321,7 @@ export default function CreateTopicScreen() {
   // Allow the four Hooks to run before the missing-category fallback.
   // Effects below skip work when category is absent.
   const selectedCategory = category ?? TOP3_CATEGORIES[0];
-  const topics = getSortedTopics(selectedCategory.topics);
+  const topics = getSortedTopics(selectedCategory.topics, selectedCategory.id);
   const rawTypeOptions =
     getOptionsForCategory(
       selectedCategory.id,
@@ -412,6 +418,21 @@ export default function CreateTopicScreen() {
     const topicName =
       collectionOption?.name ??
       topic?.name;
+    const title =
+      titleOverride ?? buildCollectionTitle(selectedCategory.id, topic?.id);
+    if (isOnboardingCreate) {
+      startOnboardingCollection({
+        category: selectedCategory.id,
+        topic: topicName,
+        themeId: mode === 'theme'
+          ? collectionOption?.slug ?? topic?.id
+          : undefined,
+        collectionOptionId: collectionOption?.id,
+        title,
+      });
+      router.push('/onboarding-collection');
+      return;
+    }
     const existingCollection = findExistingCollection(
       lists,
       selectedCategory.id,
@@ -427,8 +448,6 @@ export default function CreateTopicScreen() {
       });
       return;
     }
-    const title =
-      titleOverride ?? buildCollectionTitle(selectedCategory.id, topic?.id);
     const collectionKey =
       collectionOption?.id ??
       topic?.id ??
@@ -468,10 +487,11 @@ export default function CreateTopicScreen() {
   function openMode(nextMode: 'type' | 'theme') {
     router.push(
       {
-        pathname: '/create-topic',
+        pathname: isOnboardingCreate ? '/onboarding-create-topic' : '/create-topic',
         params: {
           categoryId: selectedCategory.id,
           mode: nextMode,
+          ...(isOnboardingCreate ? { source: 'onboarding' } : {}),
         },
       } as never
     );
@@ -480,6 +500,16 @@ export default function CreateTopicScreen() {
     option: CollectionOption
   ) {
     if (isCreatingRef.current) {
+      return;
+    }
+    if (isOnboardingCreate) {
+      startOnboardingCollection({
+        category: selectedCategory.id,
+        type: option.name,
+        collectionOptionId: option.id,
+        title: buildEntityCollectionTitle(option.name),
+      });
+      router.push('/onboarding-collection');
       return;
     }
     // Prefer the new Type identity, but recognize existing

@@ -1,5 +1,7 @@
 import { useBlock } from '@/context/block-context';
 import { useAuth } from '@/hooks/use-auth';
+import * as Notifications from 'expo-notifications';
+import { AppState } from 'react-native';
 import {
   CollectionSummary,
   getCollectionsByIds,
@@ -75,10 +77,9 @@ const NotificationContext =
 async function enrichNotifications(
   notifications: Notification[]
 ): Promise<EnrichedNotification[]> {
-  const actorUserIds = notifications.map(
-    (notification) =>
-      notification.actorUserId
-  );
+  const actorUserIds = notifications
+    .map((notification) => notification.actorUserId)
+    .filter((id): id is string => Boolean(id));
 
   const collectionIds = notifications
     .map(
@@ -124,9 +125,9 @@ async function enrichNotifications(
     (notification) => ({
       ...notification,
       actor:
-        profilesByUserId.get(
-          notification.actorUserId
-        ) ?? null,
+        notification.actorUserId
+          ? profilesByUserId.get(notification.actorUserId) ?? null
+          : null,
       collection:
         notification.collectionId
           ? collectionsById.get(
@@ -214,11 +215,17 @@ export function NotificationProvider({
   const [loadError, setLoadError] =
     useState(false);
 
+  // Avoid replacing an accurate OS badge with a zero before this user's
+  // first successful notification fetch completes.
+  const [badgeSourceUserId, setBadgeSourceUserId] =
+    useState<string | null>(null);
+
   const userId = user?.id;
 
   const refreshNotifications =
     useCallback(async () => {
       if (!userId) {
+        setBadgeSourceUserId(null);
         setNotifications([]);
         setPendingFollowRequests([]);
         setLoadError(false);
@@ -257,6 +264,7 @@ export function NotificationProvider({
           enrichedFollowRequests
         );
 
+        setBadgeSourceUserId(userId);
         setLoadError(false);
       } catch (error) {
         if (__DEV__) {
@@ -275,6 +283,28 @@ export function NotificationProvider({
   useEffect(() => {
     void refreshNotifications();
   }, [refreshNotifications]);
+
+  // Catch unread changes while the app was in the background, plus pushes
+  // received in the foreground. Existing Supabase realtime subscriptions
+  // continue to pick up changes made in the database.
+  useEffect(() => {
+    if (!userId) return;
+
+    const appStateSubscription = AppState.addEventListener(
+      'change',
+      (state) => {
+        if (state === 'active') void refreshNotifications();
+      }
+    );
+    const pushSubscription = Notifications.addNotificationReceivedListener(
+      () => { void refreshNotifications(); }
+    );
+
+    return () => {
+      appStateSubscription.remove();
+      pushSubscription.remove();
+    };
+  }, [userId, refreshNotifications]);
 
   useEffect(() => {
     if (!userId) {
@@ -315,9 +345,8 @@ export function NotificationProvider({
       () =>
         notifications.filter(
           (notification) =>
-            !blockedUserIds.includes(
-              notification.actorUserId
-            )
+            (!notification.actorUserId ||
+              !blockedUserIds.includes(notification.actorUserId))
         ),
       [
         blockedUserIds,
@@ -351,6 +380,18 @@ export function NotificationProvider({
 
   const pendingFollowRequestCount =
     visiblePendingFollowRequests.length;
+
+  // Top3 app icon badge sync: use the exact same unread social/announcement
+  // count as the in-app Notifications tab (not pending follow requests).
+  // A zero clears the icon; it does not clear notification records.
+  useEffect(() => {
+    if (userId && (badgeSourceUserId !== userId || loadError)) return;
+
+    const badgeCount = userId ? unreadCount : 0;
+    void Notifications.setBadgeCountAsync(badgeCount).catch((error) => {
+      if (__DEV__) console.log('Unable to sync app icon badge:', error);
+    });
+  }, [userId, badgeSourceUserId, loadError, unreadCount]);
 
   const markNotificationRead =
     useCallback(

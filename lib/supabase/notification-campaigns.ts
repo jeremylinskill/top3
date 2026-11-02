@@ -15,7 +15,7 @@ export type NotificationCampaign = {
   title: string | null;
   message: string | null;
   categoryId: string | null;
-  destinationKind: 'overall' | 'type' | 'theme' | null;
+  destinationKind: 'overall' | 'type' | 'theme' | 'genre' | null;
   optionId: string | null;
   audience: 'test' | 'all';
   status: NotificationCampaignStatus;
@@ -207,6 +207,44 @@ export type ScheduleNotificationCampaignInput = {
   expoPushToken: string;
 };
 
+export type ScheduleAllNotificationCampaignInput = {
+  id: string;
+  title: string;
+  message: string;
+  destination: NotificationDestination;
+  scheduledAt: string;
+  expectedDeviceCount: number;
+};
+
+export type ScheduledAudiencePreview = {
+  deviceCount: number;
+  userCount: number;
+};
+
+export async function previewScheduledBroadcastAudience():
+  Promise<ScheduledAudiencePreview> {
+  const { data, error } = await supabase.functions.invoke<{
+    success?: boolean;
+    deviceCount?: number;
+    userCount?: number;
+    error?: string;
+  }>('manage-notification-campaigns', { body: { action: 'preview-all' } });
+  if (error || data?.success !== true ||
+      typeof data.deviceCount !== 'number' ||
+      typeof data.userCount !== 'number') {
+    let reason = data?.error;
+    if (error instanceof FunctionsHttpError) {
+      try {
+        const response: unknown = await error.context.clone().json();
+        if (response && typeof response === 'object' && 'error' in response &&
+            typeof response.error === 'string') reason = response.error;
+      } catch { /* Leave the fallback. */ }
+    }
+    throw new Error(reason ?? 'Unable to check registered recipients.');
+  }
+  return { deviceCount: data.deviceCount, userCount: data.userCount };
+}
+
 export type EditScheduledNotificationCampaignInput = {
   id: string;
   title: string;
@@ -288,6 +326,17 @@ export async function scheduleNotificationCampaign(
   );
 }
 
+export async function scheduleAllNotificationCampaign(
+  input: ScheduleAllNotificationCampaignInput
+): Promise<string> {
+  return invokeCampaignMutation({
+    action: 'schedule', audience: 'all', id: input.id,
+    title: input.title, message: input.message,
+    destination: input.destination, scheduledAt: input.scheduledAt,
+    expectedDeviceCount: input.expectedDeviceCount,
+  }, 'Unable to schedule a notification for all users.');
+}
+
 export async function editScheduledNotificationCampaign(
   input: EditScheduledNotificationCampaignInput
 ): Promise<string> {
@@ -314,6 +363,18 @@ export async function rescheduleNotificationCampaign(
       scheduledAt: input.scheduledAt,
     },
     'Unable to reschedule notification.'
+  );
+}
+
+export async function deleteNotificationCampaignDraft(
+  campaignId: string
+): Promise<string> {
+  return invokeCampaignMutation(
+    {
+      action: 'delete-draft',
+      id: campaignId,
+    },
+    'Unable to delete notification draft.'
   );
 }
 

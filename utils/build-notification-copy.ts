@@ -3,6 +3,7 @@ import type { CollectionOption } from '@/types/collection-option';
 import {
   NotificationDestination,
   resolveDestinationOption,
+  resolveDestinationGenre,
 } from '@/types/notification-destination';
 
 export type SuggestedNotificationCopy = {
@@ -39,10 +40,9 @@ export function buildNotificationCopy(
     };
   }
 
-  const option = resolveDestinationOption(
-    destination,
-    options
-  );
+  const option = destination.kind === 'genre'
+    ? resolveDestinationGenre(destination)
+    : resolveDestinationOption(destination, options);
 
   if (!option) {
     return null;

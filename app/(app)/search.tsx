@@ -211,12 +211,10 @@ export default function SearchScreen() {
     isOnboardingSearch
       ? onboardingCollection
       : currentList;
+  // Onboarding uses the same Type/Theme provider identity as regular Create.
   const activeCollectionOption =
-    !isOnboardingSearch &&
-    currentList?.collectionOptionId
-      ? getOptionById(
-          currentList.collectionOptionId
-        )
+    activeCollection?.collectionOptionId
+      ? getOptionById(activeCollection.collectionOptionId)
       : undefined;
   const musicianRole = getMusicianRole(activeCollectionOption);
   const suggestMusicianLabel = musicianRole

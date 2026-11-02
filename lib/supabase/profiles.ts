@@ -113,6 +113,7 @@ export async function getNewestPublicProfiles(
     .order('created_at', {
       ascending: false,
     })
+    .order('id', { ascending: true })
     .limit(safeLimit);
 
   if (error) {
@@ -122,6 +123,31 @@ export async function getNewestPublicProfiles(
   return (data ?? []).map((row) =>
     mapProfileRow(row as ProfileRow)
   );
+}
+
+// Paged public profiles for the full Discover People screen.
+// The same public-only query and auth/RLS rules apply as on Discover.
+export async function getNewestPublicProfilesPage(
+  currentUserId: string,
+  offset: number,
+  pageSize = 20
+): Promise<UserProfile[]> {
+  const userId = currentUserId.trim();
+  if (!userId) return [];
+  const safeOffset = Math.max(0, Math.floor(offset));
+  const safeSize = Math.min(Math.max(Math.floor(pageSize), 1), 20);
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select(PROFILE_SELECT)
+    .eq('is_public', true)
+    .neq('id', userId)
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: true })
+    .range(safeOffset, safeOffset + safeSize - 1);
+
+  if (error) throw error;
+  return (data ?? []).map((row) => mapProfileRow(row as ProfileRow));
 }
 
 export async function getProfilesByIds(

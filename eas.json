@@ -12,7 +12,9 @@
       "distribution": "internal"
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "environment": "production",
+      "channel": "production"
     },
     "closed-test": {
       "environment": "development",
@@ -20,6 +22,14 @@
       "developmentClient": false,
       "channel": "closed-test",
       "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle"
+      }
+    },
+    "android-production": {
+      "extends": "production",
+      "environment": "production",
+      "channel": "production",
       "android": {
         "buildType": "app-bundle"
       }

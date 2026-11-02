@@ -293,7 +293,7 @@ function TabNavigator() {
           title: 'Discover',
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
-              name={focused ? 'compass' : 'compass-outline'}
+              name={focused ? 'search' : 'search-outline'}
               size={TAB_ICON_SIZE}
               color={color}
             />

@@ -8,6 +8,7 @@ import { useFeedback } from '@/context/feedback-context';
 import { useAppColors } from '@/hooks/use-app-colors';
 import {
   cancelNotificationCampaign,
+  deleteNotificationCampaignDraft,
   getNotificationCampaignHistory,
   type NotificationCampaign,
   type NotificationCampaignStatus,
@@ -42,8 +43,8 @@ function isDeliveryUnconfirmed(campaign: {
 }): boolean {
   return (
     campaign.status === 'failed' &&
-    campaign.lastError?.startsWith(
-      'Delivery outcome unconfirmed.'
+    campaign.lastError?.toLowerCase().includes(
+      'delivery outcome unconfirmed'
     ) === true
   );
 }
@@ -107,6 +108,12 @@ function getDestinationLabel(
     return `${category} · Overall`;
   }
 
+  if (campaign.destinationKind === 'genre') {
+    const genre = TOP3_CATEGORIES.find(item => item.id === campaign.categoryId)
+      ?.topics.find(item => item.id === campaign.optionId);
+    return `${category} · Genre · ${genre?.name ?? 'Previous selection'}`;
+  }
+
   const kind =
     campaign.destinationKind === 'type'
       ? 'Type'
@@ -168,6 +175,11 @@ export default function NotificationHistory({
     cancelConfirmationCampaign,
     setCancelConfirmationCampaign,
   ] = useState<NotificationCampaign | null>(null);
+  const deletingCampaignIdRef = useRef<string | null>(null);
+  const [deletingCampaignId, setDeletingCampaignId] =
+    useState<string | null>(null);
+  const [deleteConfirmationCampaign, setDeleteConfirmationCampaign] =
+    useState<NotificationCampaign | null>(null);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -242,7 +254,8 @@ export default function NotificationHistory({
   ) {
     if (
       campaign.status !== 'scheduled' ||
-      cancellingCampaignIdRef.current !== null
+      cancellingCampaignIdRef.current !== null ||
+      deletingCampaignIdRef.current !== null
     ) {
       return;
     }
@@ -275,7 +288,9 @@ export default function NotificationHistory({
       showFeedback({
         kind: 'success',
         title: 'Notification Cancelled',
-        message: 'This scheduled test has been cancelled.',
+        message: campaign.audience === 'all'
+          ? 'This scheduled broadcast has been cancelled.'
+          : 'This scheduled test has been cancelled.',
       });
     } catch (reason) {
       if (mountedRef.current) {
@@ -300,12 +315,64 @@ export default function NotificationHistory({
   ) {
     if (
       campaign.status !== 'scheduled' ||
-      cancellingCampaignIdRef.current !== null
+      cancellingCampaignIdRef.current !== null ||
+      deletingCampaignIdRef.current !== null
     ) {
       return;
     }
 
     setCancelConfirmationCampaign(campaign);
+  }
+
+  async function deleteDraftCampaign(campaign: NotificationCampaign) {
+    if (
+      mode !== 'manage' ||
+      campaign.status !== 'draft' ||
+      deletingCampaignIdRef.current !== null ||
+      cancellingCampaignIdRef.current !== null
+    ) {
+      return;
+    }
+
+    deletingCampaignIdRef.current = campaign.id;
+    setDeletingCampaignId(campaign.id);
+
+    try {
+      await deleteNotificationCampaignDraft(campaign.id);
+      if (!mountedRef.current) return;
+
+      setCampaigns((current) => current.filter((item) => item.id !== campaign.id));
+      setExpandedId((current) => current === campaign.id ? null : current);
+      showFeedback({
+        kind: 'success',
+        title: 'Draft Deleted',
+        message: 'The notification draft has been permanently deleted.',
+      });
+    } catch (reason) {
+      if (mountedRef.current) {
+        showFeedback({
+          kind: 'error',
+          title: 'Unable to Delete Draft',
+          message: reason instanceof Error ? reason.message : 'Please try again.',
+        });
+        // If the network response was lost after deletion, a refresh
+        // will accurately recover the server's current list.
+        void refreshHistory();
+      }
+    } finally {
+      deletingCampaignIdRef.current = null;
+      if (mountedRef.current) setDeletingCampaignId(null);
+    }
+  }
+
+  function confirmDeleteDraft(campaign: NotificationCampaign) {
+    if (
+      mode !== 'manage' ||
+      campaign.status !== 'draft' ||
+      deletingCampaignIdRef.current !== null ||
+      cancellingCampaignIdRef.current !== null
+    ) return;
+    setDeleteConfirmationCampaign(campaign);
   }
 
   const visibleCampaigns = campaigns.filter((campaign) =>
@@ -497,8 +564,7 @@ export default function NotificationHistory({
                   </AppText>
                 ) : null}
 
-                {campaign.scheduledAt &&
-                campaign.status !== 'scheduled' ? (
+                {campaign.scheduledAt ? (
                   <AppText variant="metadata">
                     {campaign.status === 'cancelled'
                       ? 'Originally scheduled for'
@@ -524,20 +590,32 @@ export default function NotificationHistory({
                     {' of '}
                     {campaign.targetCount}
                     {campaign.failedCount > 0
-                      ? ` · ${campaign.failedCount} failed`
+                      ? ` · ${campaign.failedCount} not accepted or unconfirmed`
                       : ''}
                   </AppText>
                 ) : null}
 
 
 
-                {campaign.status === 'draft' &&
-                onEditDraft ? (
-                  <AuthProviderButton
-                    title="Edit Draft"
-                    variant="secondary"
-                    onPress={() => onEditDraft(campaign)}
-                  />
+                {mode === 'manage' && campaign.status === 'draft' ? (
+                  <>
+                    {onEditDraft ? (
+                      <AuthProviderButton
+                        title="Edit Draft"
+                        variant="secondary"
+                        disabled={deletingCampaignId !== null}
+                        onPress={() => onEditDraft(campaign)}
+                      />
+                    ) : null}
+                    <AuthProviderButton
+                      title={deletingCampaignId === campaign.id
+                        ? 'Deleting…'
+                        : 'Delete Draft'}
+                      variant="destructive"
+                      disabled={deletingCampaignId !== null || cancellingCampaignId !== null}
+                      onPress={() => confirmDeleteDraft(campaign)}
+                    />
+                  </>
                 ) : null}
 
                 {mode === 'manage' &&
@@ -547,7 +625,7 @@ export default function NotificationHistory({
                       <AuthProviderButton
                         title="Edit Scheduled"
                         variant="secondary"
-                        disabled={cancellingCampaignId !== null}
+                        disabled={cancellingCampaignId !== null || deletingCampaignId !== null}
                         onPress={() => onEditScheduled(campaign)}
                       />
                     ) : null}
@@ -556,10 +634,12 @@ export default function NotificationHistory({
                       title={
                         cancellingCampaignId === campaign.id
                           ? 'Cancelling…'
-                          : 'Cancel Scheduled Test'
+                          : campaign.audience === 'all'
+                            ? 'Cancel Scheduled Broadcast'
+                            : 'Cancel Scheduled Test'
                       }
                       variant="destructive"
-                      disabled={cancellingCampaignId !== null}
+                      disabled={cancellingCampaignId !== null || deletingCampaignId !== null}
                       onPress={() =>
                         confirmCancelScheduledCampaign(campaign)
                       }
@@ -592,9 +672,36 @@ export default function NotificationHistory({
       ) : null}
 
       <ActionSheet
+        visible={deleteConfirmationCampaign !== null}
+        title="Delete Draft?"
+        message={`Permanently delete “${deleteConfirmationCampaign?.title?.trim() || 'Untitled draft'}”? This cannot be undone.`}
+        actions={[
+          {
+            label: 'Delete Draft',
+            variant: 'destructive',
+            onPress: () => {
+              const campaign = deleteConfirmationCampaign;
+              setDeleteConfirmationCampaign(null);
+              if (campaign) void deleteDraftCampaign(campaign);
+            },
+          },
+          {
+            label: 'Keep Draft',
+            variant: 'cancel',
+            onPress: () => setDeleteConfirmationCampaign(null),
+          },
+        ]}
+        onClose={() => setDeleteConfirmationCampaign(null)}
+      />
+
+      <ActionSheet
         visible={cancelConfirmationCampaign !== null}
-        title="Cancel Scheduled Test?"
-        message="This notification will no longer be scheduled for delivery. This action cannot be undone."
+        title={cancelConfirmationCampaign?.audience === 'all'
+          ? 'Cancel Scheduled Broadcast?'
+          : 'Cancel Scheduled Test?'}
+        message={cancelConfirmationCampaign?.audience === 'all'
+          ? 'Cancel this scheduled notification to all registered devices? Once cancelled, it will not be sent. This action cannot be undone.'
+          : 'This test notification will no longer be scheduled for delivery. This action cannot be undone.'}
         actions={[
           {
             label: 'Cancel Notification',

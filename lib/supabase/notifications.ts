@@ -1,17 +1,38 @@
 import { supabase } from '@/lib/supabase';
 
+export type CampaignAnnouncement = {
+  campaignId: string;
+  title: string;
+  message: string;
+  destinationKind: string;
+  categoryId: string;
+  optionId: string | null;
+};
+
+type CampaignAnnouncementRow = {
+  notification_id: string;
+  campaign_id: string;
+  title: string;
+  message: string;
+  destination_kind: string;
+  category_id: string;
+  option_id: string | null;
+};
+
 export type NotificationType =
   | 'like'
   | 'comment'
   | 'comment_reply'
   | 'comment_like'
   | 'follow'
-  | 'follow_request_accepted';
+  | 'follow_request_accepted'
+  | 'announcement';
 
 export type Notification = {
   id: string;
   recipientUserId: string;
-  actorUserId: string;
+  actorUserId: string | null;
+  announcement?: CampaignAnnouncement;
   type: NotificationType;
   collectionId?: string;
   commentId?: string;
@@ -22,7 +43,7 @@ export type Notification = {
 type NotificationRow = {
   id: string;
   recipient_user_id: string;
-  actor_user_id: string;
+  actor_user_id: string | null;
   type: NotificationType;
   collection_id: string | null;
   comment_id: string | null;
@@ -79,9 +100,41 @@ export async function getNotifications(
     throw error;
   }
 
-  return (data ?? []).map(
-    mapNotificationRow
+  const mapped = (data ?? []).map(mapNotificationRow);
+  if (!mapped.some((notification) => notification.type === 'announcement')) {
+    return mapped;
+  }
+
+  // The campaign table is admin-only. This RPC returns only announcements
+  // belonging to the signed-in user, with no privileged client-side access.
+  const { data: announcements, error: announcementError } = await supabase
+    .rpc('get_my_campaign_announcements');
+  if (announcementError) throw announcementError;
+  if (!Array.isArray(announcements)) {
+    throw new Error('Unexpected announcement response from Supabase.');
+  }
+  // Supabase's generated RPC type may describe a single record even though
+  // this database function returns SETOF rows. Validate before narrowing.
+  const announcementRows = announcements as CampaignAnnouncementRow[];
+  const byNotificationId = new Map<string, CampaignAnnouncementRow>(
+    announcementRows.map((row) => [row.notification_id, row])
   );
+  return mapped.map((notification) => {
+    if (notification.type !== 'announcement') return notification;
+    const row = byNotificationId.get(notification.id);
+    if (!row) return notification;
+    return {
+      ...notification,
+      announcement: {
+        campaignId: row.campaign_id,
+        title: row.title,
+        message: row.message,
+        destinationKind: row.destination_kind,
+        categoryId: row.category_id,
+        optionId: row.option_id,
+      },
+    };
+  });
 }
 
 export async function getUnreadNotificationCount(

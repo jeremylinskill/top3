@@ -27,6 +27,7 @@ import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
 import Reanimated from 'react-native-reanimated';
 import {
   getNewestPublicProfiles,
+  getNewestPublicProfilesPage,
   getPublicProfilesByIds,
   searchPublicProfiles,
 } from '@/lib/supabase/profiles';
@@ -41,7 +42,8 @@ import {
   getRecentSearches,
   saveRecentSearch,
 } from '@/services/recent-search-service';
-import { getTasteRecommendations } from '@/services/taste-recommendation-service';
+import { getEligibleTasteRecommendations } from '@/utils/similar-taste-people';
+import { buildDiscoverPeople } from '@/utils/discover-people';
 import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
 import {
@@ -218,6 +220,10 @@ export default function DiscoverScreen() {
 
   const [newestProfiles, setNewestProfiles] =
     useState<UserProfile[]>([]);
+  const [newestProfilesReady, setNewestProfilesReady] =
+    useState(false);
+  const [newestProfilesExhausted, setNewestProfilesExhausted] =
+    useState(false);
 
   const [recentSearches, setRecentSearches] =
     useState<string[]>([]);
@@ -276,13 +282,17 @@ export default function DiscoverScreen() {
 
   const loadNewestProfiles =
     useCallback(async () => {
-      const profiles =
-        await getNewestPublicProfiles(
-          profile.id,
-          8
-        );
-
-      setNewestProfiles(profiles);
+      setNewestProfilesReady(false);
+      try {
+        const profiles = await getNewestPublicProfiles(profile.id, 20);
+        setNewestProfiles(profiles);
+        setNewestProfilesExhausted(profiles.length < 20);
+      } catch (error) {
+        setNewestProfilesExhausted(true);
+        throw error;
+      } finally {
+        setNewestProfilesReady(true);
+      }
     }, [profile.id]);
 
   useEffect(() => {
@@ -356,11 +366,13 @@ export default function DiscoverScreen() {
         const profiles =
           await getNewestPublicProfiles(
             profile.id,
-            8
+            20
           );
 
         if (isMounted) {
           setNewestProfiles(profiles);
+          setNewestProfilesExhausted(profiles.length < 20);
+          setNewestProfilesReady(true);
         }
       } catch (error) {
         if (__DEV__) {
@@ -372,6 +384,8 @@ export default function DiscoverScreen() {
 
         if (isMounted) {
           setNewestProfiles([]);
+          setNewestProfilesExhausted(true);
+          setNewestProfilesReady(true);
         }
       }
     }
@@ -725,204 +739,87 @@ export default function DiscoverScreen() {
       ? trendingCategories
       : featuredCategories;
 
-  const tasteRecommendations = useMemo(() => {
-    const publishedPostCountByUserId =
-      new Map<string, number>();
-
-    visiblePosts.forEach((post) => {
-      publishedPostCountByUserId.set(
-        post.authorId,
-        (publishedPostCountByUserId.get(
-          post.authorId
-        ) ?? 0) + 1
-      );
-    });
-
-    const recommendationCandidates =
-      getTasteRecommendations({
-  posts: visiblePosts,
-  profilesByUserId,
-  currentUserId: profile.id,
-  limit: 5,
-});
-
-    return recommendationCandidates
-      .filter(
-        ({ user }) =>
-          user.id !== profile.id &&
-          !followedUserIds.includes(user.id) &&
-          !blockedUserIds.includes(user.id)
-      )
-      .sort((first, second) => {
-        if (second.score !== first.score) {
-          return second.score - first.score;
-        }
-
-        if (
-          second.sharedPickCount !==
-          first.sharedPickCount
-        ) {
-          return (
-            second.sharedPickCount -
-            first.sharedPickCount
-          );
-        }
-
-        const secondPublishedCount =
-          publishedPostCountByUserId.get(
-            second.user.id
-          ) ?? 0;
-
-        const firstPublishedCount =
-          publishedPostCountByUserId.get(
-            first.user.id
-          ) ?? 0;
-
-        if (
-          secondPublishedCount !==
-          firstPublishedCount
-        ) {
-          return (
-            secondPublishedCount -
-            firstPublishedCount
-          );
-        }
-
-        return first.user.displayName.localeCompare(
-          second.user.displayName
-        );
-      })
-      .slice(0, 3);
-  }, [
-    visiblePosts,
-    profilesByUserId,
-    followedUserIds,
-    blockedUserIds,
-    profile.id,
-  ]);
-
-  const activeCollectors = useMemo(() => {
-    const publishedCountByUserId =
-      new Map<string, number>();
-
-    visiblePosts.forEach((post) => {
-      publishedCountByUserId.set(
-        post.authorId,
-        (publishedCountByUserId.get(
-          post.authorId
-        ) ?? 0) + 1
-      );
-    });
-
-    return Array.from(
-      publishedCountByUserId.entries()
-    )
-      .map(([userId, collectionCount]) => {
-        const user = profilesByUserId[userId];
-
-        if (
-          !user ||
-          user.id === profile.id ||
-          blockedUserIds.includes(user.id)
-        ) {
-          return null;
-        }
-
-        return {
-          user,
-          collectionCount,
-        };
-      })
-      .filter(
-        (
-          collector
-        ): collector is {
-          user: UserProfile;
-          collectionCount: number;
-        } => collector !== null
-      )
-      .sort((first, second) => {
-        if (
-          second.collectionCount !==
-          first.collectionCount
-        ) {
-          return (
-            second.collectionCount -
-            first.collectionCount
-          );
-        }
-
-        return first.user.displayName.localeCompare(
-          second.user.displayName
-        );
-      });
-  }, [
-    visiblePosts,
-    profilesByUserId,
-    blockedUserIds,
-    profile.id,
-  ]);
-
-  const discoverMorePeople = useMemo(() => {
-    const excludedUserIds = new Set([
+  // Evaluate all available published-profile candidates before filtering,
+  // so the See all link appears only when a fourth eligible match exists.
+  const allTasteRecommendations = useMemo(
+    () => getEligibleTasteRecommendations({
+      posts: visiblePosts,
+      profilesByUserId,
+      currentUserId: profile.id,
+      followedUserIds,
+      blockedUserIds,
+    }),
+    [
+      visiblePosts,
+      profilesByUserId,
+      followedUserIds,
+      blockedUserIds,
       profile.id,
-      ...followedUserIds,
-      ...blockedUserIds,
-      ...tasteRecommendations.map(
-        ({ user }) => user.id
-      ),
-    ]);
+    ]
+  );
 
-    const people: Array<{
-      user: UserProfile;
-      detail: string;
-    }> = [];
+  // Keep Discover compact. The full screen uses the same recommendation helper.
+  const tasteRecommendations = useMemo(
+    () => allTasteRecommendations.slice(0, 3),
+    [allTasteRecommendations]
+  );
 
-    activeCollectors.forEach(
-      ({ user, collectionCount }) => {
-        if (
-          people.length >= 3 ||
-          excludedUserIds.has(user.id)
-        ) {
-          return;
-        }
+  // Same ranking and exclusions are used on the See all screen.
+  // Keep the full result here to know whether a fourth person exists.
+  const discoverMorePeople = useMemo(
+    () => buildDiscoverPeople({
+      posts: visiblePosts,
+      profilesByUserId,
+      newestProfiles: visibleNewestProfiles,
+      currentUserId: profile.id,
+      followedUserIds,
+      blockedUserIds,
+      excludedUserIds: tasteRecommendations.map(({ user }) => user.id),
+    }),
+    [
+      visiblePosts,
+      profilesByUserId,
+      visibleNewestProfiles,
+      profile.id,
+      followedUserIds,
+      blockedUserIds,
+      tasteRecommendations,
+    ]
+  );
 
-        excludedUserIds.add(user.id);
+  // Look beyond the first 20 newest profiles only when necessary.
+  // This avoids hiding See all when the first batch is already followed
+  // or otherwise excluded, without fetching every member up front.
+  useEffect(() => {
+    if (!newestProfilesReady || newestProfilesExhausted ||
+        discoverMorePeople.length > 3) return;
 
-        people.push({
-          user,
-          detail:
-            collectionCount === 1
-              ? '1 published Top 3'
-              : `${collectionCount} published Top 3s`,
+    let cancelled = false;
+    const offset = newestProfiles.length;
+    void getNewestPublicProfilesPage(profile.id, offset, 20)
+      .then((nextPage) => {
+        if (cancelled) return;
+        setNewestProfiles((existing) => {
+          if (existing.length !== offset) return existing;
+          const known = new Set(existing.map((user) => user.id));
+          return [
+            ...existing,
+            ...nextPage.filter((user) => !known.has(user.id)),
+          ];
         });
-      }
-    );
-
-    visibleNewestProfiles.forEach((user) => {
-      if (
-        people.length >= 3 ||
-        excludedUserIds.has(user.id)
-      ) {
-        return;
-      }
-
-      excludedUserIds.add(user.id);
-
-      people.push({
-        user,
-        detail: 'New to Top 3',
+        setNewestProfilesExhausted(nextPage.length < 20);
+      })
+      .catch((error) => {
+        if (__DEV__) console.log('Unable to check more profiles:', error);
+        if (!cancelled) setNewestProfilesExhausted(true);
       });
-    });
-
-    return people;
+    return () => { cancelled = true; };
   }, [
-    activeCollectors,
-    blockedUserIds,
-    followedUserIds,
+    newestProfilesReady,
+    newestProfilesExhausted,
+    discoverMorePeople.length,
+    newestProfiles.length,
     profile.id,
-    tasteRecommendations,
-    visibleNewestProfiles,
   ]);
 
   const normalizedSearchQuery =
@@ -1940,11 +1837,31 @@ export default function DiscoverScreen() {
             <>
             {tasteRecommendations.length > 0 ? (
               <View style={styles.tasteSection}>
-                <AppText
-                  variant="sectionTitle"
-                  style={styles.sectionTitle}>
-                  People with Similar Taste
-                </AppText>
+                <View style={styles.discoverPeopleHeading}>
+                  <AppText variant="sectionTitle">
+                    People with Similar Taste
+                  </AppText>
+                  {allTasteRecommendations.length > 3 ? (
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.discoverSeeAll,
+                        pressed && styles.pressed,
+                      ]}
+                      hitSlop={8}
+                      onPress={() => router.push('/similar-taste-people')}
+                      accessibilityRole="button"
+                      accessibilityLabel="See all people with similar taste">
+                      <AppText variant="label" tone="secondary" emphasis="strong">
+                        See all
+                      </AppText>
+                      <Ionicons
+                        name="chevron-forward"
+                        size={16}
+                        color={colors.secondaryText}
+                      />
+                    </Pressable>
+                  ) : null}
+                </View>
 
                 <View style={styles.tasteList}>
                   {tasteRecommendations.map(
@@ -2080,14 +1997,41 @@ export default function DiscoverScreen() {
                   tasteRecommendations.length > 0 &&
                     styles.discoverMoreSection,
                 ]}>
-                <AppText
-                  variant="sectionTitle"
-                  style={styles.sectionTitle}>
-                  Discover More People
-                </AppText>
+                <View style={styles.discoverPeopleHeading}>
+                  <AppText variant="sectionTitle">
+                    Discover More People
+                  </AppText>
+                  {discoverMorePeople.length > 3 ? (
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.discoverSeeAll,
+                        pressed && styles.pressed,
+                      ]}
+                      hitSlop={8}
+                      onPress={() => router.push({
+                        pathname: '/discover-people',
+                        params: {
+                          exclude: tasteRecommendations
+                            .map(({ user }) => user.id)
+                            .join(','),
+                        },
+                      })}
+                      accessibilityRole="button"
+                      accessibilityLabel="See all people to follow">
+                      <AppText variant="label" tone="secondary" emphasis="strong">
+                        See all
+                      </AppText>
+                      <Ionicons
+                        name="chevron-forward"
+                        size={16}
+                        color={colors.secondaryText}
+                      />
+                    </Pressable>
+                  ) : null}
+                </View>
 
                 <View style={styles.tasteList}>
-                  {discoverMorePeople.map(
+                  {discoverMorePeople.slice(0, 3).map(
                     ({ user, detail }) => {
                       const userIsFollowed =
                         isFollowing(user.id);
@@ -2504,6 +2448,23 @@ const styles = StyleSheet.create({
 
   tasteSection: {
     marginTop: 0,
+  },
+
+  discoverPeopleHeading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 12,
+  },
+
+  discoverSeeAll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+    minHeight: 38,
+    paddingHorizontal: 4,
   },
 
   discoverMoreSection: {

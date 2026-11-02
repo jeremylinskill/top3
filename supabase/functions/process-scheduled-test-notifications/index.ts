@@ -2,6 +2,7 @@
 // Delivery remains disabled until explicitly implemented and reviewed.
 
 import { createClient } from "npm:@supabase/supabase-js@^2";
+import { isNotificationGenre } from "../_shared/notification-genres.ts";
 
 const WORKER_SECRET_NAME = "SCHEDULED_TEST_WORKER_SECRET";
 const WORKER_SECRET_HEADER = "x-scheduled-test-worker-secret";
@@ -101,7 +102,7 @@ type TestDestination =
   | { categoryId: string; kind: "overall" }
   | {
       categoryId: string;
-      kind: "type" | "theme";
+      kind: "type" | "theme" | "genre";
       optionId: string;
     };
 
@@ -231,6 +232,15 @@ async function verifyClaimedTestDelivery(
     destination = {
       categoryId: campaign.category_id,
       kind: "overall",
+    };
+  } else if (
+    campaign.destination_kind === "genre" &&
+    isNotificationGenre(campaign.category_id, campaign.option_id)
+  ) {
+    destination = {
+      categoryId: campaign.category_id,
+      kind: "genre",
+      optionId: campaign.option_id as string,
     };
   } else if (
     (campaign.destination_kind === "type" ||

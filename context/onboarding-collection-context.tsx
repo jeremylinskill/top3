@@ -13,6 +13,8 @@ export type OnboardingCollection = {
   category: string;
   type?: string;
   topic?: string;
+  themeId?: string;
+  collectionOptionId?: string;
   title: string;
   items: [
     Top3Item | null,
@@ -30,6 +32,8 @@ type StartOnboardingCollectionInput = {
   category: string;
   type?: string;
   topic?: string;
+  themeId?: string;
+  collectionOptionId?: string;
   title: string;
 };
 
@@ -269,6 +273,8 @@ export function OnboardingCollectionProvider({
       category: input.category,
       type: input.type,
       topic: input.topic,
+      themeId: input.themeId,
+      collectionOptionId: input.collectionOptionId,
       title: input.title,
       items: [null, null, null],
     });

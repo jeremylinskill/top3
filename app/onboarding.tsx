@@ -4,7 +4,6 @@ import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { TEXT_STYLES } from '@/constants/typography';
 import { useOnboardingCollection } from '@/context/onboarding-collection-context';
 import { useAppColors } from '@/hooks/use-app-colors';
-import { buildCollectionTitle } from '@/utils/build-collection-title';
 import { router } from 'expo-router';
 import {
   useEffect,
@@ -61,7 +60,6 @@ export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
 
   const {
-    startCollection,
     isLoading: isOnboardingCollectionLoading,
   } = useOnboardingCollection();
 
@@ -404,16 +402,12 @@ export default function OnboardingScreen() {
       return;
     }
 
-    startCollection({
-      category: categoryId,
-      topic: undefined,
-      title: buildCollectionTitle(
-        categoryId,
-        ''
-      ),
-    });
-
-    router.push('/onboarding-collection');
+    // Share the registered-user Create chooser, not an Overall-only list.
+    // No list is created until the user chooses Overall/Genre/Type/Theme.
+    router.push({
+      pathname: '/onboarding-create-topic',
+      params: { categoryId, source: 'onboarding' },
+    } as never);
   }
 
   function handleSignIn() {

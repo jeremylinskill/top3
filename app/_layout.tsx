@@ -109,7 +109,7 @@ function parseCampaignDestination(
   }
 
   if (
-    (kind === 'type' || kind === 'theme') &&
+    (kind === 'type' || kind === 'theme' || kind === 'genre') &&
     typeof optionId === 'string' &&
     optionId.trim().length > 0
   ) {
@@ -206,7 +206,7 @@ function NotificationResponseController() {
     lists,
     isCollectionsLoaded,
     hasCollectionsLoadError,
-    createList,
+    startListWithoutSaving,
     selectList,
   } = useTop3();
 
@@ -329,6 +329,7 @@ function NotificationResponseController() {
     if (!destinationInput) {
       if (
         pendingCampaign.destination.kind !== 'overall' &&
+        pendingCampaign.destination.kind !== 'genre' &&
         options.length === 0
       ) {
         return;
@@ -399,7 +400,7 @@ function NotificationResponseController() {
           listId = existingCollection.id;
           selectList(listId);
         } else {
-          listId = await createList(resolvedDestinationInput);
+          listId = startListWithoutSaving(resolvedDestinationInput);
         }
 
         setPendingCampaign((current) =>
@@ -440,7 +441,7 @@ function NotificationResponseController() {
     hasCollectionsLoadError,
     options,
     lists,
-    createList,
+    startListWithoutSaving,
     selectList,
   ]);
 
@@ -545,6 +546,7 @@ export default function RootLayout() {
                                             animation: 'none',
                                           }}
                                         />
+                                        <Stack.Screen name="onboarding-create-topic" />
                                         <Stack.Screen name="onboarding-collection" />
                                         <Stack.Screen name="onboarding-search" />
                                         <Stack.Screen name="onboarding-published" />

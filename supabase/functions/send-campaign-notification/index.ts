@@ -1,4 +1,5 @@
 import "@supabase/functions-js/edge-runtime.d.ts";
+import { isNotificationGenre } from "../_shared/notification-genres.ts";
 import { withSupabase } from "@supabase/server";
 import type { SupabaseClient } from "npm:@supabase/supabase-js@^2";
 
@@ -30,7 +31,7 @@ type CampaignHistoryDatabase = {
           title: string;
           message: string;
           category_id: string;
-          destination_kind: "overall" | "type" | "theme";
+          destination_kind: "overall" | "type" | "theme" | "genre";
           option_id?: string | null;
           audience: "test";
           status: "sending";
@@ -190,8 +191,8 @@ export default {
       const validDestination =
         kind === "overall"
           ? optionId === undefined
-          : (kind === "type" || kind === "theme") &&
-            validOptionId;
+          : ((kind === "type" || kind === "theme") && validOptionId) ||
+            (kind === "genre" && isNotificationGenre(categoryId, optionId));
 
       if (
         !cleanTitle ||
@@ -215,7 +216,7 @@ export default {
         | { categoryId: string; kind: "overall" }
         | {
             categoryId: string;
-            kind: "type" | "theme";
+            kind: "type" | "theme" | "genre";
             optionId: string;
           };
 
@@ -226,44 +227,48 @@ export default {
         };
       } else {
         const cleanOptionId = optionId as string;
-        const cleanKind = kind as "type" | "theme";
+        const cleanKind = kind as "type" | "theme" | "genre";
 
-        const {
-          data: matchedOption,
-          error: optionError,
-        } = await ctx.supabaseAdmin
-          .from("collection_options")
-          .select("id")
-          .eq("id", cleanOptionId)
-          .eq("category_id", categoryId as string)
-          .eq("kind", cleanKind)
-          .eq("active", true)
-          .maybeSingle();
+        if (cleanKind === 'genre') {
+          cleanDestination = { categoryId: categoryId as string, kind: 'genre', optionId: cleanOptionId };
+        } else {
+          const {
+            data: matchedOption,
+            error: optionError,
+          } = await ctx.supabaseAdmin
+            .from("collection_options")
+            .select("id")
+            .eq("id", cleanOptionId)
+            .eq("category_id", categoryId as string)
+            .eq("kind", cleanKind)
+            .eq("active", true)
+            .maybeSingle();
 
-        if (optionError) {
-          console.error(
-            "Campaign destination verification failed:",
-            optionError.message
-          );
+          if (optionError) {
+            console.error(
+              "Campaign destination verification failed:",
+              optionError.message
+            );
 
-          return Response.json(
-            { error: "Unable to verify destination." },
-            { status: 500 }
-          );
+            return Response.json(
+              { error: "Unable to verify destination." },
+              { status: 500 }
+            );
+          }
+
+          if (!matchedOption) {
+            return Response.json(
+              { error: "Destination is not available." },
+              { status: 400 }
+            );
+          }
+
+          cleanDestination = {
+            categoryId: categoryId as string,
+            kind: cleanKind,
+            optionId: cleanOptionId,
+          };
         }
-
-        if (!matchedOption) {
-          return Response.json(
-            { error: "Destination is not available." },
-            { status: 400 }
-          );
-        }
-
-        cleanDestination = {
-          categoryId: categoryId as string,
-          kind: cleanKind,
-          optionId: cleanOptionId,
-        };
       }
 
       // A test can only target a device registered

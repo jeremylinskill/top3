@@ -466,3 +466,6 @@ entrypoint = "./functions/manage-notification-campaigns/index.ts"
 enabled = true
 verify_jwt = false
 entrypoint = "./functions/process-scheduled-test-notifications/index.ts"
+
+[functions.process-scheduled-broadcast-notifications]
+verify_jwt = false

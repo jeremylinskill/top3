@@ -11,12 +11,13 @@ type NotificationType =
   | "comment_reply"
   | "comment_like"
   | "follow"
-  | "follow_request_accepted";
+  | "follow_request_accepted"
+  | "announcement";
 
 type NotificationRow = {
   id: string;
   recipient_user_id: string;
-  actor_user_id: string;
+  actor_user_id: string | null;
   type: NotificationType;
   collection_id: string | null;
   comment_id: string | null;
@@ -187,6 +188,24 @@ export default {
       const notification =
         payload.record;
 
+      // Campaign announcements are sent by the broadcast worker.
+      // Never interpret them as social notifications or send a second push.
+      if (notification.type === "announcement") {
+        return Response.json({
+          skipped: true,
+          reason: "Campaign announcements use the broadcast worker.",
+        });
+      }
+
+      // Only social notifications reach this handler. They require an actor.
+      // A malformed actor-less social event must never become a follow push.
+      if (!notification.actor_user_id) {
+        return Response.json({
+          skipped: true,
+          reason: "Social notification missing actor.",
+        });
+      }
+
       const {
         data: pushTokenData,
         error: pushTokenError,
@@ -292,6 +311,59 @@ export default {
         collectionTitle,
       });
 
+      // The INSERT webhook runs after its in-app notification exists.
+      // Badge lookup is optional: failure must never stop a social push.
+      const badgeCount = await (async (): Promise<number | null> => {
+        const client = ctx.supabaseAdmin;
+        const recipientUserId = notification.recipient_user_id;
+        try {
+      // Keep iOS icon badges equal to the Notifications tab: hide unread
+      // notifications whose actor is blocked by this recipient. Actor-less
+      // announcement notifications remain visible and must still count.
+      const { count: total, error: totalError } = await client
+        .from("notifications")
+        .select("id", { count: "exact", head: true })
+        .eq("recipient_user_id", recipientUserId)
+        .eq("is_read", false);
+      if (totalError || typeof total !== "number" ||
+          !Number.isSafeInteger(total) || total < 0) return null;
+
+      let hidden = 0;
+      const BLOCK_PAGE_SIZE = 500;
+      const BLOCK_BATCH_SIZE = 100;
+      for (let offset = 0; ; offset += BLOCK_PAGE_SIZE) {
+        const { data: blockRows, error: blockError } = await client
+          .from("blocks")
+          .select("blocked_user_id")
+          .eq("blocker_id", recipientUserId)
+          .order("blocked_user_id", { ascending: true })
+          .range(offset, offset + BLOCK_PAGE_SIZE - 1);
+        if (blockError || !Array.isArray(blockRows)) return null;
+        const blockedIds = blockRows.map((row) => row.blocked_user_id);
+        if (blockedIds.some((value) => typeof value !== "string" || !value)) return null;
+        for (let index = 0; index < blockedIds.length; index += BLOCK_BATCH_SIZE) {
+          const { count: hiddenCount, error: hiddenError } = await client
+            .from("notifications")
+            .select("id", { count: "exact", head: true })
+            .eq("recipient_user_id", recipientUserId)
+            .eq("is_read", false)
+            .in("actor_user_id", blockedIds.slice(index, index + BLOCK_BATCH_SIZE));
+          if (hiddenError || typeof hiddenCount !== "number" ||
+              !Number.isSafeInteger(hiddenCount) || hiddenCount < 0) return null;
+          hidden += hiddenCount;
+        }
+        if (blockRows.length < BLOCK_PAGE_SIZE) break;
+      }
+      return hidden <= total ? total - hidden : null;
+        } catch {
+          console.error("Visible unread badge lookup failed; omitting push badge.");
+          return null;
+        }
+      })();
+      if (badgeCount === null) {
+        console.error("Visible unread badge count unavailable; omitting push badge.");
+      }
+
       const messages =
         pushTokens.map(
           ({ expo_push_token }) => ({
@@ -299,6 +371,7 @@ export default {
             sound: "default",
             title,
             body,
+            ...(badgeCount === null ? {} : { badge: badgeCount }),
             data: {
               notificationId:
                 notification.id,

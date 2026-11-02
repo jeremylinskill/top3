@@ -32,10 +32,12 @@ import {
   useState,
 } from 'react';
 import {
+  AppState,
   Platform,
 } from 'react-native';
 
 const MINIMUM_LOADING_DURATION_MS = 1100;
+const PUSH_SYNC_COOLDOWN_MS = 5 * 60 * 1000;
 
 interface AuthContextValue {
   user: User | null;
@@ -168,57 +170,91 @@ export function AuthProvider({
     }
   }, [user?.id]);
 
+  // Repair missing push registrations when an opted-in user signs in or
+  // returns to Top 3. Never request notification permission automatically.
   useEffect(() => {
     const userId = user?.id;
 
     if (
       isLoading ||
-      !userId
+      !userId ||
+      (
+        Platform.OS !== 'ios' &&
+        Platform.OS !== 'android'
+      )
     ) {
       return;
     }
 
     let isCancelled = false;
+    let isSyncing = false;
+    let lastAttemptAt = 0;
 
     async function syncPushToken(
       authenticatedUserId: string
     ) {
+      if (
+        isCancelled ||
+        isSyncing ||
+        AppState.currentState !== 'active' ||
+        Date.now() - lastAttemptAt < PUSH_SYNC_COOLDOWN_MS
+      ) {
+        return;
+      }
+
+      lastAttemptAt = Date.now();
+      isSyncing = true;
+
       try {
-        const pushNotificationsEnabled =
+        const isEnabled =
           await getPushNotificationsEnabled(
             authenticatedUserId
           );
 
-        if (
-          isCancelled ||
-          !pushNotificationsEnabled
-        ) {
+        if (isCancelled || !isEnabled) {
           return;
         }
 
+        // This only reads the OS permission; it never shows a prompt.
         const expoPushToken =
           await getExistingPushToken();
 
+        if (isCancelled || !expoPushToken) {
+          return;
+        }
+
+        // A user may have turned notifications off while we were awaiting
+        // the token, so recheck their opt-in before writing to Supabase.
         if (
-          isCancelled ||
-          !expoPushToken
+          !(await getPushNotificationsEnabled(
+            authenticatedUserId
+          )) ||
+          isCancelled
         ) {
           return;
         }
 
-        if (
-          Platform.OS !== 'ios' &&
-          Platform.OS !== 'android'
-        ) {
+        const platform = Platform.OS;
+        if (platform !== 'ios' && platform !== 'android') {
           return;
         }
 
         await upsertPushToken({
-          userId:
-            authenticatedUserId,
+          userId: authenticatedUserId,
           expoPushToken,
-          platform: Platform.OS,
+          platform,
         });
+
+        // If Settings disabled notifications during the database request,
+        // don't leave behind a newly registered device.
+        if (
+          !isCancelled &&
+          !(await getPushNotificationsEnabled(
+            authenticatedUserId
+          ))
+        ) {
+          await deletePushToken(expoPushToken);
+        }
       } catch (error) {
         if (__DEV__) {
           console.log(
@@ -226,13 +262,25 @@ export function AuthProvider({
             error
           );
         }
+      } finally {
+        isSyncing = false;
       }
     }
 
     void syncPushToken(userId);
 
+    const subscription = AppState.addEventListener(
+      'change',
+      (nextAppState) => {
+        if (nextAppState === 'active') {
+          void syncPushToken(userId);
+        }
+      }
+    );
+
     return () => {
       isCancelled = true;
+      subscription.remove();
     };
   }, [
     isLoading,
