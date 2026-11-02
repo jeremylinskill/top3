@@ -2,6 +2,47 @@ CHANGELOG.md
 
 This document records significant milestones in the evolution of Top3.
 
+1.1.2 — November 1, 2026 — Store submissions (NOT YET PUBLIC)
+
+Status: iOS 1.1.2 (build 17) was submitted to Apple and is Waiting for
+Review, with manual public release selected. Android 1.1.2 (versionCode 6)
+was submitted to Google Play Closed testing – Alpha and is In review.
+Android uses Development Supabase in closed testing; a separate
+Production-connected build is required before a public Android release.
+
+Added / improved in 1.1.2 application source:
+
+• Discover More People: shows up to three suggestions in Discover; conditional
+  See all opens a paginated people screen with community search, Follow
+  controls, existing-connection status and profile navigation.
+• People with Similar Taste: conditional See all for additional ranked Taste
+  Matches, percentages, shared-pick context and paged list presentation;
+  card text alignment matches Discover.
+• Discover tab uses a magnifying glass (search/search-outline) instead of
+  compass variants, with the existing navigation behaviour preserved.
+• Updated onboarding flows, including Taste Match and first-Top-3 creation.
+• Home-screen notification badges follow visible unread notifications;
+  push payloads include the recipient's count and exclude blocked actors.
+• Administrator Delete Draft with confirmation, draft-only authorization,
+  and removal from Manage after successful deletion.
+• Apple Music search/ranking/genre refinements aligned to Production.
+• Scheduled broadcast announcements are saved in-app before push delivery;
+  original canary and full-audience restrictions remain in place.
+
+Deployment and validation notes:
+
+• Development and Production matched on 79 migration version identifiers at
+  the November 1 audit. This was not a comprehensive object-by-object schema check.
+• Relevant updated Edge Functions were backed up and verified after guarded
+  Production deployments. Production full-audience broadcast delivery is OFF.
+• Development draft deletion passed a focused functional check. Repeated
+  app-side TypeScript checks passed. New badge and onboarding experiences
+  have not been claimed fully device-verified on the submitted binaries.
+• These notes describe the source/build submitted for review, NOT a published
+  store release. See RELEASE_1_1_2_STATUS.md for IDs and pending gates.
+
+---
+
 October 25, 2026 — Defer signed-in list creation until first selection (Development)
 
 DEFER_LIST_CREATION_UNTIL_FIRST_ITEM_20261025: Selecting Overall, a Genre, a Type

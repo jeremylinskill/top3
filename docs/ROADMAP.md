@@ -1,12 +1,38 @@
 Top3 Product Roadmap
 
-Document Version: 3.0
+Document Version: 3.1
 Status: Post-launch Active Development
 Owner: Jeremy Linskill
-Last Updated: October 21, 2026
+Last Updated: November 1, 2026
 Baseline Commit: af67e7c
 
 Document versions track roadmap revisions, not published app versions.
+
+Current Planning Checkpoint — November 1, 2026
+
+Top 3 1.1.2 is **submitted to Apple for review** (iOS build 17) and to
+Google Play **Closed testing – Alpha** (Android versionCode 6). Neither
+update is publicly released. Android Production access and a separate
+Production-Supabase-connected Android build are still required.
+
+Implemented as the current release candidate:
+
+• Discover More People: expanded browsable candidates, conditional See all,
+  full-community name/username search and follow interactions.
+• People with Similar Taste: conditional See all, ranked Taste Matches,
+  percentage explanations and consistent preview/full-screen layouts.
+• Updated onboarding, Discover search icon and notification unread badges.
+• Administrator notification draft deletion and improved backend safeguards.
+
+Immediate priorities are **store approval, controlled iOS release, Android
+closed-testing eligibility and Production-connected Android launch**.
+Confirm targeted client flows on both platforms where not already verified;
+do not rerun unrelated passed backend checks. Longer-term discovery quality,
+conversation, retention and Feed scalability initiatives remain active.
+
+The historical roadmap descriptions below are retained as their original
+planning context; the current 1.1.2 checkpoint supersedes older release
+status statements. See `RELEASE_1_1_2_STATUS.md` and `RELEASE_CHECKLIST.md`.
 
 Purpose
 
@@ -675,6 +701,12 @@ The long-term goal is not to maximize content creation or passive
 engagement, but to create meaningful connections through shared taste.
 
 Revision History
+
+Version 3.1 --- November 1, 2026
+
+Recorded 1.1.2 completed development features, verified backend alignment,
+both store submissions under review, and remaining public-release gates.
+Retained the four product pillars and prior long-term initiative planning.
 
 Version 3.0 --- October 21, 2026
 

@@ -1,13 +1,13 @@
 CURRENT_STATE.md
 
 Project: Top3
-Document Version: 3.2
+Document Version: 3.3
 Document versions are not published app versions.
 Status: Post-launch Active Development
-Last Updated: October 21, 2026
+Last Updated: November 1, 2026
 Current Branch: main
 
-Last Verified Commit
+Last Previously Recorded Verified Commit (October 21)
 
 eca4cda
 
@@ -21,9 +21,8 @@ Project Status
 
 Current Feature
 
-Documentation reconciliation and next-release preparation, following
-substantial Create, Types and Themes, Soundtracks, notification, social,
-and Android development.
+Version 1.1.2 store-review coordination and public Android launch readiness.
+Both release builds are complete and submitted; neither update is public yet.
 
 The production iOS app is live. Active development is on main.
 The initial public Android release remains pending.
@@ -31,11 +30,47 @@ The initial public Android release remains pending.
 Development and Production Supabase / Amplitude environments remain
 separate, as established in commit d70def4.
 
-The committed codebase is current through eca4cda. Completion in
-Development does not establish that corresponding changes have been
-deployed to Production or included in a published app-store binary.
+The last recorded verified Git checkpoint is eca4cda (October 21).
+Subsequent 1.1.2 local changes and EAS builds occurred after that checkpoint;
+a new release commit has not been verified here. The newer release/build
+snapshot appears below and in docs/RELEASE_1_1_2_STATUS.md.
 
 The release-specific source of truth is docs/RELEASE_CHECKLIST.md.
+
+
+November 1, 2026 — v1.1.2 Release and Backend Checkpoint
+
+**Release stage: submitted for review; not publicly published.**
+
+• iOS 1.1.2, build 17, Production EAS/Supabase and `production` OTA channel:
+  App Store Connect submission **Waiting for Review**; manual release chosen.
+• Android 1.1.2, versionCode 6, Development EAS/Supabase and `closed-test`
+  OTA channel: Google Play **Closed testing – Alpha**, **In review**.
+• New public Android build must connect to Production Supabase; Google
+  Production access/closed-testing eligibility has not yet been verified.
+• Development and Production showed 79 identical applied migration versions
+  during the alignment audit. This is not a complete independent schema audit.
+• Reviewed Apple Music search, badge-enabled social/broadcast functions and
+  draft deletion functions were deployed to and verified in Production.
+• Production full-audience broadcasts remain disabled; the previous
+  restricted canary did not authorize public sends.
+• New app experiences: updated onboarding; conditional See all for Discover
+  More People and People with Similar Taste; community member search;
+  paginated profiles and Follow; collapsible headers; search tab icon;
+  unread app-icon badges; administrator Delete Draft.
+• Local TypeScript checks passed. The Development Delete Draft workflow was
+  checked successfully. This checkpoint does not claim full device QA of
+  all new flows or successful public app-store release.
+• Development and Production remain logically separate; Production wins all
+  conflicts in any future migration of Android Development-test user data.
+
+**Current release record:** docs/RELEASE_1_1_2_STATUS.md.
+**Notification operations:** docs/NOTIFICATION_1_1_2_STATUS.md.
+**Store release gates:** docs/RELEASE_CHECKLIST.md.
+
+The material beginning with "October 21, 2026 Development Checkpoint"
+and its related historical descriptions is preserved as an earlier snapshot;
+where older production-status claims differ, the November 1 checkpoint wins.
 
 October 21, 2026 Development Checkpoint
 
@@ -203,7 +238,7 @@ Onboarding categories are derived directly from TOP3_CATEGORIES and
 alphabetized automatically. The two-column layout therefore adapts
 without a manually maintained onboarding category order.
 
-Current Priority
+Current Priority (historical October 21 snapshot)
 
 Maintain the October 21 development checkpoint and reconcile the
 remaining documentation with the committed implementation.

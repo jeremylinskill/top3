@@ -1,9 +1,59 @@
 # Top 3 — Release Checklist
 
-Status: Active preparation
-Last Updated: October 21, 2026
+Status: 1.1.2 submitted for store review; public release pending
+Last Updated: November 1, 2026
 Baseline Commit: `76d4836`
-Release Scope: Next iOS update and initial Android / Google Play release
+Release Scope: iOS 1.1.2 (build 17) and Android 1.1.2 (versionCode 6)
+
+## Current release gates — 1.1.2 (November 1, 2026)
+
+**This section is current.** Feature-by-feature checklist entries further
+below were drafted at earlier development checkpoints and remain as historical
+tracking; older unchecked Production tasks are not proof that the November 1
+alignment deployments did not occur. Refer to
+[release status](RELEASE_1_1_2_STATUS.md) for verified specifics.
+
+### Completed / verified at this stage
+
+- [x] iOS 1.1.2 build **17** finished; Production EAS environment,
+      Supabase and `production` OTA channel.
+- [x] iOS 1.1.2 (17) submitted to Apple; **Waiting for Review**.
+- [x] **Manual** iOS release selected (not automatic publication).
+- [x] Android 1.1.2 versionCode **6** finished with `closed-test` channel
+      and **Development** EAS/Supabase environment.
+- [x] Android 1.1.2 (6) submitted to Google Play **Closed testing – Alpha**;
+      **In review** (managed publishing off).
+- [x] Reviewed backend migration histories matched at **79 versions**.
+- [x] Guarded, backed-up Production function promotions completed for
+      Apple Music search, two visible-unread badge push functions, and
+      admin notification draft deletion.
+- [x] Focused Development Delete Draft functionality checked; local
+      TypeScript verification passed for the added source.
+- [x] Production scheduled broadcast full-audience delivery left disabled.
+
+### Still required before the actual public launch
+
+- [ ] Apple approves 1.1.2; record decision and actual date.
+- [ ] When coordinated launch is ready, **manually release iOS 1.1.2**.
+- [ ] Google approves versionCode 6 for closed testing; verify rollout
+      to existing testers and record status.
+- [ ] Verify Google Play Production-access eligibility and secure approval;
+      do not assume the 12-tester / 14-day condition is already satisfied.
+- [ ] Prepare a **separate Android Production-connected release** using
+      Production Supabase; never publish the Dev-connected closed-test AAB.
+- [ ] Decide if any genuinely new Android Development user/content requires
+      a separate backed-up, non-overwriting migration to Production.
+- [ ] Perform *only focused outstanding client checks*: updated onboarding,
+      Discover people screens/follow navigation, badge permissions/display
+      and user-visible in-app announcements on new clients.
+- [ ] Record app-store public availability, actual release IDs and the
+      release Git commit when verified; close the milestone afterward.
+
+**Not required now:** another broad database parity audit, rerunning
+previously passed push-canary/security cycles, deploying the legacy
+immediate all-user broadcast helper, or turning on Production broadcasts.
+
+---
 
 ## Purpose
 
@@ -49,7 +99,13 @@ Never promote changes to Production as part of routine development.
 Do not store credentials, signing keys, or privileged secrets
 in this document.
 
-## Completed in Development — Not Yet Released
+## Historical October 21 feature tracking (preserved)
+
+The following item-level states were written for an earlier release plan.
+They are retained for traceability and have **not** been rechecked one by
+one. Use the current 1.1.2 release gates above when statements conflict.
+
+### Completed in Development — Not Yet Released (October 21 baseline)
 
 - [x] Implement Album Type: Soundtracks.
 - [x] Remove Soundtrack from the standard Album Genre choices.
