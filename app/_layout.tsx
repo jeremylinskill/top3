@@ -65,6 +65,9 @@ type NotificationRouteData = {
   actorUserId?: unknown;
   collectionId?: unknown;
   destination?: unknown;
+  top3RequestId?: unknown;
+  top3_request_id?: unknown;
+  requestId?: unknown;
 };
 
 function getStringValue(
@@ -94,8 +97,7 @@ function parseCampaignDestination(
     typeof categoryId !== 'string' ||
     !TOP3_CATEGORIES.some(
       (category) =>
-        category.id === categoryId &&
-        category.id !== 'podcasts'
+        category.id === categoryId
     )
   ) {
     return null;
@@ -137,6 +139,24 @@ function routeFromNotificationData(
 
 
 
+
+  if (type === 'top3_request') {
+    const requestId =
+      getStringValue(data.top3RequestId) ??
+      getStringValue(data.top3_request_id) ??
+      getStringValue(data.requestId);
+    if (requestId) {
+      router.push({ pathname: '/top3-requests-inbox', params: { requestId } });
+    } else {
+      // Older push payloads may omit the ID. Never guess among pending requests.
+      router.push('/notifications');
+    }
+    return;
+  }
+  if (type === 'top3_request_fulfilled' && collectionId) {
+    router.push({ pathname: '/published-top3', params: { postId: `post-${collectionId}` } });
+    return;
+  }
 
   if (
     type === 'like' &&
@@ -323,7 +343,8 @@ function NotificationResponseController() {
 
     const destinationInput = resolveNotificationCollection(
       pendingCampaign.destination,
-      options
+      options,
+      { includePodcasts: true }
     );
 
     if (!destinationInput) {

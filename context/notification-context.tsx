@@ -14,6 +14,7 @@ import {
 } from '@/lib/supabase/follow-requests';
 import {
   getNotifications,
+  deleteMyNotification as deleteInDatabase,
   markAllNotificationsRead as markAllReadInDatabase,
   markNotificationRead as markReadInDatabase,
   Notification,
@@ -31,6 +32,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
@@ -57,6 +59,7 @@ type NotificationContextValue = {
     notificationId: string
   ) => Promise<void>;
   markAllNotificationsRead: () => Promise<void>;
+  deleteNotification: (notificationId: string) => Promise<void>;
   acceptFollowRequest: (
     requestId: string
   ) => Promise<void>;
@@ -222,6 +225,9 @@ export function NotificationProvider({
 
   const userId = user?.id;
 
+  // Suppress a row while its deletion is in flight, including during Realtime refreshes.
+  const deletingIdsRef = useRef(new Set<string>());
+
   const refreshNotifications =
     useCallback(async () => {
       if (!userId) {
@@ -257,7 +263,7 @@ export function NotificationProvider({
         ]);
 
         setNotifications(
-          enrichedNotifications
+          enrichedNotifications.filter((item) => !deletingIdsRef.current.has(item.id))
         );
 
         setPendingFollowRequests(
@@ -495,6 +501,26 @@ export function NotificationProvider({
       userId,
     ]);
 
+  const deleteNotification = useCallback(async (notificationId: string) => {
+    if (!userId || !notificationId) throw new Error('Please sign in again.');
+    if (deletingIdsRef.current.has(notificationId)) return;
+    deletingIdsRef.current.add(notificationId);
+    setNotifications((current) => current.filter((item) => item.id !== notificationId));
+    try {
+      await deleteInDatabase(notificationId);
+    } catch (error) {
+      deletingIdsRef.current.delete(notificationId);
+      await refreshNotifications();
+      throw error;
+    }
+    // Database commit has completed; the subsequent fetch is authoritative.
+    try {
+      await refreshNotifications();
+    } finally {
+      deletingIdsRef.current.delete(notificationId);
+    }
+  }, [userId, refreshNotifications]);
+
   const acceptFollowRequest =
     useCallback(
       async (requestId: string) => {
@@ -595,6 +621,7 @@ export function NotificationProvider({
         refreshNotifications,
         markNotificationRead,
         markAllNotificationsRead,
+        deleteNotification,
         acceptFollowRequest,
         declineFollowRequest,
       }),
@@ -608,6 +635,7 @@ export function NotificationProvider({
         refreshNotifications,
         markNotificationRead,
         markAllNotificationsRead,
+        deleteNotification,
         acceptFollowRequest,
         declineFollowRequest,
       ]

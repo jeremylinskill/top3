@@ -43,6 +43,7 @@ type ProfileScreenContentProps = {
   isLoadingFollowState?: boolean;
 
   onToggleFollow?: () => void;
+  onRequestTop3?: () => void;
   onCreateTop3?: () => void;
   onRetryPosts?: () => void;
   onSavedPress?: () => void;
@@ -81,6 +82,7 @@ export default function ProfileScreenContent({
   isLoadingFollowState = false,
 
   onToggleFollow,
+  onRequestTop3,
   onCreateTop3,
   onRetryPosts,
   onSavedPress,
@@ -314,6 +316,12 @@ export default function ProfileScreenContent({
             isLoading={isLoadingFollowState}
             onPress={onToggleFollow}
           />
+          {isFollowing && onRequestTop3 ? (
+            <PrimaryButton
+              title="Request a Top 3"
+              onPress={onRequestTop3}
+            />
+          ) : null}
         </View>
       ) : null}
 

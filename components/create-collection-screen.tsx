@@ -31,7 +31,12 @@ const CATEGORY_ORDER: CategoryId[] = [
   'games',
 ];
 
-export default function CreateCollectionScreen() {
+export default function CreateCollectionScreen({
+  requestUserId,
+}: {
+  requestUserId?: string;
+} = {}) {
+  const isRequestMode = Boolean(requestUserId);
   const colors = useAppColors();
   const insets = useSafeAreaInsets();
   const [scrollViewportHeight, setScrollViewportHeight] = useState(0);
@@ -104,6 +109,7 @@ export default function CreateCollectionScreen() {
         pathname: '/create-topic',
         params: {
           categoryId,
+          ...(isRequestMode ? { requestUserId } : {}),
         },
       } as never
     );
@@ -150,7 +156,7 @@ export default function CreateCollectionScreen() {
           },
           stickyHeaderStyle,
         ]}>
-        <ScreenHeader overlay featheredBackdrop androidStatusBarGlass />
+        <ScreenHeader showBackButton={isRequestMode} overlay featheredBackdrop androidStatusBarGlass />
       </Reanimated.View>
 
       <Reanimated.ScrollView
@@ -182,8 +188,8 @@ export default function CreateCollectionScreen() {
         onScroll={stickyScrollHandler}
         scrollEventThrottle={16}>
         <PageHeader
-          title="Create a Top 3"
-          subtitle="What would you like to rank?"
+          title={isRequestMode ? 'Request a Top 3' : 'Create a Top 3'}
+          subtitle={isRequestMode ? 'What would you like them to rank?' : 'What would you like to rank?'}
         />
 
         <View style={styles.content}>
@@ -220,7 +226,7 @@ export default function CreateCollectionScreen() {
                       }
                       accessibilityRole="button"
                       accessibilityLabel={
-                        `Create a Top 3 ${category.name} list`
+                        `${isRequestMode ? 'Request' : 'Create'} a Top 3 ${category.name} list`
                       }>
                       <Text
                         style={

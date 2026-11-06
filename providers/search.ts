@@ -17,6 +17,8 @@ import {
   getPopularTvShows,
   getThemeMovieSuggestions,
   searchMovies,
+  searchMoviesByActor,
+  searchMoviesByReleasePeriod,
   searchTvShows,
 } from './movies-and-tv';
 import {
@@ -155,6 +157,50 @@ function getTmdbDiscoverProviderConfig(
             config.withCompanies,
         }
       : {}),
+    ...(typeof config.featuredCompanyId === 'number' &&
+        Number.isSafeInteger(config.featuredCompanyId) &&
+        config.featuredCompanyId > 0
+      ? { featuredCompanyId: config.featuredCompanyId }
+      : {}),
+    ...(Array.isArray(config.featuredMovieIds)
+      ? { featuredMovieIds: config.featuredMovieIds.filter(
+          (id): id is number => Number.isSafeInteger(id) && id > 0
+        ).slice(0, 30) }
+      : {}),
+    ...(Array.isArray(config.keywordRules)
+      ? {
+          keywordRules: config.keywordRules.filter(
+            (rule): rule is { id: number; weight: number } =>
+              typeof rule === 'object' && rule !== null &&
+              Number.isInteger(rule.id) && rule.id > 0 &&
+              typeof rule.weight === 'number' &&
+              Number.isFinite(rule.weight) && rule.weight > 0
+          ).slice(0, 8),
+        }
+      : {}),
+    ...(Array.isArray(config.pinnedMovieIds)
+      ? { pinnedMovieIds: config.pinnedMovieIds.filter(
+          (id): id is number => Number.isInteger(id) && id > 0
+        ).slice(0, 20) }
+      : {}),
+    ...(Array.isArray(config.excludedMovieIds)
+      ? { excludedMovieIds: config.excludedMovieIds.filter(
+          (id): id is number => Number.isInteger(id) && id > 0
+        ).slice(0, 100) }
+      : {}),
+    ...(typeof config.minimumVotes === 'number' &&
+        Number.isFinite(config.minimumVotes) && config.minimumVotes >= 0
+      ? { minimumVotes: Math.floor(config.minimumVotes) }
+      : {}),
+    ...(Array.isArray(config.franchiseCaps)
+      ? { franchiseCaps: config.franchiseCaps.filter(
+          (rule): rule is { term: string; max: number } =>
+            typeof rule === 'object' && rule !== null &&
+            typeof rule.term === 'string' &&
+            rule.term.trim().length > 0 && rule.term.length <= 50 &&
+            Number.isInteger(rule.max) && rule.max >= 1
+        ).slice(0, 10) }
+      : {}),
   };
 }
 
@@ -178,6 +224,28 @@ export function getSearchProvider(
         musicianRole,
         signal
       );
+  }
+
+  // Objective Movie Theme criteria must constrain SEARCH as well as
+  // suggestions. Other Movie Themes keep their existing search behaviour.
+  if (categoryId === 'movies' && collectionOption?.kind === 'theme') {
+    const config = getTmdbDiscoverProviderConfig(collectionOption);
+    if (config?.withPeople && !config.withCompanies &&
+        !config.keywordRules?.length) {
+      return (query, _topic, signal) =>
+        searchMoviesByActor(query, config.withPeople!, signal);
+    }
+    if ((config?.primaryReleaseDateGte || config?.primaryReleaseDateLte) &&
+        !config.withPeople && !config.withCompanies &&
+        !config.keywordRules?.length) {
+      return (query, _topic, signal) =>
+        searchMoviesByReleasePeriod(
+          query,
+          config.primaryReleaseDateGte,
+          config.primaryReleaseDateLte,
+          signal
+        );
+    }
   }
 
   // Song recording-version filters run in the Edge Function

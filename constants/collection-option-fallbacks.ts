@@ -5,7 +5,8 @@ import {
 import { CollectionOption } from '@/types/collection-option';
 
 function getThemeProviderFields(
-  suggestionSource?: Top3ThemeSuggestionSource
+  suggestionSource?: Top3ThemeSuggestionSource,
+  displayTitle?: string
 ): Pick<
   CollectionOption,
   'providerKey' | 'providerMode' | 'providerConfig'
@@ -13,7 +14,7 @@ function getThemeProviderFields(
   if (!suggestionSource) {
     return {
       providerMode: 'curated',
-      providerConfig: {},
+      providerConfig: displayTitle ? { displayTitle } : {},
     };
   }
 
@@ -21,6 +22,7 @@ function getThemeProviderFields(
     providerKey: 'tmdb',
     providerMode: 'discover',
     providerConfig: {
+      ...(displayTitle ? { displayTitle } : {}),
       ...(suggestionSource.primaryReleaseDateGte
         ? {
             primaryReleaseDateGte:
@@ -44,6 +46,21 @@ function getThemeProviderFields(
             withCompanies:
               suggestionSource.withCompanies,
           }
+        : {}),
+      ...(suggestionSource.keywordRules
+        ? { keywordRules: suggestionSource.keywordRules }
+        : {}),
+      ...(suggestionSource.pinnedMovieIds
+        ? { pinnedMovieIds: suggestionSource.pinnedMovieIds }
+        : {}),
+      ...(suggestionSource.excludedMovieIds
+        ? { excludedMovieIds: suggestionSource.excludedMovieIds }
+        : {}),
+      ...(suggestionSource.minimumVotes !== undefined
+        ? { minimumVotes: suggestionSource.minimumVotes }
+        : {}),
+      ...(suggestionSource.franchiseCaps
+        ? { franchiseCaps: suggestionSource.franchiseCaps }
         : {}),
     },
   };
@@ -1261,7 +1278,8 @@ const MOVIE_THEME_FALLBACKS: CollectionOption[] =
     displayOrder: (index + 1) * 10,
     entityKind: 'movie',
     ...getThemeProviderFields(
-      theme.suggestionSource
+      theme.suggestionSource,
+      theme.displayTitle
     ),
   }));
 

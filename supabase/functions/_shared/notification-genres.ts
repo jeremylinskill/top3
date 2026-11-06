@@ -75,6 +75,20 @@ export const NOTIFICATION_GENRE_IDS: Readonly<Record<string, readonly string[]>>
     "sci-fi",
     "thriller"
   ],
+  "podcasts": [
+    "arts",
+    "business",
+    "comedy",
+    "education",
+    "health-and-fitness",
+    "history",
+    "music",
+    "news",
+    "science",
+    "society-and-culture",
+    "sports",
+    "true-crime"
+  ],
   "songs": [
     "alternative",
     "blues",

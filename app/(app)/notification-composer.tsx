@@ -10,6 +10,7 @@ import SegmentedControl from '@/components/segmented-control';
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { RADIUS } from '@/constants/radius';
 import { TEXT_STYLES } from '@/constants/typography';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useCollectionOptions } from '@/context/collection-options-context';
 import { useFeedback } from '@/context/feedback-context';
 import { useProfile } from '@/context/profile-context';
@@ -34,6 +35,11 @@ import {
   type NotificationCampaign,
 } from '@/lib/supabase/notification-campaigns';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import {
+  canPreviewHomeCampaignBanner,
+  setHomeBannerPreview,
+} from '@/lib/home-banner-preview';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import {
   NotificationDestination,
@@ -50,6 +56,7 @@ import {
   Pressable,
   StyleSheet,
   TextInput,
+  Text,
   View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -115,6 +122,10 @@ export default function NotificationComposerScreen() {
 
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
+  const [homeBannerEnabled, setHomeBannerEnabled] = useState(false);
+  const [homeBannerTitle, setHomeBannerTitle] = useState('');
+  const [homeBannerMessage, setHomeBannerMessage] = useState('');
+  const [homeBannerDuration, setHomeBannerDuration] = useState<'24' | '72' | '168'>('72');
   const [isTitleManuallyEdited, setIsTitleManuallyEdited] =
     useState(false);
   const [isMessageManuallyEdited, setIsMessageManuallyEdited] =
@@ -145,7 +156,9 @@ export default function NotificationComposerScreen() {
   const [scheduleAudience, setScheduleAudience] = useState<'test' | 'all'>('test');
   const [scheduleAllConfirmation, setScheduleAllConfirmation] = useState<(
     ScheduledAudiencePreview & { title: string; message: string;
-      destination: NotificationDestination; scheduledAt: string }
+      destination: NotificationDestination; scheduledAt: string;
+      homeBannerEnabled: boolean; homeBannerDurationHours: number;
+      homeBannerTitle: string; homeBannerMessage: string }
   ) | null>(null);
   const [editingScheduledId, setEditingScheduledId] =
     useState<string | null>(null);
@@ -207,6 +220,12 @@ export default function NotificationComposerScreen() {
     (
       title.trim() !== (editingScheduledOriginal.title ?? '').trim() ||
       message.trim() !== (editingScheduledOriginal.message ?? '').trim() ||
+      homeBannerEnabled !== editingScheduledOriginal.homeBannerEnabled ||
+      Number(homeBannerDuration) !== editingScheduledOriginal.homeBannerDurationHours ||
+      (homeBannerEnabled && (
+        homeBannerTitle.trim() !== (editingScheduledOriginal.homeBannerTitle ?? editingScheduledOriginal.title ?? '').trim() ||
+        homeBannerMessage.trim() !== (editingScheduledOriginal.homeBannerMessage ?? editingScheduledOriginal.message ?? '').trim()
+      )) ||
       selectedDestination?.categoryId !== editingScheduledOriginal.categoryId ||
       selectedDestination?.kind !== editingScheduledOriginal.destinationKind ||
       (
@@ -249,6 +268,12 @@ export default function NotificationComposerScreen() {
     title.trim().length <= MAX_TITLE_LENGTH &&
     message.trim().length > 0 &&
     message.trim().length <= MAX_MESSAGE_LENGTH &&
+    (!homeBannerEnabled || (
+      homeBannerTitle.trim().length > 0 &&
+      homeBannerTitle.trim().length <= MAX_TITLE_LENGTH &&
+      homeBannerMessage.trim().length > 0 &&
+      homeBannerMessage.trim().length <= MAX_MESSAGE_LENGTH
+    )) &&
     selectedDestination !== null &&
     (
       selectedDestination.kind === 'overall' ||
@@ -290,15 +315,45 @@ export default function NotificationComposerScreen() {
     if (suggestion) {
       if (!isTitleManuallyEdited) {
         setTitle(suggestion.title);
+        if (!homeBannerTitle.trim()) setHomeBannerTitle(suggestion.title);
       }
 
       if (!isMessageManuallyEdited) {
         setMessage(suggestion.message);
+        if (!homeBannerMessage.trim()) setHomeBannerMessage(suggestion.message);
       }
     }
 
     setSelectedDestination(destination);
     setIsPickingDestination(false);
+  }
+
+  function previewBannerOnHome() {
+    if (!profile.isAdmin || !canPreviewHomeCampaignBanner() ||
+        !homeBannerEnabled ||
+        (editingScheduledId
+          ? editingScheduledOriginal?.audience !== 'all'
+          : scheduleAudience !== 'all') ||
+        !hasValidScheduleContent || !selectedDestination) {
+      showFeedback({
+        kind: 'warning', title: 'Complete the banner',
+        message: 'Choose a valid Top 3 destination, notification title and message, then enable the Home banner.',
+      });
+      return;
+    }
+    try {
+      setHomeBannerPreview(profile.id, {
+        title: homeBannerTitle.trim(), message: homeBannerMessage.trim(), destination: selectedDestination,
+      });
+      Keyboard.dismiss();
+      // Push rather than replace so returning preserves unsaved composer fields.
+      router.push('/(app)/(tabs)/feed');
+    } catch (error) {
+      showFeedback({
+        kind: 'error', title: 'Preview unavailable',
+        message: error instanceof Error ? error.message : 'Please try again.',
+      });
+    }
   }
 
   function resetSuggestedCopy() {
@@ -308,6 +363,9 @@ export default function NotificationComposerScreen() {
 
     setTitle(suggestedCopy.title);
     setMessage(suggestedCopy.message);
+    // Only initialize empty banner fields; independently edited copy stays intact.
+    if (!homeBannerTitle.trim()) setHomeBannerTitle(suggestedCopy.title);
+    if (!homeBannerMessage.trim()) setHomeBannerMessage(suggestedCopy.message);
     setIsTitleManuallyEdited(false);
     setIsMessageManuallyEdited(false);
   }
@@ -343,12 +401,21 @@ export default function NotificationComposerScreen() {
 
     setTitle(campaign.title ?? '');
     setMessage(campaign.message ?? '');
+    setHomeBannerEnabled((campaign.status === 'draft' || campaign.audience === 'all') &&
+      campaign.homeBannerEnabled);
+    setHomeBannerTitle(campaign.homeBannerTitle ?? campaign.title ?? '');
+    setHomeBannerMessage(campaign.homeBannerMessage ?? campaign.message ?? '');
+    setHomeBannerDuration(
+      campaign.homeBannerDurationHours === 24 ? '24' :
+      campaign.homeBannerDurationHours === 168 ? '168' : '72'
+    );
     setSelectedDestination(restoredDestination);
     setIsTitleManuallyEdited(true);
     setIsMessageManuallyEdited(true);
     setIsPickingDestination(false);
     setOpenSchedulePicker(null);
-    setScheduleAudience(campaign.audience);
+    setScheduleAudience(campaign.status === 'draft' && campaign.homeBannerEnabled
+      ? 'all' : campaign.audience);
     setBroadcastSubmitted(false);
     setBroadcastOutcome(null);
     Keyboard.dismiss();
@@ -436,6 +503,10 @@ export default function NotificationComposerScreen() {
     setScheduledTime(defaultTime);
     setTitle('');
     setMessage('');
+    setHomeBannerEnabled(false);
+    setHomeBannerTitle('');
+    setHomeBannerMessage('');
+    setHomeBannerDuration('72');
     setSelectedDestination(null);
     setIsTitleManuallyEdited(false);
     setIsMessageManuallyEdited(false);
@@ -496,7 +567,9 @@ export default function NotificationComposerScreen() {
       }
       setScheduleAllConfirmation({ ...audience,
         title: title.trim(), message: message.trim(),
-        destination: selectedDestination, scheduledAt });
+        destination: selectedDestination, scheduledAt,
+        homeBannerEnabled, homeBannerDurationHours: Number(homeBannerDuration),
+        homeBannerTitle: homeBannerTitle.trim(), homeBannerMessage: homeBannerMessage.trim() });
       setPendingConfirmation('scheduleAll');
     } catch (error) {
       showFeedback({ kind: 'error', title: 'Unable to Preview Audience',
@@ -518,13 +591,19 @@ export default function NotificationComposerScreen() {
       if (!id) {
         id = await saveNotificationCampaignDraft({
           title: confirmed.title, message: confirmed.message,
-          destination: confirmed.destination });
+          destination: confirmed.destination,
+          homeBannerEnabled: confirmed.homeBannerEnabled,
+          homeBannerDurationHours: confirmed.homeBannerDurationHours,
+          homeBannerTitle: confirmed.homeBannerTitle, homeBannerMessage: confirmed.homeBannerMessage });
         setDraftId(id);
       }
       await scheduleAllNotificationCampaign({ id,
         title: confirmed.title, message: confirmed.message,
         destination: confirmed.destination, scheduledAt: confirmed.scheduledAt,
-        expectedDeviceCount: confirmed.deviceCount });
+        expectedDeviceCount: confirmed.deviceCount,
+        homeBannerEnabled: confirmed.homeBannerEnabled,
+        homeBannerDurationHours: confirmed.homeBannerDurationHours,
+        homeBannerTitle: confirmed.homeBannerTitle, homeBannerMessage: confirmed.homeBannerMessage });
       setDraftId(null);
       setTitle('');
       setMessage('');
@@ -532,6 +611,10 @@ export default function NotificationComposerScreen() {
       setIsTitleManuallyEdited(false);
       setIsMessageManuallyEdited(false);
       setScheduleAudience('test');
+      setHomeBannerEnabled(false);
+      setHomeBannerTitle('');
+      setHomeBannerMessage('');
+      setHomeBannerDuration('72');
       setActiveView('manage');
       showFeedback({ kind: 'success', title: 'Broadcast Scheduled',
         message: `Scheduled for ${formatScheduleSelection(new Date(confirmed.scheduledAt), 'date')} at ${formatScheduleSelection(new Date(confirmed.scheduledAt), 'time')}. ${confirmed.deviceCount} devices were registered when scheduled; the actual audience is checked at send time.` });
@@ -724,6 +807,10 @@ export default function NotificationComposerScreen() {
         title,
         message,
         destination: selectedDestination,
+        homeBannerEnabled,
+        homeBannerDurationHours: Number(homeBannerDuration),
+        homeBannerTitle: homeBannerTitle.trim(),
+        homeBannerMessage: homeBannerMessage.trim(),
       });
 
       setDraftId(savedId);
@@ -753,6 +840,10 @@ export default function NotificationComposerScreen() {
     setDraftId(null);
     setTitle('');
     setMessage('');
+    setHomeBannerEnabled(false);
+    setHomeBannerTitle('');
+    setHomeBannerMessage('');
+    setHomeBannerDuration('72');
     setSelectedDestination(null);
     setIsTitleManuallyEdited(false);
     setIsMessageManuallyEdited(false);
@@ -856,6 +947,10 @@ export default function NotificationComposerScreen() {
         message: cleanMessage,
         destination,
         scheduledAt,
+        homeBannerEnabled,
+        homeBannerDurationHours: Number(homeBannerDuration),
+        homeBannerTitle: homeBannerTitle.trim(),
+        homeBannerMessage: homeBannerMessage.trim(),
       });
 
       setEditingScheduledId(null);
@@ -1353,6 +1448,7 @@ export default function NotificationComposerScreen() {
                 ]}
                 onChange={(value) => {
                   setScheduleAudience(value);
+                  if (value !== 'all') setHomeBannerEnabled(false);
                   setScheduleAllConfirmation(null);
                 }}
               />
@@ -1363,6 +1459,114 @@ export default function NotificationComposerScreen() {
                 ? 'All registered users' : 'My test device'}
             </AppText>
           )}
+        {(editingScheduledId
+          ? editingScheduledOriginal?.audience === 'all'
+          : scheduleAudience === 'all') ? (
+          <View style={styles.homeBannerSettings}>
+            <AppText variant="formLabel">Home feed banner</AppText>
+            <Pressable
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: homeBannerEnabled }}
+              accessibilityLabel="Also show this notification on the Home feed"
+              onPress={() => {
+                if (!homeBannerEnabled) {
+                  if (!homeBannerTitle.trim()) setHomeBannerTitle(title);
+                  if (!homeBannerMessage.trim()) setHomeBannerMessage(message);
+                }
+                setHomeBannerEnabled(value => !value);
+              }}
+              style={styles.homeBannerToggle}>
+              <Ionicons
+                name={homeBannerEnabled ? 'checkbox' : 'square-outline'}
+                size={24} color={colors.primary}
+              />
+              <View style={{ flex: 1 }}>
+                <AppText variant="body">Also show on Home feed</AppText>
+                <AppText variant="label" tone="tertiary">
+                  Same Top 3 destination, with independently editable banner copy.
+                </AppText>
+              </View>
+            </Pressable>
+            {homeBannerEnabled ? (
+              <View style={{ gap: 8 }}>
+                <AppText variant="formLabel">Show for</AppText>
+                <SegmentedControl<'24' | '72' | '168'>
+                  value={homeBannerDuration}
+                  options={[
+                    { value: '24', label: '1 day' },
+                    { value: '72', label: '3 days' },
+                    { value: '168', label: '7 days' },
+                  ]}
+                  onChange={setHomeBannerDuration}
+                />
+                <AppText variant="label" tone="tertiary">
+                  Starts after a successful full-audience send. Test sends
+                  never activate a public banner. Users can dismiss it.
+                </AppText>
+                <View style={styles.bannerCopyFields}>
+                  <AppText variant="formLabel">Home banner title</AppText>
+                  <TextInput
+                    accessibilityLabel="Home banner title"
+                    value={homeBannerTitle}
+                    onChangeText={setHomeBannerTitle}
+                    maxLength={MAX_TITLE_LENGTH}
+                    placeholder="Write a banner headline"
+                    placeholderTextColor={colors.tertiaryText}
+                    style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
+                  />
+                  <AppText variant="label" tone="tertiary">{homeBannerTitle.length}/{MAX_TITLE_LENGTH}</AppText>
+                  <AppText variant="formLabel">Home banner message</AppText>
+                  <TextInput
+                    accessibilityLabel="Home banner message"
+                    value={homeBannerMessage}
+                    onChangeText={setHomeBannerMessage}
+                    maxLength={MAX_MESSAGE_LENGTH}
+                    multiline
+                    textAlignVertical="top"
+                    placeholder="Write your Home banner message"
+                    placeholderTextColor={colors.tertiaryText}
+                    style={[styles.input, styles.messageInput, { backgroundColor: colors.surface, color: colors.text }]}
+                  />
+                  <AppText variant="label" tone="tertiary">{homeBannerMessage.length}/{MAX_MESSAGE_LENGTH}</AppText>
+                  <Pressable accessibilityRole="button"
+                    accessibilityLabel="Copy notification text to Home banner"
+                    onPress={() => { setHomeBannerTitle(title); setHomeBannerMessage(message); }}
+                    style={styles.bannerCopySync}>
+                    <Ionicons name="copy-outline" size={17} color={colors.primary} />
+                    <AppText variant="label" style={{ color: colors.primary }}>Use notification copy</AppText>
+                  </Pressable>
+                </View>
+                <LinearGradient
+                  colors={['#00D898', '#00D5CC', '#00D2FF']}
+                  start={{ x: 0.5, y: 0 }}
+                  end={{ x: 0.5, y: 1 }}
+                  style={styles.preview}>
+                  <Text style={[TEXT_STYLES.label, { color: '#111111' }]}>Take the Top 3 Challenge</Text>
+                  <Text style={[TEXT_STYLES.headline, { color: '#111111' }]}>{homeBannerTitle.trim() || 'Home banner title'}</Text>
+                  <Text style={[TEXT_STYLES.body, { color: '#111111' }]}>{homeBannerMessage.trim() || 'Home banner message'}</Text>
+                </LinearGradient>
+                {canPreviewHomeCampaignBanner() ? (
+                  <>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Preview the banner on your Home feed without sending"
+                      onPress={previewBannerOnHome}
+                      style={[styles.previewOnHomeButton, { backgroundColor: colors.surface }]}>
+                      <Ionicons name="eye-outline" size={18} color={colors.primary} />
+                      <AppText variant="label" style={{ color: colors.primary }}>
+                        Preview on Home
+                      </AppText>
+                    </Pressable>
+                    <AppText variant="label" tone="tertiary">
+                      Development preview only. No notification is sent, and no campaign is scheduled or published.
+                    </AppText>
+                  </>
+                ) : null}
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+
           <View style={styles.scheduleRow}>
             <View
               style={[
@@ -1653,7 +1857,7 @@ export default function NotificationComposerScreen() {
         }
         message={
           pendingConfirmation === 'scheduleAll'
-            ? `Schedule this notification for ${scheduleAllConfirmation?.deviceCount ?? 0} currently registered devices belonging to ${scheduleAllConfirmation?.userCount ?? 0} users? This will automatically send at the chosen time once broadcast delivery is enabled on the server. The audience may change before delivery.`
+            ? `Schedule this notification for ${scheduleAllConfirmation?.deviceCount ?? 0} currently registered devices belonging to ${scheduleAllConfirmation?.userCount ?? 0} users? This will automatically send at the chosen time once broadcast delivery is enabled on the server. The audience may change before delivery.${scheduleAllConfirmation?.homeBannerEnabled ? ` A Home feed banner will run for ${scheduleAllConfirmation.homeBannerDurationHours / 24} day(s) after a successful full-audience send.` : ''}`
             : pendingConfirmation === 'sendAll'
             ? `Send this notification to ${broadcastConfirmation?.deviceCount ?? 0} registered devices belonging to ${broadcastConfirmation?.userCount ?? 0} users in the connected database? This cannot be undone. Some devices may be registered more than once per user.`
             : pendingConfirmation === 'new'
@@ -1842,6 +2046,36 @@ const styles = StyleSheet.create({
   actions: {
     marginTop: 30,
     gap: 12,
+  },
+  previewOnHomeButton: {
+    borderRadius: RADIUS.lg,
+    minHeight: 48,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  homeBannerSettings: {
+    gap: 8,
+    marginBottom: 16,
+  },
+  bannerCopyFields: {
+    marginTop: 8,
+    gap: 8,
+  },
+  bannerCopySync: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    alignSelf: 'flex-start',
+    paddingVertical: 6,
+  },
+  homeBannerToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 8,
   },
   secondaryActionsRow: {
     flexDirection: 'row',

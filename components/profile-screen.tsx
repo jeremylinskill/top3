@@ -1647,6 +1647,11 @@ export default function ProfileScreen({
               ? undefined
               : handleToggleFollow
           }
+          onRequestTop3={
+            viewedUserId && !isCurrentUser && userIsFollowed && !isBlocked(viewedUserId)
+              ? () => router.push({ pathname: '/request-top3', params: { userId: viewedUserId } })
+              : undefined
+          }
           onCreateTop3={
             isCurrentUser
               ? openCreateScreen

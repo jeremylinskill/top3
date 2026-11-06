@@ -40,6 +40,10 @@ import {
 } from '@/services/collection-option-service';
 import { getPublishedPosts } from '@/services/post-service';
 import { verifySavedEligibility } from '@/services/saved-item-eligibility';
+import {
+  getObjectiveMovieThemeConstraint,
+  verifyObjectiveMovieThemeItem,
+} from '@/services/objective-movie-theme-eligibility';
 import { Top3Item } from '@/types/top3-item';
 import {
   getTop3ItemMetadata,
@@ -217,6 +221,10 @@ export default function SearchScreen() {
       ? getOptionById(activeCollection.collectionOptionId)
       : undefined;
   const musicianRole = getMusicianRole(activeCollectionOption);
+  const objectiveMovieThemeConstraint = useMemo(
+    () => getObjectiveMovieThemeConstraint(activeCollectionOption),
+    [activeCollectionOption]
+  );
   const suggestMusicianLabel = musicianRole
     ? MUSICIAN_SUGGESTION_LABELS[musicianRole]
     : 'Suggest a Musician';
@@ -320,14 +328,16 @@ export default function SearchScreen() {
       ['actors', 'directors'].includes(normalizeValue(activeCollection?.type)));
   const savedNeedsEligibility =
     !musicianRole && !isSavedMoviePeople &&
-    activeCollectionOption?.kind !== 'theme' &&
-    (activeCollectionOption?.kind === 'type' ||
-      Boolean(activeCollection?.topic &&
-        normalizeValue(activeCollection.topic) !== 'general'));
+    (Boolean(objectiveMovieThemeConstraint) ||
+      (activeCollectionOption?.kind !== 'theme' &&
+        (activeCollectionOption?.kind === 'type' ||
+          Boolean(activeCollection?.topic &&
+            normalizeValue(activeCollection.topic) !== 'general'))));
   const savedEligibilityKey = JSON.stringify([
     selectedCategory?.id ?? '',
     activeCollectionOption?.id ?? '',
     activeCollection?.topic ?? '',
+    objectiveMovieThemeConstraint,
     savedCategoryCandidates.map((item) => [item.id, item.item.id]),
   ]);
 
@@ -346,12 +356,18 @@ export default function SearchScreen() {
       const worker = async () => {
         while (!cancelled && nextIndex < savedCategoryCandidates.length) {
           const item = savedCategoryCandidates[nextIndex++];
-          const outcome = await verifySavedEligibility(
-            item,
-            activeCollectionOption,
-            activeCollection?.topic,
-            controller.signal
-          );
+          const outcome = objectiveMovieThemeConstraint
+            ? await verifyObjectiveMovieThemeItem(
+                item.item,
+                objectiveMovieThemeConstraint,
+                controller.signal
+              )
+            : await verifySavedEligibility(
+                item,
+                activeCollectionOption,
+                activeCollection?.topic,
+                controller.signal
+              );
           if (outcome === 'match') ids.add(item.id);
           if (outcome === 'unknown') unknownCount++;
         }
@@ -378,6 +394,7 @@ export default function SearchScreen() {
     savedNeedsEligibility,
     isLoadingSavedItems,
     savedCategoryCandidates,
+    objectiveMovieThemeConstraint,
     activeCollectionOption,
     activeCollection?.topic,
     savedEligibilityKey,
@@ -651,6 +668,7 @@ export default function SearchScreen() {
     !selectedType;
   const fallbackSuggestions =
     isMoviePeopleType ||
+    objectiveMovieThemeConstraint ||
     activeCollectionOption?.id?.startsWith('songs-type-') ||
     activeCollectionOption?.id === 'albums-type-soundtracks' ||
     activeCollectionOption?.id === 'albums-type-compilations' ||
@@ -841,7 +859,9 @@ export default function SearchScreen() {
         applyThemeSuggestions();
         return;
       }
-      if (isMoviePeopleType) {
+      // Objective Movie Themes must not reuse unverified community lists
+      // or static fallback suggestions from other movie collections.
+      if (isMoviePeopleType || objectiveMovieThemeConstraint) {
         await loadProviderSuggestions(categoryId);
         return;
       }
@@ -977,6 +997,7 @@ export default function SearchScreen() {
     isCustomTopic,
     isMoviePeopleType,
     moviePeopleType,
+    objectiveMovieThemeConstraint,
     activeCollectionOption,
     curatedOptionSuggestions,
   ]);

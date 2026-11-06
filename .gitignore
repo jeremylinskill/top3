@@ -47,3 +47,6 @@ privacy-audit.zip
 
 # Development-only broadcast notification experiment
 /supabase/functions/send-broadcast-notification/
+
+# Exclude local source backups from builds
+*.bak

@@ -10,6 +10,15 @@ export type TmdbDiscoverProviderConfig = {
   primaryReleaseDateLte?: string;
   withPeople?: number;
   withCompanies?: number;
+  /** Optional editorial movie IDs for a specific credited company. */
+  featuredCompanyId?: number;
+  featuredMovieIds?: number[];
+  /** Weighted TMDB keyword IDs, configured per theme. */
+  keywordRules?: { id: number; weight: number }[];
+  pinnedMovieIds?: number[];
+  excludedMovieIds?: number[];
+  minimumVotes?: number;
+  franchiseCaps?: { term: string; max: number }[];
 };
 
 export type CollectionOption = {

@@ -15,6 +15,8 @@ import { useCollectionOptions } from '@/context/collection-options-context';
 import { TOP3_CATEGORIES, type CategoryId } from '@/constants/top3-categories';
 import type { NotificationDestination } from '@/types/notification-destination';
 import { resolveNotificationCollection } from '@/utils/resolve-notification-collection';
+import { getTop3RequestNotificationTitle, getTop3RequestMessageParts } from '@/supabase/functions/_shared/top3-request-notification-copy';
+import { getFulfilledTop3RequestMessage } from '@/supabase/functions/_shared/top3-request-fulfilled-copy';
 import {
   FLOATING_TAB_BAR_BOTTOM_SPACING,
   FLOATING_TAB_BAR_HEIGHT,
@@ -25,18 +27,33 @@ import {
   useNotifications,
 } from '@/context/notification-context';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useAuth } from '@/hooks/use-auth';
+import { registerForPushNotifications } from '@/lib/notifications';
+import { upsertPushToken } from '@/lib/supabase/push-tokens';
+import {
+  getPushNotificationsEnabled,
+  setPushNotificationsEnabled,
+} from '@/services/onboarding-service';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Notifications from 'expo-notifications';
 import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
 import Reanimated from 'react-native-reanimated';
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  AppState,
+  Linking,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
+  Text,
   View,
 } from 'react-native';
 import {
@@ -44,13 +61,30 @@ import {
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 
+function getTop3RequestTitle(notification: EnrichedNotification): string | null {
+  const request = notification.top3Request;
+  return getTop3RequestNotificationTitle(request ? {
+    categoryId: request.categoryId,
+    destinationKind: request.destinationKind,
+    topicLabel: request.topicLabel,
+  } : null);
+}
+
 function getNotificationMessage(
-  notification: EnrichedNotification
+  notification: EnrichedNotification,
+  requestTitle?: string | null,
+  requesterName?: string
 ) {
   const collectionTitle =
     notification.collection?.title;
 
   switch (notification.type) {
+    case 'top3_request':
+      return notification.top3Request?.status === 'fulfilled'
+        ? `You shared your ${requestTitle?.trim() || 'Top 3'} with ${requesterName || 'the requester'}. Tap to view.`
+        : getTop3RequestMessageParts(requestTitle).message;
+    case 'top3_request_fulfilled':
+      return getFulfilledTop3RequestMessage(collectionTitle ?? null);
     case 'announcement':
       return notification.announcement
         ? `${notification.announcement.title}. ${notification.announcement.message}`
@@ -137,8 +171,27 @@ function formatNotificationTime(
   );
 }
 
+const REMINDER_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000;
+const REMINDER_DISMISSAL_LIMIT = 3;
+
+function reminderStorageKey(userId: string) {
+  return `top3:push-reminder:v1:${userId}`;
+}
+
+type ReminderPreference = {
+  dismissedCount: number;
+  showAfter: number;
+};
+
 export default function NotificationsScreen() {
   const colors = useAppColors();
+  const isDarkMode = useColorScheme() === 'dark';
+  // Match the app's inverted preview-card treatment in either appearance.
+  const reminderSurface = isDarkMode ? '#FFFFFF' : '#101010';
+  const reminderInk = isDarkMode ? '#101010' : '#FFFFFF';
+  const reminderSecondaryInk = isDarkMode ? '#555555' : '#D0D0D0';
+  const reminderOutline = isDarkMode ? '#C8C8C8' : '#707070';
+  const { user } = useAuth();
   const insets = useSafeAreaInsets();
   // Native iOS refresh stays below the wordmark without a second spinner.
   const nativeRefreshInsetTop = NavPlatform.OS === 'ios'
@@ -173,12 +226,14 @@ export default function NotificationsScreen() {
     refreshNotifications,
     markNotificationRead,
     markAllNotificationsRead,
+    deleteNotification,
     acceptFollowRequest,
     declineFollowRequest,
   } = useNotifications();
 
   // Show the pull-to-refresh spinner only for a user-initiated pull.
   const [isPullRefreshing, setIsPullRefreshing] = useState(false);
+  const [deletingNotificationId, setDeletingNotificationId] = useState<string | null>(null);
 
   // Re-fetch when users open Notifications or return from a push destination.
   // Supabase Realtime remains active, and pull-to-refresh still works.
@@ -187,6 +242,150 @@ export default function NotificationsScreen() {
       void refreshNotifications();
     }, [refreshNotifications])
   );
+
+  // A contextual, opt-in reminder: no automatic OS prompts and no reminders
+  // on other screens. Dismissals are private to this signed-in user/device.
+  const [showPushReminder, setShowPushReminder] = useState(false);
+  const [isEnablingPush, setIsEnablingPush] = useState(false);
+  const reminderBusyRef = useRef(false);
+  const waitingForDeviceSettingsRef = useRef(false);
+  const reminderReadVersionRef = useRef(0);
+  const dismissedDuringThisVisitRef = useRef(false);
+
+  const refreshPushReminder = useCallback(async () => {
+    const userId = user?.id;
+    const currentRead = ++reminderReadVersionRef.current;
+    if (!userId || (Platform.OS !== 'ios' && Platform.OS !== 'android')) {
+      setShowPushReminder(false);
+      return;
+    }
+    if (reminderBusyRef.current) return;
+
+    try {
+      const [permission, optedIn, saved] = await Promise.all([
+        Notifications.getPermissionsAsync(),
+        getPushNotificationsEnabled(userId),
+        AsyncStorage.getItem(reminderStorageKey(userId)),
+      ]);
+      if (currentRead !== reminderReadVersionRef.current || reminderBusyRef.current) return;
+
+      const preference: ReminderPreference | null = saved ? JSON.parse(saved) : null;
+      const dismissedCount = preference?.dismissedCount ?? 0;
+      const showAfter = preference?.showAfter ?? 0;
+      setShowPushReminder(
+        !dismissedDuringThisVisitRef.current &&
+        !(optedIn && permission.status === Notifications.PermissionStatus.GRANTED) &&
+        dismissedCount < REMINDER_DISMISSAL_LIMIT &&
+        Date.now() >= showAfter
+      );
+    } catch (error) {
+      // An unknown state should not cause repeated reminders.
+      setShowPushReminder(false);
+      if (__DEV__) console.log('Unable to check notification reminder:', error);
+    }
+  }, [user?.id]);
+
+  const finishEnablingPush = useCallback(async (userId: string) => {
+    const { token } = await registerForPushNotifications();
+    if (!token) return false;
+    await upsertPushToken({ userId, expoPushToken: token, platform: Platform.OS as 'ios' | 'android' });
+    await setPushNotificationsEnabled(userId, true);
+    await AsyncStorage.removeItem(reminderStorageKey(userId)).catch(() => {});
+    setShowPushReminder(false);
+    return true;
+  }, []);
+
+  const handleEnablePushReminder = useCallback(async () => {
+    const userId = user?.id;
+    if (!userId || reminderBusyRef.current) return;
+    reminderBusyRef.current = true;
+    reminderReadVersionRef.current += 1;
+    setIsEnablingPush(true);
+    try {
+      const permissions = await Notifications.getPermissionsAsync();
+      if (
+        permissions.status !== Notifications.PermissionStatus.GRANTED &&
+        !permissions.canAskAgain
+      ) {
+        waitingForDeviceSettingsRef.current = true;
+        // Open Settings only after a direct user tap. Returning to Top 3
+        // finishes opt-in if the OS permission was granted.
+        await Linking.openSettings();
+        return;
+      }
+      const enabled = await finishEnablingPush(userId);
+      if (!enabled) {
+        Alert.alert('Notifications are off',
+          'Allow notifications for Top 3 in your phone settings to receive updates.');
+      }
+    } catch (error) {
+      waitingForDeviceSettingsRef.current = false;
+      if (__DEV__) console.log('Unable to enable push from reminder:', error);
+      Alert.alert('Unable to Enable Notifications',
+        'Please try again or enable notifications in your phone settings.');
+    } finally {
+      reminderBusyRef.current = false;
+      setIsEnablingPush(false);
+      if (!waitingForDeviceSettingsRef.current) void refreshPushReminder();
+    }
+  }, [user?.id, finishEnablingPush, refreshPushReminder]);
+
+  const handleDismissPushReminder = useCallback(async () => {
+    const userId = user?.id;
+    dismissedDuringThisVisitRef.current = true;
+    reminderReadVersionRef.current += 1;
+    setShowPushReminder(false);
+    if (!userId) return;
+    try {
+      const key = reminderStorageKey(userId);
+      const saved = await AsyncStorage.getItem(key);
+      const previous: ReminderPreference | null = saved ? JSON.parse(saved) : null;
+      await AsyncStorage.setItem(key, JSON.stringify({
+        dismissedCount: (previous?.dismissedCount ?? 0) + 1,
+        showAfter: Date.now() + REMINDER_COOLDOWN_MS,
+      } satisfies ReminderPreference));
+    } catch (error) {
+      if (__DEV__) console.log('Unable to save notification reminder dismissal:', error);
+    }
+  }, [user?.id]);
+
+  useFocusEffect(useCallback(() => {
+    void refreshPushReminder();
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') return;
+      if (waitingForDeviceSettingsRef.current) {
+        waitingForDeviceSettingsRef.current = false;
+        // Only complete the user-initiated opt-in if OS permission was granted.
+        void (async () => {
+          const userId = user?.id;
+          if (!userId || reminderBusyRef.current) return;
+          reminderBusyRef.current = true;
+          setIsEnablingPush(true);
+          try {
+            const permissions = await Notifications.getPermissionsAsync();
+            if (permissions.status === Notifications.PermissionStatus.GRANTED) {
+              await finishEnablingPush(userId);
+            }
+          } catch (error) {
+            if (__DEV__) console.log('Unable to finish notification permission change:', error);
+            Alert.alert('Unable to Enable Notifications',
+              'Please try again or enable notifications in Top 3 Settings.');
+          } finally {
+            reminderBusyRef.current = false;
+            setIsEnablingPush(false);
+            void refreshPushReminder();
+          }
+        })();
+      } else {
+        void refreshPushReminder();
+      }
+    });
+    return () => {
+      subscription.remove();
+      reminderReadVersionRef.current += 1;
+      dismissedDuringThisVisitRef.current = false;
+    };
+  }, [user?.id, finishEnablingPush, refreshPushReminder]));
 
   const { lists, isCollectionsLoaded, hasCollectionsLoadError,
     startListWithoutSaving, selectList } = useTop3();
@@ -252,10 +451,34 @@ export default function NotificationsScreen() {
     message: string;
   } | null>(null);
 
+  async function handleDeleteNotification(notificationId: string) {
+    if (deletingNotificationId !== null) return;
+    setDeletingNotificationId(notificationId);
+    try {
+      await deleteNotification(notificationId);
+    } catch (error) {
+      Alert.alert('Unable to delete notification',
+        error instanceof Error ? error.message : 'Please try again.');
+    } finally {
+      setDeletingNotificationId(null);
+    }
+  }
+
   async function handleNotificationPress(
     notification: EnrichedNotification
   ) {
     try {
+      if (notification.type === 'top3_request') {
+        // The notification identifies the precise request, even if others are pending.
+        const requestId = notification.top3RequestId;
+        if (!requestId) {
+          Alert.alert('Request unavailable', 'Unable to identify this Top 3 request.');
+          return;
+        }
+        if (!notification.isRead) await markNotificationRead(notification.id);
+        router.push({ pathname: '/top3-requests-inbox', params: { requestId } });
+        return;
+      }
       if (notification.type === 'announcement') {
         if (openingAnnouncementRef.current) return;
         const announcement = notification.announcement;
@@ -265,7 +488,7 @@ export default function NotificationsScreen() {
           return;
         }
         const category = TOP3_CATEGORIES.find(item =>
-          item.id === announcement.categoryId && item.id !== 'podcasts');
+          item.id === announcement.categoryId);
         const kind = announcement.destinationKind;
         const optionId = announcement.optionId;
         if (!category || !(
@@ -280,7 +503,7 @@ export default function NotificationsScreen() {
           ? { categoryId: category.id as CategoryId, kind: 'overall' }
           : { categoryId: category.id as CategoryId,
               kind: kind as 'type' | 'theme' | 'genre', optionId: optionId! };
-        const input = resolveNotificationCollection(destination, options);
+        const input = resolveNotificationCollection(destination, options, { includePodcasts: true });
         if (!input) {
           Alert.alert('Destination Unavailable',
             'This Top 3 destination is no longer available.');
@@ -518,6 +741,49 @@ export default function NotificationsScreen() {
           }
         />
 
+        {showPushReminder ? (
+          <Card style={[styles.pushReminderCard, { backgroundColor: reminderSurface }]}>
+            <View style={styles.pushReminderTop}>
+              <View style={styles.pushReminderBody}>
+                <AppText variant="headline" tone="invertedPrimary">Stay in the loop</AppText>
+                <AppText variant="body" tone="invertedSecondary" style={styles.pushReminderDescription}>
+                  Get inspired by timely topics and fresh ideas for your next Top 3, and stay connected with your community.
+                </AppText>
+              </View>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Dismiss notification reminder"
+                hitSlop={10}
+                disabled={isEnablingPush}
+                onPress={() => void handleDismissPushReminder()}
+                style={styles.pushReminderClose}>
+                <Ionicons name="close" size={20} color={reminderSecondaryInk} />
+              </Pressable>
+            </View>
+            <View style={styles.pushReminderActions}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Not now"
+                disabled={isEnablingPush}
+                onPress={() => void handleDismissPushReminder()}
+                style={[styles.pushReminderButton, { borderColor: reminderOutline, borderWidth: 1 }]}>
+                <AppText variant="label" tone="invertedPrimary">Not now</AppText>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Enable notifications"
+                disabled={isEnablingPush}
+                onPress={() => void handleEnablePushReminder()}
+                style={[styles.pushReminderButton, styles.pushReminderEnable, { backgroundColor: reminderInk }]}>
+                {isEnablingPush ? <ActivityIndicator size="small" color={reminderSurface} /> : null}
+                <AppText variant="label" emphasis="strong" tone="primary">
+                  Enable notifications
+                </AppText>
+              </Pressable>
+            </View>
+          </Card>
+        ) : null}
+
         {isLoading &&
         visibleNotifications.length === 0 &&
         visiblePendingFollowRequests.length === 0 ? (
@@ -748,21 +1014,52 @@ export default function NotificationsScreen() {
                       : notification.actor?.displayName ||
                     notification.actor?.username ||
                     'Someone';
+                  const requestedTitle = notification.type === 'top3_request'
+                    ? getTop3RequestTitle(notification)
+                    : null;
+                  const isFulfilledRequest = notification.type === 'top3_request' &&
+                    notification.top3Request?.status === 'fulfilled';
+                  const requestMessage = notification.type === 'top3_request'
+                    ? getTop3RequestMessageParts(requestedTitle)
+                    : null;
 
                   return (
-                    <Card
+                    <Swipeable
                       key={notification.id}
-                      style={styles.notificationRow}>
+                      friction={2}
+                      rightThreshold={42}
+                      overshootRight={false}
+                      containerStyle={styles.notificationRow}
+                      renderRightActions={() => (
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel="Delete notification"
+                          disabled={deletingNotificationId !== null}
+                          onPress={() => void handleDeleteNotification(notification.id)}
+                          style={[styles.notificationDeleteAction,
+                            deletingNotificationId !== null && styles.disabledButton]}>
+                          {deletingNotificationId === notification.id
+                            ? <ActivityIndicator color="#FFFFFF" />
+                            : <Ionicons name="trash-outline" size={23} color="#FFFFFF" />}
+                          <Text style={styles.notificationDeleteLabel}>
+                            Delete
+                          </Text>
+                        </Pressable>
+                      )}>
+                    <Card>
                       <Pressable
                         accessibilityRole="button"
-                        accessibilityLabel={notification.type === 'announcement'
-                          ? getNotificationMessage(notification)
-                          : `${actorName} ${getNotificationMessage(notification)}`}
-                        onPress={() =>
-                          handleNotificationPress(
-                            notification
-                          )
-                        }
+                        accessibilityLabel={notification.type === 'announcement' || isFulfilledRequest
+                          ? getNotificationMessage(notification, requestedTitle, actorName)
+                          : `${actorName} ${getNotificationMessage(notification, requestedTitle, actorName)}`}
+                        onPress={() => handleNotificationPress(notification)}
+                        disabled={deletingNotificationId === notification.id}
+                        accessibilityActions={[{ name: 'delete', label: 'Delete notification' }]}
+                        onAccessibilityAction={(event) => {
+                          if (event.nativeEvent.actionName === 'delete') {
+                            void handleDeleteNotification(notification.id);
+                          }
+                        }}
                         style={({ pressed }) => [
                           styles.notificationPressable,
                           pressed && styles.pressed,
@@ -795,12 +1092,15 @@ export default function NotificationsScreen() {
                           <AppText
                             variant="body"
                             tone="primary">
-                            <AppText
-                              variant="body"
-                              tone="primary"
-                              emphasis="strong">
-                              {actorName}
-                            </AppText>{' '}
+                            {!isFulfilledRequest ? (
+                              <AppText
+                                variant="body"
+                                tone="primary"
+                                emphasis="strong">
+                                {actorName}
+                              </AppText>
+                            ) : null}
+                            {!isFulfilledRequest ? ' ' : null}
                             {notification.type === 'like' ? (
                               <>
                                 liked your{' '}
@@ -834,6 +1134,30 @@ export default function NotificationsScreen() {
                             ) : notification.type ===
                               'comment_like' ? (
                               'liked your comment.'
+                            ) : notification.type === 'top3_request' ? (
+                              isFulfilledRequest ? (
+                                <>
+                                  You shared your{' '}
+                                  <AppText variant="body" tone="primary" emphasis="semibold">
+                                    {requestedTitle || 'Top 3'}
+                                  </AppText>
+                                  {' '}with{' '}
+                                  <AppText variant="body" tone="primary" emphasis="semibold">
+                                    {actorName}
+                                  </AppText>
+                                  . Tap to view.
+                                </>
+                              ) : requestMessage?.title ? (
+                                <>
+                                  {requestMessage.beforeTitle}
+                                  <AppText variant="body" tone="primary" emphasis="semibold">
+                                    {requestMessage.title}
+                                  </AppText>
+                                  {requestMessage.afterTitle}
+                                </>
+                              ) : requestMessage?.message
+                            ) : notification.type === 'top3_request_fulfilled' ? (
+                              getFulfilledTop3RequestMessage(notification.collection?.title ?? null)
                             ) : notification.type ===
                               'follow' ? (
                               'started following you.'
@@ -870,6 +1194,7 @@ export default function NotificationsScreen() {
                         ) : null}
                       </Pressable>
                     </Card>
+                    </Swipeable>
                   );
                 })}
               </View>
@@ -911,6 +1236,50 @@ const styles = StyleSheet.create({
   content: {
     paddingTop: SCREEN_HEADER_HEIGHT,
     paddingBottom: 40,
+  },
+
+  pushReminderCard: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    padding: 16,
+  },
+  pushReminderTop: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  pushReminderBody: {
+    flex: 1,
+    minWidth: 0,
+  },
+  pushReminderDescription: {
+    marginTop: 4,
+  },
+  pushReminderClose: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: -4,
+    marginRight: -4,
+  },
+  pushReminderActions: {
+    flexDirection: 'row',
+    marginTop: 16,
+    gap: 8,
+  },
+  pushReminderButton: {
+    minHeight: 44,
+    flex: 1,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 6,
+    paddingHorizontal: 10,
+  },
+  pushReminderEnable: {
+    flex: 1.5,
   },
 
   messageContainer: {
@@ -996,6 +1365,18 @@ const styles = StyleSheet.create({
   notificationRow: {
     marginHorizontal: 20,
     marginBottom: 12,
+    borderRadius: 18,
+    overflow: 'hidden',
+  },
+  notificationDeleteAction: {
+    width: 104,
+    backgroundColor: '#C9272C',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+  },
+  notificationDeleteLabel: {
+    color: '#FFFFFF',
   },
 
   notificationPressable: {

@@ -4,6 +4,11 @@ export type Top3ThemeSuggestionSource = {
   primaryReleaseDateLte?: string;
   withPeople?: number;
   withCompanies?: number;
+  keywordRules?: { id: number; weight: number }[];
+  pinnedMovieIds?: number[];
+  excludedMovieIds?: number[];
+  minimumVotes?: number;
+  franchiseCaps?: { term: string; max: number }[];
 };
 
 export type Top3ThemeGroup =
@@ -13,12 +18,15 @@ export type Top3ThemeGroup =
   | 'studio'
   | 'franchise'
   | 'platform'
-  | 'personal';
+  | 'personal'
+  | 'subject';
 
 export type Top3Theme = {
   id: string;
   category: 'movies';
   name: string;
+  /** Optional full list title, independent from the short theme selector name. */
+  displayTitle?: string;
   group: Top3ThemeGroup;
 
   /**
@@ -213,6 +221,59 @@ export const TOP3_THEMES: Top3Theme[] = [
       'Movies that surprised me',
     ],
     trendingEnabled: true,
+  },
+  {
+    id: 'heists',
+    category: 'movies',
+    name: 'Heists',
+    displayTitle: 'Top 3 Heist Movies',
+    group: 'subject',
+    browseLabel: 'Elaborate robberies, daring thefts and carefully planned jobs',
+    keywords: ['heist', 'heists', 'robbery', 'bank robbery', 'caper'],
+    searchHints: ['Best heist movies', 'Great robbery films'],
+    trendingEnabled: true,
+    suggestionSource: {
+      type: 'tmdbDiscover',
+      keywordRules: [
+        { id: 10051, weight: 5 },
+        { id: 15363, weight: 4 },
+        { id: 642, weight: 2 },
+        { id: 159469, weight: 3 },
+        { id: 156031, weight: 3 },
+      ],
+      pinnedMovieIds: [9654], // The Italian Job (2003)
+      excludedMovieIds: [14560], // Paul Blart: Mall Cop
+      minimumVotes: 150,
+    },
+  },
+  {
+    id: 'monsters',
+    category: 'movies',
+    name: 'Monsters',
+    displayTitle: 'Top 3 Monster Movies',
+    group: 'subject',
+    browseLabel: 'Memorable creature features, giant beasts and movie monsters',
+    keywords: ['monster', 'monsters', 'creature feature', 'kaiju', 'giant monster'],
+    searchHints: ['Best monster movies', 'Creature features'],
+    trendingEnabled: true,
+    suggestionSource: {
+      type: 'tmdbDiscover',
+      keywordRules: [
+        { id: 1299, weight: 4 },
+        { id: 11100, weight: 6 },
+        { id: 161791, weight: 6 },
+        { id: 158126, weight: 5 },
+        { id: 33696, weight: 4 },
+      ],
+      pinnedMovieIds: [940721, 9362, 1091], // Godzilla Minus One, Tremors, The Thing
+      excludedMovieIds: [508943, 700391, 436969], // Luca, 65, The Suicide Squad
+      minimumVotes: 250,
+      franchiseCaps: [
+        { term: 'godzilla', max: 2 },
+        { term: 'kong', max: 2 },
+        { term: 'pacific rim', max: 1 },
+      ],
+    },
   },
 ];
 

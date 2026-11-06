@@ -16,6 +16,10 @@ export type NotificationCampaign = {
   message: string | null;
   categoryId: string | null;
   destinationKind: 'overall' | 'type' | 'theme' | 'genre' | null;
+  homeBannerEnabled: boolean;
+  homeBannerDurationHours: number;
+  homeBannerTitle: string | null;
+  homeBannerMessage: string | null;
   optionId: string | null;
   audience: 'test' | 'all';
   status: NotificationCampaignStatus;
@@ -36,6 +40,10 @@ type NotificationCampaignRow = {
   message: string | null;
   category_id: string | null;
   destination_kind: NotificationCampaign['destinationKind'];
+  home_banner_enabled: boolean;
+  home_banner_duration_hours: number;
+  home_banner_title: string | null;
+  home_banner_message: string | null;
   option_id: string | null;
   audience: NotificationCampaign['audience'];
   status: NotificationCampaignStatus;
@@ -65,6 +73,10 @@ function mapCampaign(
     message: row.message,
     categoryId: row.category_id,
     destinationKind: row.destination_kind,
+    homeBannerEnabled: row.home_banner_enabled === true,
+    homeBannerDurationHours: row.home_banner_duration_hours ?? 72,
+    homeBannerTitle: row.home_banner_title ?? null,
+    homeBannerMessage: row.home_banner_message ?? null,
     optionId: row.option_id,
     audience: row.audience,
     status: row.status,
@@ -135,6 +147,10 @@ export type SaveNotificationDraftInput = {
   title: string;
   message: string;
   destination: NotificationDestination | null;
+  homeBannerEnabled?: boolean;
+  homeBannerDurationHours?: number;
+  homeBannerTitle?: string;
+  homeBannerMessage?: string;
 };
 
 type SaveNotificationDraftResponse = {
@@ -156,6 +172,10 @@ export async function saveNotificationCampaignDraft(
           title: input.title,
           message: input.message,
           destination: input.destination,
+          homeBannerEnabled: input.homeBannerEnabled ?? false,
+          homeBannerDurationHours: input.homeBannerDurationHours ?? 72,
+          homeBannerTitle: input.homeBannerTitle ?? null,
+          homeBannerMessage: input.homeBannerMessage ?? null,
         },
       }
     );
@@ -214,6 +234,10 @@ export type ScheduleAllNotificationCampaignInput = {
   destination: NotificationDestination;
   scheduledAt: string;
   expectedDeviceCount: number;
+  homeBannerEnabled: boolean;
+  homeBannerDurationHours: number;
+  homeBannerTitle: string | null;
+  homeBannerMessage: string | null;
 };
 
 export type ScheduledAudiencePreview = {
@@ -251,6 +275,10 @@ export type EditScheduledNotificationCampaignInput = {
   message: string;
   destination: NotificationDestination;
   scheduledAt?: string;
+  homeBannerEnabled: boolean;
+  homeBannerDurationHours: number;
+  homeBannerTitle: string | null;
+  homeBannerMessage: string | null;
 };
 
 export type RescheduleNotificationCampaignInput = {
@@ -334,6 +362,10 @@ export async function scheduleAllNotificationCampaign(
     title: input.title, message: input.message,
     destination: input.destination, scheduledAt: input.scheduledAt,
     expectedDeviceCount: input.expectedDeviceCount,
+    homeBannerEnabled: input.homeBannerEnabled,
+    homeBannerDurationHours: input.homeBannerDurationHours,
+    homeBannerTitle: input.homeBannerTitle,
+    homeBannerMessage: input.homeBannerMessage,
   }, 'Unable to schedule a notification for all users.');
 }
 
@@ -348,6 +380,10 @@ export async function editScheduledNotificationCampaign(
       message: input.message,
       destination: input.destination,
       scheduledAt: input.scheduledAt,
+      homeBannerEnabled: input.homeBannerEnabled,
+      homeBannerDurationHours: input.homeBannerDurationHours,
+    homeBannerTitle: input.homeBannerTitle,
+    homeBannerMessage: input.homeBannerMessage,
     },
     'Unable to save scheduled notification changes.'
   );

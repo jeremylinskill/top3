@@ -22,6 +22,7 @@ type Campaign = {
   id: string; created_by: string | null; audience: string; status: string;
   title: string | null; message: string | null; category_id: string | null;
   destination_kind: string | null; option_id: string | null;
+  home_banner_enabled: boolean;
 };
 
 async function secretsMatch(supplied: string, expected: string): Promise<boolean> {
@@ -75,7 +76,7 @@ async function claim(client: AdminClient, targetId: string): Promise<string | nu
 async function verifyCampaign(client: AdminClient, id: string):
   Promise<{ campaign: Campaign; destination: Destination } | null> {
   const { data, error } = await client.from("notification_campaigns")
-    .select("id,created_by,audience,status,title,message,category_id,destination_kind,option_id")
+    .select("id,created_by,audience,status,title,message,category_id,destination_kind,option_id,home_banner_enabled")
     .eq("id", id).eq("audience", "all").eq("status", "sending").maybeSingle();
   if (error) throw new Error("Unable to inspect claimed campaign.");
   const campaign = data as Campaign | null;
@@ -83,7 +84,7 @@ async function verifyCampaign(client: AdminClient, id: string):
       campaign.title.length > 100 || !campaign.message?.trim() ||
       campaign.message.length > 220 ||
       !campaign.category_id ||
-      !["albums", "artists", "books", "games", "movies", "songs", "tv"]
+      !["albums", "artists", "books", "games", "movies", "podcasts", "songs", "tv"]
         .includes(campaign.category_id)) return null;
   const { data: profile, error: profileError } = await client.from("profiles")
     .select("is_admin").eq("id", campaign.created_by).maybeSingle();
@@ -336,6 +337,9 @@ async function deliver(client: AdminClient, id: string, mode: DeliveryMode): Pro
   const { data: updated, error: updateError } = await client.from("notification_campaigns")
     .update({ status: campaignStatus, accepted_count: accepted,
       failed_count: failed, sent_at: complete ? now : null,
+      // Canary sends must never publish a Home banner to all app users.
+      home_banner_activated_at: complete && mode === "full" &&
+        verified.campaign.home_banner_enabled === true ? now : null,
       last_error: complete ? null : errors.join(" | ").slice(0, 1000),
       updated_at: now })
     .eq("id", id).eq("audience", "all").eq("status", "sending")

@@ -5,6 +5,30 @@ import type { SupabaseClient } from "npm:@supabase/supabase-js@^2";
 
 const HISTORY_LIMIT = 50;
 const MAX_BROADCAST_DEVICES = 500;
+const HOME_BANNER_DURATIONS = [24, 72, 168] as const;
+
+function parseHomeBannerSettings(payload: Record<string, unknown>):
+  { enabled: boolean; hours: number } | null {
+  const enabled = payload.homeBannerEnabled ?? false;
+  const hours = payload.homeBannerDurationHours ?? 72;
+  if (typeof enabled !== "boolean" || typeof hours !== "number" ||
+      !HOME_BANNER_DURATIONS.some(value => value === hours)) return null;
+  return { enabled, hours };
+}
+function parseHomeBannerCopy(
+  payload: Record<string, unknown>, fallbackTitle: string, fallbackMessage: string,
+  required: boolean
+): { title: string | null; message: string | null } | null {
+  const t = payload.homeBannerTitle;
+  const m = payload.homeBannerMessage;
+  if (t !== undefined && t !== null && typeof t !== 'string') return null;
+  if (m !== undefined && m !== null && typeof m !== 'string') return null;
+  const title = typeof t === 'string' ? t.trim() : fallbackTitle;
+  const message = typeof m === 'string' ? m.trim() : fallbackMessage;
+  if (title.length > 100 || message.length > 220) return null;
+  if (required && (!title || !message)) return null;
+  return { title: title || null, message: message || null };
+}
 const EXPO_TOKEN_PATTERN = /^(ExpoPushToken|ExponentPushToken)\[[^\]]+\]$/;
 
 async function inspectBroadcastAudience(admin: any): Promise<
@@ -76,6 +100,10 @@ type CampaignHistoryDatabase = {
           created_at: string;
           updated_at: string;
           target_push_token_id: string | null;
+          home_banner_enabled: boolean;
+          home_banner_duration_hours: number;
+          home_banner_title: string | null;
+          home_banner_message: string | null;
         };
         Insert: {
           created_by?: string | null;
@@ -88,6 +116,10 @@ type CampaignHistoryDatabase = {
           status?: CampaignStatus;
           scheduled_at?: string | null;
           target_push_token_id?: string | null;
+          home_banner_enabled?: boolean;
+          home_banner_duration_hours?: number;
+          home_banner_title?: string | null;
+          home_banner_message?: string | null;
           updated_at?: string;
         };
         Update: {
@@ -100,6 +132,10 @@ type CampaignHistoryDatabase = {
           status?: CampaignStatus;
           scheduled_at?: string | null;
           target_push_token_id?: string | null;
+          home_banner_enabled?: boolean;
+          home_banner_duration_hours?: number;
+          home_banner_title?: string | null;
+          home_banner_message?: string | null;
           updated_at?: string;
         };
         Relationships: [];
@@ -229,6 +265,10 @@ export default {
           Response.json({ error: message }, { status: 400 });
 
         const isBroadcast = payload.audience === "all";
+        const homeBanner = parseHomeBannerSettings(payload);
+        if (!homeBanner) return invalid("Invalid Home banner settings.");
+        if (!isBroadcast && homeBanner.enabled)
+          return invalid("A Home banner requires an all-user broadcast.");
         if (payload.audience !== undefined &&
             payload.audience !== "test" && payload.audience !== "all") {
           return invalid("Invalid notification audience.");
@@ -274,6 +314,9 @@ export default {
           return invalid("Invalid notification title or message.");
         }
 
+        const bannerCopy = parseHomeBannerCopy(payload, title, message,
+          isBroadcast && homeBanner.enabled);
+        if (!bannerCopy) return invalid('Invalid Home banner title or message.');
         const rawScheduledAt = payload.scheduledAt;
 
         if (
@@ -326,7 +369,7 @@ export default {
           typeof categoryId !== "string" ||
           ![
             "albums", "artists", "books", "games",
-            "movies", "songs", "tv"
+            "movies", "podcasts", "songs", "tv"
           ].includes(categoryId) ||
           (kind !== "overall" &&
            kind !== "type" &&
@@ -426,6 +469,10 @@ export default {
           status: "scheduled" as const,
           scheduled_at: scheduledAt,
           target_push_token_id: targetDeviceId,
+          home_banner_enabled: isBroadcast && homeBanner.enabled,
+          home_banner_duration_hours: homeBanner.hours,
+          home_banner_title: bannerCopy.title,
+          home_banner_message: bannerCopy.message,
           updated_at: new Date().toISOString(),
         };
 
@@ -487,6 +534,8 @@ export default {
         const invalid = (message: string) =>
           Response.json({ error: message }, { status: 400 });
 
+        const homeBanner = parseHomeBannerSettings(payload);
+        if (!homeBanner) return invalid("Invalid Home banner settings.");
         const campaignId = payload.id;
 
         if (
@@ -521,6 +570,8 @@ export default {
           );
         }
 
+        const bannerCopy = parseHomeBannerCopy(payload, title, message, homeBanner.enabled);
+        if (!bannerCopy) return invalid('Invalid Home banner title or message.');
         const rawScheduledAt = payload.scheduledAt;
 
         if (
@@ -569,7 +620,7 @@ export default {
             "books",
             "games",
             "movies",
-            "songs",
+            "podcasts", "songs",
             "tv",
           ].includes(categoryId) ||
           (
@@ -639,6 +690,20 @@ export default {
           }
         }
 
+        const { data: existing, error: existingError } = await campaignAdmin
+          .from("notification_campaigns")
+          .select("audience")
+          .eq("id", campaignId)
+          .eq("created_by", userId)
+          .eq("status", "scheduled")
+          .maybeSingle();
+        if (existingError || !existing ||
+            !allowedScheduledAudiences.includes(existing.audience)) {
+          return Response.json({ error: "Scheduled campaign is unavailable." }, { status: 404 });
+        }
+        if (existing.audience !== "all" && homeBanner.enabled)
+          return invalid("Only all-user campaigns can display a Home banner.");
+
         // Update content and delivery time atomically.
         // The target device, audience and status stay unchanged.
         // The conditional update prevents editing after
@@ -653,6 +718,10 @@ export default {
               destination_kind: kind as DestinationKind,
               option_id: optionId,
               scheduled_at: scheduledDate.toISOString(),
+              home_banner_enabled: existing.audience === "all" && homeBanner.enabled,
+              home_banner_duration_hours: homeBanner.hours,
+              home_banner_title: bannerCopy.title,
+              home_banner_message: bannerCopy.message,
               updated_at: new Date().toISOString(),
             })
             .eq("id", campaignId)
@@ -930,6 +999,10 @@ export default {
           return invalid("Draft title or message is too long.");
         }
 
+        const homeBanner = parseHomeBannerSettings(payload);
+        if (!homeBanner) return invalid("Invalid Home banner settings.");
+        const bannerCopy = parseHomeBannerCopy(payload, title, message, false);
+        if (!bannerCopy) return invalid('Invalid Home banner title or message.');
         const rawId = payload.id;
         let draftId: string | null = null;
 
@@ -976,7 +1049,7 @@ export default {
               "books",
               "games",
               "movies",
-              "songs",
+              "podcasts", "songs",
               "tv",
             ].includes(category) ||
             (
@@ -1018,6 +1091,10 @@ export default {
           category_id: categoryId,
           destination_kind: destinationKind,
           option_id: optionId,
+          home_banner_enabled: homeBanner.enabled,
+          home_banner_duration_hours: homeBanner.hours,
+          home_banner_title: bannerCopy.title,
+          home_banner_message: bannerCopy.message,
           updated_at: new Date().toISOString(),
         };
 
@@ -1090,7 +1167,7 @@ export default {
       }
 
       const campaignFields =
-        "id,title,message,category_id,destination_kind,option_id,audience,status,scheduled_at,started_at,sent_at,target_count,accepted_count,failed_count,last_error,created_at,updated_at" as const;
+        "id,title,message,category_id,destination_kind,option_id,audience,status,scheduled_at,started_at,sent_at,target_count,accepted_count,failed_count,last_error,created_at,updated_at,home_banner_enabled,home_banner_duration_hours,home_banner_title,home_banner_message" as const;
 
       // Read active campaigns in pages to avoid silently
       // losing older drafts or scheduled notifications.

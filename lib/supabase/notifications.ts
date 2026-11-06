@@ -19,6 +19,25 @@ type CampaignAnnouncementRow = {
   option_id: string | null;
 };
 
+export type Top3RequestNotificationDetails = {
+  categoryId: string;
+  destinationKind: 'overall' | 'type' | 'theme' | 'genre';
+  optionId: string | null;
+  topicLabel: string | null;
+  status: 'pending' | 'fulfilled' | 'dismissed';
+  fulfilledCollectionId: string | null;
+};
+
+type Top3RequestNotificationRow = {
+  id: string;
+  category_id: string;
+  destination_kind: Top3RequestNotificationDetails['destinationKind'];
+  option_id: string | null;
+  topic_label: string | null;
+  status: Top3RequestNotificationDetails['status'];
+  fulfilled_collection_id: string | null;
+};
+
 export type NotificationType =
   | 'like'
   | 'comment'
@@ -26,7 +45,9 @@ export type NotificationType =
   | 'comment_like'
   | 'follow'
   | 'follow_request_accepted'
-  | 'announcement';
+  | 'announcement'
+  | 'top3_request'
+  | 'top3_request_fulfilled';
 
 export type Notification = {
   id: string;
@@ -36,6 +57,8 @@ export type Notification = {
   type: NotificationType;
   collectionId?: string;
   commentId?: string;
+  top3RequestId?: string;
+  top3Request?: Top3RequestNotificationDetails;
   isRead: boolean;
   createdAt: string;
 };
@@ -47,6 +70,7 @@ type NotificationRow = {
   type: NotificationType;
   collection_id: string | null;
   comment_id: string | null;
+  top3_request_id: string | null;
   is_read: boolean;
   created_at: string;
 };
@@ -64,6 +88,7 @@ function mapNotificationRow(
       row.collection_id ?? undefined,
     commentId:
       row.comment_id ?? undefined,
+    top3RequestId: row.top3_request_id ?? undefined,
     isRead: row.is_read,
     createdAt: row.created_at,
   };
@@ -86,6 +111,7 @@ export async function getNotifications(
         type,
         collection_id,
         comment_id,
+        top3_request_id,
         is_read,
         created_at
       `
@@ -101,8 +127,51 @@ export async function getNotifications(
   }
 
   const mapped = (data ?? []).map(mapNotificationRow);
-  if (!mapped.some((notification) => notification.type === 'announcement')) {
-    return mapped;
+
+  // Read the specific topics in one query for the signed-in recipient.
+  // Keeping the details separate from the notification row means existing
+  // request notifications can show their topic without being recreated.
+  const requestIds = [...new Set(mapped
+    .filter((notification) => notification.type === 'top3_request')
+    .map((notification) => notification.top3RequestId)
+    .filter((id): id is string => Boolean(id)))];
+  let withRequestDetails = mapped;
+  if (requestIds.length > 0) {
+    const { data: requests, error: requestError } = await supabase
+      .from('top3_requests')
+      .select('id,category_id,destination_kind,option_id,topic_label,status,fulfilled_collection_id')
+      .eq('recipient_user_id', userId)
+      .in('id', requestIds)
+      .returns<Top3RequestNotificationRow[]>();
+
+    if (requestError) {
+      // A missing or inaccessible request must never break Notifications.
+      if (__DEV__) console.warn('Unable to load Top 3 request titles:', requestError);
+    } else {
+      const byId = new Map((requests ?? []).map((request) => [request.id, request]));
+      withRequestDetails = mapped.map((notification) => {
+        if (notification.type !== 'top3_request' || !notification.top3RequestId) {
+          return notification;
+        }
+        const request = byId.get(notification.top3RequestId);
+        if (!request) return notification;
+        return {
+          ...notification,
+          top3Request: {
+            categoryId: request.category_id,
+            destinationKind: request.destination_kind,
+            optionId: request.option_id,
+            topicLabel: request.topic_label,
+            status: request.status,
+            fulfilledCollectionId: request.fulfilled_collection_id,
+          },
+        };
+      });
+    }
+  }
+
+  if (!withRequestDetails.some((notification) => notification.type === 'announcement')) {
+    return withRequestDetails;
   }
 
   // The campaign table is admin-only. This RPC returns only announcements
@@ -119,7 +188,7 @@ export async function getNotifications(
   const byNotificationId = new Map<string, CampaignAnnouncementRow>(
     announcementRows.map((row) => [row.notification_id, row])
   );
-  return mapped.map((notification) => {
+  return withRequestDetails.map((notification) => {
     if (notification.type !== 'announcement') return notification;
     const row = byNotificationId.get(notification.id);
     if (!row) return notification;
@@ -216,4 +285,15 @@ export async function markAllNotificationsRead(
   if (error) {
     throw error;
   }
+}
+
+// Deletes only a notification belonging to the signed-in recipient.
+// The server atomically dismisses any still-pending linked Top 3 request.
+export async function deleteMyNotification(notificationId: string): Promise<void> {
+  if (!notificationId) throw new Error('Missing notification ID.');
+  const { data, error } = await supabase.rpc('delete_my_notification', {
+    p_notification_id: notificationId,
+  });
+  if (error) throw new Error(error.message);
+  if (data !== true) throw new Error('This notification is no longer available.');
 }

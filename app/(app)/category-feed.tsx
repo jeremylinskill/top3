@@ -16,6 +16,7 @@ import {
 import { TOP3_CATEGORIES } from '@/constants/top3-categories';
 import { useBlock } from '@/context/block-context';
 import { useComments } from '@/context/comment-context';
+import { useFollow } from '@/context/follow-context';
 import { useLike } from '@/context/like-context';
 import { useProfile } from '@/context/profile-context';
 import { useSavedItems } from '@/context/saved-items-context';
@@ -74,7 +75,7 @@ const CATEGORY_FEED_SAFE_AREA_EDGES: Edge[] =
     ? ['left', 'right', 'bottom']
     : ['left', 'right'];
 
-type CategoryView = 'lists' | 'overall';
+type CategoryView = 'lists' | 'following' | 'overall';
 
 type CategoryFeedModerationSheet =
   | {
@@ -171,6 +172,7 @@ export default function CategoryFeedScreen() {
     itemQuery?: string | string[];
     itemId?: string | string[];
     view?: string | string[];
+    audience?: string | string[];
   }>();
 
   const categoryId = Array.isArray(
@@ -209,6 +211,12 @@ export default function CategoryFeedScreen() {
     ? params.view[0]
     : params.view;
 
+  const audienceParam = Array.isArray(
+    params.audience
+  )
+    ? params.audience[0]
+    : params.audience;
+
   const normalizedTopic =
     normalizeValue(topicParam) || 'general';
 
@@ -236,10 +244,22 @@ export default function CategoryFeedScreen() {
       normalizedItemQuery
     );
 
+  // Only apply this filter to the item drill-down opened from Following.
+  const isFollowingItemsOnly =
+    isItemFiltered &&
+    normalizeValue(audienceParam) === 'following';
+
   const itemFilterLabel =
     itemQueryParam?.trim() ?? '';
 
   const { profile } = useProfile();
+
+  const {
+    followedUserIds,
+    isLoading: isLoadingFollows,
+    hasLoadError: hasFollowLoadError,
+    retryFollowState,
+  } = useFollow();
 
   const {
     blockedUserIds,
@@ -287,7 +307,9 @@ export default function CategoryFeedScreen() {
         ? 'lists'
         : normalizeValue(viewParam) === 'overall'
           ? 'overall'
-          : 'lists'
+          : normalizeValue(viewParam) === 'following'
+            ? 'following'
+            : 'lists'
     );
 
   const [
@@ -308,7 +330,9 @@ export default function CategoryFeedScreen() {
         ? 'lists'
         : normalizeValue(viewParam) === 'overall'
           ? 'overall'
-          : 'lists'
+          : normalizeValue(viewParam) === 'following'
+            ? 'following'
+            : 'lists'
     );
   }, [viewParam, isItemFiltered]);
 
@@ -440,6 +464,11 @@ if (isMounted) {
     isSpecificCollection,
   ]);
 
+  const followedUserIdSet = useMemo(
+    () => new Set(followedUserIds),
+    [followedUserIds]
+  );
+
   const filteredPosts = useMemo(() => {
     if (!categoryId) {
       return [];
@@ -453,6 +482,13 @@ if (isMounted) {
         if (
           post.authorId !== profile.id &&
           blockedUserIds.includes(post.authorId)
+        ) {
+          return false;
+        }
+
+        if (
+          isFollowingItemsOnly &&
+          !followedUserIdSet.has(post.authorId)
         ) {
           return false;
         }
@@ -542,6 +578,8 @@ if (isMounted) {
     normalizedItemId,
     normalizedItemQuery,
     profile.id,
+    isFollowingItemsOnly,
+    followedUserIdSet,
   ]);
 
   const overallResult = useMemo<
@@ -563,6 +601,37 @@ if (isMounted) {
     categoryId,
     normalizedTopic,
   ]);
+
+  // The same 3–2–1 calculation is used for Following and Overall.
+  // Following is viewer-specific and must never be recorded as public
+  // Overall ranking engagement.
+  const followingPosts = useMemo(
+    () => filteredPosts.filter(
+      (post) => followedUserIdSet.has(post.authorId)
+    ),
+    [filteredPosts, followedUserIdSet]
+  );
+
+  const followingResult = useMemo<
+    CommunityTop3Result | null
+  >(() => {
+    if (!categoryId) {
+      return null;
+    }
+
+    return calculateCommunityTop3(
+      followingPosts,
+      {
+        category: categoryId,
+        topic: normalizedTopic,
+      }
+    );
+  }, [followingPosts, categoryId, normalizedTopic]);
+
+  const rankingResult =
+    activeView === 'following'
+      ? followingResult
+      : overallResult;
 
   const communityPost = useMemo<Post | null>(
     () => {
@@ -730,6 +799,9 @@ if (isMounted) {
           : {}),
         itemId: item.id,
         itemQuery: item.title,
+        ...(activeView === 'following'
+          ? { audience: 'following' }
+          : {}),
         view: 'lists',
       },
     });
@@ -1586,7 +1658,9 @@ if (isMounted) {
               variant="label"
               tone="tertiary"
               style={styles.filteredEyebrow}>
-              Lists containing
+              {isFollowingItemsOnly
+                ? 'Following lists containing'
+                : 'Lists containing'}
             </AppText>
 
             <AppText
@@ -1613,6 +1687,12 @@ if (isMounted) {
                     'Show published lists',
                 },
                 {
+                  value: 'following',
+                  label: 'Following',
+                  accessibilityLabel:
+                    'Show rankings from people you follow',
+                },
+                {
                   value: 'overall',
                   label: 'Overall',
                   accessibilityLabel:
@@ -1624,7 +1704,28 @@ if (isMounted) {
           </View>
         )}
         {activeView === 'lists' ? (
-          filteredPosts.length === 0 ? (
+          isFollowingItemsOnly && isLoadingFollows ? (
+            <View style={styles.emptyState}>
+              <ActivityIndicator size="small" color={colors.text} />
+              <AppText variant="body" tone="tertiary" style={styles.emptyText}>
+                Loading people you follow…
+              </AppText>
+            </View>
+          ) : isFollowingItemsOnly && hasFollowLoadError ? (
+            <View style={[styles.emptyState, { backgroundColor: colors.surface }]}>
+              <AppText variant="sectionTitle" style={styles.emptyTitle}>
+                Couldn't load Following
+              </AppText>
+              <AppText variant="body" tone="tertiary" style={styles.emptyText}>
+                Try again to load the people you follow.
+              </AppText>
+              <PrimaryButton
+                title="Try Again"
+                onPress={retryFollowState}
+                style={styles.followingEmptyButton}
+              />
+            </View>
+          ) : filteredPosts.length === 0 ? (
             <View
               style={[
                 styles.emptyState,
@@ -1703,8 +1804,59 @@ if (isMounted) {
               })}
             </View>
           )
-        ) : !overallResult ||
-          overallResult.items.length === 0 ? (
+        ) : activeView === 'following' && isLoadingFollows ? (
+          <View style={styles.emptyState}>
+            <ActivityIndicator size="small" color={colors.text} />
+            <AppText variant="body" tone="tertiary" style={styles.emptyText}>
+              Loading Following rankings…
+            </AppText>
+          </View>
+        ) : activeView === 'following' && hasFollowLoadError ? (
+          <View style={[styles.emptyState, { backgroundColor: colors.surface }]}>
+            <AppText variant="sectionTitle" style={styles.emptyTitle}>
+              Couldn't load Following
+            </AppText>
+            <AppText variant="body" tone="tertiary" style={styles.emptyText}>
+              Try again to see rankings from people you follow.
+            </AppText>
+            <PrimaryButton
+              title="Try Again"
+              onPress={retryFollowState}
+              style={styles.followingEmptyButton}
+            />
+          </View>
+        ) : activeView === 'following' && followedUserIds.length === 0 ? (
+          <View style={[styles.emptyState, { backgroundColor: colors.surface }]}>
+            <Ionicons name="people-outline" size={34} color={colors.secondaryText} />
+            <AppText variant="sectionTitle" style={styles.followingEmptyTitle}>
+              Discover what your people love.
+            </AppText>
+            <AppText variant="body" tone="tertiary" style={styles.emptyText}>
+              Follow people whose taste you trust to see their collective Top 3 rankings here.
+            </AppText>
+            <PrimaryButton
+              title="Discover People"
+              onPress={() => router.push('/discover-people')}
+              style={styles.followingEmptyButton}
+            />
+          </View>
+        ) : activeView === 'following' &&
+          (!followingResult || followingResult.items.length === 0) ? (
+          <View style={[styles.emptyState, { backgroundColor: colors.surface }]}>
+            <AppText variant="sectionTitle" style={styles.emptyTitle}>
+              No rankings here yet
+            </AppText>
+            <AppText variant="body" tone="tertiary" style={styles.emptyText}>
+              The people you follow haven't published a matching Top 3 in this category yet.
+            </AppText>
+            <PrimaryButton
+              title="Discover More People"
+              onPress={() => router.push('/discover-people')}
+              style={styles.followingEmptyButton}
+            />
+          </View>
+        ) : !rankingResult ||
+          rankingResult.items.length === 0 ? (
           <View
             style={[
               styles.emptyState,
@@ -1750,7 +1902,7 @@ if (isMounted) {
             </View>
 
             <View style={styles.rankingContent}>
-              {overallResult.items.map(
+              {rankingResult.items.map(
                 (entry, index) => (
                   <View
                     key={entry.item.id}
@@ -1761,7 +1913,7 @@ if (isMounted) {
                           colors.background,
                       },
                       index <
-                        overallResult.items.length - 1 &&
+                        rankingResult.items.length - 1 &&
                         styles.rankDivider,
                     ]}>
                     <Pressable
@@ -1957,6 +2109,7 @@ if (isMounted) {
             </View>
 
             <View style={[styles.overallFooter, { flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start', rowGap: 6 }]}>
+              {activeView === 'overall' ? (
               <View style={[styles.engagement, { alignSelf: 'flex-start', justifyContent: 'flex-start', marginLeft: 0 }]}>
                 <Pressable
                   style={({ pressed }) => [
@@ -2090,15 +2243,15 @@ if (isMounted) {
                   />
                 </Pressable>
               </View>
+              ) : null}
               <View style={[styles.sourceItem, { alignSelf: 'flex-start', justifyContent: 'flex-start', marginLeft: 0 }]}>
 
                 <AppText
                   variant="metadata"
                   tone="tertiary"
                   style={styles.footerText}>
-                  Based on{' '}
-                  {overallResult.totalLists}{' '}
-                  {overallResult.totalLists === 1
+                  Based on {rankingResult.totalLists}{' '}
+                  {rankingResult.totalLists === 1
                     ? 'published list'
                     : 'published lists'}
                 </AppText>
@@ -2307,6 +2460,16 @@ const styles = StyleSheet.create({
   },
 
   emptyTitle: {},
+
+  followingEmptyTitle: {
+    marginTop: 14,
+    textAlign: 'center',
+  },
+
+  followingEmptyButton: {
+    alignSelf: 'stretch',
+    marginTop: 20,
+  },
 
   emptyText: {
     marginTop: 8,

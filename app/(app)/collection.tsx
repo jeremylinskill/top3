@@ -1,4 +1,5 @@
 import { formatCollectionDisplayTitle } from '@/utils/build-collection-title';
+import { completeTop3Request, getTop3RequestFulfillment } from '@/lib/supabase/top3-requests';
 import ActionSheet from '@/components/action-sheet';
 import AppText from '@/components/app-text';
 import PageHeader from '@/components/page-header';
@@ -12,6 +13,8 @@ import {
 import { useOnboardingCollection } from '@/context/onboarding-collection-context';
 import { useProfile } from '@/context/profile-context';
 import { useTop3 } from '@/context/top3-context';
+import { useCollectionOptions } from '@/context/collection-options-context';
+import { getCollectionOptionListTitle } from '@/utils/collection-option-list-title';
 import { useAppColors } from '@/hooks/use-app-colors';
 import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
 import { useAuth } from '@/hooks/use-auth';
@@ -29,6 +32,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   StyleSheet,
   View
@@ -65,6 +69,7 @@ const DRAG_INSTRUCTION_KEY =
 
 export default function CollectionScreen() {
   const colors = useAppColors();
+  const { getOptionById } = useCollectionOptions();
 
   const {
     currentList,
@@ -107,7 +112,12 @@ export default function CollectionScreen() {
   const params =
     useLocalSearchParams<{
       listId?: string | string[];
+      top3RequestId?: string | string[];
     }>();
+
+  const responseRequestId = Array.isArray(params.top3RequestId)
+    ? params.top3RequestId[0] : params.top3RequestId;
+  const isRequestResponse = Boolean(responseRequestId);
 
 
   const requestedListId =
@@ -235,6 +245,8 @@ export default function CollectionScreen() {
 
   const [isPublishing, setIsPublishing] =
     useState(false);
+  const [isSharingRequest, setIsSharingRequest] = useState(false);
+  const [sharedRequestId, setSharedRequestId] = useState<string | null>(null);
 
   const navigation = useNavigation();
 
@@ -281,6 +293,8 @@ export default function CollectionScreen() {
   const canPublish =
     selectedItemCount === 3 &&
     hasUnpublishedChanges;
+  const isShareExistingRequest = isRequestResponse && Boolean(persistedCollection?.publishedAt);
+  const hasSharedThisRequest = Boolean(responseRequestId && sharedRequestId === responseRequestId);
 
   const publishedCollectionId =
     persistedCollection?.publishedAt
@@ -438,8 +452,18 @@ export default function CollectionScreen() {
     )?.icon ?? '⭐';
 
 
-  const displayTitle =
-    formatCollectionDisplayTitle(activeCollection.title);
+  // Movie Theme display names are editorial UI copy; do not rewrite a saved
+  // list title or change the theme/topic identity when showing the heading.
+  const movieThemeOption =
+    activeCollection.category === 'movies'
+      ? getOptionById(activeCollection.collectionOptionId)
+      : undefined;
+  const displayTitle = formatCollectionDisplayTitle(
+    movieThemeOption?.kind === 'theme' &&
+      movieThemeOption.categoryId === 'movies'
+      ? getCollectionOptionListTitle(movieThemeOption)
+      : activeCollection.title
+  );
 
 
   const draggableRows: DraggableRow[] =
@@ -557,41 +581,62 @@ function openSearch(rank: number) {
   }
 
 
-  async function publishCollection() {
-    if (
-      !canPublish ||
-      isPublishing ||
-      isDeleting
-    ) {
-      return;
+  async function shareRequestedTop3() {
+    if (!responseRequestId || !persistedCollection?.publishedAt ||
+        isSharingRequest || isPublishing || isDeleting || hasSharedThisRequest) return;
+    setIsSharingRequest(true);
+    try {
+      // The server validates ownership, list/topic identity, published status,
+      // and pending request status. It creates the requester notification
+      // atomically, so a successful RPC is confirmation of notification creation.
+      await completeTop3Request(responseRequestId, persistedCollection.id);
+      setSharedRequestId(responseRequestId);
+    } catch (error) {
+      Alert.alert('Unable to share Top 3',
+        error instanceof Error ? error.message : 'Please try again.');
+    } finally {
+      setIsSharingRequest(false);
     }
+  }
+
+  async function publishCollection() {
+    if (!canPublish || isPublishing || isDeleting || isSharingRequest) return;
 
     if (isOnboardingCollection) {
       markPendingPublish();
-
-      if (__DEV__ || !isAuthenticated) {
-        router.push('/create-account');
-      }
-
+      if (__DEV__ || !isAuthenticated) router.push('/create-account');
       return;
     }
 
     setIsPublishing(true);
-
     try {
+      const publishedId = persistedCollection?.id;
       await publishCurrentList();
+
+      if (responseRequestId && publishedId && user?.id) {
+        // The existing publish trigger fulfills matching requests and writes
+        // the requester's notification in the same database transaction.
+        // Verify THIS exact request and published collection before returning Home.
+        try {
+          const fulfillment = await getTop3RequestFulfillment(user.id, responseRequestId);
+          if (fulfillment?.status !== 'fulfilled' ||
+              fulfillment.fulfilled_collection_id !== publishedId) {
+            Alert.alert('Top 3 published',
+              'Your list is live, but we could not confirm that the requester was notified.');
+          } else {
+            // Only report Shared after the server confirms fulfillment.
+            setSharedRequestId(responseRequestId);
+          }
+        } catch (error) {
+          if (__DEV__) console.warn('Unable to verify request notification:', error);
+          Alert.alert('Top 3 published',
+            'Your list is live, but we could not confirm that the requester was notified.');
+        }
+      }
       router.replace('/feed');
     } catch (error) {
-      if (__DEV__) {
-        console.log(
-          'Failed to publish collection:',
-          error
-        );
-      }
-
-      setCollectionActionSheet({
-        type: 'publish-error',
-      });
+      if (__DEV__) console.log('Failed to publish collection:', error);
+      setCollectionActionSheet({ type: 'publish-error' });
     } finally {
       setIsPublishing(false);
     }
@@ -603,7 +648,8 @@ function openSearch(rank: number) {
       isOnboardingCollection ||
       !persistedCollection ||
       isDeleting ||
-      isPublishing
+      isPublishing ||
+      isSharingRequest
     ) {
       return;
     }
@@ -1022,15 +1068,20 @@ function openSearch(rank: number) {
           title={
             isPublishing
               ? 'Publishing…'
-              : persistedCollection?.publishedAt
-                ? 'Publish Update'
-                : 'Publish Top 3'
+              : isShareExistingRequest
+                ? (isSharingRequest ? 'Sharing…' : hasSharedThisRequest ? 'Shared' : 'Share')
+                : persistedCollection?.publishedAt
+                  ? 'Publish Update'
+                  : isRequestResponse
+                    ? 'Publish & Share'
+                    : 'Publish Top 3'
           }
-          onPress={publishCollection}
+          onPress={isShareExistingRequest ? shareRequestedTop3 : publishCollection}
           disabled={
-            !canPublish ||
-            isDeleting ||
-            isPublishing
+            isShareExistingRequest
+              ? selectedItemCount !== 3 || isDeleting || isPublishing ||
+                isSharingRequest || hasSharedThisRequest
+              : !canPublish || isDeleting || isPublishing || isSharingRequest
           }
         />
 

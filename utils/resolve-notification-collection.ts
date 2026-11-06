@@ -3,6 +3,7 @@ import {
   TOP3_CATEGORIES,
 } from '@/constants/top3-categories';
 import type { CollectionOption } from '@/types/collection-option';
+import { getCollectionOptionListTitle } from '@/utils/collection-option-list-title';
 import {
   NotificationDestination,
   resolveDestinationOption,
@@ -24,12 +25,13 @@ export type NotificationCollectionInput = {
 
 export function resolveNotificationCollection(
   destination: NotificationDestination,
-  options: readonly CollectionOption[]
+  options: readonly CollectionOption[],
+  { includePodcasts = false }: { includePodcasts?: boolean } = {}
 ): NotificationCollectionInput | null {
   const category = TOP3_CATEGORIES.find(
     (item) =>
       item.id === destination.categoryId &&
-      item.id !== 'podcasts'
+      (includePodcasts || item.id !== 'podcasts')
   );
 
   if (!category) {
@@ -76,6 +78,6 @@ export function resolveNotificationCollection(
     topic: option.name,
     themeId: option.slug,
     collectionOptionId: option.id,
-    title: `Top 3 ${option.name}`,
+    title: getCollectionOptionListTitle(option),
   };
 }

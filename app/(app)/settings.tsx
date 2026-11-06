@@ -320,6 +320,10 @@ export default function SettingsScreen() {
     router.push('/notification-composer');
   }
 
+  function openListIdeas() {
+    router.push('/admin-list-ideas');
+  }
+
   function confirmSignOut() {
     if (isSigningOut) {
       return;
@@ -992,6 +996,24 @@ export default function SettingsScreen() {
                 />
 
                 <Pressable
+                  style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+                  onPress={openListIdeas}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open Manage List Ideas">
+                  <View style={[styles.iconContainer, { backgroundColor: colors.background }]}>
+                    <Ionicons name="list-outline" size={23} color={colors.text} />
+                  </View>
+                  <View style={styles.rowDetails}>
+                    <AppText variant="headline">Manage List Ideas</AppText>
+                    <AppText variant="label" tone="tertiary" emphasis="regular" style={styles.rowSubtitle}>
+                      Create, preview and publish Movie Themes
+                    </AppText>
+                  </View>
+                  <Ionicons name="chevron-forward" size={21} color={colors.tertiaryText} />
+                </Pressable>
+
+                <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                <Pressable
                   style={({ pressed }) => [
                     styles.row,
                     pressed && styles.pressed,
@@ -1008,7 +1030,7 @@ export default function SettingsScreen() {
                     },
                   ]}>
                     <Ionicons
-                      name="notifications-outline"
+                      name="paper-plane-outline"
                       size={23}
                       color={colors.text}
                     />

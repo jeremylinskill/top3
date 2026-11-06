@@ -12,6 +12,10 @@ import { useCollectionOptions } from '@/context/collection-options-context';
 import { useOnboardingCollection } from '@/context/onboarding-collection-context';
 import { useTop3 } from '@/context/top3-context';
 import { CollectionOption } from '@/types/collection-option';
+import {
+  getCollectionOptionBrowseTitle,
+  getCollectionOptionListTitle,
+} from '@/utils/collection-option-list-title';
 import { useAppColors } from '@/hooks/use-app-colors';
 import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
 import Reanimated from 'react-native-reanimated';
@@ -267,7 +271,12 @@ export default function CreateTopicScreen() {
     source?: string | string[];
     // CARD_RETURN_TO_ORIGIN_20261025
     fromFeedCard?: string | string[];
+    requestUserId?: string | string[];
   }>();
+  const requestUserId = Array.isArray(params.requestUserId)
+    ? params.requestUserId[0]
+    : params.requestUserId;
+  const isRequestMode = Boolean(requestUserId);
   const categoryId = Array.isArray(params.categoryId)
     ? params.categoryId[0]
     : params.categoryId;
@@ -420,6 +429,26 @@ export default function CreateTopicScreen() {
       topic?.name;
     const title =
       titleOverride ?? buildCollectionTitle(selectedCategory.id, topic?.id);
+    if (requestUserId) {
+      router.push({
+        pathname: '/request-top3',
+        params: {
+          userId: requestUserId,
+          categoryId: selectedCategory.id,
+          kind: collectionOption
+            ? 'theme'
+            : topic?.id && topic.id !== 'general'
+              ? 'genre'
+              : 'overall',
+          ...(collectionOption
+            ? { optionId: collectionOption.id }
+            : topic?.id && topic.id !== 'general'
+              ? { optionId: topic.id }
+              : {}),
+        },
+      } as never);
+      return;
+    }
     if (isOnboardingCreate) {
       startOnboardingCollection({
         category: selectedCategory.id,
@@ -492,6 +521,7 @@ export default function CreateTopicScreen() {
           categoryId: selectedCategory.id,
           mode: nextMode,
           ...(isOnboardingCreate ? { source: 'onboarding' } : {}),
+          ...(requestUserId ? { requestUserId } : {}),
         },
       } as never
     );
@@ -500,6 +530,18 @@ export default function CreateTopicScreen() {
     option: CollectionOption
   ) {
     if (isCreatingRef.current) {
+      return;
+    }
+    if (requestUserId) {
+      router.push({
+        pathname: '/request-top3',
+        params: {
+          userId: requestUserId,
+          categoryId: selectedCategory.id,
+          kind: 'type',
+          optionId: option.id,
+        },
+      } as never);
       return;
     }
     if (isOnboardingCreate) {
@@ -634,7 +676,7 @@ export default function CreateTopicScreen() {
     hasHandledRequestedTheme.current = true;
     void chooseCollection(
       undefined,
-      `Top 3 ${requestedTheme.name}`,
+      getCollectionOptionListTitle(requestedTheme),
       requestedTheme
     );
   }, [requestedThemeSlug, mode, themes, category]);
@@ -676,7 +718,7 @@ export default function CreateTopicScreen() {
         backgroundColor={colors.background}>
         <PageHeader
           title={`${selectedCategory.icon} ${selectedCategory.name}`}
-          subtitle="How would you like to rank them?"
+          subtitle={isRequestMode ? 'How would you like them to rank?' : 'How would you like to rank them?'}
         />
         <View style={styles.content}>
           <Pressable
@@ -690,13 +732,13 @@ export default function CreateTopicScreen() {
             accessibilityRole="button"
             accessibilityLabel={
               overallIsPublished
-                ? `Edit overall ${selectedCategory.name}`
-                : `Rank overall ${selectedCategory.name}`
+                ? `${isRequestMode ? 'Request' : 'Edit'} overall ${selectedCategory.name}`
+                : `${isRequestMode ? 'Request' : 'Rank'} overall ${selectedCategory.name}`
             }>
             <View style={styles.choiceText}>
               <AppText variant="selectionTitle">Overall</AppText>
               <AppText variant="subtitle" style={styles.choiceSubtitle}>
-                Your three favourite {selectedCategory.name.toLowerCase()}.
+                {isRequestMode ? 'Their' : 'Your'} three favourite {selectedCategory.name.toLowerCase()}.
               </AppText>
             </View>
             {creatingCollectionKey === 'general' ? (
@@ -722,7 +764,7 @@ export default function CreateTopicScreen() {
               ]}
               onPress={() => openMode('type')}
               accessibilityRole="button"
-              accessibilityLabel={`Create a ${selectedCategory.name} Top 3 ${typeScreenTitle.toLowerCase()}`}>
+              accessibilityLabel={`${isRequestMode ? 'Request' : 'Create'} a ${selectedCategory.name} Top 3 ${typeScreenTitle.toLowerCase()}`} >
               <View style={styles.choiceText}>
                 <AppText variant="selectionTitle">{typeScreenTitle}</AppText>
                 <AppText variant="subtitle" style={styles.choiceSubtitle}>
@@ -746,7 +788,7 @@ export default function CreateTopicScreen() {
               ]}
               onPress={() => openMode('theme')}
               accessibilityRole="button"
-              accessibilityLabel={`Create a ${selectedCategory.name} Top 3 by theme`}>
+              accessibilityLabel={`${isRequestMode ? 'Request' : 'Create'} a ${selectedCategory.name} Top 3 by theme`} >
               <View style={styles.choiceText}>
                 <AppText variant="selectionTitle">By theme</AppText>
                 <AppText variant="subtitle" style={styles.choiceSubtitle}>
@@ -1061,7 +1103,7 @@ export default function CreateTopicScreen() {
           onPress={() =>
             chooseCollection(
               undefined,
-              `Top 3 ${theme.name}`,
+              getCollectionOptionListTitle(theme),
               theme
             )
           }
@@ -1071,14 +1113,14 @@ export default function CreateTopicScreen() {
           accessibilityRole="button"
           accessibilityLabel={
             isPublished
-              ? `Edit Top 3 ${theme.name}`
-              : `Create Top 3 ${theme.name}`
+              ? `Edit ${getCollectionOptionListTitle(theme)}`
+              : `Create ${getCollectionOptionListTitle(theme)}`
           }>
           <View style={styles.themeRowText}>
             <AppText
               variant="selectionTitle"
               style={styles.themeRowTitle}>
-              {theme.name}
+              {getCollectionOptionBrowseTitle(theme)}
             </AppText>
             {theme.browseLabel ? (
               <AppText
@@ -1316,7 +1358,7 @@ export default function CreateTopicScreen() {
         backgroundColor={colors.background}>
       <PageHeader
         title={`${selectedCategory.icon} ${selectedCategory.name}`}
-        subtitle="Rank them all, or choose a genre."
+        subtitle={isRequestMode ? 'Ask them for an overall Top 3 or a genre.' : 'Rank them all, or choose a genre.'}
       />
       <View style={styles.content}>
         <Pressable
@@ -1330,15 +1372,15 @@ export default function CreateTopicScreen() {
           accessibilityRole="button"
           accessibilityLabel={
             overallIsPublished
-              ? `Edit overall ${selectedCategory.name}`
-              : `Rank overall ${selectedCategory.name}`
+              ? `${isRequestMode ? 'Request' : 'Edit'} overall ${selectedCategory.name}`
+              : `${isRequestMode ? 'Request' : 'Rank'} overall ${selectedCategory.name}`
           }>
           <View style={styles.overallText}>
             <AppText variant="selectionTitle">
               All {selectedCategory.name}
             </AppText>
             <AppText variant="subtitle" style={styles.overallSubtitle}>
-              Rank your favourites across every genre.
+              {isRequestMode ? 'Ask for their favourites across every genre.' : 'Rank your favourites across every genre.'}
             </AppText>
           </View>
           {creatingCollectionKey === 'general' ? (

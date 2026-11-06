@@ -38,9 +38,9 @@ type Props = {
   onClose: () => void;
 };
 
-// Podcasts are not part of the seven supported categories yet.
+// Keep destinations aligned with the categories supported by Create.
 const categories = TOP3_CATEGORIES
-  .filter((category) => category.id !== 'podcasts')
+  .slice()
   .sort((a, b) => a.name.localeCompare(b.name));
 
 
@@ -312,64 +312,40 @@ export default function NotificationDestinationPicker({
           </View>
         ) : null}
 
-        {genres.length > 0 || !isSearchResult ? (
+        {genres.length > 0 ? (
           <View>
             {!isSearchResult ? sectionHeading('Genres') : null}
-            {genres.length > 0
-              ? genres.map(genre => renderChoice(
+            {genres.map(genre => renderChoice(
                   genre.name,
                   { categoryId: category.id, kind: 'genre', optionId: genre.id },
                   isSearchResult ? 'Genre' : undefined
-                ))
-              : (
-                <AppText variant="label" tone="tertiary" style={styles.emptySection}>
-                  No genres available yet.
-                </AppText>
-              )}
+                ))}
           </View>
         ) : null}
 
-        {types.length > 0 || !isSearchResult ? (
+        {types.length > 0 ? (
           <View>
             {!isSearchResult ? sectionHeading('Types') : null}
-            {types.length > 0
-              ? types.map((option) =>
+            {types.map((option) =>
                   renderChoice(
                     option.name,
                     destinationFromCollectionOption(option),
                     isSearchResult ? 'Type' : undefined
                   )
-                )
-              : (
-                <AppText
-                  variant="label"
-                  tone="tertiary"
-                  style={styles.emptySection}>
-                  No types available yet.
-                </AppText>
-              )}
+                )}
           </View>
         ) : null}
 
-        {themes.length > 0 || !isSearchResult ? (
+        {themes.length > 0 ? (
           <View>
             {!isSearchResult ? sectionHeading('Themes') : null}
-            {themes.length > 0
-              ? themes.map((option) =>
+            {themes.map((option) =>
                   renderChoice(
                     option.name,
                     destinationFromCollectionOption(option),
                     isSearchResult ? 'Theme' : undefined
                   )
-                )
-              : (
-                <AppText
-                  variant="label"
-                  tone="tertiary"
-                  style={styles.emptySection}>
-                  No themes available yet.
-                </AppText>
-              )}
+                )}
           </View>
         ) : null}
       </View>

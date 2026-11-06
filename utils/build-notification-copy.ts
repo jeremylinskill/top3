@@ -49,6 +49,16 @@ export function buildNotificationCopy(
   }
 
   const name = option.name.trim();
+  // Movie Themes (and other collection options) can define a reader-facing
+  // full list title such as "Top 3 Monster Movies" even when the admin name is
+  // just "Monsters". Use that canonical title for suggested notification copy.
+  const configuredTitle =
+    'providerConfig' in option &&
+    typeof option.providerConfig?.displayTitle === 'string'
+      ? option.providerConfig.displayTitle.trim()
+      : '';
+  const configuredSubject =
+    /^Top\s*3\s+(.+)$/i.exec(configuredTitle)?.[1]?.trim() ?? '';
   const hasPluralEnding =
     PLURAL_NOUN_ENDING.test(name);
 
@@ -59,13 +69,17 @@ export function buildNotificationCopy(
       )
     : name;
 
-  const suggestedTitle = hasPluralEnding
-    ? `What are your Top 3 ${subject}?`
-    : `${name}: What's your Top 3?`;
+  const suggestedTitle = configuredSubject
+    ? `What's your Top 3 ${configuredSubject}?`
+    : hasPluralEnding
+      ? `What are your Top 3 ${subject}?`
+      : `${name}: What's your Top 3?`;
 
-  const suggestedMessage = hasPluralEnding
-    ? `Rank your three favourite ${subject} and see who shares your taste!`
-    : `Make your Top 3 picks for ${name} and see who shares your taste!`;
+  const suggestedMessage = configuredSubject
+    ? `Pick your Top 3 ${configuredSubject} and see who shares your taste!`
+    : hasPluralEnding
+      ? `Rank your three favourite ${subject} and see who shares your taste!`
+      : `Make your Top 3 picks for ${name} and see who shares your taste!`;
 
   return {
     title:

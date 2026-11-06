@@ -201,7 +201,7 @@ async function verifyClaimedTestDelivery(
 
   const categories = [
     "albums", "artists", "books", "games",
-    "movies", "songs", "tv",
+    "movies", "podcasts", "songs", "tv",
   ];
 
   if (

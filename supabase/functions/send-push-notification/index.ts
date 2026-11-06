@@ -1,6 +1,12 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import "@supabase/functions-js/edge-runtime.d.ts";
 import { withSupabase } from "@supabase/server";
+import { getFulfilledTop3RequestMessage } from '../_shared/top3-request-fulfilled-copy.ts';
+import {
+  getTop3RequestNotificationTitle,
+  getTop3RequestPushBody,
+  type Top3RequestCopyDetails,
+} from "../_shared/top3-request-notification-copy.ts";
 
 const EXPO_PUSH_URL =
   "https://exp.host/--/api/v2/push/send";
@@ -12,7 +18,9 @@ type NotificationType =
   | "comment_like"
   | "follow"
   | "follow_request_accepted"
-  | "announcement";
+  | "announcement"
+  | "top3_request"
+  | "top3_request_fulfilled";
 
 type NotificationRow = {
   id: string;
@@ -21,6 +29,7 @@ type NotificationRow = {
   type: NotificationType;
   collection_id: string | null;
   comment_id: string | null;
+  top3_request_id?: string | null;
   is_read: boolean;
   created_at: string;
 };
@@ -73,10 +82,12 @@ function getPushCopy({
   notification,
   actorName,
   collectionTitle,
+  requestTitle,
 }: {
   notification: NotificationRow;
   actorName: string;
   collectionTitle: string | null;
+  requestTitle: string | null;
 }) {
   const title = "Top 3";
   const pushCollectionTitle =
@@ -84,6 +95,12 @@ function getPushCopy({
       collectionTitle
     );
 
+  if (notification.type === "top3_request") {
+    return { title, body: getTop3RequestPushBody(actorName, requestTitle) };
+  }
+  if (notification.type === "top3_request_fulfilled") {
+    return { title, body: `${actorName} ${getFulfilledTop3RequestMessage(collectionTitle)}` };
+  }
   if (notification.type === "like") {
     return {
       title,
@@ -302,13 +319,60 @@ export default {
             ProfileRow | null
         );
 
-      const {
-        title,
-        body,
-      } = getPushCopy({
+      // A notification INSERT webhook can omit columns added after that
+      // webhook was configured. Re-read the persisted notification to resolve
+      // its exact request ID, rather than guessing from pending requests.
+      // Always scope the lookup to the webhook's recipient and event type.
+      let top3RequestId: string | null = notification.top3_request_id ?? null;
+      let requestTitle: string | null = null;
+      if (notification.type === "top3_request") {
+        const { data: savedNotification, error: savedError } = await ctx.supabaseAdmin
+          .from("notifications")
+          .select("top3_request_id")
+          .eq("id", notification.id)
+          .eq("recipient_user_id", notification.recipient_user_id)
+          .eq("type", "top3_request")
+          .maybeSingle();
+        if (savedError) {
+          console.error("Unable to resolve Top 3 request from notification:", savedError);
+        } else if (savedNotification?.top3_request_id) {
+          if (!top3RequestId) {
+            console.warn("Top 3 request ID absent from webhook; recovered from saved notification.");
+          }
+          top3RequestId = savedNotification.top3_request_id;
+        }
+
+        if (top3RequestId) {
+          const { data: requestDetails, error: requestError } = await ctx.supabaseAdmin
+            .from("top3_requests")
+            .select("category_id,destination_kind,topic_label")
+            .eq("id", top3RequestId)
+            .eq("recipient_user_id", notification.recipient_user_id)
+            .maybeSingle();
+          if (requestError) {
+            console.error("Unable to load Top 3 request title for push:", requestError);
+          } else if (requestDetails) {
+            const details: Top3RequestCopyDetails = {
+              categoryId: requestDetails.category_id,
+              destinationKind: requestDetails.destination_kind,
+              topicLabel: requestDetails.topic_label,
+            };
+            requestTitle = getTop3RequestNotificationTitle(details);
+            if (!requestTitle) {
+              console.warn("Top 3 request title unavailable for push: unsupported saved request details.");
+            }
+          } else {
+            console.warn("Top 3 request title unavailable for push: request record not found.");
+          }
+        } else {
+          console.warn("Top 3 request push has no linked request ID after database lookup.");
+        }
+      }
+      const { title, body } = getPushCopy({
         notification,
         actorName,
         collectionTitle,
+        requestTitle,
       });
 
       // The INSERT webhook runs after its in-app notification exists.
@@ -383,6 +447,7 @@ export default {
                 notification.collection_id,
               commentId:
                 notification.comment_id,
+              top3RequestId,
             },
           })
         );

@@ -2,7 +2,9 @@ import {
     TEXT_STYLES,
     TypographyKey,
 } from '@/constants/typography';
+import { DARK_COLORS, LIGHT_COLORS } from '@/constants/colors';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import {
     Text,
     TextProps,
@@ -19,6 +21,8 @@ export type AppTextTone =
   | 'onPrimary'
   | 'onHighlight'
   | 'onDark'
+  | 'invertedPrimary'
+  | 'invertedSecondary'
   | 'disabled';
 
 export type AppTextEmphasis =
@@ -112,6 +116,10 @@ export default function AppText({
   ...textProps
 }: AppTextProps) {
   const colors = useAppColors();
+  // Inverted surfaces use the opposite theme's semantic text colours.
+  const invertedColors = useColorScheme() === 'dark'
+    ? LIGHT_COLORS
+    : DARK_COLORS;
 
   const resolvedTone =
     tone ?? DEFAULT_TONE_BY_VARIANT[variant];
@@ -135,7 +143,11 @@ export default function AppText({
                     ? colors.onHighlight
                     : resolvedTone === 'onDark'
                       ? colors.white
-                      : colors.disabledText;
+                      : resolvedTone === 'invertedPrimary'
+                        ? invertedColors.text
+                        : resolvedTone === 'invertedSecondary'
+                          ? invertedColors.secondaryText
+                          : colors.disabledText;
 
   return (
     <Text

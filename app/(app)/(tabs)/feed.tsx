@@ -2,11 +2,24 @@ import ActionSheet, {
   ActionSheetAction,
 } from '@/components/action-sheet';
 import AppText from '@/components/app-text';
+import { TEXT_STYLES } from '@/constants/typography';
+import { TOP3_CATEGORIES } from '@/constants/top3-categories';
+import { LinearGradient } from 'expo-linear-gradient';
 import CommentsSheet from '@/components/comments-sheet';
 import PrimaryButton from '@/components/primary-button';
 import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
 import Reanimated from 'react-native-reanimated';
 import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
+import { useCollectionOptions } from '@/context/collection-options-context';
+import { getActiveHomeCampaignBanner, dismissHomeCampaignBanner,
+  type HomeCampaignBanner } from '@/lib/supabase/home-campaign-banner';
+import {
+  canPreviewHomeCampaignBanner,
+  getHomeBannerPreview,
+  dismissHomeBannerPreview,
+} from '@/lib/home-banner-preview';
+import { resolveNotificationCollection } from '@/utils/resolve-notification-collection';
+import { Ionicons } from '@expo/vector-icons';
 import { Platform as NavPlatform } from 'react-native';
 import Top3Card from '@/components/top3-card';
 import { RADIUS } from '@/constants/radius';
@@ -21,6 +34,8 @@ import {
   useTabBarScroll,
 } from '@/context/tab-bar-scroll-context';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { fetchCollectionOptionSuggestions } from '@/services/collection-option-service';
+import { getPopularSuggestionsByCategory } from '@/providers/search';
 import { useAuth } from '@/hooks/use-auth';
 import { sharePublishedCollection } from '@/lib/share';
 import { getProfilesByIds } from '@/lib/supabase/profiles';
@@ -36,17 +51,23 @@ import {
 import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
 import { buildPersonalizedFeed } from '@/utils/build-personalized-feed';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
 import {
+  Alert,
   FlatList,
+  Image,
+  Pressable,
   RefreshControl,
+  ScrollView,
   StyleSheet,
+  Text,
   View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -79,6 +100,30 @@ function formatSuggestionReason(
   }
 
   return formattedReason;
+}
+
+type HomeBannerMovie = { id: string; title: string; imageUrl: string };
+
+// Prefer three entirely new posters on pull-to-refresh. If the theme has
+// fewer than six eligible posters, reuse only the minimum needed from the
+// preceding set. Poster selection is local; no network call is made here.
+function pickHomeBannerMovies(
+  candidates: HomeBannerMovie[],
+  previousIds: readonly string[]
+): HomeBannerMovie[] {
+  if (candidates.length < 3) return [];
+  const previous = new Set(previousIds);
+  const shuffle = (movies: HomeBannerMovie[]) => {
+    const mixed = [...movies];
+    for (let i = mixed.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [mixed[i], mixed[j]] = [mixed[j], mixed[i]];
+    }
+    return mixed;
+  };
+  const newMovies = candidates.filter(movie => !previous.has(movie.id));
+  const previousMovies = candidates.filter(movie => previous.has(movie.id));
+  return [...shuffle(newMovies), ...shuffle(previousMovies)].slice(0, 3);
 }
 
 type FeedReportSheet =
@@ -138,6 +183,8 @@ type FeedReportSheet =
 
 export default function FeedScreen() {
   const colors = useAppColors();
+  // Shared Top 3 blue-to-green campaign gradient across light and dark mode.
+  const bannerForeground = '#111111';
   const insets = useSafeAreaInsets();
   const { onFeedScroll } = useTabBarScroll();
   // Native iOS refresh pilot: the inset replaces the top content padding.
@@ -175,7 +222,205 @@ export default function FeedScreen() {
 
   const {
     posts,
+    lists,
+    isCollectionsLoaded,
+    hasCollectionsLoadError,
+    selectList,
+    startListWithoutSaving,
   } = useTop3();
+  const { options } = useCollectionOptions();
+  const [homeBanner, setHomeBanner] = useState<HomeCampaignBanner | null>(null);
+  const [homeBannerPreview, setHomeBannerPreview] = useState<HomeCampaignBanner | null>(null);
+  const [isDismissingBanner, setIsDismissingBanner] = useState(false);
+  const [bannerMovies, setBannerMovies] = useState<HomeBannerMovie[]>([]);
+  const bannerMoviePoolRef = useRef<{
+    key: string;
+    movies: HomeBannerMovie[];
+  } | null>(null);
+  const bannerShownMovieIdsRef = useRef<string[]>([]);
+
+  // The server only exposes a banner after a verified full-audience send.
+  // Refresh on Home focus to pick up new or expired campaigns.
+  useFocusEffect(useCallback(() => {
+    let alive = true;
+    if (!isAuthenticated) {
+      setHomeBanner(null);
+      setHomeBannerPreview(null);
+      return () => { alive = false; };
+    }
+    setHomeBannerPreview(profile.isAdmin && canPreviewHomeCampaignBanner()
+      ? getHomeBannerPreview(profile.id) : null);
+    void getActiveHomeCampaignBanner()
+      .then(banner => { if (alive) setHomeBanner(banner); })
+      .catch(() => { if (alive) setHomeBanner(null); });
+    return () => { alive = false; };
+  }, [isAuthenticated, profile.id, profile.isAdmin]));
+
+  // Local previews take precedence over any live Development banner. A preview
+  // is tied to this administrator and never uses a campaign database row.
+  const displayedHomeBanner = homeBannerPreview ?? homeBanner;
+  const homeBannerDestination = useMemo(() => displayedHomeBanner
+    ? resolveNotificationCollection(displayedHomeBanner.destination, options, { includePodcasts: true })
+    : null, [displayedHomeBanner, options]);
+
+  // A challenge should encourage both new lists and revisiting older ones.
+  // Publish Update refreshes publishedAt, while in-progress edits can update
+  // updatedAt locally before they are shared. Use only the last successful
+  // publication as the 90-day participation signal.
+  const bannerParticipation = useMemo(() => {
+    if (!homeBannerDestination || !isCollectionsLoaded) {
+      return { hasPublishedList: false, participatedRecently: false };
+    }
+    const normalize = (value?: string) => {
+      const n = value?.trim().toLowerCase() ?? '';
+      return n === 'general' ? '' : n;
+    };
+    const ninetyDaysAgo = Date.now() - 90 * 24 * 60 * 60 * 1000;
+    let hasPublishedList = false;
+    let participatedRecently = false;
+    for (const list of lists) {
+      if (!list.publishedAt || normalize(list.category) !== normalize(homeBannerDestination.category)) {
+        continue;
+      }
+      const matches = homeBannerDestination.collectionOptionId && list.collectionOptionId
+        ? normalize(homeBannerDestination.collectionOptionId) === normalize(list.collectionOptionId)
+        : normalize(list.type) === normalize(homeBannerDestination.type) &&
+          normalize(list.topic) === normalize(homeBannerDestination.topic);
+      if (!matches) continue;
+      hasPublishedList = true;
+      const lastShared = Date.parse(list.publishedAt);
+      if (Number.isFinite(lastShared) && lastShared >= ninetyDaysAgo) {
+        participatedRecently = true;
+        break;
+      }
+    }
+    return { hasPublishedList, participatedRecently };
+  }, [homeBannerDestination, isCollectionsLoaded, lists]);
+
+  // A local design preview intentionally bypasses participation eligibility.
+  // Real and private database-backed banners hide only after participation
+  // within 90 days; older published lists remain eligible for an update.
+  const visibleHomeBanner = displayedHomeBanner && homeBannerDestination && isCollectionsLoaded &&
+    !hasCollectionsLoadError && (homeBannerPreview !== null || !bannerParticipation.participatedRecently) &&
+    new Date(displayedHomeBanner.expiresAt).getTime() > Date.now()
+      ? displayedHomeBanner : null;
+  const showingLocalPreview = visibleHomeBanner !== null &&
+    homeBannerPreview !== null && visibleHomeBanner === homeBannerPreview;
+  const bannerMovieKey = visibleHomeBanner && homeBannerDestination
+    ? [
+        visibleHomeBanner.id,
+        homeBannerDestination.category,
+        homeBannerDestination.collectionOptionId ?? '',
+        homeBannerDestination.topic ?? '',
+      ].join('|')
+    : '';
+
+  // Preview and live campaigns use this SAME poster row. Fetch titles from
+  // the selected movie theme only; never mix unrelated globally popular films.
+  // The row is decorative: tapping anywhere in the banner still opens the Top 3.
+  useEffect(() => {
+    let cancelled = false;
+    const destination = homeBannerDestination;
+    if (!bannerMovieKey || !destination || destination.category !== 'movies') {
+      bannerMoviePoolRef.current = null;
+      bannerShownMovieIdsRef.current = [];
+      setBannerMovies([]);
+      return () => { cancelled = true; };
+    }
+    // A new banner object returned by Home refresh must not start a new
+    // TMDB request or reset the three posters we just rotated.
+    if (bannerMoviePoolRef.current?.key === bannerMovieKey) {
+      return () => { cancelled = true; };
+    }
+    setBannerMovies([]);
+    bannerShownMovieIdsRef.current = [];
+    const matchingOption = options.find(option =>
+      option.id === destination.collectionOptionId && option.categoryId === 'movies'
+    );
+    const load = async () => {
+      try {
+        const curated = matchingOption &&
+          !(matchingOption.providerKey === 'tmdb' && matchingOption.providerMode === 'discover')
+          ? (await fetchCollectionOptionSuggestions(matchingOption.id)).map(row => row.item)
+          : [];
+        const candidates = curated.length >= 3
+          ? curated
+          : matchingOption &&
+            !(matchingOption.providerKey === 'tmdb' && matchingOption.providerMode === 'discover')
+            ? curated
+            : await getPopularSuggestionsByCategory(
+                'movies', destination.topic, 20, undefined, matchingOption
+              );
+        const seen = new Set<string>();
+        const eligible: HomeBannerMovie[] = candidates.filter(item => {
+          if (!item.imageUrl || !item.title?.trim() || seen.has(item.id)) return false;
+          seen.add(item.id);
+          return true;
+        }).slice(0, 15).map(item => ({
+          id: item.id, title: item.title, imageUrl: item.imageUrl!,
+        }));
+        if (!cancelled) {
+          bannerMoviePoolRef.current = { key: bannerMovieKey, movies: eligible };
+          const initial = pickHomeBannerMovies(eligible, []);
+          bannerShownMovieIdsRef.current = initial.map(movie => movie.id);
+          setBannerMovies(initial);
+        }
+      } catch {
+        // Poster artwork is optional. Never block the campaign CTA or Home.
+        if (!cancelled) {
+          bannerMoviePoolRef.current = null;
+          bannerShownMovieIdsRef.current = [];
+          setBannerMovies([]);
+        }
+      }
+    };
+    void load();
+    return () => { cancelled = true; };
+  }, [bannerMovieKey, options]);
+
+  function openHomeCampaignBanner() {
+    if (!visibleHomeBanner || !homeBannerDestination || !isCollectionsLoaded || hasCollectionsLoadError) {
+      Alert.alert('Top 3 unavailable', 'Please try again once your lists are loaded.');
+      return;
+    }
+    const normalize = (value?: string) => {
+      const n = value?.trim().toLowerCase() ?? '';
+      return n === 'general' ? '' : n;
+    };
+    const matching = lists.filter(list => {
+      if (normalize(list.category) !== normalize(homeBannerDestination.category)) return false;
+      if (homeBannerDestination.collectionOptionId && list.collectionOptionId)
+        return normalize(homeBannerDestination.collectionOptionId) === normalize(list.collectionOptionId);
+      return normalize(list.type) === normalize(homeBannerDestination.type) &&
+        normalize(list.topic) === normalize(homeBannerDestination.topic);
+    });
+    const existing = matching.find(list => Boolean(list.publishedAt)) ??
+      matching.find(list => list.items.some(item => item !== null)) ?? matching[0];
+    const listId = existing
+      ? (selectList(existing.id), existing.id)
+      : startListWithoutSaving(homeBannerDestination);
+    router.push({ pathname: '/collection', params: { listId } });
+  }
+
+  async function dismissCurrentHomeBanner() {
+    if (!visibleHomeBanner || isDismissingBanner) return;
+    if (showingLocalPreview) {
+      dismissHomeBannerPreview(profile.id);
+      setHomeBannerPreview(null);
+      return;
+    }
+    const campaignId = visibleHomeBanner.id;
+    setIsDismissingBanner(true);
+    try {
+      await dismissHomeCampaignBanner(campaignId);
+      setHomeBanner(current => current?.id === campaignId ? null : current);
+    } catch {
+      Alert.alert('Unable to dismiss', 'Please try again.');
+    } finally {
+      setIsDismissingBanner(false);
+    }
+  }
+
 
   const postsRef =
     useRef(posts);
@@ -197,6 +442,8 @@ export default function FeedScreen() {
 
   const [isRefreshing, setIsRefreshing] =
     useState(false);
+
+  const [selectedHomeCategory, setSelectedHomeCategory] = useState('all');
 
   const artworkHydrationRunRef =
     useRef(0);
@@ -363,6 +610,50 @@ export default function FeedScreen() {
       followedUserIds,
       profile.id,
     ]
+  );
+
+  // Derive pills ONLY from published lists already available in the
+  // viewer's Home feed (after blocked-user filtering). No extra query and
+  // no empty-category filters. Display present categories alphabetically.
+  const availableHomeCategories = useMemo(() => {
+    const published = new Set<string>();
+    for (const { post } of personalizedFeed) {
+      const category = post.collection.category?.trim();
+      if (category) published.add(category);
+    }
+    const known = TOP3_CATEGORIES
+      .filter(category => published.has(category.id))
+      .map(category => ({ id: category.id, label: category.name }));
+    const knownIds = new Set<string>(known.map(category => category.id));
+    // Show future published category IDs even if not yet in local constants.
+    const additional = [...published]
+      .filter(id => !knownIds.has(id))
+      .sort()
+      .map(id => ({
+        id,
+        label: id.replace(/[-_]/g, ' ').replace(/\b\w/g, letter => letter.toUpperCase()),
+      }));
+    return [...known, ...additional].sort((a, b) =>
+      a.label.localeCompare(b.label, undefined, { sensitivity: 'base' })
+    );
+  }, [personalizedFeed]);
+
+  // If a category loses its final visible post (e.g. after a block or
+  // refresh), restore All rather than leave Home showing an empty list.
+  useEffect(() => {
+    if (selectedHomeCategory !== 'all' &&
+        !availableHomeCategories.some(category => category.id === selectedHomeCategory)) {
+      setSelectedHomeCategory('all');
+    }
+  }, [selectedHomeCategory, availableHomeCategories]);
+
+  const categoryFilteredFeed = useMemo(() =>
+    selectedHomeCategory === 'all'
+      ? personalizedFeed
+      : personalizedFeed.filter(({ post }) =>
+          post.collection.category === selectedHomeCategory
+        ),
+    [personalizedFeed, selectedHomeCategory]
   );
 
   const feedCollectionIds = useMemo(
@@ -1124,6 +1415,20 @@ export default function FeedScreen() {
     }
 
     setIsRefreshing(true);
+    // Rotate from the already-loaded candidate pool, with no extra TMDB fetch.
+    const currentBannerPool = bannerMoviePoolRef.current;
+    if (currentBannerPool?.key === bannerMovieKey) {
+      const nextMovies = pickHomeBannerMovies(
+        currentBannerPool.movies, bannerShownMovieIdsRef.current
+      );
+      if (nextMovies.length === 3) {
+        bannerShownMovieIdsRef.current = nextMovies.map(movie => movie.id);
+        setBannerMovies(nextMovies);
+      }
+    }
+    void getActiveHomeCampaignBanner()
+      .then(setHomeBanner)
+      .catch(() => {});
 
     try {
       const nextPosts =
@@ -1284,6 +1589,93 @@ export default function FeedScreen() {
     );
   }
 
+  const featuredBanner = visibleHomeBanner ? (
+    <LinearGradient
+      colors={['#00D898', '#00D5CC', '#00D2FF']}
+      start={{ x: 0.5, y: 0 }}
+      end={{ x: 0.5, y: 1 }}
+      style={styles.homeBanner}>
+      <View style={styles.homeBannerHeader}>
+        <Text style={[TEXT_STYLES.label, { color: bannerForeground }]}>
+          Take the Top 3 Challenge
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss featured Top 3"
+          disabled={isDismissingBanner}
+          onPress={() => { void dismissCurrentHomeBanner(); }}
+          hitSlop={12}
+          style={styles.bannerClose}>
+          <Ionicons name="close" size={20} color={bannerForeground} />
+        </Pressable>
+      </View>
+      <Pressable accessibilityRole="button"
+        accessibilityLabel={`${bannerParticipation.hasPublishedList ? 'Review or update' : 'Create'} ${visibleHomeBanner.title}`}
+        onPress={openHomeCampaignBanner} style={styles.homeBannerBody}>
+        <Text style={[TEXT_STYLES.headline, { color: bannerForeground }]}>
+          {visibleHomeBanner.title}
+        </Text>
+        <Text style={[TEXT_STYLES.body, { color: bannerForeground }]}>
+          {visibleHomeBanner.message}
+        </Text>
+        {bannerMovies.length === 3 ? (
+          <View style={styles.homeBannerMovies} accessibilityLabel="Example movies for this Top 3">
+            {bannerMovies.map(movie => (
+              <View key={movie.id} style={styles.homeBannerMovie}>
+                <Image source={{ uri: movie.imageUrl }}
+                  style={styles.homeBannerPoster} resizeMode="cover"
+                  accessible accessibilityLabel={`${movie.title} movie poster`} />
+              </View>
+            ))}
+          </View>
+        ) : null}
+      </Pressable>
+    </LinearGradient>
+  ) : null;
+
+  // The pills and campaign scroll with the feed. Category filtering never
+  // fetches or reorders posts, and unrelated campaigns appear only on All.
+  const homeFeedHeader = (
+    <View>
+      {availableHomeCategories.length > 0 ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.categoryFilterScroll}
+          contentContainerStyle={styles.categoryFilterContent}>
+          {[{ id: 'all', label: 'All' }, ...availableHomeCategories].map(category => {
+            const selected = selectedHomeCategory === category.id;
+            return (
+              <Pressable
+                key={category.id}
+                accessibilityRole="button"
+                accessibilityLabel={category.id === 'all'
+                  ? 'Show all Top 3 lists'
+                  : `Show ${category.label} Top 3 lists`}
+                accessibilityState={{ selected }}
+                onPress={() => setSelectedHomeCategory(category.id)}
+                hitSlop={{ top: 3, bottom: 3 }}
+                style={[
+                  styles.categoryPill,
+                  {
+                    backgroundColor: selected ? colors.primary : colors.surface,
+                  },
+                ]}>
+                <AppText
+                  variant="label"
+                  tone={selected ? 'onPrimary' : 'primary'}
+                  emphasis="semibold">
+                  {category.label}
+                </AppText>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      ) : null}
+      {selectedHomeCategory === 'all' ? featuredBanner : null}
+    </View>
+  );
+
   return (
     <SafeAreaView
       style={[
@@ -1329,6 +1721,7 @@ export default function FeedScreen() {
         </View>
       ) : personalizedFeed.length === 0 ? (
         <View style={styles.content}>
+          {featuredBanner}
           <View
             style={[
               styles.emptyState,
@@ -1358,11 +1751,12 @@ export default function FeedScreen() {
         </View>
       ) : (
         <Reanimated.FlatList
-          data={personalizedFeed}
+          data={categoryFilteredFeed}
           keyExtractor={({ post }) =>
             post.id
           }
           renderItem={renderFeedItem}
+          ListHeaderComponent={homeFeedHeader}
           onScroll={onStickyHeaderScroll}
           scrollEventThrottle={16}
           // On iOS, UIScrollView manages the native refresh indicator
@@ -1430,6 +1824,58 @@ const styles = StyleSheet.create({
 
   feedItem: {
     marginBottom: 16,
+  },
+  categoryFilterScroll: {
+    marginHorizontal: -20,
+    marginBottom: 16,
+  },
+  categoryFilterContent: {
+    paddingHorizontal: 20,
+    gap: SPACING.sm,
+  },
+  categoryPill: {
+    minHeight: 38,
+    paddingHorizontal: 16,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  homeBanner: {
+    width: '100%',
+    alignSelf: 'stretch',
+    borderRadius: RADIUS.lg,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    marginBottom: 16,
+    gap: 6,
+  },
+  homeBannerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  bannerClose: {
+    padding: 3,
+  },
+  homeBannerBody: {
+    gap: 10,
+    paddingBottom: 0,
+  },
+  homeBannerMovies: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 6,
+    marginBottom: 2,
+  },
+  homeBannerMovie: {
+    flex: 1,
+    minWidth: 0,
+  },
+  homeBannerPoster: {
+    width: '100%',
+    aspectRatio: 2 / 3,
+    borderRadius: 8,
+    backgroundColor: '#666666',
   },
 
   loadingState: {

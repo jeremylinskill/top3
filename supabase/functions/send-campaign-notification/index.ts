@@ -176,7 +176,7 @@ export default {
         "books",
         "games",
         "movies",
-        "songs",
+        "podcasts", "songs",
         "tv",
       ];
 
