@@ -1,9 +1,9 @@
 # Top3 Architecture
 
-Document Version: 1.5
+Document Version: 1.6
 Status: Active
 Owner: Jeremy Linskill
-Last Updated: October 21, 2026
+Last Updated: November 8, 2026
 
 ## Purpose
 
@@ -318,6 +318,7 @@ Taste Match recommendation candidate generation must also become bounded and ser
 
  Feed • Discover • Search • Create / Collection • Profile • Community
          Onboarding • Taste Match • Notifications • Authentication
+         Messages • DM Conversation • Admin Campaign Composer
                                   │
                                   ▼
                               Expo Router
@@ -375,6 +376,27 @@ intentional Production promotion step.
 A change that works correctly in Development is not automatically safe to
 promote to Production. Production-specific dependencies must be verified before
 promotion.
+
+### EAS build profiles, updates, and backend identity (November 2026)
+
+A store track does not select a backend. Build-time
+`EXPO_PUBLIC_SUPABASE_URL` and publishable-key configuration determine the
+Supabase project, and compatible EAS Updates can replace the JavaScript
+bundle and its public environment values without replacing the native app.
+
+- Android 1.1.3 (7) used EAS build profile `closed-test` with the Development
+  EAS environment and update channel `closed-test`.
+- Android 1.2.0 (8) was built with `android-production`, targeting Production
+  and update channel `production`. A subsequent Android-only EAS Update with
+  `--environment development` restored closed testers' Development backend.
+  The build still subscribes to the `production` channel (runtime `1.2.0`).
+- iOS 1.2.0 (19) was submitted with Production settings and did not receive
+  those Android-only updates.
+- Do not equate an EAS channel name with the Supabase environment of the
+  currently running JavaScript bundle. Check both before release.
+- A public Android release needs a controlled Production-targeted update
+  or rebuild, user-data reconciliation, verified DM permissions, and a
+  release plan that prevents a Development OTA from reaching public clients.
 
 ## External Provider Paths
 
@@ -584,6 +606,7 @@ System of record for:
 - Following
 - Follow requests
 - Notifications
+- Direct Messaging conversations, messages and read state
 - Push-token registrations
 - Storage-backed profile assets
 - Apple refresh tokens used for account lifecycle
@@ -828,6 +851,77 @@ The mobile client is responsible for push-token registration, reassignment, clea
 
 Historical notification rows must not permanently suppress legitimate future relikes or refollows.
 
+## One-to-One Direct Messaging Architecture (v1.2.0)
+
+This is an implemented private social feature, not a replacement for Lists
+as the primary product object. Direct Messages may refer to or share a
+published Top 3 list, but conversations and messages are distinct records.
+
+- `dm_conversations`: one unique ordered user pair per conversation;
+  participant-filtered SELECT policy. The 1:1 design is intentional.
+- `dm_messages`: message body, sender, conversation and timestamps; SELECT
+  only for authorized participants; message INSERT goes through trusted
+  database RPCs, not client table writes.
+- `dm_read_states`: per-user read tracking; trusted RPC for mark-read.
+- `dm_create_conversation`, `dm_send_message`, `dm_mark_read`,
+  `dm_list_share_recipients`, and `dm_share_collection`: authoritative
+  creation, eligibility, messaging and list-sharing operations.
+- Existing policies and functions require mutual following, enforce block
+  restrictions, validate participants, enforce the 2,000-character body
+  limit and sender rate limits, and protect collection visibility.
+- Realtime subscriptions are scoped to conversation/read-state signals;
+  private message bodies are loaded through RLS-protected queries rather
+  than broadcast in wide realtime payloads.
+- Message reporting and safety/moderation rules are enforced server-side.
+  New-message push copy intentionally excludes the message body; tapping
+  routes to the specific conversation. The approved presentation is
+  “New message from [sender display name]” / “Tap to reply.”
+
+The client API lives in `lib/supabase/direct-messages.ts`; navigation and
+screens include `messages.tsx`, `dm-new-conversation.tsx`,
+`dm-conversation.tsx`, and `dm-share-top3.tsx`. Visibility logic is
+centralized in `lib/dm-availability.ts`.
+
+### Production staging gate
+
+The Production schema was deployed with an additional protective gate and
+Production-only migration workspace adjustments. Authenticated SELECT on
+`dm_conversations`, `dm_messages`, and `dm_read_states` returned `false`
+in the November 8 read-only audit. Therefore RLS policies alone are not
+sufficient for a working Production launch; table privileges and RPC grants
+need an explicit, reviewed activation step. Do not simply remove the gate or
+make Production changes while the app-store review is in progress without a
+coordinated release decision. The Development backend remains independent.
+
+### Group Direct Messaging — design direction (NOT implemented)
+
+Group conversations must not be faked by adding extra users to existing
+`dm_conversations`, which structurally assumes a unique 1:1 pair. Prefer an
+additive group conversation/member/message model or an equivalently safe
+versioned design, with explicit security boundaries and rollout migration.
+Proposed initial scope (subject to product confirmation): 3–10 total
+participants including creator, invitations to mutually-followed users,
+accept/decline, named groups, member-only message visibility, leave group,
+list sharing, unread state, reporting/blocking, and per-recipient privacy-
+preserving notifications. Invited users should not read prior messages
+until membership is accepted; member removals and blocking must be handled
+without exposing stale content. Reuse shared DM UI where safe.
+
+Implement and verify in Development on a dedicated feature branch. Add new
+migrations rather than editing already applied 1:1 migration files. Keep
+Production untouched until explicit promotion and compatibility testing.
+
+## Home Feed Campaign Banner Preview
+
+The admin notification composer and Home feed share
+`lib/home-banner-preview.ts`. The temporary preview is local in-memory
+state, associated with the signed-in profile and expiring after 30 minutes;
+it does not publish a campaign, send a push or change database records.
+The preview is available only on the exact Development Supabase URL, and
+both the composer control and Home renderer require `profile.isAdmin`.
+Release-mode Android uses that same Development URL check, not `__DEV__`,
+so the feature works in Google Play closed testing. Production is excluded.
+
 ## Feed Scalability Direction
 
 The V1 Feed currently uses a client-generated architecture suitable for initial low-volume launch validation.
@@ -904,6 +998,8 @@ Realtime architecture should similarly avoid global subscriptions when user-scop
 - Shared UI components should be reused before screen-specific duplicates are created.
 
 - Realtime subscriptions should be scoped to the smallest appropriate user / relationship domain.
+
+- Direct Messaging must enforce mutual-follow, block, membership and message visibility constraints at the backend. Keep 1:1 records compatible while adding group models.
 
 - Push notifications derive from authoritative notification events rather than client-generated social push logic.
 

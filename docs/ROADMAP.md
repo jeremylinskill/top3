@@ -1,38 +1,70 @@
 Top3 Product Roadmap
 
-Document Version: 3.1
+Document Version: 3.2
 Status: Post-launch Active Development
 Owner: Jeremy Linskill
-Last Updated: November 1, 2026
-Baseline Commit: af67e7c
+Last Updated: November 8, 2026
+Planning Baseline Commit: ddd6733 (before documentation update)
 
 Document versions track roadmap revisions, not published app versions.
 
-Current Planning Checkpoint — November 1, 2026
+Current Planning Checkpoint — November 8, 2026
 
-Top 3 1.1.2 is **submitted to Apple for review** (iOS build 17) and to
-Google Play **Closed testing – Alpha** (Android versionCode 6). Neither
-update is publicly released. Android Production access and a separate
-Production-Supabase-connected Android build are still required.
+Top 3 v1.2.0 iOS build 19 and Android versionCode 8 were submitted for
+store review on November 7. iOS uses Production and manual public release;
+Android is only in Google Play Closed testing – Alpha. No new public
+Android launch is confirmed. Actual store states require rechecking.
 
-Implemented as the current release candidate:
+The Android 1.2.0 native build initially targeted Production Supabase, but
+three Android-only EAS Updates restored the **Development** backend and
+fixed the Direct Messaging keyboard and admin Home banner preview. All
+three were verified on the Samsung test phone. Android 1.2.0 still uses
+EAS Update channel `production`, runtime `1.2.0`, so that configuration
+must be corrected deliberately before public Android release. iOS is
+unaffected by those Android-only updates.
 
-• Discover More People: expanded browsable candidates, conditional See all,
-  full-community name/username search and follow interactions.
-• People with Similar Taste: conditional See all, ranked Taste Matches,
-  percentage explanations and consistent preview/full-screen layouts.
-• Updated onboarding, Discover search icon and notification unread badges.
-• Administrator notification draft deletion and improved backend safeguards.
+**Immediate product priority: Group Direct Messaging (planning, not built).**
+Extend v1.2.0 private one-to-one messaging to small invited groups while
+preserving existing conversations, privacy controls, list sharing, and push.
+Group DM is a new Development-only feature project, not part of the
+v1.2.0 submissions or present Production schema.
 
-Immediate priorities are **store approval, controlled iOS release, Android
-closed-testing eligibility and Production-connected Android launch**.
-Confirm targeted client flows on both platforms where not already verified;
-do not rerun unrelated passed backend checks. Longer-term discovery quality,
-conversation, retention and Feed scalability initiatives remain active.
+**Separate release priorities:**
 
-The historical roadmap descriptions below are retained as their original
-planning context; the current 1.1.2 checkpoint supersedes older release
-status statements. See `RELEASE_1_1_2_STATUS.md` and `RELEASE_CHECKLIST.md`.
+- Confirm iOS review/approval and hold manual release until Production DM
+  permissions and functionality are safely activated.
+- Complete Android closed-testing requirements without discarding testers'
+  Development accounts or lists.
+- Before Android public launch, reconcile Development test data with
+  Production identities; prevent duplicate identities, losing content or
+  overwriting legitimate Production activity.
+- Restore a Production-configured public Android build/update and verify
+  OTA branch/channel and server environment separation.
+- Maintain focused, change-specific testing; do not repeat already passed
+  Android DM or banner checks without a relevant change.
+
+### Planned Group Direct Messaging — initial scope
+
+The proposed first iteration covers private named groups with 3–10 total
+participants including creator; selecting invitees from mutual follows;
+accepting/declining invitations; a unified Messages inbox; sender-labelled
+messages; unread/read state; sharing Top 3 lists; member lists/leave group;
+blocking, reporting and eligibility rules; and per-recipient privacy-
+preserving push. Confirm product decisions during design rather than
+presenting these as shipped functionality.
+
+Delivery order: (1) map current one-to-one schema and security, (2) add
+Development-only group tables, invitations and server authorization,
+(3) group creation and inbox, (4) conversation, read state and list sharing,
+(5) push/moderation, (6) targeted device checks and release assessment.
+Prefer additive migrations and existing UI patterns. Do not weaken
+one-to-one RLS or bypass a staged Production safety gate.
+
+The remaining roadmap records below are historical planning context.
+Where a prior checkpoint calls v1.1.2 the current release or says normal
+work is on `main`, the November 8 checkpoint supersedes that statement.
+The last verified working source branch is `fix/android-closed-test-dev-ota`,
+commit `ddd6733`; a group feature branch has **not** yet been created.
 
 Purpose
 
@@ -92,7 +124,7 @@ required for Top3's Feed to scale well beyond the initial launch
 population have also been identified.
 
 The original iOS V1 launch is complete, and the iOS app is live.
-Routine development now takes place on main.
+Current feature work uses controlled branches; see the November 8 checkpoint for the active branch.
 
 Our next stage focuses on improving discovery, expanding meaningful
 list choices through Types and Themes, strengthening conversation,
@@ -166,6 +198,7 @@ for category and genre suggestion / search rows
 
 Current Priorities
 
+• Design and implement Group Direct Messaging in Development, without disturbing 1:1 messaging.
 • Refine Types, Themes, search quality, and entertainment discovery.
 • Improve community and conversation experiences using user feedback.
 • Maintain consistent behaviour across iOS and Android.
@@ -701,6 +734,13 @@ The long-term goal is not to maximize content creation or passive
 engagement, but to create meaningful connections through shared taste.
 
 Revision History
+
+Version 3.2 --- November 8, 2026
+
+Documented v1.2.0 submissions, Development-backed Android OTA corrections,
+Production Direct Messaging activation gate, Android data reconciliation,
+and Group Direct Messaging as the next planned feature. Preserved earlier
+planning and marked superseded release claims as historical.
 
 Version 3.1 --- November 1, 2026
 

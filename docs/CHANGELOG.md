@@ -2,6 +2,70 @@ CHANGELOG.md
 
 This document records significant milestones in the evolution of Top3.
 
+1.2.0 — November 8, 2026 — Review submissions and Android OTA corrections
+
+**Release state (not a declaration of public availability):** iOS v1.2.0,
+build 19, submitted to Apple on November 7 with manual release selected.
+Android v1.2.0, versionCode 8, submitted to Google Play Closed testing –
+Alpha on November 7. The Android application is not publicly released.
+Latest store approval/review states require a fresh check.
+
+Added / improved for the v1.2.0 source and Development environment:
+
+- One-to-one Direct Messaging: mutual-follow eligibility, inbox, read/unread
+  state, realtime refresh, private conversations, message reporting, blocking,
+  Top 3 sharing into chats and metadata-only push notifications.
+- Request a Top 3 with specific request routing, sharing/publishing responses,
+  and notifications to the requester.
+- Admin-curated movie themes and suggestions, draft publishing, archiving
+  and restoring; Home feed campaign banners and their admin preview flow.
+- Apple Music artist, album and song search relevance refinements.
+
+Backend and release safeguards:
+
+- Development DM foundation migrations
+  `20261107030000_direct_messages_foundation.sql` through
+  `20261107060000_dm_production_staging_gate.sql`.
+- Guarded Production deployment of the DM schema and supporting push
+  function, with authenticated table reads and messaging RPCs deliberately
+  restricted pending coordinated activation. Production DM still needs
+  a release-ready privileges/security check before normal users or Apple
+  reviewers can use the advertised feature.
+- The Android 1.2.0 (8) native binary was initially built using the
+  `android-production` EAS profile, Production Supabase, OTA channel
+  `production` and runtime version `1.2.0`, unintentionally changing the
+  backend from the Development setup used by Android 1.1.3 (7).
+
+November 8, 2026 — Android-only over-the-air corrections (no new AAB):
+
+1. `3194343` — Published Android-only, runtime 1.2.0, EAS branch
+   `production`, `--environment development`. Restored the Development
+   backend for closed testers and made DM available in Development-backed
+   release JS. Device confirmed the connection. Update group:
+   `41d24d00-88c9-4dac-87ca-b7f4e1caf13b`.
+2. `1c57a2e` — Added Android keyboard avoidance to the message composer.
+   Android device check confirmed composer/Send visibility above keyboard.
+   Update group: `d3a0b690-efcf-40a3-8ce0-d512095faf5b`.
+3. `ddd6733` — Enabled `Preview on Home` in Development-backed release
+   builds and guarded the preview control with `profile.isAdmin`.
+   Samsung confirmed that the button and preview work; preview does not
+   send/publish a campaign. Update group:
+   `475ca57f-79b5-432e-a1f7-253be55c1312`.
+
+No iOS OTA was published as part of these three Android fixes. Production
+Supabase user data was not changed by the OTA updates. Existing closed-test
+user content is still isolated in Development; a deliberate reconciliation
+is needed before Android public launch. Three November 7 Google-signup
+Production accounts were reviewed: zero lists and selected social activity,
+no matching Development identities, device origin unresolved, no migration
+performed.
+
+Next feature decision: **Group Direct Messaging** is planned but not yet
+implemented. Begin with additive Development-only schema and UI, preserving
+existing one-to-one DM behaviour and release safeguards.
+
+---
+
 1.1.2 — November 1, 2026 — Store submissions (NOT YET PUBLIC)
 
 Status: iOS 1.1.2 (build 17) was submitted to Apple and is Waiting for

@@ -1,42 +1,126 @@
 CURRENT_STATE.md
 
 Project: Top3
-Document Version: 3.3
+Document Version: 3.4
 Document versions are not published app versions.
 Status: Post-launch Active Development
-Last Updated: November 1, 2026
-Current Branch: main
-
-Last Previously Recorded Verified Commit (October 21)
-
-eca4cda
-
-Add release checklist for iOS and Android
+Last Updated: November 8, 2026
+Current Working Branch: `fix/android-closed-test-dev-ota`
+Last Verified Source Commit: `ddd6733` (November 8, 2026; before this documentation-only update)
 
 Dashboard
 
 Project Status
 
-🟢 Active Development
+🟢 iOS app live at an earlier store version; v1.2.0 review submitted.
+🟢 Android v1.2.0 available for closed testing; no public Android release.
+🟢 One-to-one Direct Messaging validated in Development.
+🟡 Production Direct Messaging remains staged/restricted.
+🟡 Android public-launch data consolidation and release configuration remain outstanding.
 
-Current Feature
+Current Development Priority
 
-Version 1.1.2 store-review coordination and public Android launch readiness.
-Both release builds are complete and submitted; neither update is public yet.
+Group Direct Messaging — **planning / architecture review only; not implemented**.
+Preserve the existing one-to-one messaging feature while planning an additive
+membership/invitation system. No Group DM migrations or features have been
+applied to either database.
 
-The production iOS app is live. Active development is on main.
-The initial public Android release remains pending.
+## November 8, 2026 — Current v1.2.0 Release and Development Checkpoint
 
-Development and Production Supabase / Amplitude environments remain
-separate, as established in commit d70def4.
+**Store release state (last confirmed in the project conversation):**
 
-The last recorded verified Git checkpoint is eca4cda (October 21).
-Subsequent 1.1.2 local changes and EAS builds occurred after that checkpoint;
-a new release commit has not been verified here. The newer release/build
-snapshot appears below and in docs/RELEASE_1_1_2_STATUS.md.
+- **iOS:** v1.2.0, build 19, submitted to Apple for review on November 7.
+  Uses Production Supabase and the iOS Production environment. Manual release
+  was selected, so approval is not equivalent to a public release. Current
+  App Review outcome has not been independently rechecked.
+- **Android:** v1.2.0, versionCode 8, submitted to Google Play Closed testing
+  – Alpha on November 7. The initial `android-production` binary was built
+  with Production Supabase and the `production` EAS Update channel. There is
+  **no public Android release**. Latest Google review/track status has not
+  been independently rechecked; device-side closed-testing functionality
+  has been confirmed.
+- Android v1.1.3/versionCode 7 previously used the EAS `closed-test` build
+  profile and Development backend. Version 8 briefly pointed at Production
+  before being redirected by an Android-only over-the-air update.
 
-The release-specific source of truth is docs/RELEASE_CHECKLIST.md.
+**Actual runtime environments as last device-verified:**
 
+| Runtime | Supabase project | Notes |
+| --- | --- | --- |
+| Android closed test 1.2.0 (8) | Development `kkltzygebomopysklaqq` | Android-only EAS Update overrides the original Production-backed JS bundle; build channel remains `production` and runtime is `1.2.0`. |
+| iOS App Store 1.2.0 (19) submission | Production `nxtowcheatxouypzqkzc` | Not modified by Android-only EAS Updates. |
+| Local development / Supabase CLI | Development `kkltzygebomopysklaqq` | Confirm project ref before any backend operation. |
+
+**One-to-one Direct Messaging (v1.2.0):**
+
+- Implemented: mutual-follow eligibility, private 1:1 conversations, inbox,
+  message sending, unread/read tracking, realtime updates, list sharing,
+  reporting/blocking integration and privacy-preserving push navigation.
+- Messages are limited to 2,000 characters; sender rate limiting and
+  recipient/participant checks are enforced server-side. No message text
+  is included in push previews; approved copy is “New message from
+  [sender display name]” / “Tap to reply.”
+- Seven Development SQL migrations beginning
+  `20261107030000_direct_messages_foundation.sql` through
+  `20261107060000_dm_production_staging_gate.sql` comprise the v1.2.0 DM
+  foundation, tracking, moderation, realtime, push, sharing and staging.
+- The corresponding Production deployment used a separately prepared
+  guarded migration workspace. Production DM read/RPC privileges were
+  intentionally restricted pending an explicit release decision. A read-only
+  Production audit returned `false` for authenticated SELECT on
+  `dm_conversations`, `dm_messages`, and `dm_read_states`.
+- **Release blocker to resolve before iOS availability / public Android:**
+  Production DM currently cannot function for normal signed-in users while
+  those privileges remain revoked. Do not blindly enable the feature or
+  remove restrictions; coordinate a secure activation and targeted review.
+
+**Android-only EAS Updates verified November 8:**
+
+| Git commit | EAS Update ID / Group ID | Purpose / result |
+| --- | --- | --- |
+| `3194343` | `41d24d00-88c9-4dac-87ca-b7f4e1caf13b` | Redirect Android 1.2.0 back to Development; permit DM UI on Development-backed release builds. Android confirmed back on Development. |
+| `1c57a2e` | `d3a0b690-efcf-40a3-8ce0-d512095faf5b` | Fix Android DM composer covered by keyboard via `KeyboardAvoidingView` padding; confirmed on Samsung. |
+| `ddd6733` | `475ca57f-79b5-432e-a1f7-253be55c1312` | Enable admin-only `Preview on Home` for Development-backed Android release builds; button and temporary Home preview verified on Samsung. |
+
+All three updates were published on EAS branch `production`, **platform
+Android only**, runtime `1.2.0`, with `--environment development`.
+No new Google Play binary was created. EAS branch/channel naming does **not**
+imply that the Android OTA bundle currently targets Production Supabase.
+Before any public Android release, replace the Development-targeted update,
+verify the actual backend connection, and coordinate the Production DM gate.
+
+**Other recent development:** Request a Top 3; curated movie themes and
+admin list ideas; Home feed campaign banners and admin notification composer;
+Apple Music relevance improvements. Avoid assuming that every Development
+feature is active in the public iOS application or Production backend.
+
+**Account/data separation and future Android launch:**
+
+- Google Play testing membership and Supabase user identity are separate.
+  Development and Production users, collections, follows, likes, comments,
+  and notification data do not synchronize automatically.
+- Three Google-only accounts created in Production on November 7 —
+  `jeannieadkins.37313`, `murielstewart.58416`, and
+  `ouidafajardo.47045` — had no matching Google identity in Development.
+  A read-only audit found no collections, follows, likes, or comments for
+  these three accounts. Their device of origin is **not confirmed**;
+  neither account deletion nor copying was performed.
+- Do not replicate Supabase Auth records by hand or assume a simple DB copy
+  can reconcile user IDs and relationships. Preserve Production identities
+  and plan a deliberate Development-to-Production migration before Android
+  goes public, including conflict detection and validation.
+
+**Next controlled work:** Review current messaging architecture; create a
+separate Group DM feature branch only after documenting the checkpoint;
+implement schema, membership rules, inbox, UI, push and moderation in
+Development first. Do not modify the already submitted iOS binary, Production
+DM privileges, or the public store state as part of this planning step.
+
+**Document routing:** Store gates and actual approval status require fresh
+checks in App Store Connect/Google Play and `docs/RELEASE_CHECKLIST.md`.
+The `docs/RELEASE_1_1_2_STATUS.md` snapshot below is historical.
+All sections dated November 1 or earlier are retained for history; this
+November 8 checkpoint supersedes their current-status assertions.
 
 November 1, 2026 — v1.1.2 Release and Backend Checkpoint
 
