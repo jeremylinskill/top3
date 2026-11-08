@@ -1,4 +1,4 @@
-// Direct Messaging is enabled automatically only in local JS Development
+// Direct Messaging is enabled automatically for the Development Supabase project
 // against the established Top 3 Development project. Production requires
 // BOTH an explicit rollout flag and an exact-match target project reference.
 // These EXPO_PUBLIC_* values are not secrets. Database RPCs/RLS continue to
@@ -11,7 +11,7 @@ const releaseProjectRef =
   (process.env.EXPO_PUBLIC_DM_RELEASE_PROJECT_REF ?? '').trim();
 
 const localDevelopmentEnabled =
-  __DEV__ && configuredSupabaseUrl === developmentProjectUrl;
+  configuredSupabaseUrl === developmentProjectUrl;
 
 const productionOptInEnabled =
   process.env.EXPO_PUBLIC_DM_ENABLED === 'true' &&
