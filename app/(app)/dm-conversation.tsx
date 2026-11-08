@@ -32,7 +32,6 @@ import {
   FlatList,
   Image,
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   RefreshControl,
   Share,
@@ -428,7 +427,7 @@ export default function DmConversationScreen() {
       </Reanimated.View>
       <KeyboardAvoidingView
         style={styles.content}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        behavior="padding">
         {loading && !refreshing ? (
           <View style={styles.state}><ActivityIndicator color={colors.tertiaryText} /></View>
         ) : error ? (
