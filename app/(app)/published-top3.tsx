@@ -10,10 +10,10 @@ import Top3Card from '@/components/top3-card';
 import UserAvatar from '@/components/user-avatar';
 import { useProfile } from '@/context/profile-context';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { usePublishedCollectionShare } from '@/hooks/use-published-collection-share';
 import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
 import Reanimated from 'react-native-reanimated';
 import { trackAnalyticsEvent } from '@/lib/analytics';
-import { sharePublishedCollection } from '@/lib/share';
 import { getProfileById } from '@/lib/supabase/profiles';
 import {
   createPostReport,
@@ -68,6 +68,7 @@ type ReportTop3Sheet =
 
 export default function PublishedTop3Screen() {
   const colors = useAppColors();
+  const { sharePublishedCollection, shareSheet } = usePublishedCollectionShare();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{
     postId?: string | string[];
@@ -768,6 +769,8 @@ export default function PublishedTop3Screen() {
           setIsCommentsVisible(false)
         }
       />
+
+      {shareSheet}
 
       <ActionSheet
         visible={reportSheet !== null}

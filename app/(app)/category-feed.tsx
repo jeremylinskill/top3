@@ -10,6 +10,7 @@ import PrimaryButton from '@/components/primary-button';
 import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
 import SegmentedControl from '@/components/segmented-control';
 import Top3Card from '@/components/top3-card';
+import { useDmCardActions } from '@/hooks/use-dm-card-actions';
 import {
   getCategoryArtworkRule,
 } from '@/constants/category-artwork-rules';
@@ -22,12 +23,10 @@ import { useProfile } from '@/context/profile-context';
 import { useSavedItems } from '@/context/saved-items-context';
 import { useTop3 } from '@/context/top3-context';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { usePublishedCollectionShare } from '@/hooks/use-published-collection-share';
 import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
 import Reanimated from 'react-native-reanimated';
-import {
-  shareOverallCollection,
-  sharePublishedCollection,
-} from '@/lib/share';
+import { shareOverallCollection } from '@/lib/share';
 import { getPublicProfilesByIds } from '@/lib/supabase/profiles';
 import {
   createPostReport,
@@ -151,6 +150,8 @@ function formatTopicLabel(topic: string) {
 
 export default function CategoryFeedScreen() {
   const colors = useAppColors();
+  const { sharePublishedCollection, shareSheet } = usePublishedCollectionShare();
+  const dmCardActions = useDmCardActions();
   const insets = useSafeAreaInsets();
   const [headerScrolled, setHeaderScrolled] = useState(false);
   const {
@@ -1799,6 +1800,11 @@ if (isMounted) {
                     onSharePress={() => {
                       void shareCollection(post);
                     }}
+                    onMessagePress={
+                      dmCardActions.canMessage(post.authorId)
+                        ? () => { void dmCardActions.openMessage(post.authorId); }
+                        : undefined
+                    }
                   />
                 );
               })}
@@ -2260,6 +2266,8 @@ if (isMounted) {
           </View>
         )}
       </Reanimated.ScrollView>
+
+      {shareSheet}
 
       <ActionSheet
         visible={moderationSheet !== null}

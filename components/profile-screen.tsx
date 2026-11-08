@@ -13,10 +13,14 @@ import { useBlock } from '@/context/block-context';
 import { useFollow } from '@/context/follow-context';
 import { useProfile } from '@/context/profile-context';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { usePublishedCollectionShare } from '@/hooks/use-published-collection-share';
 import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
+import { useDmHeaderAction } from '@/hooks/use-dm-header-action';
 import { useAuth } from '@/hooks/use-auth';
 import { trackAnalyticsEvent } from '@/lib/analytics';
-import { sharePublishedCollection } from '@/lib/share';
+import { supabase } from '@/lib/supabase';
+import { openDmConversation } from '@/lib/supabase/direct-messages';
+import { DM_NAV_ENABLED } from '@/lib/dm-availability';
 import type { FollowCounts } from '@/lib/supabase/follows';
 import { getFollowCounts } from '@/lib/supabase/follows';
 import { getProfileById } from '@/lib/supabase/profiles';
@@ -35,7 +39,7 @@ import { getTasteRecommendationForUser } from '@/services/taste-recommendation-s
 import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
 import { isNetworkError } from '@/utils/is-network-error';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import Reanimated from 'react-native-reanimated';
 import {
   useCallback,
@@ -46,6 +50,8 @@ import {
 } from 'react';
 import {
   ActivityIndicator,
+  Alert,
+  Pressable,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   Platform,
@@ -136,8 +142,12 @@ export default function ProfileScreen({
   showBackButton = false,
 }: ProfileScreenProps) {
   const colors = useAppColors();
+  const { sharePublishedCollection, shareSheet } = usePublishedCollectionShare();
+  const dmHeaderAction = useDmHeaderAction();
   const insets = useSafeAreaInsets();
   const [headerScrolled, setHeaderScrolled] = useState(false);
+  const [mutualDmUserId, setMutualDmUserId] = useState<string | null>(null);
+  const [openingDm, setOpeningDm] = useState(false);
   const floatingCircleVisible = useRef(false);
   // Once Profile has scrolled, retain the frosted action circle when the
   // user scrolls upward or stops. Restore the plain top-of-page style only
@@ -322,6 +332,51 @@ export default function ProfileScreen({
     viewedUserId && !isCurrentUser
       ? isFollowRequested(viewedUserId)
       : false;
+
+  // Check the other direction of the follow relationship. The existing
+  // follow context provides whether *we* follow this person; the database
+  // requires both directions before creating a conversation. Check on screen
+  // focus so returning from another screen refreshes eligibility.
+  useFocusEffect(useCallback(() => {
+    let active = true;
+    setMutualDmUserId(null);
+
+    if (
+      !DM_NAV_ENABLED ||
+      !isAuthenticated ||
+      !viewedUserId ||
+      isCurrentUser ||
+      !userIsFollowed ||
+      !profile.id
+    ) {
+      return () => { active = false; };
+    }
+
+    void (async () => {
+      const { data, error } = await supabase
+        .from('follows')
+        .select('follower_id')
+        .eq('follower_id', viewedUserId)
+        .eq('following_id', profile.id)
+        .limit(1);
+
+      if (!active) return;
+      if (error) {
+        // Fail closed if the reciprocal follow cannot be verified.
+        console.warn('Unable to check mutual follow for DM:', error.message);
+        return;
+      }
+      setMutualDmUserId(data?.[0]?.follower_id === viewedUserId ? viewedUserId : null);
+    })();
+
+    return () => { active = false; };
+  }, [isAuthenticated, viewedUserId, isCurrentUser, userIsFollowed, profile.id]));
+
+  const showDevelopmentMessageButton =
+    DM_NAV_ENABLED &&
+    isAuthenticated &&
+    Boolean(viewedUserId && !isCurrentUser && userIsFollowed &&
+      mutualDmUserId === viewedUserId && !isBlocked(viewedUserId));
 
   const canViewPosts =
     viewedUser?.visibility === 'public' ||
@@ -717,6 +772,24 @@ export default function ProfileScreen({
     }
 
     router.push('/saved');
+  }
+
+  async function openDevelopmentDmConversation() {
+    if (!showDevelopmentMessageButton || !viewedUserId || openingDm) return;
+    setOpeningDm(true);
+    try {
+      // The RPC rechecks mutual follows and blocks on the server. A profile
+      // button alone is never treated as permission to open a conversation.
+      const conversationId = await openDmConversation(viewedUserId);
+      router.push({ pathname: '/dm-conversation', params: { conversationId } });
+    } catch (error) {
+      Alert.alert(
+        'Unable to start conversation',
+        error instanceof Error ? error.message : 'Please try again.'
+      );
+    } finally {
+      setOpeningDm(false);
+    }
   }
 
   function openCreateScreen() {
@@ -1549,21 +1622,22 @@ export default function ProfileScreen({
           floatingCircleScrollY={circleScrollY}
           featheredBackdrop
           androidStatusBarGlass
-          rightIconName={
-            isCurrentUser
-              ? 'settings-outline'
-              : 'ellipsis-horizontal'
-          }
-          onRightPress={
-            isCurrentUser
-              ? openSettings
-              : openProfileMenu
-          }
-          rightAccessibilityLabel={
-            isCurrentUser
-              ? 'Open settings'
-              : 'Open profile actions'
-          }
+          {...(isCurrentUser && !showBackButton && DM_NAV_ENABLED && isAuthenticated
+            ? {
+                leftIconName: 'settings-outline' as const,
+                onLeftPress: openSettings,
+                leftAccessibilityLabel: 'Open settings',
+                ...dmHeaderAction,
+              }
+            : {
+                rightIconName: isCurrentUser
+                  ? 'settings-outline' as const
+                  : 'ellipsis-horizontal' as const,
+                onRightPress: isCurrentUser ? openSettings : openProfileMenu,
+                rightAccessibilityLabel: isCurrentUser
+                  ? 'Open settings'
+                  : 'Open profile actions',
+              })}
         />
       </Reanimated.View>
 
@@ -1652,6 +1726,12 @@ export default function ProfileScreen({
               ? () => router.push({ pathname: '/request-top3', params: { userId: viewedUserId } })
               : undefined
           }
+          onMessagePress={
+            showDevelopmentMessageButton
+              ? () => { void openDevelopmentDmConversation(); }
+              : undefined
+          }
+          isOpeningMessage={openingDm}
           onCreateTop3={
             isCurrentUser
               ? openCreateScreen
@@ -1680,6 +1760,8 @@ export default function ProfileScreen({
           }}
         />
       </Reanimated.ScrollView>
+
+      {shareSheet}
 
       <ActionSheet
         visible={moderationSheet !== null}

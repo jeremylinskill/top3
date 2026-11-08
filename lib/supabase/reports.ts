@@ -8,6 +8,13 @@ export type ReportReason =
   | 'impersonation'
   | 'other';
 
+export type CreateMessageReportInput = {
+  reporterId: string;
+  reportedUserId: string;
+  reportedMessageId: string;
+  reason: ReportReason;
+};
+
 export type CreateUserReportInput = {
   reporterId: string;
   reportedUserId: string;
@@ -200,4 +207,27 @@ export async function createCommentReport({
       `Failed to report comment: ${error.message}`
     );
   }
+}
+// Only the recipient of a DM may report it. A database trigger verifies the
+// sender/recipient relationship and rejects spoofed or already-removed messages.
+export async function createMessageReport({
+  reporterId, reportedUserId, reportedMessageId, reason,
+}: CreateMessageReportInput): Promise<void> {
+  const reporter = reporterId.trim();
+  const sender = reportedUserId.trim();
+  const message = reportedMessageId.trim();
+  if (!reporter || !sender || !message || reporter === sender) {
+    throw new Error('A received message is required to submit a report.');
+  }
+  const { error } = await supabase.from('reports').insert({
+    reporter_id: reporter,
+    reported_user_id: sender,
+    target_type: 'message',
+    reported_post_id: null,
+    reported_comment_id: null,
+    reported_message_id: message,
+    reason,
+    details: null,
+  });
+  if (error) throw new Error(`Failed to report message: ${error.message}`);
 }

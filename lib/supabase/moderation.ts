@@ -19,7 +19,8 @@ export type ModerationReportResolution =
 export type ModerationReportTargetType =
   | 'user'
   | 'post'
-  | 'comment';
+  | 'comment'
+  | 'message';
 
 export type ModerationReportProfile = {
   id: string;
@@ -51,9 +52,19 @@ export type ModerationReportedPost = {
   createdAt: string;
 };
 
+export type ModerationReportedMessage = {
+  type: 'message';
+  id: string;
+  conversationId: string;
+  userId: string;
+  content: string;
+  createdAt: string;
+};
+
 export type ModerationReportedContent =
   | ModerationReportedComment
-  | ModerationReportedPost;
+  | ModerationReportedPost
+  | ModerationReportedMessage;
 
 export type ModerationReport = {
   id: string;
@@ -67,6 +78,7 @@ export type ModerationReport = {
   targetType: ModerationReportTargetType;
   reportedPostId: string | null;
   reportedCommentId: string | null;
+  reportedMessageId: string | null;
   reviewedAt: string | null;
   resolution: ModerationReportResolution | null;
   moderatorNotes: string | null;
@@ -113,7 +125,8 @@ type PendingReportedPostRow = {
 
 type PendingReportedContentRow =
   | PendingReportedCommentRow
-  | PendingReportedPostRow;
+  | PendingReportedPostRow
+  | { type: 'message'; id: string; conversationId: string; userId: string; content: string; createdAt: string };
 
 type PendingReportRow = {
   id: string;
@@ -127,6 +140,7 @@ type PendingReportRow = {
   target_type: ModerationReportTargetType;
   reported_post_id: string | null;
   reported_comment_id: string | null;
+  reported_message_id: string | null;
   reviewed_at: string | null;
   resolution: ModerationReportResolution | null;
   moderator_notes: string | null;
@@ -180,6 +194,8 @@ function mapPendingReportRow(
     reportedPostId: row.reported_post_id,
     reportedCommentId:
       row.reported_comment_id,
+    reportedMessageId:
+      row.reported_message_id ?? null,
     reviewedAt: row.reviewed_at,
     resolution: row.resolution,
     moderatorNotes: row.moderator_notes,

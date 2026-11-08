@@ -34,9 +34,13 @@ type ScreenHeaderProps = {
   // Opt-in: let modal drill-downs handle Back without leaving their route.
   onBackPress?: () => void;
   backAccessibilityLabel?: string;
+  leftIconName?: IoniconName;
+  onLeftPress?: () => void;
+  leftAccessibilityLabel?: string;
   rightIconName?: IoniconName;
   onRightPress?: () => void;
   rightAccessibilityLabel?: string;
+  rightUnreadDot?: boolean;
   secondaryRightIconName?: IoniconName;
   onSecondaryRightPress?: () => void;
   secondaryRightAccessibilityLabel?: string;
@@ -275,9 +279,13 @@ export default function ScreenHeader({
   showBackButton = false,
   onBackPress,
   backAccessibilityLabel = 'Go back',
+  leftIconName,
+  onLeftPress,
+  leftAccessibilityLabel = 'Open left action',
   rightIconName,
   onRightPress,
   rightAccessibilityLabel = 'Open menu',
+  rightUnreadDot = false,
   secondaryRightIconName,
   onSecondaryRightPress,
   secondaryRightAccessibilityLabel = 'Open secondary action',
@@ -310,6 +318,7 @@ export default function ScreenHeader({
     }).start();
   }, [isCollapsed, visibility]);
 
+  const showLeftAction = Boolean(leftIconName) && Boolean(onLeftPress);
   const showRightAction = Boolean(rightIconName) && Boolean(onRightPress);
   const showSecondaryRightAction =
     Boolean(secondaryRightIconName) && Boolean(onSecondaryRightPress);
@@ -474,6 +483,23 @@ export default function ScreenHeader({
                 style={styles.backChevron}
               />
             </IconButton>
+          ) : showLeftAction ? (
+            <IconButton
+              size="navigation"
+              pressFeedback="scale"
+              onPress={() => onLeftPress?.()}
+              accessibilityLabel={leftAccessibilityLabel}>
+              <HeaderActionCircle
+                background={colors.background}
+                isDark={isDark}
+                variant={floatingCircleStyle}
+              />
+              <Ionicons
+                name={leftIconName}
+                size={26}
+                color={colors.text}
+              />
+            </IconButton>
           ) : (
             <View style={styles.sideSlot} />
           )}
@@ -532,6 +558,9 @@ export default function ScreenHeader({
                 size={26}
                 color={colors.text}
               />
+              {rightUnreadDot ? (
+                <View pointerEvents="none" style={styles.rightUnreadDot} />
+              ) : null}
             </IconButton>
           ) : (
             <View style={styles.sideSlot} />
@@ -608,6 +637,17 @@ const styles = StyleSheet.create({
   floatingHeaderBlur: {
     ...StyleSheet.absoluteFillObject,
     height: SCREEN_HEADER_HEIGHT,
+  },
+  rightUnreadDot: {
+    position: 'absolute',
+    right: 3,
+    top: 2,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#6228F5',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
   },
   actionCircle: {
     ...StyleSheet.absoluteFillObject,

@@ -10,6 +10,8 @@ import PrimaryButton from '@/components/primary-button';
 import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
 import Reanimated from 'react-native-reanimated';
 import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
+import { useDmHeaderAction } from '@/hooks/use-dm-header-action';
+import { useDmCardActions } from '@/hooks/use-dm-card-actions';
 import { useCollectionOptions } from '@/context/collection-options-context';
 import { getActiveHomeCampaignBanner, dismissHomeCampaignBanner,
   type HomeCampaignBanner } from '@/lib/supabase/home-campaign-banner';
@@ -34,10 +36,10 @@ import {
   useTabBarScroll,
 } from '@/context/tab-bar-scroll-context';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { usePublishedCollectionShare } from '@/hooks/use-published-collection-share';
 import { fetchCollectionOptionSuggestions } from '@/services/collection-option-service';
 import { getPopularSuggestionsByCategory } from '@/providers/search';
 import { useAuth } from '@/hooks/use-auth';
-import { sharePublishedCollection } from '@/lib/share';
 import { getProfilesByIds } from '@/lib/supabase/profiles';
 import {
   createPostReport,
@@ -183,6 +185,7 @@ type FeedReportSheet =
 
 export default function FeedScreen() {
   const colors = useAppColors();
+  const { sharePublishedCollection, shareSheet } = usePublishedCollectionShare();
   // Shared Top 3 blue-to-green campaign gradient across light and dark mode.
   const bannerForeground = '#111111';
   const insets = useSafeAreaInsets();
@@ -205,6 +208,8 @@ export default function FeedScreen() {
   } = useAuth();
 
   const { profile } = useProfile();
+  const dmHeaderAction = useDmHeaderAction();
+  const dmCardActions = useDmCardActions();
 
   const {
     blockedUserIds,
@@ -1584,6 +1589,11 @@ export default function FeedScreen() {
           onSharePress={() => {
             void shareCollection(post);
           }}
+          onMessagePress={
+            dmCardActions.canMessage(post.authorId)
+              ? () => { void dmCardActions.openMessage(post.authorId); }
+              : undefined
+          }
         />
       </View>
     );
@@ -1704,10 +1714,13 @@ export default function FeedScreen() {
         androidStatusBarGlass
         overlay={personalizedFeed.length > 0}
         scrolled={headerScrolled} floatingCircleScrollY={floatingCircleScrollY}
+        {...dmHeaderAction}
       />
         </Reanimated.View>
       ) : (
-        <ScreenHeader />
+        <ScreenHeader
+          {...dmHeaderAction}
+        />
       )}
 
       {isLoadingFeed ? (
@@ -1791,6 +1804,8 @@ export default function FeedScreen() {
           windowSize={5}
         />
       )}
+
+      {shareSheet}
 
       <ActionSheet
         visible={reportSheet !== null}

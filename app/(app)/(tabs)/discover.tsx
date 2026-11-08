@@ -2,6 +2,7 @@ import AppText from '@/components/app-text';
 import DiscoverListCard from '@/components/discover-list-card';
 import PrimaryButton from '@/components/primary-button';
 import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
+import { useDmHeaderAction } from '@/hooks/use-dm-header-action';
 import { Platform as NavPlatform } from 'react-native';
 import SearchInput from '@/components/search-input';
 import SegmentedControl from '@/components/segmented-control';
@@ -154,6 +155,7 @@ function formatResultCaption(
 
 export default function DiscoverScreen() {
   const colors = useAppColors();
+  const dmHeaderAction = useDmHeaderAction();
   const insets = useSafeAreaInsets();
   // Match the verified Home pilot: iOS native refresh lives under the header.
   const nativeRefreshInsetTop = NavPlatform.OS === 'ios'
@@ -1392,7 +1394,7 @@ export default function DiscoverScreen() {
           },
           stickyHeaderStyle,
         ]}>
-        <ScreenHeader overlay androidStatusBarGlass scrolled={headerScrolled} floatingCircleScrollY={floatingCircleScrollY} />
+        <ScreenHeader overlay androidStatusBarGlass scrolled={headerScrolled} floatingCircleScrollY={floatingCircleScrollY} {...dmHeaderAction} />
       </Reanimated.View>
 
       <Reanimated.ScrollView

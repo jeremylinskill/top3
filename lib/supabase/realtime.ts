@@ -10,6 +10,9 @@ type PostgresChangesSubscriptionInput = {
   channelName: string;
   table: string;
   filter?: string;
+  // Existing subscribers keep their '*' default; DMs exclude DELETE events.
+  events?: readonly ('INSERT' | 'UPDATE' | 'DELETE')[];
+  onSubscribed?: () => void;
   onChange: (
     payload: PostgresChangesPayload
   ) => void | Promise<void>;
@@ -19,6 +22,8 @@ export function subscribeToTableChanges({
   channelName,
   table,
   filter,
+  events,
+  onSubscribed,
   onChange,
 }: PostgresChangesSubscriptionInput) {
   const uniqueChannelName =
@@ -26,48 +31,48 @@ export function subscribeToTableChanges({
       .toString(36)
       .slice(2, 8)}`;
 
-  const channel = supabase
-    .channel(uniqueChannelName)
-    .on(
+  const channel = supabase.channel(uniqueChannelName);
+  const watchedEvents: ('INSERT' | 'UPDATE' | 'DELETE' | '*')[] =
+    events?.length ? [...events] : ['*'];
+
+  for (const event of watchedEvents) {
+    channel.on(
       'postgres_changes',
       {
-        event: '*',
+        event,
         schema: 'public',
         table,
         ...(filter ? { filter } : {}),
       },
       (payload) => {
-        void onChange(
-          payload as PostgresChangesPayload
-        );
+        void onChange(payload as PostgresChangesPayload);
       }
-    )
-    .subscribe((status, error) => {
-      switch (status) {
-        case 'SUBSCRIBED':
-          return;
+    );
+  }
 
-        case 'CHANNEL_ERROR':
-          if (__DEV__) {
-            console.log(
-              `Realtime subscription error for ${table}:`,
-              error
-            );
-          }
-          return;
+  channel.subscribe((status, error) => {
+    switch (status) {
+      case 'SUBSCRIBED':
+        // Re-read after joining to close the initial fetch/subscription race.
+        onSubscribed?.();
+        return;
 
-        case 'TIMED_OUT':
-          if (__DEV__) {
-            console.log(
-              `Realtime subscription timed out for ${table}.`
-            );
-          }
-          return;
+      case 'CHANNEL_ERROR':
+        if (__DEV__) {
+          console.log(`Realtime subscription error for ${table}:`, error);
+        }
+        return;
 
-        default:
-          return;
-      }
-    });
+      case 'TIMED_OUT':
+        if (__DEV__) {
+          console.log(`Realtime subscription timed out for ${table}.`);
+        }
+        return;
+
+      default:
+        return;
+    }
+  });
 
   return () => {
     void supabase.removeChannel(channel);

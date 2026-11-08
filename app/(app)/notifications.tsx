@@ -4,6 +4,7 @@ import IconButton from '@/components/icon-button';
 import PageHeader from '@/components/page-header';
 import PrimaryButton from '@/components/primary-button';
 import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
+import { useDmHeaderAction } from '@/hooks/use-dm-header-action';
 import { Platform as NavPlatform } from 'react-native';
 import Card from '@/components/ui/card';
 import SecondaryActionPill from '@/components/ui/secondary-action-pill';
@@ -45,7 +46,6 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   AppState,
   Linking,
   Platform,
@@ -185,6 +185,7 @@ type ReminderPreference = {
 
 export default function NotificationsScreen() {
   const colors = useAppColors();
+  const dmHeaderAction = useDmHeaderAction();
   const isDarkMode = useColorScheme() === 'dark';
   // Match the app's inverted preview-card treatment in either appearance.
   const reminderSurface = isDarkMode ? '#FFFFFF' : '#101010';
@@ -315,14 +316,18 @@ export default function NotificationsScreen() {
       }
       const enabled = await finishEnablingPush(userId);
       if (!enabled) {
-        Alert.alert('Notifications are off',
-          'Allow notifications for Top 3 in your phone settings to receive updates.');
+        setNotificationError({
+          title: 'Notifications are off',
+          message: 'Allow notifications for Top 3 in your phone settings to receive updates.',
+        });
       }
     } catch (error) {
       waitingForDeviceSettingsRef.current = false;
       if (__DEV__) console.log('Unable to enable push from reminder:', error);
-      Alert.alert('Unable to Enable Notifications',
-        'Please try again or enable notifications in your phone settings.');
+      setNotificationError({
+        title: 'Unable to Enable Notifications',
+        message: 'Please try again or enable notifications in your phone settings.',
+      });
     } finally {
       reminderBusyRef.current = false;
       setIsEnablingPush(false);
@@ -368,8 +373,10 @@ export default function NotificationsScreen() {
             }
           } catch (error) {
             if (__DEV__) console.log('Unable to finish notification permission change:', error);
-            Alert.alert('Unable to Enable Notifications',
-              'Please try again or enable notifications in Top 3 Settings.');
+            setNotificationError({
+              title: 'Unable to Enable Notifications',
+              message: 'Please try again or enable notifications in Top 3 Settings.',
+            });
           } finally {
             reminderBusyRef.current = false;
             setIsEnablingPush(false);
@@ -457,8 +464,10 @@ export default function NotificationsScreen() {
     try {
       await deleteNotification(notificationId);
     } catch (error) {
-      Alert.alert('Unable to delete notification',
-        error instanceof Error ? error.message : 'Please try again.');
+      setNotificationError({
+        title: 'Unable to delete notification',
+        message: error instanceof Error ? error.message : 'Please try again.',
+      });
     } finally {
       setDeletingNotificationId(null);
     }
@@ -472,7 +481,10 @@ export default function NotificationsScreen() {
         // The notification identifies the precise request, even if others are pending.
         const requestId = notification.top3RequestId;
         if (!requestId) {
-          Alert.alert('Request unavailable', 'Unable to identify this Top 3 request.');
+          setNotificationError({
+            title: 'Request unavailable',
+            message: 'Unable to identify this Top 3 request.',
+          });
           return;
         }
         if (!notification.isRead) await markNotificationRead(notification.id);
@@ -483,8 +495,10 @@ export default function NotificationsScreen() {
         if (openingAnnouncementRef.current) return;
         const announcement = notification.announcement;
         if (!announcement || !isCollectionsLoaded || hasCollectionsLoadError) {
-          Alert.alert('Unable to Open Top 3',
-            'Your lists are not available yet. Please try again.');
+          setNotificationError({
+            title: 'Unable to Open Top 3',
+            message: 'Your lists are not available yet. Please try again.',
+          });
           return;
         }
         const category = TOP3_CATEGORIES.find(item =>
@@ -495,8 +509,10 @@ export default function NotificationsScreen() {
           (kind === 'overall' && !optionId) ||
           ((kind === 'type' || kind === 'theme' || kind === 'genre') && optionId)
         )) {
-          Alert.alert('Destination Unavailable',
-            'This Top 3 destination is no longer available.');
+          setNotificationError({
+            title: 'Destination Unavailable',
+            message: 'This Top 3 destination is no longer available.',
+          });
           return;
         }
         const destination: NotificationDestination = kind === 'overall'
@@ -505,8 +521,10 @@ export default function NotificationsScreen() {
               kind: kind as 'type' | 'theme' | 'genre', optionId: optionId! };
         const input = resolveNotificationCollection(destination, options, { includePodcasts: true });
         if (!input) {
-          Alert.alert('Destination Unavailable',
-            'This Top 3 destination is no longer available.');
+          setNotificationError({
+            title: 'Destination Unavailable',
+            message: 'This Top 3 destination is no longer available.',
+          });
           return;
         }
         openingAnnouncementRef.current = true;
@@ -695,7 +713,7 @@ export default function NotificationsScreen() {
           },
           stickyHeaderStyle,
         ]}>
-        <ScreenHeader overlay androidStatusBarGlass scrolled={headerScrolled} floatingCircleScrollY={floatingCircleScrollY} />
+        <ScreenHeader overlay androidStatusBarGlass scrolled={headerScrolled} floatingCircleScrollY={floatingCircleScrollY} {...dmHeaderAction} />
       </Reanimated.View>
 
       <Reanimated.ScrollView

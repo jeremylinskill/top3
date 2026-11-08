@@ -6,6 +6,7 @@ import {
 } from '@/constants/top3-categories';
 import { useAppColors } from '@/hooks/use-app-colors';
 import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
+import { useDmHeaderAction } from '@/hooks/use-dm-header-action';
 import Reanimated from 'react-native-reanimated';
 import {
   router,
@@ -37,6 +38,7 @@ export default function CreateCollectionScreen({
   requestUserId?: string;
 } = {}) {
   const isRequestMode = Boolean(requestUserId);
+  const dmHeaderAction = useDmHeaderAction();
   const colors = useAppColors();
   const insets = useSafeAreaInsets();
   const [scrollViewportHeight, setScrollViewportHeight] = useState(0);
@@ -156,7 +158,7 @@ export default function CreateCollectionScreen({
           },
           stickyHeaderStyle,
         ]}>
-        <ScreenHeader showBackButton={isRequestMode} overlay featheredBackdrop androidStatusBarGlass />
+        <ScreenHeader showBackButton={isRequestMode} overlay featheredBackdrop androidStatusBarGlass {...(!isRequestMode ? dmHeaderAction : {})} />
       </Reanimated.View>
 
       <Reanimated.ScrollView

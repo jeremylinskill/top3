@@ -99,6 +99,7 @@ type Top3CardProps = {
   onAuthorPress?: () => void;
   onCommentsPress?: () => void;
   onSharePress?: () => void;
+  onMessagePress?: () => void;
   onTitlePress?: () => void;
   onEditPress?: () => void;
   onMorePress?: () => void;
@@ -124,6 +125,7 @@ export default function Top3Card({
   onAuthorPress,
   onCommentsPress,
   onSharePress,
+  onMessagePress,
   onTitlePress,
   onEditPress,
   onMorePress,
@@ -1065,6 +1067,24 @@ export default function Top3Card({
               <Ionicons
                 name="share-outline"
                 size={17}
+                color={colors.secondaryText}
+              />
+            </Pressable>
+          ) : null}
+          {onMessagePress ? (
+            <Pressable
+              style={({ pressed }) => [
+                styles.footerItem,
+                styles.shareButton,
+                pressed && styles.pressed,
+              ]}
+              onPress={onMessagePress}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel={`Message ${author?.displayName ?? 'list creator'}`}>
+              <Ionicons
+                name="chatbubbles-outline"
+                size={18}
                 color={colors.secondaryText}
               />
             </Pressable>

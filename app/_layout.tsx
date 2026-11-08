@@ -17,6 +17,7 @@ import { Top3Provider, useTop3 } from '@/context/top3-context';
 import { TrailerPreviewProvider } from '@/context/trailer-preview-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAuth } from '@/hooks/use-auth';
+import { DM_NAV_ENABLED } from '@/lib/dm-availability';
 import { initializeAnalytics } from '@/lib/analytics';
 import {
   TOP3_CATEGORIES,
@@ -36,6 +37,7 @@ import {
   Stack,
   usePathname,
   useRootNavigationState,
+  useSegments,
 } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import {
@@ -68,6 +70,8 @@ type NotificationRouteData = {
   top3RequestId?: unknown;
   top3_request_id?: unknown;
   requestId?: unknown;
+  conversationId?: unknown;
+  recipientUserId?: unknown;
 };
 
 function getStringValue(
@@ -126,7 +130,8 @@ function parseCampaignDestination(
 }
 
 function routeFromNotificationData(
-  data: NotificationRouteData
+  data: NotificationRouteData,
+  currentUserId: string | null
 ) {
   const type =
     getStringValue(data.type);
@@ -137,8 +142,21 @@ function routeFromNotificationData(
   const actorUserId =
     getStringValue(data.actorUserId);
 
-
-
+  if (type === 'direct_message') {
+    const conversationId = getStringValue(data.conversationId);
+    const recipientUserId = getStringValue(data.recipientUserId);
+    // Only route DM pushes in an explicitly enabled environment, and never
+    // open a conversation for a different signed-in recipient.
+    if (
+      DM_NAV_ENABLED &&
+      conversationId &&
+      recipientUserId &&
+      recipientUserId === currentUserId
+    ) {
+      router.push({ pathname: '/dm-conversation', params: { conversationId } });
+    }
+    return;
+  }
 
   if (type === 'top3_request') {
     const requestId =
@@ -218,9 +236,11 @@ function NotificationResponseController() {
       data: NotificationRouteData;
     } | null>(null);
 
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const navigationState = useRootNavigationState();
   const pathname = usePathname();
+  const segments = useSegments();
+  const isInsideApp = segments[0] === '(app)';
   const { options } = useCollectionOptions();
   const {
     lists,
@@ -308,13 +328,35 @@ function NotificationResponseController() {
 
     const { data } = pendingSocialNotification;
 
+    if (getStringValue(data.type) === 'direct_message') {
+      // Notification responses can arrive before auth finishes restoring the
+      // signed-in user and before the protected app stack is mounted.
+      // Do not discard this response until both are ready.
+      if (!user?.id || !isInsideApp) {
+        return;
+      }
+
+      // The server provides the recipient identity. Never route a notification
+      // for another account into the currently signed-in account's session.
+      const recipientUserId = getStringValue(data.recipientUserId);
+      if (!recipientUserId || recipientUserId !== user.id) {
+        if (__DEV__) {
+          console.log('DM notification ignored: recipient does not match signed-in account.');
+        }
+        setPendingSocialNotification(null);
+        return;
+      }
+    }
+
     setPendingSocialNotification(null);
-    routeFromNotificationData(data);
+    routeFromNotificationData(data, user?.id ?? null);
   }, [
     pendingSocialNotification,
     navigationState?.key,
     pathname,
     isAuthenticated,
+    isInsideApp,
+    user?.id,
   ]);
 
   useEffect(() => {

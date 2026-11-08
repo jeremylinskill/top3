@@ -2,6 +2,7 @@ import IconButton from '@/components/icon-button';
 import { TEXT_STYLES } from '@/constants/typography';
 import { useAppColors } from '@/hooks/use-app-colors';
 import { Ionicons } from '@expo/vector-icons';
+import { useRef } from 'react';
 import {
   Platform,
   StyleSheet,
@@ -34,6 +35,7 @@ export default function SearchInput({
   ...textInputProps
 }: SearchInputProps) {
   const colors = useAppColors();
+  const inputRef = useRef<TextInput>(null);
 
   const resolvedPlaceholderTextColor =
     placeholderTextColor ??
@@ -42,6 +44,7 @@ export default function SearchInput({
   function handleClear() {
     onChangeText('');
     onClear?.();
+    inputRef.current?.focus();
   }
 
   return (
@@ -64,6 +67,7 @@ export default function SearchInput({
       <View style={styles.inputViewport}>
         <TextInput
           {...textInputProps}
+          ref={inputRef}
           style={[
             styles.input,
             {
@@ -93,11 +97,13 @@ export default function SearchInput({
           size="navigation"
           onPress={handleClear}
           accessibilityLabel="Clear search">
-          <Ionicons
-            name="close"
-            size={26}
-            color={colors.tertiaryText}
-          />
+          <View style={styles.clearIconCircle}>
+            <Ionicons
+              name="close"
+              size={18}
+              color={colors.secondaryText}
+            />
+          </View>
         </IconButton>
       ) : null}
     </View>
@@ -123,20 +129,32 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
 
+  clearIconCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(127, 127, 127, 0.16)',
+  },
+
   inputViewport: {
     flex: 1,
     minWidth: 0,
-    height: Platform.OS === 'ios' ? 28 : 54,
-    overflow: 'hidden',
+    height: 54,
+    justifyContent: 'center',
   },
 
   input: {
     ...TEXT_STYLES.bodyLarge,
+    // iOS TextInput can shift typed text when given a custom lineHeight.
+    ...(Platform.OS === 'ios' ? { lineHeight: undefined } : {}),
     flex: 1,
     minWidth: 0,
-    height: Platform.OS === 'ios' ? 28 : 54,
+    height: 54,
     paddingVertical: 0,
     paddingHorizontal: 0,
+    textAlignVertical: 'center',
   },
 
 });

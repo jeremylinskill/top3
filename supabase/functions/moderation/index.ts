@@ -33,6 +33,7 @@ type ModerationReportRow = {
   target_type: string;
   reported_post_id: string | null;
   reported_comment_id: string | null;
+  reported_message_id: string | null;
   reviewed_at: string | null;
   resolution: string | null;
   moderator_notes: string | null;
@@ -65,6 +66,15 @@ type CommunityModerationCommentRow = {
 
 type PendingModerationReport = ModerationReportRow & {
   source: "standard" | "community";
+};
+
+type ModerationMessageRow = {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  body: string;
+  created_at: string;
+  removed_at: string | null;
 };
 
 type ModerationCommentRow = {
@@ -399,8 +409,10 @@ export default {
               "id",
               "status",
               "target_type",
+              "reported_user_id",
               "reported_post_id",
               "reported_comment_id",
+              "reported_message_id",
             ].join(",")
           )
           .eq("id", reportId)
@@ -431,8 +443,10 @@ export default {
               id: string;
               status: string;
               target_type: string;
+              reported_user_id: string;
               reported_post_id: string | null;
               reported_comment_id: string | null;
+              reported_message_id: string | null;
             }
           | null;
 
@@ -446,6 +460,51 @@ export default {
               status: 404,
             }
           );
+        }
+
+        // Private DM removal: retain the original body for admin evidence,
+        // set removed_at so participant RLS no longer exposes the message.
+        if (report.target_type === "message") {
+          if (!report.reported_message_id) {
+            return Response.json({ error: "Reported message ID is missing." }, { status: 400 });
+          }
+          const removedAt = new Date().toISOString();
+          const { data: changed, error: removalError } = await ctx.supabaseAdmin
+            .from("dm_messages")
+            .update({ removed_at: removedAt } as never)
+            .eq("id", report.reported_message_id)
+            .eq("sender_id", report.reported_user_id)
+            .is("removed_at", null)
+            .select("id")
+            .maybeSingle();
+          if (removalError) {
+            console.error("Failed to remove reported DM:", removalError);
+            return Response.json({ error: "Failed to remove reported message." }, { status: 500 });
+          }
+          if (!changed) {
+            // Safe retry when content was hidden in a previous attempt.
+            const { data: existing, error: existingError } = await ctx.supabaseAdmin
+              .from("dm_messages")
+              .select("id,removed_at,sender_id")
+              .eq("id", report.reported_message_id)
+              .maybeSingle();
+            if (existingError || !existing?.removed_at ||
+                existing.sender_id !== report.reported_user_id) {
+              return Response.json({ error: "Reported message not found." }, { status: 404 });
+            }
+          }
+          const { data: resolved, error: resolveError } = await ctx.supabaseAdmin
+            .from("reports")
+            .update({ status: "resolved", reviewed_at: removedAt, resolution: "content_removed" } as never)
+            .eq("id", reportId)
+            .eq("status", "pending")
+            .select("id,status,reviewed_at,resolution")
+            .maybeSingle();
+          if (resolveError || !resolved) {
+            console.error("Failed to resolve removed DM report:", resolveError);
+            return Response.json({ error: "Message removed, but report could not be resolved. Please retry." }, { status: 500 });
+          }
+          return Response.json({ success: true, report: resolved });
         }
 
         if (report.target_type === "user") {
@@ -945,6 +1004,7 @@ export default {
               "target_type",
               "reported_post_id",
               "reported_comment_id",
+              "reported_message_id",
               "reviewed_at",
               "resolution",
               "moderator_notes",
@@ -1009,6 +1069,7 @@ export default {
             reported_user_id: report.reported_user_id,
             reported_comment_id: report.reported_comment_id,
             reported_post_id: null,
+            reported_message_id: null,
             reason: report.reason,
             details: null,
             status: report.status,
@@ -1202,6 +1263,29 @@ export default {
           }
         }
 
+        // Fetch only messages referenced by pending reports. The admin-only
+        // function uses service_role; unrelated private chats are never read.
+        const reportedMessageIds = Array.from(new Set(
+          pendingReports
+            .filter((report) => report.source === "standard" && report.target_type === "message")
+            .map((report) => report.reported_message_id)
+            .filter((id): id is string => Boolean(id))
+        ));
+        const messagesById = new Map<string, ModerationMessageRow>();
+        if (reportedMessageIds.length > 0) {
+          const { data: rows, error: messagesError } = await ctx.supabaseAdmin
+            .from("dm_messages")
+            .select("id,conversation_id,sender_id,body,created_at,removed_at")
+            .in("id", reportedMessageIds);
+          if (messagesError) {
+            console.error("Failed to load reported DM evidence:", messagesError);
+            return Response.json({ error: "Failed to load reported messages." }, { status: 500 });
+          }
+          for (const row of (rows ?? []) as ModerationMessageRow[]) {
+            messagesById.set(row.id, row);
+          }
+        }
+
         const collectionIds = Array.from(
           new Set(
             pendingReports
@@ -1302,6 +1386,11 @@ export default {
                   ? communityCommentsById.get(report.reported_comment_id) ?? null
                   : null;
 
+              const reportedMessage =
+                report.target_type === "message" && report.reported_message_id
+                  ? messagesById.get(report.reported_message_id) ?? null
+                  : null;
+
               const reportedCollectionId =
                 report.target_type === "post"
                   ? getCollectionIdFromReportedPostId(
@@ -1327,7 +1416,18 @@ export default {
                     report.reported_user_id
                   ) ?? null,
                 reportedContent:
-                  report.source === "community" &&
+                  report.target_type === "message" &&
+                  reportedMessage &&
+                  reportedMessage.sender_id === report.reported_user_id
+                    ? {
+                        type: "message",
+                        id: reportedMessage.id,
+                        conversationId: reportedMessage.conversation_id,
+                        userId: reportedMessage.sender_id,
+                        content: reportedMessage.body,
+                        createdAt: reportedMessage.created_at,
+                      }
+                    : report.source === "community" &&
                   reportedCommunityComment
                     ? {
                         type: "comment",

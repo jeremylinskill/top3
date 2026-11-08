@@ -1,3 +1,4 @@
+import ActionSheet from '@/components/action-sheet';
 import AppText from '@/components/app-text';
 import CreateCollectionScreen from '@/components/create-collection-screen';
 import PrimaryButton from '@/components/primary-button';
@@ -16,7 +17,7 @@ import { resolveNotificationCollection } from '@/utils/resolve-notification-coll
 import type { NotificationDestination } from '@/types/notification-destination';
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function RequestTop3Screen() {
@@ -42,6 +43,7 @@ export default function RequestTop3Screen() {
   const { options } = useCollectionOptions();
   const [name, setName] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [requestError, setRequestError] = useState<string | null>(null);
   const [sentRequestKey, setSentRequestKey] = useState<string | null>(null);
   const recipient = userId ?? '';
   const requestKey = [recipient, categoryId ?? '', kind ?? '', optionId ?? ''].join(':');
@@ -74,7 +76,7 @@ export default function RequestTop3Screen() {
       await sendTop3Request(recipient, destination);
       setSentRequestKey(requestKey);
     } catch (error) {
-      Alert.alert('Unable to send request', error instanceof Error ? error.message : 'Try again later.');
+      setRequestError(error instanceof Error ? error.message : 'Try again later.');
     } finally { setSending(false); }
   }
   // Reuse the actual Create category cards. A request selection never creates
@@ -145,7 +147,13 @@ export default function RequestTop3Screen() {
           </AppText>
         </View>
       </Reanimated.ScrollView>
-
+      <ActionSheet
+        visible={requestError !== null}
+        title="Unable to send request"
+        message={requestError ?? undefined}
+        actions={[{ label: 'OK', onPress: () => setRequestError(null) }]}
+        onClose={() => setRequestError(null)}
+      />
     </SafeAreaView>
   );
 }

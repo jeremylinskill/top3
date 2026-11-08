@@ -191,6 +191,134 @@ export default {
         );
       }
 
+      // Direct Messages use the existing trusted push endpoint, but deliberately
+      // do not create a second entry in the general Notifications feed. The DM
+      // trigger sends only the message ID; all identities are re-read here.
+      if (
+        payload.type === "INSERT" &&
+        payload.schema === "public" &&
+        payload.table === "dm_messages"
+      ) {
+        const dmRecord = payload.record as unknown as { id?: unknown } | null;
+        const messageId =
+          dmRecord && typeof dmRecord.id === "string"
+            ? dmRecord.id
+            : null;
+        if (!messageId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(messageId)) {
+          return Response.json({ skipped: true, reason: "Invalid DM event." });
+        }
+
+        const { data: message, error: messageError } = await ctx.supabaseAdmin
+          .from("dm_messages")
+          .select("id,conversation_id,sender_id,removed_at")
+          .eq("id", messageId)
+          .maybeSingle();
+        if (messageError) {
+          console.error("Unable to resolve DM push event:", messageError);
+          return Response.json({ error: "Unable to resolve DM event." }, { status: 500 });
+        }
+        if (!message || message.removed_at) {
+          return Response.json({ skipped: true, reason: "Message unavailable." });
+        }
+
+        const { data: conversation, error: conversationError } = await ctx.supabaseAdmin
+          .from("dm_conversations")
+          .select("id,user_low_id,user_high_id")
+          .eq("id", message.conversation_id)
+          .maybeSingle();
+        if (conversationError) {
+          console.error("Unable to resolve DM conversation for push:", conversationError);
+          return Response.json({ error: "Unable to resolve DM conversation." }, { status: 500 });
+        }
+        if (!conversation) {
+          return Response.json({ skipped: true, reason: "Conversation unavailable." });
+        }
+
+        const senderId = message.sender_id;
+        const recipientUserId =
+          conversation.user_low_id === senderId
+            ? conversation.user_high_id
+            : conversation.user_high_id === senderId
+              ? conversation.user_low_id
+              : null;
+        if (!recipientUserId || recipientUserId === senderId) {
+          return Response.json({ skipped: true, reason: "Invalid DM participants." });
+        }
+
+        // Do not notify for messages from accounts blocked by either user,
+        // including a block that happened after the original message insert.
+        const { data: blocks, error: blockError } = await ctx.supabaseAdmin
+          .from("blocks")
+          .select("blocker_id,blocked_user_id")
+          .in("blocker_id", [senderId, recipientUserId])
+          .in("blocked_user_id", [senderId, recipientUserId]);
+        if (blockError) {
+          console.error("Unable to verify DM block state for push:", blockError);
+          return Response.json({ error: "Unable to verify DM permissions." }, { status: 500 });
+        }
+        if ((blocks ?? []).some((b) =>
+          (b.blocker_id === senderId && b.blocked_user_id === recipientUserId) ||
+          (b.blocker_id === recipientUserId && b.blocked_user_id === senderId)
+        )) {
+          return Response.json({ skipped: true, reason: "DM participants blocked." });
+        }
+
+        const { data: dmTokens, error: dmTokensError } = await ctx.supabaseAdmin
+          .from("push_tokens")
+          .select("expo_push_token")
+          .eq("user_id", recipientUserId);
+        if (dmTokensError) {
+          console.error("Unable to load DM recipient push tokens:", dmTokensError);
+          return Response.json({ error: "Unable to load DM push tokens." }, { status: 500 });
+        }
+        if (!dmTokens?.length) {
+          return Response.json({ success: true, sent: 0 });
+        }
+
+        const { data: dmSender, error: dmSenderError } = await ctx.supabaseAdmin
+          .from("profiles")
+          .select("display_name,username")
+          .eq("id", senderId)
+          .maybeSingle();
+        if (dmSenderError) {
+          console.error("Unable to load DM sender name for push:", dmSenderError);
+          return Response.json({ error: "Unable to resolve DM sender." }, { status: 500 });
+        }
+        const actorName = getActorName(dmSender as ProfileRow | null);
+
+        // No message body is included in the notification, event payload,
+        // or OS badge. DM unread state is tracked separately from social badges.
+        const dmPushes = (dmTokens as PushTokenRow[]).map(({ expo_push_token }) => ({
+          to: expo_push_token,
+          sound: "default",
+          title: `New message from ${actorName}`,
+          body: "Tap to reply.",
+          data: {
+            type: "direct_message",
+            conversationId: conversation.id,
+            messageId: message.id,
+            actorUserId: senderId,
+            recipientUserId,
+          },
+        }));
+        const dmResponse = await fetch(EXPO_PUSH_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(dmPushes),
+        });
+        let dmResponseBody: unknown = null;
+        try {
+          dmResponseBody = await dmResponse.json();
+        } catch {
+          // Avoid logging any message contents or push token values.
+        }
+        if (!dmResponse.ok) {
+          console.error("Expo DM push request failed with status:", dmResponse.status);
+          return Response.json({ error: "Expo DM push request failed." }, { status: 502 });
+        }
+        return Response.json({ success: true, sent: dmPushes.length, expo: dmResponseBody });
+      }
+
       if (
         payload.type !== "INSERT" ||
         payload.schema !== "public" ||

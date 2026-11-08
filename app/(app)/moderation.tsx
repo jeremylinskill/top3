@@ -37,6 +37,9 @@ function formatTargetType(
 
     case 'comment':
       return 'Comment';
+
+    case 'message':
+      return 'Message';
   }
 }
 
@@ -155,12 +158,8 @@ function getReportedContentLabel(
     return null;
   }
 
-  if (
-    report.reportedContent.type === 'comment'
-  ) {
-    return 'Reported comment';
-  }
-
+  if (report.reportedContent.type === 'comment') return 'Reported comment';
+  if (report.reportedContent.type === 'message') return 'Reported message';
   return 'Reported list';
 }
 
@@ -178,11 +177,11 @@ type ModerationActionSheet =
   | {
       type: 'remove-confirmation';
       report: ModerationReport;
-      targetLabel: 'comment' | 'list';
+      targetLabel: 'comment' | 'list' | 'message';
     }
   | {
       type: 'remove-success';
-      targetLabel: 'comment' | 'list';
+      targetLabel: 'comment' | 'list' | 'message';
     }
   | {
       type: 'remove-error';
@@ -338,6 +337,10 @@ function ReportCard({
                   </AppText>
                 ) : null}
               </>
+            ) : report.reportedContent?.type === 'message' ? (
+              <AppText variant="body" style={styles.reportContentText}>
+                {report.reportedContent.content}
+              </AppText>
             ) : report.reportedContent?.type ===
               'post' ? (
               <>
@@ -667,7 +670,7 @@ export default function ModerationScreen() {
   const performRemoveContent = useCallback(
     async (
       report: ModerationReport,
-      targetLabel: 'comment' | 'list'
+      targetLabel: 'comment' | 'list' | 'message'
     ) => {
       setRemovingContentReportId(report.id);
 
@@ -706,9 +709,10 @@ export default function ModerationScreen() {
         return;
       }
 
-      const targetLabel =
-        report.targetType === 'comment'
-          ? 'comment'
+      const targetLabel = report.targetType === 'comment'
+        ? 'comment'
+        : report.targetType === 'message'
+          ? 'message'
           : 'list';
 
       setModerationActionSheet({

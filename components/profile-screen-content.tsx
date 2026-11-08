@@ -12,6 +12,7 @@ import { Post } from '@/types/post';
 import { UserProfile } from '@/types/user-profile';
 import { Ionicons } from '@expo/vector-icons';
 import {
+  ActivityIndicator,
   Pressable,
   StyleSheet,
   View,
@@ -44,6 +45,8 @@ type ProfileScreenContentProps = {
 
   onToggleFollow?: () => void;
   onRequestTop3?: () => void;
+  onMessagePress?: () => void;
+  isOpeningMessage?: boolean;
   onCreateTop3?: () => void;
   onRetryPosts?: () => void;
   onSavedPress?: () => void;
@@ -83,6 +86,8 @@ export default function ProfileScreenContent({
 
   onToggleFollow,
   onRequestTop3,
+  onMessagePress,
+  isOpeningMessage = false,
   onCreateTop3,
   onRetryPosts,
   onSavedPress,
@@ -180,12 +185,6 @@ export default function ProfileScreenContent({
           </AppText>
         </View>
 
-        <View
-          style={[
-            styles.statDivider,
-            { backgroundColor: colors.border },
-          ]}
-        />
 
         <Pressable
           style={({ pressed }) => [
@@ -217,12 +216,6 @@ export default function ProfileScreenContent({
           </AppText>
         </Pressable>
 
-        <View
-          style={[
-            styles.statDivider,
-            { backgroundColor: colors.border },
-          ]}
-        />
 
         <Pressable
           style={({ pressed }) => [
@@ -307,15 +300,41 @@ export default function ProfileScreenContent({
 
       {!isCurrentUser ? (
         <View style={styles.profileActions}>
-          <FollowButton
-            userId={user.id}
-            size="large"
-            isFollowing={isFollowing}
-            isRequested={isFollowRequested}
-            isPrivate={user.visibility === 'private'}
-            isLoading={isLoadingFollowState}
-            onPress={onToggleFollow}
-          />
+          <View style={styles.profileActionRow}>
+            <View style={styles.followActionColumn}>
+              <FollowButton
+                userId={user.id}
+                size="large"
+                style={styles.borderlessFollowButton}
+                isFollowing={isFollowing}
+                isRequested={isFollowRequested}
+                isPrivate={user.visibility === 'private'}
+                isLoading={isLoadingFollowState}
+                onPress={onToggleFollow}
+              />
+            </View>
+            {onMessagePress ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Message ${user.displayName}`}
+                disabled={isOpeningMessage}
+                onPress={onMessagePress}
+                style={({ pressed }) => [
+                  styles.messageAction,
+                  {
+                    backgroundColor: colors.surface,
+                    opacity: pressed || isOpeningMessage ? 0.6 : 1,
+                  },
+                ]}>
+                {isOpeningMessage ? (
+                  <ActivityIndicator size="small" color={colors.text} />
+                ) : null}
+                <AppText variant="bodyLarge" tone="primary" emphasis="strong">
+                  Message
+                </AppText>
+              </Pressable>
+            ) : null}
+          </View>
           {isFollowing && onRequestTop3 ? (
             <PrimaryButton
               title="Request a Top 3"
@@ -440,6 +459,7 @@ export default function ProfileScreenContent({
                     ? () => onSharePost(post)
                     : undefined
                 }
+                onMessagePress={onMessagePress}
               />
             ))}
           </View>
@@ -496,11 +516,6 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
 
-  statDivider: {
-    width: StyleSheet.hairlineWidth,
-    height: 30,
-  },
-
   savedRow: {
     marginTop: SPACING.sm,
     minHeight: 72,
@@ -536,6 +551,30 @@ const styles = StyleSheet.create({
   profileActions: {
     marginTop: SPACING.sm,
     gap: SPACING.sm,
+  },
+  profileActionRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: SPACING.sm,
+  },
+  followActionColumn: {
+    flex: 1,
+    minWidth: 0,
+  },
+  borderlessFollowButton: {
+    borderWidth: 0,
+    minHeight: 44,
+  },
+  messageAction: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 44,
+    borderRadius: RADIUS.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
   },
 
   section: {

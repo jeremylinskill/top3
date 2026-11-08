@@ -9,6 +9,9 @@ import {
   useTabBarScroll,
 } from '@/context/tab-bar-scroll-context';
 import { useAppColors } from '@/hooks/use-app-colors';
+import { useAuth } from '@/hooks/use-auth';
+import { DmUnreadContext, useDmUnread } from '@/hooks/use-dm-unread';
+import { DM_NAV_ENABLED } from '@/lib/dm-availability';
 import { Ionicons } from '@expo/vector-icons';
 import {
   BottomTabBar,
@@ -235,6 +238,8 @@ function TabNavigator() {
   const colors = useAppColors();
   const { unreadCount } = useNotifications();
   const { profile } = useProfile();
+  const { isAuthenticated } = useAuth();
+  const hasUnreadDm = useDmUnread(DM_NAV_ENABLED && isAuthenticated);
 
   const avatarUrl = profile?.avatarUrl;
   const notificationBadge =
@@ -245,6 +250,7 @@ function TabNavigator() {
         : unreadCount;
 
   return (
+    <DmUnreadContext.Provider value={hasUnreadDm}>
     <Tabs
       initialRouteName="feed"
       tabBar={(props) => <FloatingTabBar {...props} />}
@@ -371,6 +377,7 @@ function TabNavigator() {
         }}
       />
     </Tabs>
+    </DmUnreadContext.Provider>
   );
 }
 

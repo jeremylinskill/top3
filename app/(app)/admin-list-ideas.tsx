@@ -1,4 +1,5 @@
 import AppText from '@/components/app-text';
+import ActionSheet, { type ActionSheetAction } from '@/components/action-sheet';
 import { RADIUS } from '@/constants/radius';
 import { SPACING } from '@/constants/spacing';
 import PrimaryButton from '@/components/primary-button';
@@ -67,6 +68,15 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+
+type PendingConfirmation = {
+  title: string;
+  message: string;
+  confirmLabel: string;
+  cancelLabel?: string;
+  destructive?: boolean;
+  onConfirm: () => void;
+};
 
 type Editing =
   | { kind: 'new' }
@@ -440,6 +450,10 @@ export default function AdminListIdeasScreen() {
   const [franchiseText, setFranchiseText] = useState('');
   const [keywordTermsText, setKeywordTermsText] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [confirmation, setConfirmation] = useState<PendingConfirmation | null>(null);
+  const showConfirmation = useCallback((next: PendingConfirmation) => {
+    setConfirmation(next);
+  }, []);
 
   const movieThemes = useMemo(() => options.filter((option) =>
     option.categoryId === 'movies' && option.kind === 'theme'
@@ -790,32 +804,36 @@ export default function AdminListIdeasScreen() {
       Alert.alert('Unsaved changes', 'Save your changes before archiving or restoring this theme.');
       return;
     }
-    Alert.alert(restore ? 'Restore theme?' : 'Archive theme?', restore
-      ? 'This theme will become available again when creating a Top 3.'
-      : 'This theme will no longer appear in new Top 3 choices. Existing published user lists and curated suggestions are preserved.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: restore ? 'Restore' : 'Archive', style: restore ? 'default' : 'destructive',
-        onPress: () => { void (async () => {
-          if (working) return;
-          setWorkingAction(restore ? 'restore' : 'archive'); setError(null);
-          try {
-            await setAdminCuratedMovieThemeActive(id, restore);
-            await Promise.all([reload(), refreshOptions()]);
-            setEditing(null);
-            Alert.alert(restore ? 'Restored' : 'Archived', restore
-              ? 'This Curated Movie Theme is available again.'
-              : 'This Curated Movie Theme has been moved to Archived themes.');
-          } catch (caught) {
-            setError(caught instanceof Error ? caught.message : 'Could not change the theme status.');
-          } finally { setWorkingAction(null); }
-        })(); },
-      },
-    ]);
+    showConfirmation({
+      title: restore ? 'Restore theme?' : 'Archive theme?',
+      message: restore
+        ? 'This theme will become available again when creating a Top 3.'
+        : 'This theme will no longer appear in new Top 3 choices. Existing published user lists and curated suggestions are preserved.',
+      confirmLabel: restore ? 'Restore' : 'Archive',
+      destructive: !restore,
+      onConfirm: () => { void (async () => {
+        if (working) return;
+        setWorkingAction(restore ? 'restore' : 'archive'); setError(null);
+        try {
+          await setAdminCuratedMovieThemeActive(id, restore);
+          await Promise.all([reload(), refreshOptions()]);
+          setEditing(null);
+          Alert.alert(restore ? 'Restored' : 'Archived', restore
+            ? 'This Curated Movie Theme is available again.'
+            : 'This Curated Movie Theme has been moved to Archived themes.');
+        } catch (caught) {
+          setError(caught instanceof Error ? caught.message : 'Could not change the theme status.');
+        } finally { setWorkingAction(null); }
+      })(); },
+    });
   }
   function confirmDeleteCuratedDraft(id: string) {
-    Alert.alert('Delete draft?', 'This unpublished Curated Movie Theme draft will be permanently deleted.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => { void (async () => {
+    showConfirmation({
+      title: 'Delete draft?',
+      message: 'This unpublished Curated Movie Theme draft will be permanently deleted.',
+      confirmLabel: 'Delete',
+      destructive: true,
+      onConfirm: () => { void (async () => {
         if (working) return;
         setWorkingAction('delete_curated_draft'); setError(null);
         try {
@@ -824,8 +842,8 @@ export default function AdminListIdeasScreen() {
         } catch (caught) {
           setError(caught instanceof Error ? caught.message : 'Could not delete curated draft.');
         } finally { setWorkingAction(null); }
-      })(); } },
-    ]);
+      })(); },
+    });
   }
   function beginNewPeriod() {
     setEditing({ kind: 'new_period' });
@@ -1051,9 +1069,12 @@ export default function AdminListIdeasScreen() {
     } finally { setWorkingAction(null); }
   }
   function confirmDeletePeriodDraft(id: string) {
-    Alert.alert('Delete draft?', 'This unpublished Release Period draft will be permanently deleted.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => { void (async () => {
+    showConfirmation({
+      title: 'Delete draft?',
+      message: 'This unpublished Release Period draft will be permanently deleted.',
+      confirmLabel: 'Delete',
+      destructive: true,
+      onConfirm: () => { void (async () => {
         if (working) return;
         setWorkingAction('delete_period_draft'); setError(null);
         try {
@@ -1063,8 +1084,8 @@ export default function AdminListIdeasScreen() {
         } catch (caught) {
           setError(caught instanceof Error ? caught.message : 'Could not delete release period draft.');
         } finally { setWorkingAction(null); }
-      })(); } },
-    ]);
+      })(); },
+    });
   }
   async function companyLookup() {
     if (companySearch.trim().length < 2 || companyLookupBusy) return;
@@ -1153,9 +1174,12 @@ export default function AdminListIdeasScreen() {
     } finally { setWorkingAction(null); }
   }
   function confirmDeleteCompanyDraft(id: string) {
-    Alert.alert('Delete draft?', 'This unpublished company theme draft will be permanently deleted.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => { void (async () => {
+    showConfirmation({
+      title: 'Delete draft?',
+      message: 'This unpublished company theme draft will be permanently deleted.',
+      confirmLabel: 'Delete',
+      destructive: true,
+      onConfirm: () => { void (async () => {
         if (working) return;
         setWorkingAction('delete_company_draft'); setError(null);
         try {
@@ -1165,8 +1189,8 @@ export default function AdminListIdeasScreen() {
         } catch (caught) {
           setError(caught instanceof Error ? caught.message : 'Could not delete company draft.');
         } finally { setWorkingAction(null); }
-      })(); } },
-    ]);
+      })(); },
+    });
   }
   async function actorLookup() {
     if (actorSearch.trim().length < 2 || actorLookupBusy) return;
@@ -1242,9 +1266,12 @@ export default function AdminListIdeasScreen() {
     } finally { setWorkingAction(null); }
   }
   function confirmDeleteActorDraft(id: string) {
-    Alert.alert('Delete draft?', 'This unpublished actor theme draft will be permanently deleted.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => { void (async () => {
+    showConfirmation({
+      title: 'Delete draft?',
+      message: 'This unpublished actor theme draft will be permanently deleted.',
+      confirmLabel: 'Delete',
+      destructive: true,
+      onConfirm: () => { void (async () => {
         if (working) return;
         setWorkingAction('delete_actor_draft'); setError(null);
         try {
@@ -1254,8 +1281,8 @@ export default function AdminListIdeasScreen() {
         } catch (caught) {
           setError(caught instanceof Error ? caught.message : 'Could not delete actor draft.');
         } finally { setWorkingAction(null); }
-      })(); } },
-    ]);
+      })(); },
+    });
   }
   function chooseNewMethod(method: 'keywords' | 'actor' | 'company' | 'period' | 'curated') {
     if (working || !editing || !['new', 'new_actor', 'new_company', 'new_period', 'new_curated'].includes(editing.kind)) return;
@@ -1272,10 +1299,14 @@ export default function AdminListIdeasScreen() {
       else begin({ kind: 'new' }, { ...EMPTY });
     };
     if (hasUnsavedChanges) {
-      Alert.alert('Switch discovery method?', 'Your unsaved form changes will be lost.', [
-        { text: 'Keep editing', style: 'cancel' },
-        { text: 'Switch', style: 'destructive', onPress: switchMethod },
-      ]);
+      showConfirmation({
+        title: 'Switch discovery method?',
+        message: 'Your unsaved form changes will be lost.',
+        confirmLabel: 'Switch',
+        cancelLabel: 'Keep editing',
+        destructive: true,
+        onConfirm: switchMethod,
+      });
     } else switchMethod();
   }
   const methodPicker = () => (
@@ -1406,26 +1437,28 @@ export default function AdminListIdeasScreen() {
   function confirmAction(action: 'archive' | 'restore' | 'delete_draft', id: string) {
     const label = action === 'archive' ? 'Archive theme?'
       : action === 'restore' ? 'Restore theme?' : 'Delete draft?';
-    Alert.alert(label, action === 'archive'
-      ? 'The theme will disappear from new list choices. Existing published lists are preserved.'
-      : action === 'restore' ? 'The theme will become selectable again.'
-      : 'This unpublished draft will be permanently deleted.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Confirm', style: action === 'restore' ? 'default' : 'destructive', onPress: () => {
-        void (async () => {
-          if (working) return;
-          setWorkingAction(action); setError(null);
-          try {
-            await manageAdminMovieTheme(action, id);
-            await Promise.all([reload(), refreshOptions()]);
-            if (action === 'delete_draft') draftPreviewCache.current.delete(id);
-            setEditing(null);
-          } catch (caught) {
-            setError(caught instanceof Error ? caught.message : 'Action failed.');
-          } finally { setWorkingAction(null); }
-        })();
-      } },
-    ]);
+    showConfirmation({
+      title: label,
+      message: action === 'archive'
+        ? 'The theme will disappear from new list choices. Existing published lists are preserved.'
+        : action === 'restore' ? 'The theme will become selectable again.'
+        : 'This unpublished draft will be permanently deleted.',
+      confirmLabel: action === 'archive' ? 'Archive'
+        : action === 'restore' ? 'Restore' : 'Delete',
+      destructive: action !== 'restore',
+      onConfirm: () => { void (async () => {
+        if (working) return;
+        setWorkingAction(action); setError(null);
+        try {
+          await manageAdminMovieTheme(action, id);
+          await Promise.all([reload(), refreshOptions()]);
+          if (action === 'delete_draft') draftPreviewCache.current.delete(id);
+          setEditing(null);
+        } catch (caught) {
+          setError(caught instanceof Error ? caught.message : 'Action failed.');
+        } finally { setWorkingAction(null); }
+      })(); },
+    });
   }
 
   const hasUnsavedChanges = (editing?.kind === 'curated' ||
@@ -1461,15 +1494,18 @@ export default function AdminListIdeasScreen() {
       return;
     }
     if (hasUnsavedChanges) {
-      Alert.alert('Discard unsaved changes?',
-        'Changes you have not saved will be lost.', [
-          { text: 'Keep editing', style: 'cancel' },
-          { text: 'Discard changes', style: 'destructive', onPress: closeEditor },
-        ]);
+      showConfirmation({
+        title: 'Discard unsaved changes?',
+        message: 'Changes you have not saved will be lost.',
+        confirmLabel: 'Discard changes',
+        cancelLabel: 'Keep editing',
+        destructive: true,
+        onConfirm: closeEditor,
+      });
     } else {
       closeEditor();
     }
-  }, [closeEditor, editing, hasUnsavedChanges, working]);
+  }, [closeEditor, editing, hasUnsavedChanges, working, showConfirmation]);
   // Android's system back key should behave exactly like the shared header back.
   useEffect(() => {
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -1580,6 +1616,23 @@ export default function AdminListIdeasScreen() {
     </Pressable>
   );
 
+  const confirmationActions: ActionSheetAction[] = confirmation ? [
+    {
+      label: confirmation.confirmLabel,
+      variant: confirmation.destructive ? 'destructive' : 'default',
+      onPress: () => {
+        const confirmedAction = confirmation.onConfirm;
+        setConfirmation(null);
+        confirmedAction();
+      },
+    },
+    {
+      label: confirmation.cancelLabel ?? 'Cancel',
+      variant: 'cancel',
+      onPress: () => setConfirmation(null),
+    },
+  ] : [];
+
   if (!profile.isAdmin) {
     return (
       <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]}>
@@ -1591,6 +1644,7 @@ export default function AdminListIdeasScreen() {
   }
 
   return (
+    <>
     <AdminMovieThemeScrollShell
       key={editing?.kind ?? 'overview'}
       backgroundColor={colors.background}
@@ -2448,6 +2502,14 @@ export default function AdminListIdeasScreen() {
           </>
         )}
     </AdminMovieThemeScrollShell>
+    <ActionSheet
+      visible={confirmation !== null}
+      title={confirmation?.title}
+      message={confirmation?.message}
+      actions={confirmationActions}
+      onClose={() => setConfirmation(null)}
+    />
+    </>
   );
 }
 
