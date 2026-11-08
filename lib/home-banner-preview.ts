@@ -5,8 +5,10 @@ const DEVELOPMENT_REF = 'kkltzygebomopysklaqq';
 const PREVIEW_DURATION_MS = 30 * 60 * 1000;
 
 export function canPreviewHomeCampaignBanner(): boolean {
-  return __DEV__ === true &&
-    (process.env.EXPO_PUBLIC_SUPABASE_URL?.includes(DEVELOPMENT_REF) === true);
+  const url = (process.env.EXPO_PUBLIC_SUPABASE_URL ?? '')
+    .trim()
+    .replace(/\/+$/, '');
+  return url === `https://${DEVELOPMENT_REF}.supabase.co`;
 }
 
 type PreviewStore = { ownerId: string; banner: HomeCampaignBanner };

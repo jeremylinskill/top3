@@ -1545,7 +1545,7 @@ export default function NotificationComposerScreen() {
                   <Text style={[TEXT_STYLES.headline, { color: '#111111' }]}>{homeBannerTitle.trim() || 'Home banner title'}</Text>
                   <Text style={[TEXT_STYLES.body, { color: '#111111' }]}>{homeBannerMessage.trim() || 'Home banner message'}</Text>
                 </LinearGradient>
-                {canPreviewHomeCampaignBanner() ? (
+                {profile.isAdmin && canPreviewHomeCampaignBanner() ? (
                   <>
                     <Pressable
                       accessibilityRole="button"
