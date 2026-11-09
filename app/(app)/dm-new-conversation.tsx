@@ -4,7 +4,7 @@ import SearchInput from '@/components/search-input';
 import UserAvatar from '@/components/user-avatar';
 import { useAppColors } from '@/hooks/use-app-colors';
 import { useAuth } from '@/hooks/use-auth';
-import { DM_NAV_ENABLED } from '@/lib/dm-availability';
+import { DM_NAV_ENABLED, GROUP_DM_ENABLED } from '@/lib/dm-availability';
 import { listDmShareRecipientIds, openDmConversation } from '@/lib/supabase/direct-messages';
 import { getProfilesByIds } from '@/lib/supabase/profiles';
 import type { UserProfile } from '@/types/user-profile';
@@ -103,6 +103,18 @@ export default function NewDmConversationScreen() {
         <AppText variant="body" tone="secondary" style={styles.hint}>
           You can start a conversation with someone you follow who follows you back.
         </AppText>
+        {GROUP_DM_ENABLED ? (
+          <Pressable accessibilityRole="button" accessibilityLabel="Create a group conversation"
+            onPress={() => router.push('/dm-new-group')}
+            style={[styles.newGroup, { backgroundColor: colors.surface }]}>
+            <Ionicons name="people-outline" size={25} color={colors.accent} />
+            <View style={styles.profileText}>
+              <AppText variant="label">New Group</AppText>
+              <AppText variant="caption" tone="secondary">Invite 2–9 mutual followers</AppText>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={colors.tertiaryText} />
+          </Pressable>
+        ) : null}
       </View>
       {error ? (
         <AppText variant="body" tone="secondary" style={styles.error}>{error}</AppText>
@@ -164,4 +176,5 @@ const styles = StyleSheet.create({
   emptyList: { flexGrow: 1 },
   row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, gap: 12, borderBottomWidth: StyleSheet.hairlineWidth },
   profileText: { flex: 1, gap: 4 },
+  newGroup: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 12, padding: 14 },
 });

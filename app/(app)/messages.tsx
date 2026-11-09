@@ -1,4 +1,5 @@
 import AppText from '@/components/app-text';
+import GroupDmInboxSection from '@/components/group-dm-inbox-section';
 import PageHeader from '@/components/page-header';
 import ScreenHeader, { SCREEN_HEADER_HEIGHT } from '@/components/screen-header';
 import SearchInput from '@/components/search-input';
@@ -6,7 +7,7 @@ import UserAvatar from '@/components/user-avatar';
 import { useAppColors } from '@/hooks/use-app-colors';
 import { useAuth } from '@/hooks/use-auth';
 import { useHomeStickyHeader } from '@/hooks/use-home-sticky-header';
-import { DM_NAV_ENABLED } from '@/lib/dm-availability';
+import { DM_NAV_ENABLED, GROUP_DM_ENABLED } from '@/lib/dm-availability';
 import {
   getMyDmReadStates,
   getDmConversationsByIds,
@@ -414,6 +415,7 @@ export default function MessagesScreen() {
           ListHeaderComponent={
             <>
               {listHeading}
+              {GROUP_DM_ENABLED ? <GroupDmInboxSection userId={userId} searchQuery={query} refreshing={refreshing} /> : null}
               {(!normalizedQuery || matchingConversations.length > 0) ? (
                 <AppText variant="sectionTitle" style={styles.conversationsHeading}>
                   Conversations

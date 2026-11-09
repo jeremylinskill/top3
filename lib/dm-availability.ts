@@ -21,3 +21,7 @@ const productionOptInEnabled =
 
 export const DM_NAV_ENABLED =
   localDevelopmentEnabled || productionOptInEnabled;
+
+// Group DMs are still in Development. Never expose group tables/RPCs to a
+// Production-backed app simply because one-to-one DM has been enabled.
+export const GROUP_DM_ENABLED = localDevelopmentEnabled;
