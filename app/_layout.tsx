@@ -35,6 +35,7 @@ import * as Notifications from 'expo-notifications';
 import {
   router,
   Stack,
+  useGlobalSearchParams,
   usePathname,
   useRootNavigationState,
   useSegments,
@@ -45,21 +46,50 @@ import {
   useRef,
   useState,
 } from 'react';
-import { Alert, Keyboard, Platform, View } from 'react-native';
+import { Alert, AppState, Keyboard, Platform, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import 'react-native-reanimated';
 
-// Display push notifications while Top 3 is open.
-// Device notification permissions still apply.
+// Only the foregrounded, signed-in conversation can suppress its own
+// notification banner. A different conversation, an invitation, or an app in
+// the background retains the existing notification behaviour.
+type ForegroundMessageConversation = {
+  type: 'direct_message' | 'group_message';
+  id: string;
+  recipientUserId: string;
+};
+
+let foregroundMessageConversation: ForegroundMessageConversation | null = null;
+
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
+  handleNotification: async (notification) => {
+    const data = notification.request.content.data;
+    const type = getStringValue(data.type);
+    const conversationId = type === 'direct_message'
+      ? getStringValue(data.conversationId)
+      : type === 'group_message'
+        ? getStringValue(data.groupId)
+        : null;
+    const recipientUserId = getStringValue(data.recipientUserId);
+    const open = foregroundMessageConversation;
+    const isOpenConversationMessage =
+      AppState.currentState === 'active' &&
+      open !== null &&
+      type === open.type &&
+      conversationId === open.id &&
+      recipientUserId === open.recipientUserId;
+
+    return {
+      // Keep the configured notification sound, but do not duplicate the
+      // message on screen or in Notification Centre for the open chat.
+      shouldShowBanner: !isOpenConversationMessage,
+      shouldShowList: !isOpenConversationMessage,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    };
+  },
 });
 
 type NotificationRouteData = {
@@ -262,6 +292,11 @@ function NotificationResponseController() {
   const { isAuthenticated, user } = useAuth();
   const navigationState = useRootNavigationState();
   const pathname = usePathname();
+  const { conversationId: activeConversationId, groupId: activeGroupId } =
+    useGlobalSearchParams<{
+      conversationId?: string;
+      groupId?: string;
+    }>();
   const segments = useSegments();
   const isInsideApp = segments[0] === '(app)';
   const { options } = useCollectionOptions();
@@ -272,6 +307,52 @@ function NotificationResponseController() {
     startListWithoutSaving,
     selectList,
   } = useTop3();
+
+  // Track only the currently visible chat, not a conversation obscured by
+  // another screen or one belonging to a previous signed-in account.
+  useEffect(() => {
+    const currentUserId = isAuthenticated && isInsideApp ? user?.id : null;
+    let active: ForegroundMessageConversation | null = null;
+    if (
+      currentUserId &&
+      DM_NAV_ENABLED &&
+      pathname === '/dm-conversation' &&
+      typeof activeConversationId === 'string' &&
+      activeConversationId.length > 0
+    ) {
+      active = {
+        type: 'direct_message',
+        id: activeConversationId,
+        recipientUserId: currentUserId,
+      };
+    } else if (
+      currentUserId &&
+      GROUP_DM_ENABLED &&
+      pathname === '/dm-group-conversation' &&
+      typeof activeGroupId === 'string' &&
+      activeGroupId.length > 0
+    ) {
+      active = {
+        type: 'group_message',
+        id: activeGroupId,
+        recipientUserId: currentUserId,
+      };
+    }
+
+    foregroundMessageConversation = active;
+    return () => {
+      if (foregroundMessageConversation === active) {
+        foregroundMessageConversation = null;
+      }
+    };
+  }, [
+    isAuthenticated,
+    isInsideApp,
+    user?.id,
+    pathname,
+    activeConversationId,
+    activeGroupId,
+  ]);
 
   useEffect(() => {
     function handleResponse(
