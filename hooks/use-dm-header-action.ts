@@ -7,16 +7,16 @@ import { router } from 'expo-router';
 // main tabs. The one Realtime-backed unread subscription lives in the tab layout.
 export function useDmHeaderAction() {
   const { isAuthenticated } = useAuth();
-  const hasUnread = useDmUnreadStatus();
+  const unreadCount = useDmUnreadStatus();
 
   if (!DM_NAV_ENABLED || !isAuthenticated) return {};
 
   return {
     rightIconName: 'chatbubbles-outline' as const,
     onRightPress: () => router.push('/messages'),
-    rightAccessibilityLabel: hasUnread
-      ? 'Open Messages, unread messages'
+    rightAccessibilityLabel: unreadCount > 0
+      ? `Open Messages, ${unreadCount > 9 ? '9 or more' : unreadCount} conversations or invitations needing attention`
       : 'Open Messages',
-    rightUnreadDot: hasUnread,
+    rightUnreadCount: unreadCount,
   };
 }

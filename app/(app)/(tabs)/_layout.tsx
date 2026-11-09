@@ -239,7 +239,7 @@ function TabNavigator() {
   const { unreadCount } = useNotifications();
   const { profile } = useProfile();
   const { isAuthenticated } = useAuth();
-  const hasUnreadDm = useDmUnread(DM_NAV_ENABLED && isAuthenticated);
+  const unreadDmCount = useDmUnread(DM_NAV_ENABLED && isAuthenticated);
 
   const avatarUrl = profile?.avatarUrl;
   const notificationBadge =
@@ -250,7 +250,7 @@ function TabNavigator() {
         : unreadCount;
 
   return (
-    <DmUnreadContext.Provider value={hasUnreadDm}>
+    <DmUnreadContext.Provider value={unreadDmCount}>
     <Tabs
       initialRouteName="feed"
       tabBar={(props) => <FloatingTabBar {...props} />}

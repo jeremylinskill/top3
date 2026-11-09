@@ -1,4 +1,5 @@
 import IconButton from '@/components/icon-button';
+import { useTheme } from '@react-navigation/native';
 import AppText from '@/components/app-text';
 import { SPACING } from '@/constants/spacing';
 import { useAppColors } from '@/hooks/use-app-colors';
@@ -40,7 +41,8 @@ type ScreenHeaderProps = {
   rightIconName?: IoniconName;
   onRightPress?: () => void;
   rightAccessibilityLabel?: string;
-  rightUnreadDot?: boolean;
+  rightUnreadDot?: boolean; // Legacy callers: display as one unread item.
+  rightUnreadCount?: number;
   secondaryRightIconName?: IoniconName;
   onSecondaryRightPress?: () => void;
   secondaryRightAccessibilityLabel?: string;
@@ -286,6 +288,7 @@ export default function ScreenHeader({
   onRightPress,
   rightAccessibilityLabel = 'Open menu',
   rightUnreadDot = false,
+  rightUnreadCount = 0,
   secondaryRightIconName,
   onSecondaryRightPress,
   secondaryRightAccessibilityLabel = 'Open secondary action',
@@ -298,6 +301,7 @@ export default function ScreenHeader({
   collapseWithBackButton = false,
 }: ScreenHeaderProps) {
   const colors = useAppColors();
+  const notificationColor = useTheme().colors.notification;
   const isDark = useColorScheme() === 'dark';
   const insets = useSafeAreaInsets();
   const visibility = useRef(new Animated.Value(1)).current;
@@ -320,6 +324,7 @@ export default function ScreenHeader({
 
   const showLeftAction = Boolean(leftIconName) && Boolean(onLeftPress);
   const showRightAction = Boolean(rightIconName) && Boolean(onRightPress);
+  const messageBadgeCount = Math.max(0, rightUnreadCount || (rightUnreadDot ? 1 : 0));
   const showSecondaryRightAction =
     Boolean(secondaryRightIconName) && Boolean(onSecondaryRightPress);
 
@@ -558,8 +563,17 @@ export default function ScreenHeader({
                 size={26}
                 color={colors.text}
               />
-              {rightUnreadDot ? (
-                <View pointerEvents="none" style={styles.rightUnreadDot} />
+              {messageBadgeCount > 0 ? (
+                <View
+                  pointerEvents="none"
+                  style={[
+                    styles.rightUnreadBadge,
+                    { backgroundColor: notificationColor },
+                  ]}>
+                  <Text style={styles.rightUnreadBadgeText}>
+                    {messageBadgeCount > 9 ? '9+' : String(messageBadgeCount)}
+                  </Text>
+                </View>
               ) : null}
             </IconButton>
           ) : (
@@ -638,16 +652,24 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     height: SCREEN_HEADER_HEIGHT,
   },
-  rightUnreadDot: {
+  rightUnreadBadge: {
     position: 'absolute',
-    right: 3,
-    top: 2,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#6228F5',
-    borderWidth: 1,
-    borderColor: '#FFFFFF',
+    right: 0,
+    top: 0,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    paddingHorizontal: 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rightUnreadBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    lineHeight: 15,
+    fontWeight: '700',
+    textAlign: 'center',
+    includeFontPadding: false,
   },
   actionCircle: {
     ...StyleSheet.absoluteFillObject,
