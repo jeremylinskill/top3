@@ -1,6 +1,7 @@
 import AppText from '@/components/app-text';
 import { useAppColors } from '@/hooks/use-app-colors';
 import { GROUP_DM_ENABLED } from '@/lib/dm-availability';
+import { subscribeToTableChanges } from '@/lib/supabase/realtime';
 import {
   getMyGroupReadStates, hasUnreadGroupMessages, listGroupConversations,
   listMyGroupMemberships, respondToGroupInvitation,
@@ -66,27 +67,61 @@ export default function GroupDmInboxSection({ userId, searchQuery, refreshing }:
 
   useFocusEffect(useCallback(() => {
     let active = true;
+    let pending: ReturnType<typeof setTimeout> | null = null;
     if (!GROUP_DM_ENABLED || !userId) {
       setRows([]);
       setLoading(false);
       return () => { active = false; };
     }
+
+    const fetchRows = () => {
+      if (!active || AppState.currentState !== 'active') return;
+      void load().then((next) => {
+        if (active) { setRows(next); setError(null); }
+      }).catch((cause) => {
+        if (active) setError(cause instanceof Error ? cause.message : 'Unable to load groups.');
+      }).finally(() => {
+        if (active) setLoading(false);
+      });
+    };
+    const scheduleRefresh = () => {
+      if (!active || AppState.currentState !== 'active') return;
+      if (pending !== null) clearTimeout(pending);
+      pending = setTimeout(() => { pending = null; fetchRows(); }, 200);
+    };
+
     setLoading(true);
     setError(null);
-    void load().then((next) => {
-      if (active) setRows(next);
-    }).catch((cause) => {
-      if (active) setError(cause instanceof Error ? cause.message : 'Unable to load groups.');
-    }).finally(() => {
-      if (active) setLoading(false);
+    fetchRows();
+
+    // Metadata-only Realtime events; messages themselves are never published.
+    // RLS limits group rows to invited/accepted participants.
+    const unsubscribeGroups = subscribeToTableChanges({
+      channelName: `dm-group-inbox-${userId}`,
+      table: 'dm_group_conversations',
+      events: ['INSERT', 'UPDATE'],
+      onChange: scheduleRefresh,
+      onSubscribed: scheduleRefresh,
     });
+    const unsubscribeReadStates = subscribeToTableChanges({
+      channelName: `dm-group-read-states-${userId}`,
+      table: 'dm_group_read_states',
+      filter: `user_id=eq.${userId}`,
+      events: ['INSERT', 'UPDATE'],
+      onChange: scheduleRefresh,
+      onSubscribed: scheduleRefresh,
+    });
+
     const appState = AppState.addEventListener('change', (state) => {
-      if (state === 'active') {
-        void load().then((next) => { if (active) setRows(next); })
-          .catch((cause) => { if (active) setError(cause instanceof Error ? cause.message : 'Unable to load groups.'); });
-      }
+      if (state === 'active') scheduleRefresh();
     });
-    return () => { active = false; appState.remove(); };
+    return () => {
+      active = false;
+      if (pending !== null) clearTimeout(pending);
+      unsubscribeGroups();
+      unsubscribeReadStates();
+      appState.remove();
+    };
   }, [load, userId]));
 
   // Share the parent inbox's pull-to-refresh gesture without modifying its

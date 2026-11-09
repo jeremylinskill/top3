@@ -10,6 +10,7 @@ import {
   markGroupRead, sendGroupMessage, type GroupMessage,
 } from '@/lib/supabase/group-messages';
 import { getProfilesByIds } from '@/lib/supabase/profiles';
+import { subscribeToTableChanges } from '@/lib/supabase/realtime';
 import { createUserReport, type ReportReason } from '@/lib/supabase/reports';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
@@ -112,18 +113,46 @@ export default function GroupDmConversationScreen() {
   }, [id, userId]);
 
   useFocusEffect(useCallback(() => {
+    let active = true;
+    let pending: ReturnType<typeof setTimeout> | null = null;
     setViewing(AppState.currentState === 'active');
-    const subscription = AppState.addEventListener('change', (state) => {
-      setViewing(state === 'active');
-      if (state === 'active') void refresh(false, true);
+
+    const scheduleRefresh = () => {
+      if (!active || AppState.currentState !== 'active') return;
+      if (pending !== null) clearTimeout(pending);
+      pending = setTimeout(() => {
+        pending = null;
+        if (active) void refresh(false, true);
+      }, 150);
+    };
+
+    // Stream only participant-visible metadata. The message body is fetched
+    // with dm_group_messages SELECT RLS, never sent in Realtime events.
+    const unsubscribe = id && userId && GROUP_DM_ENABLED
+      ? subscribeToTableChanges({
+        channelName: `dm-group-conversation-${id}`,
+        table: 'dm_group_conversations',
+        filter: `id=eq.${id}`,
+        events: ['UPDATE'],
+        onChange: scheduleRefresh,
+        onSubscribed: scheduleRefresh,
+      })
+      : () => {};
+
+    const appState = AppState.addEventListener('change', (state) => {
+      setViewing(active && state === 'active');
+      if (state === 'active') scheduleRefresh();
     });
     void refresh();
     return () => {
+      active = false;
+      if (pending !== null) clearTimeout(pending);
       generation.current += 1;
       setViewing(false);
-      subscription.remove();
+      unsubscribe();
+      appState.remove();
     };
-  }, [refresh]));
+  }, [id, userId, refresh]));
 
   // Message IDs are validated by the server before advancing a read position.
   useEffect(() => {
