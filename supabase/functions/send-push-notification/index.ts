@@ -364,6 +364,7 @@ export default {
             data: {
               type: isMessage ? "group_message" : "group_invitation",
               groupId,
+              recipientUserId: token.user_id,
               ...(messageId ? { messageId } : {}),
             },
           }));

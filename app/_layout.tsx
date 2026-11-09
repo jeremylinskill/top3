@@ -17,7 +17,7 @@ import { Top3Provider, useTop3 } from '@/context/top3-context';
 import { TrailerPreviewProvider } from '@/context/trailer-preview-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAuth } from '@/hooks/use-auth';
-import { DM_NAV_ENABLED } from '@/lib/dm-availability';
+import { DM_NAV_ENABLED, GROUP_DM_ENABLED } from '@/lib/dm-availability';
 import { initializeAnalytics } from '@/lib/analytics';
 import {
   TOP3_CATEGORIES,
@@ -71,6 +71,7 @@ type NotificationRouteData = {
   top3_request_id?: unknown;
   requestId?: unknown;
   conversationId?: unknown;
+  groupId?: unknown;
   recipientUserId?: unknown;
 };
 
@@ -154,6 +155,28 @@ function routeFromNotificationData(
       recipientUserId === currentUserId
     ) {
       router.push({ pathname: '/dm-conversation', params: { conversationId } });
+    }
+    return;
+  }
+
+  if (type === 'group_message' || type === 'group_invitation') {
+    const groupId = getStringValue(data.groupId);
+    const recipientUserId = getStringValue(data.recipientUserId);
+    // Development-only group routing. The server sends a separate recipient
+    // ID with each push, which must match the currently authenticated account.
+    if (
+      !GROUP_DM_ENABLED ||
+      !groupId ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(groupId) ||
+      !recipientUserId ||
+      recipientUserId !== currentUserId
+    ) {
+      return;
+    }
+    if (type === 'group_invitation') {
+      router.push('/messages');
+    } else {
+      router.push({ pathname: '/dm-group-conversation', params: { groupId } });
     }
     return;
   }
@@ -342,6 +365,27 @@ function NotificationResponseController() {
       if (!recipientUserId || recipientUserId !== user.id) {
         if (__DEV__) {
           console.log('DM notification ignored: recipient does not match signed-in account.');
+        }
+        setPendingSocialNotification(null);
+        return;
+      }
+    }
+
+    const notificationType = getStringValue(data.type);
+    if (notificationType === 'group_message' || notificationType === 'group_invitation') {
+      if (!GROUP_DM_ENABLED) {
+        setPendingSocialNotification(null);
+        return;
+      }
+      // Keep the response pending until authentication and the protected app
+      // navigator have completed their initial restoration.
+      if (!user?.id || !isInsideApp) {
+        return;
+      }
+      const recipientUserId = getStringValue(data.recipientUserId);
+      if (!recipientUserId || recipientUserId !== user.id) {
+        if (__DEV__) {
+          console.log('Group notification ignored: recipient does not match signed-in account.');
         }
         setPendingSocialNotification(null);
         return;
