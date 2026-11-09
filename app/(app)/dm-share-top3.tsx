@@ -4,14 +4,19 @@ import ScreenHeader from '@/components/screen-header';
 import UserAvatar from '@/components/user-avatar';
 import { useAppColors } from '@/hooks/use-app-colors';
 import { useAuth } from '@/hooks/use-auth';
-import { DM_NAV_ENABLED } from '@/lib/dm-availability';
+import { DM_NAV_ENABLED, GROUP_DM_ENABLED } from '@/lib/dm-availability';
 import { trackAnalyticsEvent } from '@/lib/analytics';
 import {
   getDmSharedCollectionPreviews,
   listDmShareRecipientIds,
   shareDmCollection,
 } from '@/lib/supabase/direct-messages';
+import {
+  listGroupConversations, listMyGroupMemberships, shareGroupCollection,
+  type GroupConversation,
+} from '@/lib/supabase/group-messages';
 import { getProfilesByIds } from '@/lib/supabase/profiles';
+import { Ionicons } from '@expo/vector-icons';
 import type { UserProfile } from '@/types/user-profile';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -33,6 +38,8 @@ export default function DmShareTop3Screen() {
   const collectionId = typeof rawCollectionId === 'string' ? rawCollectionId : '';
   const [title, setTitle] = useState('');
   const [recipients, setRecipients] = useState<UserProfile[]>([]);
+  const [groups, setGroups] = useState<GroupConversation[]>([]);
+  const [groupsError, setGroupsError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sendingTo, setSendingTo] = useState<string | null>(null);
@@ -40,13 +47,16 @@ export default function DmShareTop3Screen() {
 
   useEffect(() => {
     let active = true;
-    if (!DM_NAV_ENABLED || !user?.id || !collectionId) {
+    const currentUserId = user?.id ?? '';
+    if (!DM_NAV_ENABLED || !currentUserId || !collectionId) {
       setLoading(false);
       setError('Sharing in Top 3 is not available.');
       return () => { active = false; };
     }
     setLoading(true);
     setError(null);
+    setGroupsError(null);
+    setGroups([]);
     void (async () => {
       try {
         const [previews, recipientIds] = await Promise.all([
@@ -61,6 +71,21 @@ export default function DmShareTop3Screen() {
         setRecipients(recipientIds.map((id) => byId.get(id)).filter(
           (value): value is UserProfile => Boolean(value)
         ));
+        if (GROUP_DM_ENABLED) {
+          try {
+            const memberships = await listMyGroupMemberships(currentUserId);
+            const ids = memberships.filter((member) => member.status === 'accepted')
+              .map((member) => member.group_id);
+            const loadedGroups = await listGroupConversations(ids);
+            if (active) setGroups(loadedGroups.sort((a, b) =>
+              new Date(b.last_message_at || b.created_at).getTime() -
+              new Date(a.last_message_at || a.created_at).getTime()
+            ));
+          } catch {
+            // Do not prevent established one-to-one sharing if group lookup fails.
+            if (active) setGroupsError('Unable to load group conversations.');
+          }
+        }
       } catch (cause) {
         if (active) setError(cause instanceof Error ? cause.message : 'Unable to load recipients.');
       } finally {
@@ -87,13 +112,28 @@ export default function DmShareTop3Screen() {
     }
   }
 
+  async function shareWithGroup(group: GroupConversation) {
+    if (sendingTo || !user?.id || !GROUP_DM_ENABLED) return;
+    setSendingTo(`group:${group.id}`);
+    try {
+      const groupId = await shareGroupCollection(group.id, collectionId);
+      trackAnalyticsEvent('collection_shared', { source: 'group_message' });
+      router.replace({ pathname: '/dm-group-conversation', params: { groupId } });
+    } catch (cause) {
+      setShareError(cause instanceof Error ? cause.message : 'Please try again.');
+    } finally {
+      setSendingTo(null);
+    }
+  }
+
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
       <ScreenHeader showBackButton centerTitle="Send Top 3" />
       <View style={styles.intro}>
         <AppText variant="label">{title || 'Share a Top 3'}</AppText>
         <AppText variant="body" tone="secondary">
-          Choose someone you mutually follow.
+          {GROUP_DM_ENABLED ? 'Choose a mutual follower or a group conversation.' :
+            'Choose someone you mutually follow.'}
         </AppText>
       </View>
       {loading ? (
@@ -111,6 +151,39 @@ export default function DmShareTop3Screen() {
           data={recipients}
           keyExtractor={(recipient) => recipient.id}
           contentContainerStyle={styles.list}
+          ListHeaderComponent={GROUP_DM_ENABLED ? (
+            <View>
+              <AppText variant="sectionTitle" style={styles.sectionHeading}>Groups</AppText>
+              {groupsError ? (
+                <AppText variant="body" tone="secondary" style={styles.groupError}>{groupsError}</AppText>
+              ) : null}
+              {!groups.length && !groupsError ? (
+                <AppText variant="body" tone="secondary" style={styles.groupError}>
+                  No group conversations yet.
+                </AppText>
+              ) : null}
+              {groups.map((group) => (
+                <Pressable key={group.id}
+                  onPress={() => { void shareWithGroup(group); }}
+                  disabled={sendingTo !== null}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Send Top 3 to group ${group.name}`}
+                  style={[styles.row, { borderBottomColor: colors.border }]}>
+                  <Ionicons name="people-circle-outline" size={44} color={colors.accent} />
+                  <View style={styles.recipientText}>
+                    <AppText variant="label" numberOfLines={1}>{group.name}</AppText>
+                    <AppText variant="body" tone="secondary">Group conversation</AppText>
+                  </View>
+                  {sendingTo === `group:${group.id}` ? (
+                    <ActivityIndicator color={colors.accent} />
+                  ) : (
+                    <AppText variant="action">Send</AppText>
+                  )}
+                </Pressable>
+              ))}
+              <AppText variant="sectionTitle" style={styles.sectionHeading}>People</AppText>
+            </View>
+          ) : null}
           renderItem={({ item }) => (
             <Pressable
               onPress={() => { void shareWith(item); }}
@@ -135,9 +208,11 @@ export default function DmShareTop3Screen() {
             </Pressable>
           )}
           ListEmptyComponent={
-            <View style={styles.center}>
+            <View style={styles.emptyMessage}>
               <AppText variant="body" tone="secondary" style={styles.centerText}>
-                No mutual followers available to message yet.
+                {groups.length ? 'No individual recipients available.' :
+                  GROUP_DM_ENABLED ? 'No mutual followers or group conversations available yet.' :
+                    'No mutual followers available to message yet.'}
               </AppText>
             </View>
           }
@@ -162,4 +237,7 @@ const styles = StyleSheet.create({
   list: { paddingHorizontal: 20, paddingBottom: 24, flexGrow: 1 },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, gap: 12, borderBottomWidth: StyleSheet.hairlineWidth },
   recipientText: { flex: 1, gap: 4 },
+  sectionHeading: { marginTop: 14, marginBottom: 4 },
+  groupError: { paddingVertical: 8 },
+  emptyMessage: { paddingVertical: 22, alignItems: 'center', justifyContent: 'center' },
 });

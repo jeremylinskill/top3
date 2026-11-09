@@ -151,6 +151,21 @@ export async function sendGroupMessage(groupId: string, body: string): Promise<s
   return data;
 }
 
+// Server validates that the sender and all currently joined members can open
+// the published list. Attaching the structured ID is atomic with sending.
+export async function shareGroupCollection(groupId: string, collectionId: string): Promise<string> {
+  if (!groupId.trim() || !collectionId.trim()) {
+    throw new Error('Choose a group and a published Top 3.');
+  }
+  const { data, error } = await supabase.rpc('dm_group_share_collection', {
+    p_group_id: groupId.trim(),
+    p_collection_id: collectionId.trim(),
+  });
+  if (error) throw new Error(error.message);
+  if (typeof data !== 'string' || !data) throw new Error('Unable to share this Top 3.');
+  return data;
+}
+
 export async function markGroupRead(groupId: string, messageId: string): Promise<void> {
   if (!groupId.trim() || !messageId.trim()) return;
   const { error } = await supabase.rpc('dm_group_mark_read', {

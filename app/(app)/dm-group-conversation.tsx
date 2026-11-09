@@ -6,6 +6,9 @@ import { useAppColors } from '@/hooks/use-app-colors';
 import { useAuth } from '@/hooks/use-auth';
 import { GROUP_DM_ENABLED } from '@/lib/dm-availability';
 import {
+  getDmSharedCollectionPreviews, type DmSharedCollectionPreview,
+} from '@/lib/supabase/direct-messages';
+import {
   getGroupConversation, getGroupMembers, leaveGroup, listGroupMessages,
   markGroupRead, sendGroupMessage, type GroupMessage,
 } from '@/lib/supabase/group-messages';
@@ -49,6 +52,7 @@ export default function GroupDmConversationScreen() {
   const [memberSummary, setMemberSummary] = useState('');
   const [senderNames, setSenderNames] = useState<Record<string, string>>({});
   const [messages, setMessages] = useState<GroupMessage[]>([]);
+  const [sharedPreviews, setSharedPreviews] = useState<Record<string, DmSharedCollectionPreview>>({});
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -78,6 +82,16 @@ export default function GroupDmConversationScreen() {
         throw new Error('Group unavailable.');
       }
       const page = await listGroupMessages(id, 50);
+      // The caller's published-collection RLS controls which forwarded Top 3s
+      // can still be previewed. Never reveal titles for revoked/private lists.
+      let previews: Record<string, DmSharedCollectionPreview> = {};
+      try {
+        previews = await getDmSharedCollectionPreviews(
+          page.map((message) => message.shared_collection_id ?? '').filter(Boolean)
+        );
+      } catch {
+        // A preview failure must not prevent normal group messages loading.
+      }
       const profileIds = Array.from(new Set([
         ...members.map((member) => member.user_id), ...page.map((message) => message.sender_id),
       ]));
@@ -93,6 +107,7 @@ export default function GroupDmConversationScreen() {
       if (current !== generation.current) return;
       setName(group.name);
       setMessages(page);
+      setSharedPreviews(previews);
       setSenderNames(names);
       setMemberSummary(`${members.filter((m) => m.status === 'accepted').length} joined · ${
         members.filter((m) => m.status === 'invited').length
@@ -347,9 +362,22 @@ export default function GroupDmConversationScreen() {
                 return (
                   <View style={[styles.messageRow, own && styles.ownMessageRow]}>
                     <Pressable accessibilityRole="button"
-                      accessibilityLabel={`${senderNames[item.sender_id] || 'Member'} message options`}
-                      accessibilityHint="Tap or long press for copy, report, or block options"
-                      onPress={() => setSheet({ type: 'message', message: item })}
+                      accessibilityLabel={item.shared_collection_id && sharedPreviews[item.shared_collection_id]
+                        ? `Open shared Top 3: ${sharedPreviews[item.shared_collection_id].title}`
+                        : `${senderNames[item.sender_id] || 'Member'} message options`}
+                      accessibilityHint={item.shared_collection_id && sharedPreviews[item.shared_collection_id]
+                        ? 'Tap to view Top 3, or long press for message options'
+                        : 'Tap or long press for copy, report, or block options'}
+                      onPress={() => {
+                        if (item.shared_collection_id && sharedPreviews[item.shared_collection_id]) {
+                          router.push({
+                            pathname: '/published-top3',
+                            params: { postId: `post-${item.shared_collection_id}` },
+                          });
+                        } else {
+                          setSheet({ type: 'message', message: item });
+                        }
+                      }}
                       onLongPress={() => setSheet({ type: 'message', message: item })}
                       style={[styles.bubble, {
                         backgroundColor: own ? colors.accent : colors.surface,
@@ -359,7 +387,23 @@ export default function GroupDmConversationScreen() {
                           {senderNames[item.sender_id] || 'Group member'}
                         </AppText>
                       ) : null}
-                      <AppText variant="body" tone={own ? 'onPrimary' : 'primary'}>{item.body}</AppText>
+                      {item.shared_collection_id ? (
+                        <View style={styles.sharedCollection}>
+                          <AppText variant="body" tone={own ? 'onPrimary' : 'primary'}>
+                            {item.body}
+                          </AppText>
+                          <AppText variant="label" tone={own ? 'onPrimary' : 'primary'}>
+                            {sharedPreviews[item.shared_collection_id]?.title || 'This Top 3 is unavailable'}
+                          </AppText>
+                          {sharedPreviews[item.shared_collection_id] ? (
+                            <AppText variant="caption" tone={own ? 'onPrimary' : 'secondary'}>
+                              Tap to view
+                            </AppText>
+                          ) : null}
+                        </View>
+                      ) : (
+                        <AppText variant="body" tone={own ? 'onPrimary' : 'primary'}>{item.body}</AppText>
+                      )}
                     </Pressable>
                   </View>
                 );
@@ -407,6 +451,7 @@ const styles = StyleSheet.create({
   ownMessageRow: { justifyContent: 'flex-end' },
   bubble: { maxWidth: '83%', paddingHorizontal: 14, paddingVertical: 11, borderRadius: 16, gap: 5 },
   senderName: { fontWeight: '600' },
+  sharedCollection: { gap: 7 },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 40 },
   composer: { flexDirection: 'row', gap: 10, alignItems: 'flex-end', paddingHorizontal: 16, paddingVertical: 10, borderTopWidth: StyleSheet.hairlineWidth },
   input: { flex: 1, minHeight: 42, maxHeight: 120, borderRadius: 15, paddingHorizontal: 14, paddingTop: 11, paddingBottom: 10, fontSize: 16 },
