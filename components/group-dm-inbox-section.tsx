@@ -14,6 +14,19 @@ import { ActivityIndicator, AppState, Pressable, StyleSheet, View } from 'react-
 type GroupInboxRow = { group: GroupConversation; member: GroupMember; unread: boolean };
 type Props = { userId: string; searchQuery: string; refreshing: boolean };
 
+// Keep group timestamps consistent with the existing one-to-one DM cards.
+function relativeTime(timestamp: string | null): string {
+  if (!timestamp) return '';
+  const elapsed = Date.now() - new Date(timestamp).getTime();
+  if (!Number.isFinite(elapsed) || elapsed < 0) return '';
+  const minutes = Math.floor(elapsed / 60000);
+  if (minutes < 1) return 'Now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
+
 export default function GroupDmInboxSection({ userId, searchQuery, refreshing }: Props) {
   const colors = useAppColors();
   const [rows, setRows] = useState<GroupInboxRow[]>([]);
@@ -172,7 +185,7 @@ export default function GroupDmInboxSection({ userId, searchQuery, refreshing }:
               <View style={styles.titleBlock}>
                 <AppText variant="selectionTitle" numberOfLines={1}>{group.name}</AppText>
                 <AppText variant="caption" tone="tertiary" numberOfLines={1}>
-                  {group.last_message_at ? 'Group conversation' : 'No messages yet'}
+                  {group.last_message_at ? `Group · ${relativeTime(group.last_message_at)}` : 'Group · No messages yet'}
                 </AppText>
               </View>
               {unread ? <View accessibilityLabel="Unread group message"
@@ -198,6 +211,6 @@ const styles = StyleSheet.create({
   titleBlock: { flex: 1, minWidth: 0, gap: 2 },
   actions: { flexDirection: 'row', gap: 10 },
   action: { flex: 1, borderRadius: 10, minHeight: 42, alignItems: 'center', justifyContent: 'center' },
-  groupRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  groupRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 76 },
   unreadDot: { width: 10, height: 10, borderRadius: 5 },
 });

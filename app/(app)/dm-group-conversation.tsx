@@ -203,6 +203,10 @@ export default function GroupDmConversationScreen() {
     case 'options':
       sheetTitle = 'Group options';
       sheetActions = [
+        { label: 'Group Details', onPress: () => {
+          setSheet(null);
+          router.push({ pathname: '/dm-group-details', params: { groupId: id } });
+        } },
         { label: 'Leave Group', variant: 'destructive', onPress: () => setSheet({ type: 'leave' }) },
         cancel,
       ];
@@ -287,10 +291,16 @@ export default function GroupDmConversationScreen() {
           </View>
         ) : (
           <>
-            <View style={[styles.header, { borderBottomColor: colors.border }]}>
-              <AppText variant="selectionTitle" numberOfLines={2}>{name}</AppText>
-              <AppText variant="caption" tone="secondary">{memberSummary}</AppText>
-            </View>
+            <Pressable accessibilityRole="button"
+              accessibilityLabel={`View details and members of ${name}`}
+              onPress={() => router.push({ pathname: '/dm-group-details', params: { groupId: id } })}
+              style={[styles.header, styles.detailsLink, { borderBottomColor: colors.border }]}>
+              <View style={styles.detailsTitle}>
+                <AppText variant="selectionTitle" numberOfLines={2}>{name}</AppText>
+                <AppText variant="caption" tone="secondary">{memberSummary}</AppText>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.tertiaryText} />
+            </Pressable>
             <FlatList
               ref={listRef}
               data={messages}
@@ -360,6 +370,8 @@ const styles = StyleSheet.create({
   state: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12, paddingHorizontal: 24 },
   centerText: { textAlign: 'center' },
   header: { paddingHorizontal: 20, paddingVertical: 12, gap: 4, borderBottomWidth: StyleSheet.hairlineWidth },
+  detailsLink: { flexDirection: 'row', alignItems: 'center' },
+  detailsTitle: { flex: 1, gap: 4, minWidth: 0 },
   list: { flex: 1 },
   listContent: { paddingHorizontal: 16, paddingVertical: 20, flexGrow: 1, gap: 12 },
   messageRow: { flexDirection: 'row', justifyContent: 'flex-start' },
