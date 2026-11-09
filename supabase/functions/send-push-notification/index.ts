@@ -191,6 +191,201 @@ export default {
         );
       }
 
+      // Group Direct Messaging uses the existing trusted webhook, but never
+      // sends message text, group names, rosters or collection metadata to Expo.
+      // These events are only permitted from the DEVELOPMENT Supabase project.
+      if (
+        payload.type === "INSERT" &&
+        payload.schema === "public" &&
+        (payload.table === "dm_group_messages" || payload.table === "dm_group_members")
+      ) {
+        const projectUrl = Deno.env.get("SUPABASE_URL")?.replace(/\/+$/, "");
+        if (projectUrl !== "https://kkltzygebomopysklaqq.supabase.co") {
+          return Response.json({ skipped: true, reason: "Group push not enabled for this project." });
+        }
+
+        const event = payload.record as unknown as Record<string, unknown> | null;
+        const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        const isUuid = (value: unknown): value is string =>
+          typeof value === "string" && uuidPattern.test(value);
+        const isMessage = payload.table === "dm_group_messages";
+        let groupId: string;
+        let recipientIds: string[] = [];
+        let messageId: string | null = null;
+        let senderId: string | null = null;
+        let otherInviteParticipants: string[] = [];
+
+        if (isMessage) {
+          if (!isUuid(event?.id)) {
+            return Response.json({ skipped: true, reason: "Invalid group message event." });
+          }
+          messageId = event.id;
+          const { data: message, error: messageError } = await ctx.supabaseAdmin
+            .from("dm_group_messages")
+            .select("id,group_id,sender_id,created_at,removed_at")
+            .eq("id", messageId)
+            .maybeSingle();
+          if (messageError) {
+            console.error("Unable to resolve group message for push:", messageError);
+            return Response.json({ error: "Group message lookup failed." }, { status: 500 });
+          }
+          if (!message || message.removed_at || !isUuid(message.group_id) || !isUuid(message.sender_id)) {
+            return Response.json({ skipped: true, reason: "Group message unavailable." });
+          }
+          groupId = message.group_id;
+          senderId = message.sender_id;
+
+          const { data: members, error: memberError } = await ctx.supabaseAdmin
+            .from("dm_group_members")
+            .select("user_id,status,joined_at")
+            .eq("group_id", groupId)
+            .eq("status", "accepted");
+          if (memberError) {
+            console.error("Unable to check group membership for push:", memberError);
+            return Response.json({ error: "Group membership lookup failed." }, { status: 500 });
+          }
+          // New members never receive notifications for pre-join messages.
+          // Leaving/declined members do not receive pushes even if they were
+          // present when the original message was sent.
+          recipientIds = (members ?? [])
+            .filter((member) =>
+              member.user_id !== senderId &&
+              member.joined_at !== null &&
+              new Date(member.joined_at).getTime() <= new Date(message.created_at).getTime()
+            )
+            .map((member) => member.user_id);
+        } else {
+          if (!isUuid(event?.group_id) || !isUuid(event?.user_id)) {
+            return Response.json({ skipped: true, reason: "Invalid group invitation event." });
+          }
+          groupId = event.group_id;
+          const { data: invitation, error: inviteError } = await ctx.supabaseAdmin
+            .from("dm_group_members")
+            .select("group_id,user_id,invited_by,status")
+            .eq("group_id", groupId)
+            .eq("user_id", event.user_id)
+            .maybeSingle();
+          if (inviteError) {
+            console.error("Unable to resolve group invitation for push:", inviteError);
+            return Response.json({ error: "Group invitation lookup failed." }, { status: 500 });
+          }
+          if (!invitation || invitation.status !== "invited" ||
+              !isUuid(invitation.invited_by) || invitation.invited_by === invitation.user_id) {
+            return Response.json({ skipped: true, reason: "Group invitation unavailable." });
+          }
+          senderId = invitation.invited_by;
+          const { data: inviter, error: inviterError } = await ctx.supabaseAdmin
+            .from("dm_group_members")
+            .select("status")
+            .eq("group_id", groupId)
+            .eq("user_id", senderId)
+            .maybeSingle();
+          if (inviterError) {
+            console.error("Unable to check group inviter for push:", inviterError);
+            return Response.json({ error: "Group inviter lookup failed." }, { status: 500 });
+          }
+          if (inviter?.status !== "accepted") {
+            return Response.json({ skipped: true, reason: "Inviter no longer in group." });
+          }
+          // Mutual follow eligibility may have been revoked after invitation.
+          const { data: follows, error: followError } = await ctx.supabaseAdmin
+            .from("follows")
+            .select("follower_id,following_id")
+            .in("follower_id", [senderId, invitation.user_id])
+            .in("following_id", [senderId, invitation.user_id]);
+          if (followError) {
+            console.error("Unable to check group follow state for push:", followError);
+            return Response.json({ error: "Group follow lookup failed." }, { status: 500 });
+          }
+          if (!(follows ?? []).some((row) => row.follower_id === senderId && row.following_id === invitation.user_id) ||
+              !(follows ?? []).some((row) => row.follower_id === invitation.user_id && row.following_id === senderId)) {
+            return Response.json({ skipped: true, reason: "Invitation no longer eligible." });
+          }
+          // An invite is not eligible if the recipient is blocked by any
+          // currently invited or accepted member, not only the inviter.
+          const { data: roster, error: rosterError } = await ctx.supabaseAdmin
+            .from("dm_group_members")
+            .select("user_id,status")
+            .eq("group_id", groupId)
+            .in("status", ["accepted", "invited"]);
+          if (rosterError) {
+            console.error("Unable to check group invitation roster for push:", rosterError);
+            return Response.json({ error: "Group invitation membership lookup failed." }, { status: 500 });
+          }
+          otherInviteParticipants = (roster ?? []).map((member) => member.user_id);
+          recipientIds = [invitation.user_id];
+        }
+
+        if (!recipientIds.length || !senderId) {
+          return Response.json({ success: true, sent: 0 });
+        }
+        // Re-read block state before sending. Any mutual block suppresses the
+        // push; no identities in the minimal trigger payload are trusted.
+        const participants = Array.from(new Set([senderId, ...recipientIds, ...otherInviteParticipants]));
+        const { data: blocks, error: blocksError } = await ctx.supabaseAdmin
+          .from("blocks")
+          .select("blocker_id,blocked_user_id")
+          .in("blocker_id", participants)
+          .in("blocked_user_id", participants);
+        if (blocksError) {
+          console.error("Unable to check group block state for push:", blocksError);
+          return Response.json({ error: "Group block lookup failed." }, { status: 500 });
+        }
+        const blockedRecipients = new Set<string>();
+        for (const row of blocks ?? []) {
+          if (row.blocker_id === senderId) blockedRecipients.add(row.blocked_user_id);
+          if (row.blocked_user_id === senderId) blockedRecipients.add(row.blocker_id);
+          if (!isMessage && row.blocker_id === recipientIds[0]) {
+            blockedRecipients.add(recipientIds[0]);
+          }
+          if (!isMessage && row.blocked_user_id === recipientIds[0]) {
+            blockedRecipients.add(recipientIds[0]);
+          }
+        }
+        recipientIds = recipientIds.filter((id) => !blockedRecipients.has(id));
+        if (!recipientIds.length) {
+          return Response.json({ success: true, sent: 0 });
+        }
+        const { data: tokenRows, error: tokensError } = await ctx.supabaseAdmin
+          .from("push_tokens")
+          .select("user_id,expo_push_token")
+          .in("user_id", recipientIds);
+        if (tokensError) {
+          console.error("Unable to load group push tokens:", tokensError);
+          return Response.json({ error: "Group push tokens unavailable." }, { status: 500 });
+        }
+        const pushes = (tokenRows ?? [])
+          .filter((token) => recipientIds.includes(token.user_id))
+          .map((token) => ({
+            to: token.expo_push_token,
+            sound: "default",
+            title: isMessage ? "New group message" : "New group invitation",
+            body: isMessage ? "Tap to reply." : "Tap to respond.",
+            data: {
+              type: isMessage ? "group_message" : "group_invitation",
+              groupId,
+              ...(messageId ? { messageId } : {}),
+            },
+          }));
+        if (!pushes.length) {
+          return Response.json({ success: true, sent: 0 });
+        }
+        // Expo allows at most 100 notifications in a single send request.
+        // Do not log token values, group names, or message content.
+        for (let offset = 0; offset < pushes.length; offset += 100) {
+          const response = await fetch(EXPO_PUSH_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(pushes.slice(offset, offset + 100)),
+          });
+          if (!response.ok) {
+            console.error("Expo group push request failed with status:", response.status);
+            return Response.json({ error: "Expo group push request failed." }, { status: 502 });
+          }
+        }
+        return Response.json({ success: true, sent: pushes.length });
+      }
+
       // Direct Messages use the existing trusted push endpoint, but deliberately
       // do not create a second entry in the general Notifications feed. The DM
       // trigger sends only the message ID; all identities are re-read here.
